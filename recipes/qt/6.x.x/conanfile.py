@@ -964,6 +964,8 @@ class QtConan(ConanFile):
                 continue
             if any(path.glob("QtPublic*Helpers.cmake")):
                 continue
+            if any(path.glob("Qt6QmlPublic*Helpers.cmake")):
+                continue
             self.output.info(f"Removing {path.relative_to(package_path)}")
             rmdir(self, path)
         rm(self, "ensure_pro_file.cmake", self.package_folder, recursive=True)
@@ -1043,8 +1045,11 @@ class QtConan(ConanFile):
 
         if self.options.qtdeclarative:
             _create_private_module("Qml", ["CorePrivate", "Qml"])
-            module = package_path.joinpath("lib", "cmake", "Qt6Qml", "conan_qt_qt6_policies.cmake")
-            save(self, module, "set(QT_KNOWN_POLICY_QTP0001 TRUE)\n")
+            save(self, os.path.join(self.package_folder, "lib", "cmake", "Qt6Qml", "conan_qt_qt6_policies.cmake"), textwrap.dedent("""\
+                set(QT_KNOWN_POLICY_QTP0001 TRUE)
+                set(QT_KNOWN_POLICY_QTP0004 TRUE)
+                set(QT_KNOWN_POLICY_QTP0005 TRUE)
+            """))
             if self.options.gui and self.options.qtshadertools:
                 _create_private_module("Quick", ["CorePrivate", "GuiPrivate", "QmlPrivate", "Quick"])
 
@@ -1623,6 +1628,8 @@ class QtConan(ConanFile):
                 if module.is_file():
                     _add_build_module(component_name, str(module))
                 for helper_modules in path.glob("QtPublic*Helpers.cmake"):
+                    _add_build_module(component_name, str(helper_modules))
+                for helper_modules in path.glob("Qt6QmlPublic*Helpers.cmake"):
                     _add_build_module(component_name, str(helper_modules))
                 self.cpp_info.components[component_name].builddirs.append(str(path))
 
