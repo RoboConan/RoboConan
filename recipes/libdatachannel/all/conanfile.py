@@ -34,6 +34,9 @@ class libdatachannelConan(ConanFile):
 
     implements = ["auto_shared_fpic"]
 
+    def export_sources(self):
+        export_conandata_patches(self)
+
     def requirements(self):
         if self.options.with_ssl == "openssl":
             self.requires("openssl/[>=1.1 <4]")
@@ -49,7 +52,7 @@ class libdatachannelConan(ConanFile):
         if self.options.with_nice:
             self.requires("libnice/[>=0.1.21 <1]")
         else:
-            self.requires("libjuice/1.5.7", transitive_headers=True, transitive_libs=True)
+            self.requires("libjuice/[^1.5.7]", transitive_headers=True, transitive_libs=True)
 
     def validate(self):
         check_min_cppstd(self, 17)
@@ -59,6 +62,7 @@ class libdatachannelConan(ConanFile):
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
+        apply_conandata_patches(self)
         # Let Conan handle fPIC
         replace_in_file(self, "CMakeLists.txt", "set(CMAKE_POSITION_INDEPENDENT_CODE ON)", "")
 
@@ -134,4 +138,3 @@ class libdatachannelConan(ConanFile):
         self.cpp_info.defines.append("RTC_ENABLE_WEBSOCKET=" + ("1" if self.options.with_websocket else "0"))
         # This is True by default, and the recipe currently does not model it
         self.cpp_info.defines.append("RTC_ENABLE_MEDIA=1")
-
