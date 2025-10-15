@@ -86,6 +86,10 @@ class DataFrameConan(ConanFile):
     def layout(self):
         cmake_layout(self, src_folder="src")
 
+    def build_requirements(self):
+        if Version(self.version) >= "3.7.0":
+            self.tool_requires("cmake/[>=3.20]")
+
     def validate(self):
         check_min_cppstd(self, self._min_cppstd)
         minimum_version = self._minimum_compilers_version.get(str(self.settings.compiler), False)
