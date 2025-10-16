@@ -58,8 +58,12 @@ class OpenColorIOConan(ConanFile):
         self.requires("lcms/[^2.16]")
         # TODO: add GLUT (needed for ociodisplay tool)
 
+    def validate_build(self):
+        minimum_cppstd = 11 if Version(self.version) < "2.5" else 17
+        check_min_cppstd(self, minimum_cppstd)
+
     def validate(self):
-        check_min_cppstd(self, 11 if Version(self.version) < "2.5" else 17)
+        check_min_cppstd(self, 11)
 
     def build_requirements(self):
         self.tool_requires("cmake/[>=3.16 <5]")
