@@ -31,7 +31,7 @@ class LibassertConan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("cpptrace/[>=0.7.1 <1]", transitive_headers=True, transitive_libs=True)
+        self.requires("cpptrace/[>=0.7.1 <2]", transitive_headers=True, transitive_libs=True)
 
     def validate(self):
         check_min_cppstd(self, 17)
