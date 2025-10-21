@@ -7,6 +7,7 @@ from conan.tools.build import check_min_cppstd
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
 from conan.tools.gnu import PkgConfigDeps
+from conan.tools.microsoft import is_msvc
 from conan.tools.scm import Version
 
 required_conan_version = ">=2.1"
@@ -88,6 +89,7 @@ class PclConan(ConanFile):
         # Whether to append a ''/d/rd/s postfix to executables on Windows depending on the build type
         "add_build_type_postfix": [True, False],
         "use_sse": [True, False],
+        "use_avx": [True, False]
     }
     default_options = {
         "shared": False,
@@ -152,6 +154,7 @@ class PclConan(ConanFile):
         "precompile_only_core_point_types": True,
         "add_build_type_postfix": False,
         "use_sse": True,
+        "use_avx": True
     }
 
     python_requires = "conan-cuda/latest"
@@ -335,6 +338,7 @@ class PclConan(ConanFile):
             del self.options.fPIC
         if self.settings.arch not in ["x86", "x86_64"]:
             del self.options.use_sse
+            del self.options.use_avx
 
     def configure(self):
         if self.options.shared:
@@ -540,6 +544,15 @@ class PclConan(ConanFile):
                         "vtk_module_autoinit(",
                         "message(TRACE # vtk_module_autoinit(")
 
+        # Let users activate/deactivate the AVX/SSE optimizations without depending on extra flags
+        # added by Conan or downstream
+        replace_in_file(self, os.path.join(self.source_folder, "CMakeLists.txt"),
+                        'if(PCL_ENABLE_AVX AND "${CMAKE_CXX_FLAGS}" STREQUAL "${CMAKE_CXX_FLAGS_DEFAULT}")',
+                        'if(PCL_ENABLE_AVX)')
+        replace_in_file(self, os.path.join(self.source_folder, "CMakeLists.txt"),
+                        'if(PCL_ENABLE_SSE AND "${CMAKE_CXX_FLAGS}" STREQUAL "${CMAKE_CXX_FLAGS_DEFAULT}")',
+                        'if(PCL_ENABLE_SSE)')
+
     def generate(self):
         tc = CMakeToolchain(self)
         tc.cache_variables["PCL_SHARED_LIBS"] = self.options.shared
@@ -560,7 +573,10 @@ class PclConan(ConanFile):
         tc.cache_variables["BUILD_GPU"] = self._is_enabled("cuda")
         tc.cache_variables["CUDA_ARCH_BIN"] = ";"
         tc.cache_variables["WITH_SYSTEM_ZLIB"] = True
-        tc.cache_variables["PCL_ONLY_CORE_POINT_TYPES"] = self.options.precompile_only_core_point_types
+        if not is_msvc(self):
+            # PCL_ONLY_CORE_POINT_TYPES is always defined for MSVC and MinGW
+            # Avoid warning C4005: 'PCL_ONLY_CORE_POINT_TYPES': macro redefinition message
+            tc.cache_variables["PCL_ONLY_CORE_POINT_TYPES"] = self.options.precompile_only_core_point_types
         # The default False setting breaks OpenGL detection in CMake
         tc.cache_variables["PCL_ALLOW_BOTH_SHARED_AND_STATIC_DEPENDENCIES"] = True
         tc.cache_variables["OpenGL_GL_PREFERENCE"] = "GLVND"
@@ -584,6 +600,10 @@ class PclConan(ConanFile):
             tc.cache_variables[f"BUILD_{comp}"] = False
 
         tc.cache_variables["PCL_ENABLE_SSE"] = self.options.get_safe("use_sse", False)
+        tc.cache_variables["PCL_ENABLE_AVX"] = self.options.get_safe("use_avx", False)
+        # Let's skip the AVX2 check as it fails when cross-building from ARM to AMD
+        # because of the -march=native flag, but -mavx2 actually works
+        tc.cache_variables["HAVE_AVX2"] = self.options.get_safe("use_avx", False)
 
         # Do not overwrite CMakeToolchain variables with cache variables
         tc.cache_variables["CMAKE_POLICY_DEFAULT_CMP0077"] = "NEW"
@@ -672,6 +692,14 @@ class PclConan(ConanFile):
             self.cpp_info.components["gpu_people"].requires.extend(["npp::nppim", "npp::nppidei", "npp::npps"])
         if self.options.gpu_tracking:
             self.cpp_info.components["gpu_tracking"].requires.append("curand::curand")
+
+        if self.options.get_safe("use_sse"):
+            # Assuming SSE4.2 extensions
+            if not is_msvc(self):
+                self.cpp_info.cxxflags.append("-msse4.2")
+        if self.options.get_safe("use_avx"):
+            # Assuming AVX2
+            self.cpp_info.cxxflags.append("/arch:AVX2" if is_msvc(self) else "-mavx2")
 
         common = self.cpp_info.components["common"]
         if not self.options.shared:

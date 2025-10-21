@@ -28,6 +28,7 @@ patches:
     - patch_file: "patches/1.13.1/0008-remove-cufft-include.patch"
       patch_description: "Remove an unused include for cufft.h"
       patch_type: "portability"
+    - patch_file: "patches/1.14.1/0007-improve-sse-avx-detection-arm.patch"
   "1.13.1":
     - patch_file: "patches/1.13.1/0001-cmake_use_conan_targets.patch"
       patch_description: "Update PCL CMake files to work with Conan"
@@ -54,3 +55,4 @@ patches:
     - patch_file: "patches/1.13.1/0008-remove-cufft-include.patch"
       patch_description: "Remove an unused include for cufft.h"
       patch_type: "portability"
+    - patch_file: "patches/1.13.1/0007-improve-sse-avx-detection-arm.patch"
