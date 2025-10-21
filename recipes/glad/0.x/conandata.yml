@@ -1,0 +1,7 @@
+sources:
+  "0.1.36":
+    url: "https://github.com/Dav1dde/glad/archive/v0.1.36.tar.gz"
+    sha256: "8470ed1b0e9fbe88e10c34770505c8a1dc8ccb78cadcf673331aaf5224f963d2"
+patches:
+  "0.1.36":
+    - patch_file: "patches/0003-CMake-handle-all-specs.patch"
