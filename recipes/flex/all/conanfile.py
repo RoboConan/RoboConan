@@ -43,17 +43,18 @@ class FlexConan(ConanFile):
         # installed, Conan will need to know that Flex requires it.
         self.requires("m4/[^1.4.20]")
 
-    def validate(self):
-        if self.settings.os == "Windows":
-            raise ConanInvalidConfiguration("Flex package is not compatible with Windows. "
-                                            "Consider using winflexbison instead.")
-
     def build_requirements(self):
-        self.tool_requires("m4/[^1.4.20]")
+        self.tool_requires("m4/<host_version>")
+        self.tool_requires("gnu-config/[*]")
         if self.options.i18n:
             self.tool_requires("gettext/[>=0.21 <1]", options={"tools": True})
         if cross_building(self):
             self.tool_requires(f"{self.name}/{self.version}")
+
+    def validate(self):
+        if self.settings.os == "Windows":
+            raise ConanInvalidConfiguration("Flex package is not compatible with Windows. "
+                                            "Consider using winflexbison instead.")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
@@ -76,7 +77,18 @@ class FlexConan(ConanFile):
         env.define_path("CC_FOR_BUILD", env_vars.get("CC_FOR_BUILD", env_vars.get("CC", "cc")))
         tc.generate()
 
+    def _patch_sources_autotools(self):
+        for gnu_config in [
+            self.conf.get("user.gnu-config:config_guess", check_type=str),
+            self.conf.get("user.gnu-config:config_sub", check_type=str),
+        ]:
+            if gnu_config:
+                copy(self, os.path.basename(gnu_config),
+                     src=os.path.dirname(gnu_config),
+                     dst=os.path.join(self.source_folder, "config"))
+
     def build(self):
+        self._patch_sources_autotools()
         autotools = Autotools(self)
         autotools.configure()
         autotools.make()
