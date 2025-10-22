@@ -4,6 +4,10 @@ sources:
   "6.6.3":
 patches:
   "6.8.3":
+    - "patch_file": "patches/remove-linkage-to-agl-framework.patch"
+      "base_path": "qtbase"
+    - "patch_file": "patches/macos-link-platform-plugin-to-foundation.patch"
+      "base_path": "qtbase"
     - "base_path": "qtwebengine"
       "patch_description": "Workaround for too long .rps file name"
       "patch_file": "patches/c72097e_6.8.0.diff"
@@ -13,6 +17,10 @@ patches:
       "patch_file": "patches/fix-find-xcb.patch"
       "patch_type": "conan"
   "6.7.3":
+    - "patch_file": "patches/remove-linkage-to-agl-framework.patch"
+      "base_path": "qtbase"
+    - "patch_file": "patches/macos-link-platform-plugin-to-foundation.patch"
+      "base_path": "qtbase"
     - "base_path": "qtwebengine"
       "patch_description": "Workaround for too long .rps file name"
       "patch_file": "patches/c72097e_6.6.0.diff"
@@ -22,6 +30,10 @@ patches:
       "patch_file": "patches/fix-find-xcb.patch"
       "patch_type": "conan"
   "6.6.3":
+    - "patch_file": "patches/remove-linkage-to-agl-framework.patch"
+      "base_path": "qtbase"
+    - "patch_file": "patches/macos-link-platform-plugin-to-foundation.patch"
+      "base_path": "qtbase"
     - "base_path": "qtwebengine"
       "patch_description": "Workaround for too long .rps file name"
       "patch_file": "patches/c72097e_6.6.0.diff"

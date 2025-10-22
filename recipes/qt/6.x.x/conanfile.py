@@ -1259,9 +1259,6 @@ class QtConan(ConanFile):
                 elif is_apple_os(self):
                     # https://github.com/qt/qtbase/blob/v6.8.0/src/gui/CMakeLists.txt#L423-L429
                     qtGui.frameworks = ["CoreFoundation", "CoreGraphics", "CoreText", "Foundation", "ImageIO"]
-                    if self.options.get_safe("opengl", "no") != "no":
-                        # https://github.com/qt/qtbase/commit/2ed63e587eefb246dba9e69aa01fdb2abb2def13
-                        qtGui.frameworks.append("AGL")
                     if self.settings.os == "Macos":
                         # https://github.com/qt/qtbase/blob/v6.8.0/src/gui/CMakeLists.txt#L394-L398
                         qtGui.frameworks += ["AppKit", "Carbon"]
