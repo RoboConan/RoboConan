@@ -2,7 +2,7 @@ import os
 
 from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
-from conan.tools.apple import fix_apple_shared_install_name
+from conan.tools.apple import fix_apple_shared_install_name, is_apple_os
 from conan.tools.build import cross_building
 from conan.tools.files import *
 from conan.tools.gnu import Autotools, GnuToolchain
@@ -71,6 +71,8 @@ class FlexConan(ConanFile):
         tc.configure_args["ac_cv_func_realloc_0_nonnull"] = "yes"
         # https://github.com/easybuilders/easybuild-easyconfigs/pull/5792
         tc.configure_args["ac_cv_func_reallocarray"] = "no"
+        if is_apple_os(self):
+            tc.configure_args["-headerpad_max_install_names"] = None
         env = tc.extra_env
         env_vars = env.vars(self)
         # flex looks for build-context CC even if not cross-compiling
