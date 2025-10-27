@@ -560,7 +560,7 @@ class OpenCVConan(ConanFile):
             if self.options.parallel == "openmp":
                 return ["openmp::openmp"]
             if self.options.parallel == "tbb":
-                return ["onetbb::onetbb"]
+                return ["onetbb::libtbb"]
             return []
 
         def cudart():
@@ -1318,7 +1318,7 @@ class OpenCVConan(ConanFile):
         if self.options.get_safe("with_openexr"):
             self.requires("openexr/[^3.3.3]")
         if self.options.get_safe("with_tiff"):
-            self.requires("libtiff/[>=4.5 <5]")
+            self.requires("libtiff/[^4.5]")
         if self.options.get_safe("with_webp"):
             self.requires("libwebp/[^1.3.2]")
         if self.options.get_safe("with_gdal"):
