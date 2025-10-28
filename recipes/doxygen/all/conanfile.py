@@ -70,12 +70,15 @@ class DoxygenConan(ConanFile):
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
-        apply_conandata_patches(self)
 
         #Do not build manpages
         cmakelists = os.path.join(self.source_folder, "CMakeLists.txt")
         replace_in_file(self, cmakelists, "add_subdirectory(doc)", "")
         replace_in_file(self, cmakelists, "set(CMAKE_CXX_STANDARD", "##set(CMAKE_CXX_STANDARD")
+
+        if Version(self.version) == "1.15.0":
+            # https://github.com/doxygen/doxygen/issues/11833
+            replace_in_file(self, cmakelists, "MACOS_VERSION_MIN 10.14", "MACOS_VERSION_MIN 10.15")
 
     def generate(self):
         tc = CMakeToolchain(self)
