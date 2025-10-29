@@ -20,7 +20,9 @@ class OpenVDBConan(ConanFile):
         "structure and a large suite of tools for the efficient storage and "
         "manipulation of sparse volumetric data discretized on three-dimensional grids."
     )
-    license = "MPL-2.0"
+    # The license is defined in the config_options as it depends on the package version.
+    # (openvdb < 12 is MPL-2.0 licensed, openvdb >= 12 is Apache-2 licensed.)
+    license = "Apache-2.0"
     homepage = "https://github.com/AcademySoftwareFoundation/openvdb"
     topics = ("voxel", "voxelizer", "volume-rendering", "fx", "vdb")
 
@@ -78,44 +80,32 @@ class OpenVDBConan(ConanFile):
 
     @property
     def _min_cppstd(self):
-        return 17 if Version(self.version) >= "10.0.0" else 14
+        return 17
 
     @property
     def _compilers_min_version(self):
-        if Version(self.version) >= "10.0.0":
-            # https://github.com/AcademySoftwareFoundation/openvdb/blob/v10.0.1/doc/dependencies.txt#L56-L84
-            return {
-                "msvc": "192.8",
-                "gcc": "9.3.1",
-                "clang": "5.0",
-                "apple-clang": "12.0",
-                "intel-cc": "19",
-            }
-        else:
-            # https://github.com/AcademySoftwareFoundation/openvdb/blob/v9.1.0/doc/dependencies.txt#L56-L84
-            return {
-                "msvc": "191.0",
-                "gcc": "6.3.1",
-                "clang": "3.8",
-                "apple-clang": "10.0",
-                "intel-cc": "17",
-            }
+        # https://github.com/AcademySoftwareFoundation/openvdb/blob/v10.0.1/doc/dependencies.txt#L56-L84
+        return {
+            "msvc": "192.8",
+            "gcc": "9.3.1",
+            "clang": "5.0",
+            "apple-clang": "12.0",
+            "intel-cc": "19",
+        }
 
     def config_options(self):
+        # Setting license conditionally as OpenVDB 12.0.0 switched from MPL 2 to Apache 2.
+        self.license = "Apache-2.0" if Version(self.version) >= "12.0" else "MPL-2.0"
+
         if self.settings.os == "Windows":
             del self.options.fPIC
         if is_msvc(self):
             # Supported by GCC and Clang only
             del self.options.use_colored_output
-        if Version(self.version) < "10.0.0":
-            del self.options.use_explicit_instantiation
-            del self.options.use_delayed_loading
 
     def configure(self):
         if self.options.shared:
             self.options.rm_safe("fPIC")
-        if Version(self.version) < "10":
-            self.options["boost"].with_iostreams = True
         elif self.options.use_delayed_loading:
             self.options["boost"].with_iostreams = True
 
@@ -152,8 +142,7 @@ class OpenVDBConan(ConanFile):
         self._check_compiler_version()
 
     def build_requirements(self):
-        if Version(self.version) >= "10.0.0":
-            self.tool_requires("cmake/[>=3.18 <5]")
+        self.tool_requires("cmake/[>=3.20]")
         if self.options.build_ax:
             if self.settings_build.os == "Windows":
                 self.tool_requires("winflexbison/[^2.5.25]")
@@ -256,9 +245,7 @@ class OpenVDBConan(ConanFile):
             self.cpp_info.system_libs = ["pthread"]
 
         self.cpp_info.requires = ["boost::headers", "onetbb::onetbb"]
-        if Version(self.version) < "10":
-            self.cpp_info.requires.extend(["boost::iostreams"])
-        elif self.options.use_delayed_loading:
+        if self.options.use_delayed_loading:
             self.cpp_info.requires.append("boost::iostreams")
         if self.settings.os == "Windows":
             self.cpp_info.requires.append("boost::disable_autolinking")
