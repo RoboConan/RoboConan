@@ -457,6 +457,8 @@ class BoostConan(ConanFile):
             libraries.append("thread")
         if Version(self.version) >= "1.85.0":
             libraries.append("system")
+        if Version(self.version) >= "1.89.0":
+            libraries.append("atomic")
         return sorted(set(libraries) & self._available_libraries)
 
     @property
@@ -602,6 +604,8 @@ class BoostConan(ConanFile):
             del self.info.options.pch
             if self.info.options.with_python:
                 self.info.python_version = self._python_version
+            if Version(self.version) >= "1.89.0":
+                del self.info.options.system_use_utf8
 
     def build_requirements(self):
         if not self.options.header_only:
