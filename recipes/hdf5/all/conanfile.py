@@ -109,21 +109,11 @@ class Hdf5Conan(ConanFile):
         apply_conandata_patches(self)
         replace_in_file(self, "CMakeLists.txt", "set (CMAKE_POSITION_INDEPENDENT_CODE ON)", "")
 
-    def _inject_stdlib_flag(self, tc):
-        if self.settings.os in ["Linux", "FreeBSD"] and self.settings.compiler == "clang":
-            cpp_stdlib = f" -stdlib={self.settings.compiler.libcxx}".rstrip("1")  # strip 11 from stdlibc++11
-            tc.variables["CMAKE_CXX_FLAGS"] = tc.variables.get("CMAKE_CXX_FLAGS", "") + cpp_stdlib
-        return tc
-
     def generate(self):
         cmakedeps = CMakeDeps(self)
         cmakedeps.generate()
 
         tc = CMakeToolchain(self)
-        if not valid_min_cppstd(self, self._min_cppstd):
-            tc.variables["CMAKE_CXX_STANDARD"] = self._min_cppstd
-        if self.settings.get_safe("compiler.libcxx"):
-            tc = self._inject_stdlib_flag(tc)
         if self.options.szip_support == "with_libaec":
             tc.variables["USE_LIBAEC"] = True
         tc.variables["HDF5_EXTERNALLY_CONFIGURED"] = True
