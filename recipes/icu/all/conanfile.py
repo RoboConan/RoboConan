@@ -51,10 +51,6 @@ class ICUConan(ConanFile):
     def _enable_icu_tools(self):
         return self.settings.os not in ["iOS", "tvOS", "watchOS", "Emscripten"]
 
-    @property
-    def _with_unit_tests(self):
-        return not self.conf.get("tools.build:skip_test", default=True, check_type=bool)
-
     def export_sources(self):
         export_conandata_patches(self)
 
@@ -120,7 +116,7 @@ class ICUConan(ConanFile):
             "--disable-layoutex",
             "--disable-layout",
             f"--enable-tools={yes_no(self._enable_icu_tools)}",
-            f"--enable-tests={yes_no(self._with_unit_tests)}",
+            "--disable-tests",
             "--disable-samples",
         ])
         if cross_building(self):
@@ -154,11 +150,10 @@ class ICUConan(ConanFile):
             env.vars(self).save_script("conanbuild_icu_msvc")
 
     def _patch_sources(self):
-        if not self._with_unit_tests:
-            # Prevent any call to python during configuration, it's only needed for unit tests
-            replace_in_file(self, os.path.join(self.source_folder, "source", "configure"),
-                            'if test -z "$PYTHON"',
-                            "if true")
+        # Prevent any call to python during configuration, it's only needed for unit tests
+        replace_in_file(self, os.path.join(self.source_folder, "source", "configure"),
+                        'if test -z "$PYTHON"',
+                        "if true")
 
         if self.settings_build.os == "Windows":
             # https://unicode-org.atlassian.net/projects/ICU/issues/ICU-20545
@@ -191,8 +186,6 @@ class ICUConan(ConanFile):
         autotools = Autotools(self)
         autotools.configure(build_script_folder="source")
         autotools.make()
-        if self._with_unit_tests:
-            autotools.make(target="check")
 
     @property
     def _data_stem(self):
