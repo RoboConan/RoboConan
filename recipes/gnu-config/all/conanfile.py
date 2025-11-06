@@ -4,6 +4,7 @@ from conan import ConanFile
 from conan.errors import ConanException
 from conan.tools.files import *
 from conan.tools.layout import basic_layout
+from conan.tools.scm import Git
 
 required_conan_version = ">=2.1"
 
@@ -27,7 +28,8 @@ class GnuConfigConan(ConanFile):
         self.info.clear()
 
     def source(self):
-        get(self, **self.conan_data["sources"][self.version], strip_root=True)
+        git = Git(self)
+        git.fetch_commit(**self.conan_data["sources"][self.version])
         apply_conandata_patches(self)
 
     def _extract_license(self):
