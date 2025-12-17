@@ -43,6 +43,8 @@ patches:
       patch_source: "https://github.com/opencv/opencv/pull/27536"
     - patch_file: "patches/4.12.0-0003-ffmpeg-8-support.patch"
       patch_source: "https://github.com/opencv/opencv/pull/27691"
+    - patch_file: "patches/4.12.0-0003-fix-cuda-12-9.patch"
+      patch_source: "https://github.com/opencv/opencv/commit/e2d87defd10d415c29120c3b1c07ac7364ba12f2"
   "4.11.0":
     - patch_file: "patches/4.1.2-0006-hdf.patch"
     - patch_file: "patches/4.1.2-0007-android-install-layout.patch"
