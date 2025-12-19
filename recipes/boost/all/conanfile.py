@@ -398,6 +398,11 @@ class BoostConan(ConanFile):
             if self.settings.os == "iOS":
                 # the process library doesn't build (and doesn't even make sense) on iOS
                 self.options.with_process = False
+        if Version(self.version) == "1.90.0":
+            # FIXME: boost.coroutine doesn't support Windows ARM64 due to missing context assembly
+            # See https://github.com/boostorg/context/issues/296
+            if self._is_windows_platform and "arm" in str(self.settings.arch):
+                self.options.without_coroutine = True
 
         # Enable all internal transitive dependencies of modules
         self._enable_transitive_dependencies()
