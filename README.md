@@ -1,7 +1,7 @@
-Conan Kiln
-==========
+RoboConan
+=========
 
-Kiln is a recipes-only Conan repository, forked from ConanCenter to
+RoboConan is a recipes-only Conan repository, forked from ConanCenter to
 deliver faster iteration, broader coverage (CV/ML/robotics, especially on
 edge devices), and greater control over your dependency graph.
 
