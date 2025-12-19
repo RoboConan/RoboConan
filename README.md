@@ -57,8 +57,8 @@ In total, 440 additional recipes and 8,000 commits on top of ConanCenter as of 2
 You can add this repo as a Conan remote with the following commands:
 
 ```
-git clone https://github.com/conan-kiln/kiln.git
-conan remote add kiln "$PWD/kiln"
+git clone https://github.com/RoboConan/RoboConan.git
+conan remote add roboconan "$PWD/RoboConan"
 ```
 
 Requires Conan v2.2 or newer.
