@@ -189,7 +189,13 @@ class ICUConan(ConanFile):
 
     @property
     def _data_stem(self):
-        return f"icudt{Version(self.version).major}l"
+        vtag = Version(self.version).major
+        arch = self.settings.get_safe("arch")
+        suffix = "b" if arch in {"ppc32", "ppc64",
+                                 "sparc", "sparcv9",
+                                 "s390", "s390x",
+                                 "mips", "mips64"} else "l"
+        return f"icudt{vtag}{suffix}"
 
     @property
     def _data_filename(self):
