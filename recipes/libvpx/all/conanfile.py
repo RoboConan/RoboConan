@@ -67,7 +67,8 @@ class LibVPXConan(ConanFile):
             raise ConanInvalidConfiguration("iOS platform with x86/x86_64 architectures only supports 'iphonesimulator' SDK option")
 
     def build_requirements(self):
-        self.tool_requires("nasm/[*]")
+        if self.settings.arch in ["x86", "x86_64"]:
+            self.tool_requires("nasm/[*]")
         if self.settings_build.os == "Windows":
             self.win_bash = True
             if not self.conf.get("tools.microsoft.bash:path", check_type=str):
@@ -90,7 +91,7 @@ class LibVPXConan(ConanFile):
                 "armv8": "arm64",
                 "mips": "mips32",
                 "mips64": "mips64",
-                "sparc": "sparc"}.get(str(self.settings.arch))
+                "sparc": "sparc"}.get(str(self.settings.arch), "generic-gnu")
         compiler = str(self.settings.compiler)
         os_name = str(self.settings.os)
         if is_msvc(self):
