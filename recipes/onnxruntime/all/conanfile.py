@@ -63,7 +63,7 @@ class OnnxRuntimeConan(ConanFile):
     def requirements(self):
         # For the official external dependency versions see
         # https://github.com/microsoft/onnxruntime/blob/main/cmake/deps.txt
-        absl_max = "<=20240722" if Version(self.version) <= "1.22.2" else ""
+        absl_max = "<=20240722" if Version(self.version) <= "1.22.2" else "<=20260107.1"
         self.requires(f"abseil/[>=20220623.1 {absl_max}]")
         required_onnx_version = self.conan_data["onnx_version_map"][self.version]
         self.requires(f"onnx/[~{required_onnx_version}]")
