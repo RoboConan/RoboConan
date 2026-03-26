@@ -98,8 +98,6 @@ class LibVPXConan(ConanFile):
             vc_version = str(self.settings.compiler.version)
             vc_version = {"170": "11", "180": "12", "190": "14", "191": "15",
                           "192": "16", "193": "17", "194": "17", "195": "18"}[vc_version]
-            if vc_version == "18" and self.version == "1.16.0":
-                vc_version = "17"
             compiler = f"vs{vc_version}"
         elif self.settings.compiler in ["gcc", "clang", "apple-clang"]:
             compiler = "gcc"
