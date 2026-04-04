@@ -45,9 +45,16 @@ class CoinClpConan(ConanFile):
     }
     implements = ["auto_shared_fpic"]
 
+    def configure(self):
+        # Shared builds on Windows are not supported yet
+        if self.settings.os == "Windows":
+            self.options.shared.value = False
+            self.package_type = "static-library"
+        if self.options.shared:
+            self.options.rm_safe("fPIC")
+
     def layout(self):
         basic_layout(self, src_folder="src")
-
 
     def requirements(self):
         self.requires("lapack/latest")
@@ -66,8 +73,6 @@ class CoinClpConan(ConanFile):
         return 32 if self.dependencies["blas"].options.interface == "lp64" else 64
 
     def validate(self):
-        if self.settings.os == "Windows" and self.options.shared:
-            raise ConanInvalidConfiguration("Shared builds on Windows are not supported yet")
         if self.options.with_asl and self.options.precision != "double":
             raise ConanInvalidConfiguration("ASL solver requires double precision")
         if self.options.with_spral and (self.options.precision != "double" or self._int_size != 32):
