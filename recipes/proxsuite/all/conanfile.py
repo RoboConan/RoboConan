@@ -93,4 +93,4 @@ class ProxSuiteConan(ConanFile):
         if self.settings.os == "Windows":
             self.cpp_info.defines.append("NOMINMAX")
             if self.settings.compiler == "msvc":
-                self.cpp_info.cppflags.extend(["/permissive-", "/bigobj"])
+                self.cpp_info.cxxflags.extend(["/permissive-", "/bigobj"])
