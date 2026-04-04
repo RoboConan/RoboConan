@@ -1,14 +1,10 @@
 sources:
   "1.90.0":
-    url:
-      - "https://archives.boost.io/release/1.90.0/source/boost_1_90_0.tar.bz2"
-      - "https://sourceforge.net/projects/boost/files/boost/1.90.0/boost_1_90_0.tar.bz2"
-    sha256: "49551aff3b22cbc5c5a9ed3dbc92f0e23ea50a0f7325b0d198b705e8ee3fc305"
+    url: "https://github.com/boostorg/boost/releases/download/boost-1.90.0/boost-1.90.0-b2-nodocs.tar.gz"
+    sha256: "e848446c6fec62d8a96b44ed7352238b3de040b8b9facd4d6963b32f541e00f5"
   "1.89.0":
-    url:
-      - "https://archives.boost.io/release/1.89.0/source/boost_1_89_0.tar.bz2"
-      - "https://sourceforge.net/projects/boost/files/boost/1.89.0/boost_1_89_0.tar.bz2"
-    sha256: "85a33fa22621b4f314f8e85e1a5e2a9363d22e4f4992925d4bb3bc631b5a0c7a"
+    url: "https://github.com/boostorg/boost/releases/download/boost-1.89.0/boost-1.89.0-b2-nodocs.tar.gz"
+    sha256: "aa25e7b9c227c21abb8a681efd4fe6e54823815ffc12394c9339de998eb503fb"
   "1.88.0":
     url: "https://github.com/boostorg/boost/releases/download/boost-1.88.0/boost-1.88.0-b2-nodocs.tar.gz"
     sha256: "85138e4a185a7e7535e82b011179c5b5fb72185bea9f59fe8e2d76939b2f5c51"
