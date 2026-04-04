@@ -1,7 +1,7 @@
 sources:
-  "4.3-a0":
-    url: "https://github.com/borglab/gtsam/archive/refs/tags/4.3a0.tar.gz"
-    sha256: "5f821d3d306dc36730e2b71a78b3dd849e3e3a4cae725121cd6a9d151b894d21"
+  "4.3-a1":
+    url: "https://github.com/borglab/gtsam/archive/refs/tags/4.3a1.tar.gz"
+    sha256: "4233192fd9154aa2c0ccd05aebd833d8bf67307888774895e7b3b3d98b31607a"
   "4.2":
     url: "https://github.com/borglab/gtsam/archive/refs/tags/4.2.tar.gz"
     sha256: "9ff8846d0a83a245c284cb5760ec2d74535ef9b5885183ccfefd7ff122eba60e"
@@ -9,10 +9,7 @@ sources:
     url: "https://github.com/borglab/gtsam/archive/4.1.1.tar.gz"
     sha256: "c7b5e6cdad52b141c272778f47baf628975457be3e26ed96a7bc2ae685a00af0"
 patches:
-  "4.3-a0":
-    - patch_file: "patches/4.3.0-cmake-boost.patch"
-      patch_description: "Use boost targets"
-      patch_type: "conan"
+  "4.3-a1":
     - patch_file: "patches/4.3.0-macos-rpath.patch"
       patch_description: "Relocatable shared libs on Apple OS"
       patch_type: "conan"

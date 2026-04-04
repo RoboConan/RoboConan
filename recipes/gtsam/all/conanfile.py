@@ -247,8 +247,8 @@ class GtsamConan(ConanFile):
         # Honor vc runtime
         if is_msvc(self):
             gtsam_build_types_cmake = os.path.join(self.source_folder, "cmake", "GtsamBuildTypes.cmake")
-            replace_in_file(self, gtsam_build_types_cmake, "/MD ", f"/{msvc_runtime_flag(self)} ")
-            replace_in_file(self, gtsam_build_types_cmake, "/MDd ", f"/{msvc_runtime_flag(self)} ")
+            replace_in_file(self, gtsam_build_types_cmake, "/MDd", "/MD")
+            replace_in_file(self, gtsam_build_types_cmake, "/MD", f"/{msvc_runtime_flag(self)}")
 
         # Fix tcmalloc / gperftools handling
         if self.options.default_allocator == "tcmalloc":
