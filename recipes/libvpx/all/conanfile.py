@@ -16,10 +16,10 @@ required_conan_version = ">=2.1"
 
 class LibVPXConan(ConanFile):
     name = "libvpx"
-    homepage = "https://www.webmproject.org/code"
     description = "WebM VP8/VP9 Codec SDK"
-    topics = "vpx", "codec", "web", "VP8", "VP9"
     license = "BSD-3-Clause"
+    homepage = "https://www.webmproject.org/code"
+    topics = "vpx", "codec", "web", "VP8", "VP9"
 
     package_type = "library"
     settings = "os", "arch", "compiler", "build_type"
