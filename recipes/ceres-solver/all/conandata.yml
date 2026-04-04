@@ -1,7 +1,7 @@
 sources:
-  "2.3.0-git.20250817":
-    url: "https://github.com/ceres-solver/ceres-solver/archive/93e66f0d9480ea1d6022793f073d682717d85897.tar.gz"
-    sha256: "f702b58b8adfc940485ad99c8324f3420f0623b6d4fbc467f94f6bf84447c209"
+  "2.3.0-git.20260401":
+    url: "https://github.com/ceres-solver/ceres-solver/archive/4a60fb8b52e1664d5417aa6dbf6d3a9c38ce3d63.tar.gz"
+    sha256: "fc19c59e98db2034d41876bfdaa309106f31735740f7f353dfa943a137d1ea27"
   "2.2.0":
     url: "http://ceres-solver.org/ceres-solver-2.2.0.tar.gz"
     sha256: "48b2302a7986ece172898477c3bcd6deb8fb5cf19b3327bc49969aad4cede82d"
@@ -22,6 +22,10 @@ patches:
     - patch_file: "patches/2.2.0-0002-fix-mingw-build.patch"
       patch_description: "Fix MinGW build"
       patch_type: "portability"
+    - patch_file: "patches/2.2.0-0003-eigen-v5.patch"
+      patch_description: "Enable compatibility with Eigen 5.0.0 and above"
+      patch_type: "backport"
+      patch_source: "https://github.com/ceres-solver/ceres-solver/commit/f9b7b6651b108136a16df44d91fb31735645f5a7"
   "2.1.0":
     - patch_file: "patches/2.1.0-0001-find-libraries-conan.patch"
       patch_description: "Robust dependencies handling"
@@ -33,6 +37,10 @@ patches:
       patch_description: "Enable compatibility with SuiteSparse 7.2.0"
       patch_type: "backport"
       patch_source: "https://github.com/ceres-solver/ceres-solver/commit/9cca671273c2f205ca7350422f48b7b119c5dd78"
+    - patch_file: "patches/2.1.0-0003-eigen-v5.patch"
+      patch_description: "Enable compatibility with Eigen 5.0.0 and above"
+      patch_type: "backport"
+      patch_source: "https://github.com/ceres-solver/ceres-solver/commit/f9b7b6651b108136a16df44d91fb31735645f5a7"
   "2.0.0":
     - patch_file: "patches/2.0.0-0002-fix-mingw-build.patch"
       patch_description: "Fix MinGW build"
@@ -44,6 +52,10 @@ patches:
       patch_description: "Enable compatibility with SuiteSparse 7.2.0"
       patch_type: "backport"
       patch_source: "https://github.com/ceres-solver/ceres-solver/commit/9cca671273c2f205ca7350422f48b7b119c5dd78"
+    - patch_file: "patches/2.0.0-0003-eigen-v5.patch"
+      patch_description: "Enable compatibility with Eigen 5.0.0 and above"
+      patch_type: "backport"
+      patch_source: "https://github.com/ceres-solver/ceres-solver/commit/f9b7b6651b108136a16df44d91fb31735645f5a7"
   "1.14.0":
     - patch_file: "patches/1.14.0-0001-find-libraries-conan.patch"
       patch_description: "Robust dependencies handling"

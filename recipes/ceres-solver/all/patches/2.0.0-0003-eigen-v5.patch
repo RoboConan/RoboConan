@@ -1,0 +1,41 @@
+From f9b7b6651b108136a16df44d91fb31735645f5a7 Mon Sep 17 00:00:00 2001 
+From: Sergiu Deitsch <sergiu.deitsch@gmail.com> 
+Date: Sun, 28 Sep 2025 08:35:06 +0200 
+Subject: [PATCH] Support Eigen3 5.0.0 
+
+Change ID: I5cf476a6d8c090861f4ea4a254a35d39e36a6d68 
+
+diff --git a/internal/ceres/covariance_impl.cc b/internal/ceres/covariance_impl.cc
+index 56221945a..930711fd0 100644
+--- a/internal/ceres/covariance_impl.cc
++++ b/internal/ceres/covariance_impl.cc
+@@ -740,8 +740,13 @@ bool CovarianceImpl::ComputeCovarianceValuesUsingDenseSVD() {
+   }
+   event_logger.AddEvent("ConvertToDenseMatrix");
+ 
++#if EIGEN_VERSION_AT_LEAST(5, 0, 0)
++  Eigen::BDCSVD<Matrix, Eigen::ComputeThinU | Eigen::ComputeThinV> svd(
++      dense_jacobian);
++#else   // !EIGEN_VERSION_AT_LEAST(5, 0, 0)
+   Eigen::BDCSVD<Matrix> svd(dense_jacobian,
+                             Eigen::ComputeThinU | Eigen::ComputeThinV);
++#endif  // EIGEN_VERSION_AT_LEAST(5, 0, 0)
+ 
+   event_logger.AddEvent("SingularValueDecomposition");
+ 
+diff --git a/internal/ceres/invert_psd_matrix.h b/internal/ceres/invert_psd_matrix.h
+index 21ba2dc8a..dd3a0a34b 100644
+--- a/internal/ceres/invert_psd_matrix.h
++++ b/internal/ceres/invert_psd_matrix.h
+@@ -69,7 +69,11 @@ typename EigenTypes<kSize, kSize>::Matrix InvertPSDMatrix(
+ 
+   // For a thin SVD the number of columns of the matrix need to be dynamic.
+   using SVDMType = typename EigenTypes<kSize, Eigen::Dynamic>::Matrix;
++#if EIGEN_VERSION_AT_LEAST(5, 0, 0)
++  Eigen::JacobiSVD<SVDMType, Eigen::ComputeThinU | Eigen::ComputeThinV> svd(m);
++#else   // !EIGEN_VERSION_AT_LEAST(5, 0, 0)
+   Eigen::JacobiSVD<SVDMType> svd(m, Eigen::ComputeThinU | Eigen::ComputeThinV);
++#endif  // EIGEN_VERSION_AT_LEAST(5, 0, 0)
+   return svd.solve(MType::Identity(size, size));
+ }
+ 

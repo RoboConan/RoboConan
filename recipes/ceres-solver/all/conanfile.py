@@ -178,6 +178,10 @@ class CeresSolverConan(ConanFile):
         if Version(self.version) < "2.0":
             replace_in_file(self, "CMakeLists.txt", "cmake_minimum_required(VERSION 2.8.0)", "cmake_minimum_required(VERSION 3.5)")
             replace_in_file(self, "CMakeLists.txt", "cmake_policy(VERSION 2.8)", "")
+        elif Version(self.version) <= "2.2.0":
+            replace_in_file(self, "CMakeLists.txt", "Eigen3 3.3 ", "Eigen3 ")
+        else:
+            replace_in_file(self, "CMakeLists.txt", "Eigen3 3.3.4...5 ", "Eigen3 ")
         copy(self, "FindSuiteSparse.cmake", self.export_sources_folder, os.path.join(self.source_folder, "cmake"))
         if Version(self.version) >= "2.2.0":
             # Don't force CMAKE_CUDA_ARCHITECTURES, let CudaToolchain handle it
