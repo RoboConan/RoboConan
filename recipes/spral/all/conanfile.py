@@ -49,6 +49,8 @@ class SpralConan(ConanFile):
     def configure(self):
         if self.options.with_cuda:
             self.options.with_openmp.value = True
+        else:
+            del self.settings.cuda
 
     def layout(self):
         basic_layout(self, src_folder="src")
