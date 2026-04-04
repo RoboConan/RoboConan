@@ -1433,6 +1433,11 @@ class OpenCVConan(ConanFile):
         get(self, **self.conan_data["sources"][self.version][1], destination=self._contrib_folder, strip_root=True)
         apply_conandata_patches(self)
 
+        # Don't force only Release or Debug as build_type
+        replace_in_file(self, "CMakeLists.txt",
+                        "ocv_update(CMAKE_CONFIGURATION_TYPES",
+                        "# ocv_update(CMAKE_CONFIGURATION_TYPES")
+
         ## Remove 3rd party libs
         for directory in [
             "include", "libjasper", "libjpeg", "libjpeg-turbo", "libpng", "libspng", "libtiff",
