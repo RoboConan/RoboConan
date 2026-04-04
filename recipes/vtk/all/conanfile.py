@@ -251,7 +251,6 @@ class VtkConan(ConanFile):
             self.options["boost"].with_thread = True
             self.options["boost"].with_filesystem = True
             self.options["boost"].with_iostreams = True
-            self.options["boost"].with_system = True
 
     def layout(self):
         cmake_layout(self, src_folder="src")
@@ -1112,7 +1111,7 @@ class VtkConan(ConanFile):
             "IOCatalystConduit": ["catalyst::catalyst"],
             "IOFFMPEG": ["ffmpeg::avformat", "ffmpeg::avcodec", "ffmpeg::avutil", "ffmpeg::swscale", "ffmpeg::swresample"],
             "IOGDAL": ["gdal::gdal"],
-            "IOLAS": ["liblas::liblas", "boost::program_options", "boost::thread", "boost::system", "boost::iostreams", "boost::filesystem"],
+            "IOLAS": ["liblas::liblas", "boost::program_options", "boost::thread", "boost::iostreams", "boost::filesystem"],
             "IOMySQL": ["mariadb-connector-c::mariadb-connector-c"] if self.options.with_mysql == "mariadb-connector-c" else ["libmysqlclient::libmysqlclient"],
             "IOOCCT": ["opencascade::occt_tkstep", "opencascade::occt_tkiges", "opencascade::occt_tkmesh", "opencascade::occt_tkxdestep", "opencascade::occt_tkxdeiges"],
             "IOODBC": ["odbc::odbc"],

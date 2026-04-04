@@ -23,7 +23,7 @@ class SocketcanCanaryConan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("boost/[^1.71.0]", options={"with_system": True})
+        self.requires("boost/[^1.71.0]")
 
     def package_id(self):
         self.info.clear()
@@ -54,7 +54,7 @@ class SocketcanCanaryConan(ConanFile):
         rmdir(self, os.path.join(self.package_folder, "lib"))
 
     def package_info(self):
-        self.cpp_info.requires = ["boost::headers", "boost::system"]
+        self.cpp_info.requires = ["boost::headers"]
         self.cpp_info.set_property("cmake_file_name", "canary")
         self.cpp_info.set_property("cmake_target_name", "canary::canary")
         self.cpp_info.bindirs = []

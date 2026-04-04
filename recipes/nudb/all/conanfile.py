@@ -23,10 +23,7 @@ class NudbConan(ConanFile):
         basic_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("boost/[^1.71.0]", options={
-            "with_system": True,
-            "with_thread": True,
-        })
+        self.requires("boost/[^1.71.0]", options={"with_thread": True})
 
     def package_id(self):
         self.info.clear()
@@ -54,4 +51,4 @@ class NudbConan(ConanFile):
         self.cpp_info.set_property("cmake_find_mode", "both")
 
         self.cpp_info.components["core"].set_property("cmake_target_name", "nudb")
-        self.cpp_info.components["core"].requires = ["boost::thread", "boost::system"]
+        self.cpp_info.components["core"].requires = ["boost::thread"]

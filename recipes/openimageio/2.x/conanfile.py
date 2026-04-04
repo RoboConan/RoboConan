@@ -72,7 +72,6 @@ class OpenImageIOConan(ConanFile):
             self.options.rm_safe("fPIC")
         self.options["boost"].with_filesystem = True
         self.options["boost"].with_regex = True
-        self.options["boost"].with_system = True
         self.options["boost"].with_thread = True
 
     def layout(self):
@@ -216,7 +215,6 @@ class OpenImageIOConan(ConanFile):
         open_image_io_util.requires = [
             "boost::filesystem",
             "boost::thread",
-            "boost::system",
             "boost::regex",
             "imath::imath",
             "openexr::openexr",

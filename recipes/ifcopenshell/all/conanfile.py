@@ -41,7 +41,6 @@ class IfcopenshellConan(ConanFile):
         "with_cgal": False,
         "with_hdf5": False,
 
-        "boost/*:with_system": True,
         "boost/*:with_program_options": True,
         "boost/*:with_regex": True,
         "boost/*:with_thread": True,
@@ -160,7 +159,6 @@ class IfcopenshellConan(ConanFile):
             return component
 
         ifcparse = _add_component("IfcParse", requires=[
-            "boost::system",
             "boost::program_options",
             "boost::regex",
             "boost::thread",

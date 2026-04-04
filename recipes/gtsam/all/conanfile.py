@@ -135,7 +135,6 @@ class GtsamConan(ConanFile):
             "program_options",
             "regex",
             "serialization",
-            "system",
             "thread",
             "timer",
         ]

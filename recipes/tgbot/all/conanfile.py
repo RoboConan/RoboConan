@@ -29,11 +29,6 @@ class TgbotConan(ConanFile):
     }
     implements = ["auto_shared_fpic"]
 
-    def configure(self):
-        if self.options.shared:
-            self.options.rm_safe("fPIC")
-        self.options["boost"].with_system = True
-
     def layout(self):
         cmake_layout(self, src_folder="src")
 

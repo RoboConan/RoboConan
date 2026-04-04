@@ -34,7 +34,6 @@ class AudiowaveformConan(ConanFile):
             "with_program_options": True,
             "with_filesystem": True,
             "with_regex": True,
-            "with_system": True,
         })
 
     def package_id(self):

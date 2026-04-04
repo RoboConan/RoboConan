@@ -47,7 +47,6 @@ class LibtorrentConan(ConanFile):
         "enable_iconv": False,
         "enable_logging": True,
         "enable_mutable_torrents": True,
-        "boost/*:with_system": True,
     }
     implements = ["auto_shared_fpic"]
 
@@ -137,7 +136,7 @@ class LibtorrentConan(ConanFile):
         self.cpp_info.includedirs = ["include", os.path.join("include", "libtorrent")]
         self.cpp_info.libs = ["torrent-rasterbar"]
 
-        self.cpp_info.requires = ["boost::headers", "boost::system"]
+        self.cpp_info.requires = ["boost::headers"]
         if self.options.enable_encryption:
             self.cpp_info.requires.append("openssl::openssl")
         if self.options.enable_iconv:

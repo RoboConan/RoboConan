@@ -30,7 +30,6 @@ class MailioConan(ConanFile):
 
     def requirements(self):
         self.requires("boost/[^1.71.0]", transitive_headers=True, transitive_libs=True, options={
-            "with_system": True,
             "with_date_time": True,
             "with_regex": True,
         })
@@ -73,7 +72,6 @@ class MailioConan(ConanFile):
     def package_info(self):
         self.cpp_info.libs = ["mailio"]
         self.cpp_info.requires = [
-            "boost::system",
             "boost::date_time",
             "boost::regex",
             "openssl::openssl",

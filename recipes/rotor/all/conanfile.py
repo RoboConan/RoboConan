@@ -49,7 +49,6 @@ class RotorConan(ConanFile):
             self.options.rm_safe("fPIC")
         self.options["boost"].with_date_time = True
         self.options["boost"].with_regex = True
-        self.options["boost"].with_system = True
 
     def requirements(self):
         self.requires("boost/[^1.71.0]", transitive_headers=True)
@@ -95,7 +94,7 @@ class RotorConan(ConanFile):
 
     def package_info(self):
         self.cpp_info.components["core"].libs = ["rotor"]
-        self.cpp_info.components["core"].requires = ["boost::date_time", "boost::system", "boost::regex"]
+        self.cpp_info.components["core"].requires = ["boost::date_time", "boost::regex"]
 
         if not self.options.multithreading:
             v = Version(self.version)

@@ -32,7 +32,6 @@ class CrocoddylConan(ConanFile):
         "with_openmp": True,
         "with_ipopt": True,
         "boost/*:with_filesystem": True,
-        "boost/*:with_system": True,
         "boost/*:with_serialization": True,
     }
     implements = ["auto_shared_fpic"]
@@ -114,7 +113,6 @@ class CrocoddylConan(ConanFile):
         self.cpp_info.requires = [
             "pinocchio::pinocchio",
             "boost::filesystem",
-            "boost::system",
             "boost::serialization",
             "eigen::eigen",
         ]

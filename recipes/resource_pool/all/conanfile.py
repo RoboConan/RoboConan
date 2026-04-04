@@ -21,7 +21,6 @@ class ResourcePool(ConanFile):
 
     def configure(self):
         self.options["boost"].with_coroutine = True
-        self.options["boost"].with_system = True
         self.options["boost"].with_thread = True
 
     def layout(self):
@@ -54,7 +53,7 @@ class ResourcePool(ConanFile):
         self.cpp_info.set_property("cmake_target_name", "elsid::resource_pool")
         self.cpp_info.bindirs = []
         self.cpp_info.libdirs = []
-        self.cpp_info.requires = ["boost::coroutine", "boost::system", "boost::thread"]
+        self.cpp_info.requires = ["boost::coroutine", "boost::thread"]
         self.cpp_info.defines = ["BOOST_ASIO_USE_TS_EXECUTOR_AS_DEFAULT"]
         if self.settings.os == "Windows":
             self.cpp_info.system_libs.append("ws2_32")

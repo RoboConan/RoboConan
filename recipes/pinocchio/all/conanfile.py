@@ -60,7 +60,6 @@ class PinocchioConan(ConanFile):
         "boost/*:with_date_time": True,
         "boost/*:with_filesystem": True,
         "boost/*:with_serialization": True,
-        "boost/*:with_system": True,
         "boost/*:with_thread": True,
         "coal/*:hpp_fcl_compatibility": True,
         "qhull/*:qhullcpp": True,
@@ -132,7 +131,7 @@ class PinocchioConan(ConanFile):
         check_min_cppstd(self, 11)
         if self.options.with_qhull and not self.dependencies["qhull"].options.qhullcpp:
             raise ConanInvalidConfiguration("-o qhull/*:qhullcpp=True is required")
-        for mod in ["chrono", "date_time", "filesystem", "serialization", "system", "thread"]:
+        for mod in ["chrono", "date_time", "filesystem", "serialization", "thread"]:
             if not self.dependencies["boost"].options.get_safe(f"with_{mod}"):
                 raise ConanInvalidConfiguration(f"boost/*:with_{mod}=True is required")
 

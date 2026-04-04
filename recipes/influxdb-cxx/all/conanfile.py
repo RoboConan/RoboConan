@@ -33,7 +33,7 @@ class InfluxdbCxxConan(ConanFile):
     def requirements(self):
         self.requires("cpr/[^1.10.4]")
         if self.options.with_boost:
-            self.requires("boost/[^1.71.0 <1.88]", options={"with_system": True})
+            self.requires("boost/[^1.71.0 <1.88]")
 
     def validate(self):
         check_min_cppstd(self, 17)

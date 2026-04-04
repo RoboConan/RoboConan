@@ -52,7 +52,6 @@ MODULES = [
     "regex",
     "serialization",
     "stacktrace",
-    "system",
     "test",
     "thread",
     "timer",
@@ -460,8 +459,6 @@ class BoostConan(ConanFile):
             libraries.append("stacktrace")
             libraries.append("test")
             libraries.append("thread")
-        if Version(self.version) >= "1.85.0":
-            libraries.append("system")
         if Version(self.version) >= "1.89.0":
             libraries.append("atomic")
         return sorted(set(libraries) & self._available_libraries)
@@ -1628,6 +1625,12 @@ class BoostConan(ConanFile):
                 # A Boost::dynamic_linking cmake target does only make sense for a shared boost package
                 self.cpp_info.components["dynamic_linking"].defines = ["BOOST_ALL_DYN_LINK"]
 
+            # Boost System is header-only since v1.69
+            self.cpp_info.components["system"].libs = []
+            self.cpp_info.components["system"].libdirs = []
+            self.cpp_info.components["system"].set_property("cmake_target_name", "Boost::system")
+            self.cpp_info.components["system"].requires = ["headers"]
+
             # https://www.boost.org/doc/libs/1_73_0/more/getting_started/windows.html#library-naming
             # libsuffix for MSVC:
             # - system: ""
@@ -1734,13 +1737,6 @@ class BoostConan(ConanFile):
                 if set(module_libraries).difference(all_detected_libraries):
                     incomplete_components.append(module)
 
-                # Starting v1.69.0 Boost.System is header-only. A stub library is
-                # still built for compatibility, but linking to it is no longer
-                # necessary.
-                # https://www.boost.org/doc/libs/1_75_0/libs/system/doc/html/system.html#changes_in_boost_1_69
-                if module == "system":
-                    module_libraries = []
-
                 self.cpp_info.components[module].libs = module_libraries
 
                 self.cpp_info.components[module].requires = self._dependencies["dependencies"][module] + ["_libboost"]
@@ -1767,7 +1763,7 @@ class BoostConan(ConanFile):
                 self.output.warning(f"Boost component '{incomplete_component}' is missing libraries. Try building boost with '-o boost:with_{incomplete_component}=False'. (Option is not guaranteed to exist)")
 
             non_used = all_detected_libraries.difference(all_expected_libraries)
-            non_used -= {"boost_container"}  # boost_container tends to get built despite not being used for some reason
+            non_used -= {"boost_container", "boost_system"}  # boost_container tends to get built despite not being used for some reason
             if non_used:
                 raise ConanException(f"These libraries were built, but were not used in any boost module: {non_used}")
 

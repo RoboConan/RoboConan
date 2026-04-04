@@ -22,7 +22,6 @@ configure_options:
 - regex
 - serialization
 - stacktrace
-- system
 - test
 - thread
 - timer
@@ -30,8 +29,7 @@ configure_options:
 - wave
 dependencies:
   atomic: []
-  chrono:
-  - system
+  chrono: []
   container: []
   context:
   - thread
@@ -41,7 +39,6 @@ dependencies:
   coroutine:
   - context
   - exception
-  - system
   - thread
   date_time:
   - serialization
@@ -51,8 +48,7 @@ dependencies:
   - filesystem
   fiber_numa:
   - fiber
-  filesystem:
-  - system
+  filesystem: []
   graph:
   - math
   - random
@@ -78,7 +74,6 @@ dependencies:
   - locale
   - random
   - regex
-  - system
   - thread
   log_setup:
   - log
@@ -110,7 +105,6 @@ dependencies:
   python: []
   random:
   - math
-  - system
   regex: []
   serialization: []
   stacktrace: []
@@ -126,7 +120,6 @@ dependencies:
   - stacktrace
   stacktrace_windbg_cached:
   - stacktrace
-  system: []
   test:
   - exception
   test_exec_monitor:
@@ -137,10 +130,8 @@ dependencies:
   - container
   - date_time
   - exception
-  - system
   timer:
   - chrono
-  - system
   type_erasure:
   - thread
   unit_test_framework:
@@ -231,8 +222,6 @@ libs:
   - boost_stacktrace_windbg
   stacktrace_windbg_cached:
   - boost_stacktrace_windbg_cached
-  system:
-  - boost_system
   test: []
   test_exec_monitor:
   - boost_test_exec_monitor

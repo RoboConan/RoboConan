@@ -22,7 +22,6 @@ class YandexOzoConan(ConanFile):
     no_copy_source = True
 
     def configure(self):
-        self.options["boost"].with_system = True
         self.options["boost"].with_thread = True
         self.options["boost"].with_coroutine = True
 
@@ -62,7 +61,7 @@ class YandexOzoConan(ConanFile):
         self.cpp_info.libdirs = []
 
         main_comp = self.cpp_info.components["_ozo"]
-        main_comp.requires = ["boost::boost", "boost::system", "boost::thread", "boost::coroutine", "resource_pool::resource_pool", "libpq::pq"]
+        main_comp.requires = ["boost::boost", "boost::thread", "boost::coroutine", "resource_pool::resource_pool", "libpq::pq"]
         main_comp.defines = ["BOOST_HANA_CONFIG_ENABLE_STRING_UDL", "BOOST_ASIO_USE_TS_EXECUTOR_AS_DEFAULT"]
         main_comp.set_property("cmake_target_name", "yandex::ozo")
 

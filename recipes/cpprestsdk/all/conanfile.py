@@ -56,7 +56,7 @@ class CppRestSDKConan(ConanFile):
 
     @property
     def _boost_modules(self):
-        modules = ["system"]
+        modules = []
         if self.settings.os != "Windows":
             modules += ["random", "thread", "filesystem", "chrono", "atomic"]
         elif self.settings.os != "Android":

@@ -24,7 +24,6 @@ class DynamicGraphConan(ConanFile):
         "shared": False,
         "fPIC": True,
         "boost/*:with_serialization": True,
-        "boost/*:with_system": True,
         "boost/*:with_thread": True,
     }
     implements = ["auto_shared_fpic"]
@@ -74,7 +73,6 @@ class DynamicGraphConan(ConanFile):
         self.cpp_info.components["core"].libs = ["dynamic-graph"]
         self.cpp_info.components["core"].requires = [
             "boost::serialization",
-            "boost::system",
             "boost::thread",
             "eigen::eigen"
         ]

@@ -55,7 +55,6 @@ CONFIGURE_OPTIONS = (
     "regex",
     "serialization",
     "stacktrace",
-    "system",
     "test",
     "thread",
     "timer",

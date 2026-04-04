@@ -64,7 +64,6 @@ class CoalConan(ConanFile):
             del self.options.generate_python_stubs
         else:
             self.options["boost"].with_python = True
-            self.options["boost"].with_system = True
         if self.options.enable_logging:
             self.options["boost"].with_log = True
 
@@ -199,5 +198,5 @@ class CoalConan(ConanFile):
         if self.options.python_bindings:
             pywrap = self.cpp_info.components["pywrap"]
             pywrap.set_property("cmake_target_name", "coal::coal_pywrap")
-            pywrap.requires = ["core", "eigenpy::eigenpy", "boost::system"]
+            pywrap.requires = ["core", "eigenpy::eigenpy"]
             self.runenv_info.prepend_path("PYTHONPATH", self._find_installed_site_packages())

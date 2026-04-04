@@ -35,7 +35,7 @@ class LibavrocppConan(ConanFile):
 
     @property
     def _boost_components(self):
-        return ["filesystem", "iostreams", "program_options", "regex", "system"]
+        return ["filesystem", "iostreams", "program_options", "regex"]
 
     def requirements(self):
         self.requires("boost/[^1.74.0]", transitive_headers=True, options={

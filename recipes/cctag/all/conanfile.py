@@ -54,7 +54,7 @@ class CCTagConan(ConanFile):
 
     @property
     def _boost_components(self):
-        return ["atomic", "chrono", "date_time", "exception", "filesystem", "math_c99", "program_options", "random", "serialization", "system", "thread", "timer"]
+        return ["atomic", "chrono", "date_time", "exception", "filesystem", "math_c99", "program_options", "random", "serialization", "thread", "timer"]
 
     @property
     def _apps_opencv_components(self):

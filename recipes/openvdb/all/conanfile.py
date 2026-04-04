@@ -116,7 +116,6 @@ class OpenVDBConan(ConanFile):
             self.options.rm_safe("fPIC")
         if Version(self.version) < "10":
             self.options["boost"].with_iostreams = True
-            self.options["boost"].with_system = True
         elif self.options.use_delayed_loading:
             self.options["boost"].with_iostreams = True
 
@@ -258,7 +257,7 @@ class OpenVDBConan(ConanFile):
 
         self.cpp_info.requires = ["boost::headers", "onetbb::onetbb"]
         if Version(self.version) < "10":
-            self.cpp_info.requires.extend(["boost::iostreams", "boost::system"])
+            self.cpp_info.requires.extend(["boost::iostreams"])
         elif self.options.use_delayed_loading:
             self.cpp_info.requires.append("boost::iostreams")
         if self.settings.os == "Windows":
