@@ -1,4 +1,5 @@
 # Use recipes/conan-utils/all/scripts/update-oneapi.py to add new versions
 sources:
-  "2025.2.1":
+  "2025.3.3":
+  "2025.2.2":
   "2025.1.1":

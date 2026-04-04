@@ -1,5 +1,7 @@
 versions:
-  "2025.2.1":
+  "2025.3.3":
+    folder: all
+  "2025.2.2":
     folder: all
   "2025.1.1":
     folder: all

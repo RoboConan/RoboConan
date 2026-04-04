@@ -1,0 +1,98 @@
+Linux:
+  mkl:
+    url: https://files.pythonhosted.org/packages/b3/ee/76755ca0ec9626835e0d024c369b968f24eadce2106a7884404720670623/mkl-2025.3.1-py2.py3-none-manylinux_2_28_x86_64.whl
+    sha256: db31e59fa368dd4fa45b494351f4b7e0e6204b08d7db27836118c4e1370eb011
+  mkl-static:
+    url: https://files.pythonhosted.org/packages/6c/ca/3f030ea6a9690f7b9918961d1a8cb9854ae2b716c4b40745d3f8d555cfa5/mkl_static-2025.3.1-py2.py3-none-manylinux_2_28_x86_64.whl
+    sha256: a8f13291243aa78bae7c2d38092ae34c99cc133fcd426beca2421cc44517f355
+  mkl-devel:
+    url: https://files.pythonhosted.org/packages/74/06/3904b7b1ebf05c856cbd3628d3b25fffb9f9d2b49fa657be93b410e2183c/mkl_devel-2025.3.1-py2.py3-none-manylinux_2_28_x86_64.whl
+    sha256: bb18e30ced5bd18dc1800a08354dc2752c7cd42ade255f0fa33005197609c443
+  mkl-include:
+    url: https://files.pythonhosted.org/packages/a6/43/7c107c3b05da5590797d34a48666b235b05265398feb48984a14dd1b458b/mkl_include-2025.3.1-py2.py3-none-manylinux_2_28_x86_64.whl
+    sha256: b81b08dfd64901a398bd1a751783e9a4de53d9e2ba2e019438dab9e3f8c7e1ea
+  mkl-dpcpp:
+    url: https://files.pythonhosted.org/packages/f3/2f/19153ce8b21ab52b1963b6c05727d3cc152f3bd36cdbed773a6438d3ef96/mkl_dpcpp-2025.3.1-py2.py3-none-manylinux_2_28_x86_64.whl
+    sha256: dc429959a8f0b971573774d2e12f9119916b7cfb3b0db7b5ab6d2ca3126c6aad
+  mkl-devel-dpcpp:
+    url: https://files.pythonhosted.org/packages/b6/45/6623d2ccb1368baa59828144a70b1c3426dfb13e904b675d2060cb4dd3e3/mkl_devel_dpcpp-2025.3.1-py2.py3-none-manylinux_2_28_x86_64.whl
+    sha256: d24dc86268447e08b9661388ba35023d927ef7ab3b196eaf7439400a5fdaa8cb
+  onemkl-sycl-include:
+    url: https://files.pythonhosted.org/packages/79/70/d64211c4cf78490b273d449a7a4bd62e11a2a61c0b6b8dbef6b7c179c244/onemkl_sycl_include-2025.3.1-py2.py3-none-manylinux_2_28_x86_64.whl
+    sha256: 8cf08d257ecf004f71f6c70b49da9793332daef7e556ab062f342071900fe435
+  onemkl-sycl-blas:
+    url: https://files.pythonhosted.org/packages/51/17/497d29cd13029f4835383d95e644d1602dafa9b7887d298ba9ea77734dce/onemkl_sycl_blas-2025.3.1-py2.py3-none-manylinux_2_28_x86_64.whl
+    sha256: b956c14db44990579cf376eb72ba6010b0c83ae27fc132f66752b1b337d9e728
+  onemkl-sycl-lapack:
+    url: https://files.pythonhosted.org/packages/24/f6/f4e38bb1a81fbda3afa2d79aa95b5a5d73c838977c1f86fbf73e7dafe676/onemkl_sycl_lapack-2025.3.1-py2.py3-none-manylinux_2_28_x86_64.whl
+    sha256: 360fc636bc0832d5a2ee2d3c4f440145ec43d94c170a351d588a9af7a84849ce
+  onemkl-sycl-datafitting:
+    url: https://files.pythonhosted.org/packages/cc/c8/d38188f7b9a92b11f3eff48e5d3160c2e2536077dcd9ab7eebf035cece68/onemkl_sycl_datafitting-2025.3.1-py2.py3-none-manylinux_2_28_x86_64.whl
+    sha256: 9a1d7f8a0e64d745050c984bcbfa7363e4df617fbb7cce92964686f5bfda067c
+  onemkl-sycl-dft:
+    url: https://files.pythonhosted.org/packages/41/ae/46fe3ca4fcf715cfef35b239abe705d32f355c3be4b9e94aca782a4720ae/onemkl_sycl_dft-2025.3.1-py2.py3-none-manylinux_2_28_x86_64.whl
+    sha256: 39f43a334d05ab5989b22ceb46243eacce4571d016c9f67923179ff4e427b88a
+  onemkl-sycl-rng:
+    url: https://files.pythonhosted.org/packages/60/f9/1f3b6ce37848c721462b4f30de08482dc27d6ffbcbba621b61ef53e28d3c/onemkl_sycl_rng-2025.3.1-py2.py3-none-manylinux_2_28_x86_64.whl
+    sha256: 3b0d89c6d38cfbeccc00d2ebe95d6ad81637d62e146e4f3f2101952bc836c39d
+  onemkl-sycl-sparse:
+    url: https://files.pythonhosted.org/packages/5d/88/4b7e2095f5d16ce1d8425efb2bf0126dd60ef659e24619bdeea85c10ef74/onemkl_sycl_sparse-2025.3.1-py2.py3-none-manylinux_2_28_x86_64.whl
+    sha256: 4a27ded81ab3826a839dc1ce66e44cbb739f0f7109a1dccd1aa77cc9a6663d08
+  onemkl-sycl-stats:
+    url: https://files.pythonhosted.org/packages/c8/3e/decdde705ba6eb293a38bde4f3cda1bab00f656d00c3a3c7bd4ba2ca03cd/onemkl_sycl_stats-2025.3.1-py2.py3-none-manylinux_2_28_x86_64.whl
+    sha256: 7794bc17ea79f2e2777976bb8bff34976acc48de97e3e45ddac516a5be40ecfa
+  onemkl-sycl-vm:
+    url: https://files.pythonhosted.org/packages/6f/02/9ef955b55c6ba18161e64841def1d0d435794436d85b903943f87434cc92/onemkl_sycl_vm-2025.3.1-py2.py3-none-manylinux_2_28_x86_64.whl
+    sha256: 9407fc88d9ff8e70bda4a049752092c845953f5a23a6da37a063a43f0681017e
+  onemkl-sycl-distributed-dft:
+    url: https://files.pythonhosted.org/packages/ff/b5/d906d2386c66f895f44376de92d292e0370678b45503181ac5a1228e59c6/onemkl_sycl_distributed_dft-2025.3.1-py2.py3-none-manylinux_2_28_x86_64.whl
+    sha256: db7b5f1a63444154dd4a3aed45552137593ca9092373d46f7f0a28d38814a7e5
+  onemkl-devel-sycl-distributed-dft:
+    url: https://files.pythonhosted.org/packages/dd/4c/807a4bf928f1dde354264677b398de75ebf351c7943e52d3ba15cf196532/onemkl_devel_sycl_distributed_dft-2025.3.1-py2.py3-none-manylinux_2_28_x86_64.whl
+    sha256: eb55caaffa78edbbed69a3bf34b1a4f3893ff0f6cc09936375ec5184b18ebc81
+Windows:
+  mkl:
+    url: https://files.pythonhosted.org/packages/99/c2/97c8df6e8c0663903ab7b0fe4d9529e6a75ffeeeef7b1727bc14996d389b/mkl-2025.3.1-py2.py3-none-win_amd64.whl
+    sha256: 74084f58784c4cde1dc3284bdf3a19df30fbfe11416567e4ba6419d3bd9ce33e
+  mkl-static:
+    url: https://files.pythonhosted.org/packages/a5/ef/c3e52ba7804d6ecedbeb2768cbcc400836cebed0c8a0bb7507140f674f41/mkl_static-2025.3.1-py2.py3-none-win_amd64.whl
+    sha256: a7cdff76a03c9ca82954f24b570e8ce4e06f0a133c56e881e9256482b5241533
+  mkl-devel:
+    url: https://files.pythonhosted.org/packages/1f/03/f97ca377dbec2c8aa81c08712206ab612da48c72af966758a7646ba0d8c5/mkl_devel-2025.3.1-py2.py3-none-win_amd64.whl
+    sha256: 42669ca656d8c46ec8fef4109471e2684f53468119664862e02f7de473e3761d
+  mkl-include:
+    url: https://files.pythonhosted.org/packages/54/8f/3a292e04ee57f31fea21d9c882a50a7385f46037effd91f25a2aea647a56/mkl_include-2025.3.1-py2.py3-none-win_amd64.whl
+    sha256: 8d7c785da74418d6bfb20f8d5b08ddfc661b86ab78ee4cdad64a617542aa1cf2
+  mkl-dpcpp:
+    url: https://files.pythonhosted.org/packages/b9/c9/11b81a1f49fc62aa0540f14f53c1976d4f3aa4a3960d770d56b841c51cb1/mkl_dpcpp-2025.3.1-py2.py3-none-win_amd64.whl
+    sha256: c04504a805d6f14c2dad235180bb0ed14fc5d9bfa97e5ff216e5bd4002dd50ab
+  mkl-devel-dpcpp:
+    url: https://files.pythonhosted.org/packages/42/7e/b4c9f6c461c54a01669c99966f51f40d252ecd8529ea14309f2eac2e3d3c/mkl_devel_dpcpp-2025.3.1-py2.py3-none-win_amd64.whl
+    sha256: c1a23d569cdba247ed61c35da98697ffac97e191834902a61645120144b21fc0
+  onemkl-sycl-include:
+    url: https://files.pythonhosted.org/packages/29/a2/94fc17f70e7934b34517fe9b7a8fd6939ae50b819f9fbe688296e9fcc792/onemkl_sycl_include-2025.3.1-py2.py3-none-win_amd64.whl
+    sha256: fcd46d1a0dd12a34fe7e5080b2bc4a983f6643c57baae1474e4bcc4b475ded20
+  onemkl-sycl-blas:
+    url: https://files.pythonhosted.org/packages/e1/4b/1c60d831fb54c13fead3bb8e98d44721059b9bbad44184a507c42589234f/onemkl_sycl_blas-2025.3.1-py2.py3-none-win_amd64.whl
+    sha256: 8a094fb2d6f393e6beb030e507475cdb704178ac7afec80b634a5d1eb848b557
+  onemkl-sycl-lapack:
+    url: https://files.pythonhosted.org/packages/80/33/3aef7852a99a08ec6a6535268f63e600e998b011bffafa5cd6205050b46f/onemkl_sycl_lapack-2025.3.1-py2.py3-none-win_amd64.whl
+    sha256: b4df2a705422a7c27d5ad35ea853a26103a39dbfc1fe4c5180c4d7b39ba34e7e
+  onemkl-sycl-datafitting:
+    url: https://files.pythonhosted.org/packages/3c/c6/33bdea81cba1cf7cebffc54cc45404e5a3b64e1ed1da63c678d0f41455ed/onemkl_sycl_datafitting-2025.3.1-py2.py3-none-win_amd64.whl
+    sha256: 7cc8ebfca0e42058e8be67f985bedef1b42ff81eff4b226d1b8993f92be08d86
+  onemkl-sycl-dft:
+    url: https://files.pythonhosted.org/packages/17/e9/2a20a5130f4ec203ee62fdd7adbaacd413f22729522988d112a48a1f7f11/onemkl_sycl_dft-2025.3.1-py2.py3-none-win_amd64.whl
+    sha256: 720d31ef23d5fe15355e6b95434244b27e254f817c45c89057f576a8a3e087a1
+  onemkl-sycl-rng:
+    url: https://files.pythonhosted.org/packages/81/57/d9e2941e40cdcbfc6a6dbd6c1184d4be5138965e63f978c8a595dcb2ce65/onemkl_sycl_rng-2025.3.1-py2.py3-none-win_amd64.whl
+    sha256: fe9bf5b9db1bb72578df997beb7e8ff7e4c0345b692fe947ee4a0af284709006
+  onemkl-sycl-sparse:
+    url: https://files.pythonhosted.org/packages/58/88/970baf908e8be5d5d7d0ed7e86863b350f1419cf9b6a9bd015a020e03bf2/onemkl_sycl_sparse-2025.3.1-py2.py3-none-win_amd64.whl
+    sha256: 994969efc1a4ee0483466ce0b75c510df4c5ffc89a6a12a0e878d5536ce29c69
+  onemkl-sycl-stats:
+    url: https://files.pythonhosted.org/packages/44/a7/bc5b99bff808e8c235c8bd0531c6f9f4d6bf60b8d16cb3336f0ba500017d/onemkl_sycl_stats-2025.3.1-py2.py3-none-win_amd64.whl
+    sha256: 3803e3889994827cab9d8cf233df55d0dd168e685dcf2fa7f32a75e3dbf22ee5
+  onemkl-sycl-vm:
+    url: https://files.pythonhosted.org/packages/3a/4e/90f6c7a55aff4531daad2f72d328df9dd1dbe866e384636f0e107b2e14fc/onemkl_sycl_vm-2025.3.1-py2.py3-none-win_amd64.whl
+    sha256: 17c785d4d659a9d162c54eb2bb6342ae3378b274be43d27cd0bc3c9869e66103
