@@ -1,7 +1,6 @@
 import os
 
 from conan import ConanFile
-from conan.errors import ConanInvalidConfiguration
 from conan.tools.cmake import CMakeToolchain, CMake, cmake_layout, CMakeDeps
 from conan.tools.files import *
 
@@ -13,7 +12,7 @@ class opengvConan(ConanFile):
     description = "A collection of computer vision methods for solving geometric vision problems"
     homepage = "https://github.com/laurentkneip/opengv"
     license = "BSD-3-Clause"
-    topics = ("computer", "vision", "geometric", "pose", "triangulation", "point-cloud")
+    topics = ("computer-vision", "geometric", "pose", "triangulation", "point-cloud")
     package_type = "library"
     settings = "os", "arch", "compiler", "build_type"
     options = {
@@ -39,14 +38,6 @@ class opengvConan(ConanFile):
         if self.options.with_python_bindings:
             self.requires("pybind11/[^2.10.1]")
 
-    def validate(self):
-        # Disable windows builds since they error out.
-        if self.settings.os == "Windows":
-            raise ConanInvalidConfiguration("Windows builds are not supported by this recipe.")
-        #FIXME this passes locally but fails on CCI with a clang internal error
-        if self.settings.compiler == "clang" and self.settings.compiler.version == 12:
-            raise ConanInvalidConfiguration("Clang 12 builds fail on Conan CI.")
-
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
         apply_conandata_patches(self)
@@ -54,13 +45,20 @@ class opengvConan(ConanFile):
                         "cmake_minimum_required(VERSION 3.1.3)",
                         "cmake_minimum_required(VERSION 3.5)")
         replace_in_file(self, "CMakeLists.txt", "CXX_STANDARD 11", "")
+        replace_in_file(self, "CMakeLists.txt", "DEBUG_POSTFIX d", "")
         replace_in_file(self, "include/opengv/types.hpp", "#include <stdlib.h>", "#include <cassert>\n#include <cstdlib>")
 
     def generate(self):
         tc = CMakeToolchain(self)
-        tc.variables["BUILD_TESTS"] = False
-        tc.variables["BUILD_PYTHON"] = self.options.with_python_bindings
-        tc.variables["BUILD_POSITION_INDEPENDENT_CODE"] = self.settings.os != "Windows" and self.options.get_safe("fPIC", True)
+        tc.cache_variables["BUILD_TESTS"] = False
+        tc.cache_variables["BUILD_PYTHON"] = self.options.with_python_bindings
+        tc.cache_variables["BUILD_POSITION_INDEPENDENT_CODE"] = False  # Handled automatically by Conan/CMake
+        if self.settings.compiler == "msvc":
+            # Apply some fixes from https://github.com/laurentkneip/opengv/pull/126
+            # Disable Eigen half-precision float to avoid MSVC ostream operator conflict
+            tc.preprocessor_definitions["EIGEN_HAS_HALF_FLOAT"] = "0"
+            # Increase stack size for large Groebner matrix allocations in fivept_kneip and sixpt algorithms
+            tc.extra_exelinkflags.append("/STACK:8388608")
         tc.generate()
 
         cd = CMakeDeps(self)
