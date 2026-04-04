@@ -46,6 +46,7 @@ class XZUtilsConan(ConanFile):
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
+        rmdir(self, "tests")
 
     def generate(self):
         tc = CMakeToolchain(self)
