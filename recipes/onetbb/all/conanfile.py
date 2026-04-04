@@ -45,9 +45,6 @@ class OneTBBConan(ConanFile):
         # but then oneTBB creates an imported SHARED target from provided paths, so we have to set shared=True
         return self.options.get_safe("tbbbind") and cross_building(self)
 
-    def export_sources(self):
-        export_conandata_patches(self)
-
     def config_options(self):
         if is_apple_os(self) and self.settings.os != "Macos":
             del self.options.tbbbind
@@ -82,7 +79,6 @@ class OneTBBConan(ConanFile):
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
-        apply_conandata_patches(self)
 
     def generate(self):
         tc = CMakeToolchain(self)
