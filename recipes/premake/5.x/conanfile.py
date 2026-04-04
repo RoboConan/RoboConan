@@ -88,13 +88,11 @@ class PremakeConan(ConanFile):
     @property
     def _vs_ide_year(self):
         year = {
-            "194": "2022",
-            "193": "2022",
             "192": "2019",
             "191": "2017",
             "190": "2015",
             "180": "2013",
-        }.get(str(self.settings.compiler.version))
+        }.get(str(self.settings.compiler.version), "2022")
         return year
 
     def build(self):

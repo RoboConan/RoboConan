@@ -114,6 +114,7 @@ class MpirConan(ConanFile):
             "192": "16",
             "193": "17",
             "194": "17",
+            "195": "18",
         }
         return msvc_to_ide.get(str(self.settings.compiler.version), "17")
 

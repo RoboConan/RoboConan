@@ -83,11 +83,11 @@ class bxConan(ConanFile):
     def build(self):
         if is_msvc(self):
             # Conan to Genie translation maps
-            vs_ver_to_genie = {"17": "2022", "16": "2019", "15": "2017",
-                            "194": "2022", "193": "2022", "192": "2019", "191": "2017"}
+            vs_ver_to_genie = {"16": "2019", "15": "2017", "192": "2019", "191": "2017"}
+            vs_genie_ver = vs_ver_to_genie.get(str(self.settings.compiler.version), "2022")
 
             # Use genie directly, then msbuild on specific projects based on requirements
-            genie_VS = f"vs{vs_ver_to_genie[str(self.settings.compiler.version)]}"
+            genie_VS = f"vs{vs_genie_ver}"
             genie_gen = f"{self._genie_extra} {genie_VS}"
             self.run(f"genie {genie_gen}", cwd=self._bx_path)
 

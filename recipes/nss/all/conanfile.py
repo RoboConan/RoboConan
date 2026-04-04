@@ -78,9 +78,7 @@ class NSSConan(ConanFile):
             "190": "2015",
             "191": "2017",
             "192": "2019",
-            "193": "2022",
-            "194": "2022",
-        }.get(compiler_version)
+        }.get(compiler_version, "2022")
 
     @property
     def _dist_dir(self):

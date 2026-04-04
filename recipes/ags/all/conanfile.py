@@ -58,9 +58,7 @@ class AGSConan(ConanFile):
             "190": "2015",
             "191": "2017",
             "192": "2019",
-            "193": "2022",
-            "194": "2022",
-        }[compiler_version]
+        }.get(compiler_version, "2022")
 
     @property
     def _win_arch(self):
