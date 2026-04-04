@@ -1,10 +1,10 @@
 sources:
-  "8.0.0":
-    url: "https://ffmpeg.org/releases/ffmpeg-8.0.tar.bz2"
-    sha256: "3e74acc48ddb9f5f70b6747d3f439d51e7cc5497f097d58e5975c84488f4d186"
-  "7.1.2":
-    url: "https://ffmpeg.org//releases/ffmpeg-7.1.2.tar.bz2"
-    sha256: "5eb62f529114778333b7eb0381cb16e2b8725ce2ae081d07b1082effe22b12e9"
+  "8.1":
+    url: "https://ffmpeg.org/releases/ffmpeg-8.1.tar.xz"
+    sha256: "b072aed6871998cce9b36e7774033105ca29e33632be5b6347f3206898e0756a"
+  "7.1.3":
+    url: "https://ffmpeg.org//releases/ffmpeg-7.1.3.tar.bz2"
+    sha256: "e7df715136a1231598dadb70fe6abd5cd66abc1ac2f470a02c567b2600c5292b"
   "6.1.3":
     url: "http://ffmpeg.org/releases/ffmpeg-6.1.3.tar.bz2"
     sha256: "54c08e5ae924ca9a1cef3e2b719351b6936194a5d701c14845f7151bb4d59270"
@@ -15,12 +15,12 @@ sources:
     url: "https://ffmpeg.org/releases/ffmpeg-4.4.6.tar.bz2"
     sha256: "822c980717470a2a576e5adba4e8a40977d15c3312b89dcd121547262b730d11"
 patches:
-  "8.0.0":
-    - patch_file: "patches/8.0-ffmpeg-add-av_stream_get_first_dts-for-chromium.patch"
+  "8.1":
+    - patch_file: "patches/8.1-ffmpeg-add-av_stream_get_first_dts-for-chromium.patch"
       patch_description: "Add backwards compatibility with Chromium"
       patch_type: "portability"
       patch_source: "https://github.com/microsoft/vcpkg/blob/fdd63dd662a542a91df65ca776d80e35e31e67be/ports/ffmpeg/0040-ffmpeg-add-av_stream_get_first_dts-for-chromium.patch"
-  "7.1.2":
+  "7.1.3":
     - patch_file: "patches/7.1-ffmpeg-add-av_stream_get_first_dts-for-chromium.patch"
       patch_description: "Add backwards compatibility with Chromium"
       patch_type: "portability"
