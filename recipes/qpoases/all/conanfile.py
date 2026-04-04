@@ -28,6 +28,14 @@ class ConanRecipe(ConanFile):
     def export_sources(self):
         export_conandata_patches(self)
 
+    def configure(self):
+        # Shared builds on Windows are not supported
+        if self.settings.os == "Windows":
+            self.options.shared.value = False
+            self.package_type = "static-library"
+        if self.options.shared:
+            self.options.rm_safe("fPIC")
+
     def layout(self):
         cmake_layout(self, src_folder="src")
 
