@@ -83,7 +83,7 @@ class SVTAV1Conan(ConanFile):
         if Version(self.version) >= "1.3.0":
             self.tool_requires("cmake/[>=3.16 <5]")
         if self.settings.arch in ("x86", "x86_64"):
-            self.tool_requires("nasm/[^2.16]")
+            self.tool_requires("nasm/[*]")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)

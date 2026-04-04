@@ -35,7 +35,7 @@ class SvtJpegXsConan(ConanFile):
         self.requires("cpuinfo/[*]")
 
     def build_requirements(self):
-        self.tool_requires("nasm/[^2.16]")
+        self.tool_requires("nasm/[*]")
 
     def validate(self):
         if self.settings.arch not in ["x86", "x86_64"]:

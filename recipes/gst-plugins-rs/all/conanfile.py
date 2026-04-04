@@ -178,7 +178,7 @@ class GStPluginsRsConan(ConanFile):
         self.tool_requires("rust/[^1.72]")
         self.tool_requires("cargo-c/[^0.10]")
         if self.options.rav1e:
-            self.tool_requires("nasm/[^2.16]")
+            self.tool_requires("nasm/[*]")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)

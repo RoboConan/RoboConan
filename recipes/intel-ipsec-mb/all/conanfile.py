@@ -47,7 +47,7 @@ class PackageConan(ConanFile):
             raise ConanInvalidConfiguration(f"{self.ref} does not support the architecture {self.settings.arch}.")
 
     def build_requirements(self):
-        self.tool_requires("nasm/[^2.16]")
+        self.tool_requires("nasm/[*]")
         self.tool_requires("cmake/[>3.16 <5]")
 
     def source(self):

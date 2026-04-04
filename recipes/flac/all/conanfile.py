@@ -35,7 +35,7 @@ class FlacConan(ConanFile):
 
     def build_requirements(self):
         if Version(self.version) < "1.4.2" and self.settings.arch in ["x86", "x86_64"]:
-            self.tool_requires("nasm/[^2.16]")
+            self.tool_requires("nasm/[*]")
 
     def layout(self):
         cmake_layout(self, src_folder="src")

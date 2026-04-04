@@ -47,7 +47,7 @@ class LibX264Conan(ConanFile):
 
     def build_requirements(self):
         if self._with_nasm:
-            self.tool_requires("nasm/[^2.16]")
+            self.tool_requires("nasm/[*]")
         if self.settings_build.os == "Windows":
             self.win_bash = True
             if not self.conf.get("tools.microsoft.bash:path", check_type=str):

@@ -72,7 +72,7 @@ class BlasfeoConan(ConanFile):
             self.requires("blas/latest")
 
     def build_requirements(self):
-        self.tool_requires("nasm/[^2.16]")
+        self.tool_requires("nasm/[*]")
         self.tool_requires("cmake/[<4]")
 
     def source(self):
