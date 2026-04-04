@@ -1,4 +1,4 @@
 sources:
-  "2.12.1":
-    url: "https://download.open-mpi.org/release/hwloc/v2.12/hwloc-2.12.1.tar.bz2"
-    sha256: "38a90328bb86259f9bb2fe1dc57fd841e111d1e6358012bef23dfd95d21dc66b"
+  "2.13.0":
+    url: "https://download.open-mpi.org/release/hwloc/v2.13/hwloc-2.13.0.tar.bz2"
+    sha256: "52e936afb6ebd80f171f763fcf14f7b1f5ce98b125af5dd2f328b873b1fd0dab"

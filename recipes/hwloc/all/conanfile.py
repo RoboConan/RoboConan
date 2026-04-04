@@ -99,7 +99,6 @@ class HwlocConan(ConanFile):
             tc.cache_variables["HWLOC_SKIP_INCLUDES"] = False
             tc.cache_variables["HWLOC_WITH_OPENCL"] = False
             tc.cache_variables["HWLOC_WITH_CUDA"] = self.options.with_cuda
-            tc.cache_variables["HWLOC_BUILD_SHARED_LIBS"] = self.options.shared
             tc.cache_variables["HWLOC_WITH_LIBXML2"] = self.options.with_libxml2
             tc.generate()
             deps = CMakeDeps(self)
