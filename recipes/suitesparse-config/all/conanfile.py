@@ -5,8 +5,9 @@ from conan import ConanFile
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
 from conan.tools.microsoft import is_msvc
+from conan.tools.scm import Version
 
-required_conan_version = ">=2.4"
+required_conan_version = ">=2.21"  # for cmake_extra_variables
 
 
 class SuiteSparseConfigConan(ConanFile):
@@ -42,16 +43,47 @@ class SuiteSparseConfigConan(ConanFile):
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
 
+    @property
+    def _bla_vendor(self):
+        return {
+            "openblas": "OpenBLAS",
+            "mkl": "Intel10",
+            "blis": "FLAME",
+            "accelerate": "Apple",
+            "armpl": "Arm",
+            "nvpl": "NVPL",
+        }.get(str(self.dependencies["blas"].options.provider), "Generic")
+
+    @property
+    def _blas_variables(self):
+        blas_variables = {}
+        blas_variables["BLA_VENDOR"] = self._bla_vendor
+        blas_variables["SUITESPARSE_USE_64BIT_BLAS"] = self.dependencies["blas"].options.interface == "ilp64"
+        # Skip try_run()-s
+        if self._bla_vendor == "OpenBLAS":
+            blas_variables["OPENBLAS_2015_COMPILES"] = True
+            blas_variables["OPENBLAS_2015_RUNS"] = True
+            is_new = bool(Version(self.dependencies["openblas"].ref.version) >= "0.3.27")
+            blas_variables["OPENBLAS_2024_COMPILES"] = is_new
+            blas_variables["OPENBLAS_2024_RUNS"] = is_new
+        elif self._bla_vendor == "Intel10":
+            blas_variables["MKL_COMPILES"] = True
+            blas_variables["MKL_RUNS"] = True
+        return blas_variables
+
+
     def generate(self):
         tc = CMakeToolchain(self)
-        tc.variables["BUILD_SHARED_LIBS"] = self.options.shared
-        tc.variables["BUILD_STATIC_LIBS"] = not self.options.shared
-        tc.variables["SUITESPARSE_USE_OPENMP"] = True
-        tc.variables["SUITESPARSE_USE_CUDA"] = False
-        tc.variables["SUITESPARSE_DEMOS"] = False
-        tc.variables["SUITESPARSE_USE_STRICT"] = True  # don't allow implicit dependencies
-        tc.variables["SUITESPARSE_USE_FORTRAN"] = False  # Fortran sources are translated to C instead
-        tc.variables["BUILD_TESTING"] = False
+        tc.cache_variables["BUILD_SHARED_LIBS"] = self.options.shared
+        tc.cache_variables["BUILD_STATIC_LIBS"] = not self.options.shared
+        tc.cache_variables["SUITESPARSE_USE_OPENMP"] = True
+        tc.cache_variables["SUITESPARSE_USE_CUDA"] = False
+        tc.cache_variables["SUITESPARSE_DEMOS"] = False
+        tc.cache_variables["SUITESPARSE_USE_STRICT"] = True  # don't allow implicit dependencies
+        tc.cache_variables["SUITESPARSE_USE_FORTRAN"] = False  # Fortran sources are translated to C instead
+        tc.cache_variables["BUILD_TESTING"] = False
+        tc.cache_variables["CMAKE_TRY_COMPILE_CONFIGURATION"] = str(self.settings.build_type)  # for BLAS try_compile()-s
+        tc.cache_variables.update(self._blas_variables)
         tc.generate()
 
         deps = CMakeDeps(self)
@@ -93,3 +125,5 @@ class SuiteSparseConfigConan(ConanFile):
 
         # All available BLAS implementations currently available under blas/latest use a single underscore suffix
         self.cpp_info.defines.append("BLAS64_SUFFIX=_")
+
+        self.cpp_info.set_property("cmake_extra_variables", self._blas_variables)

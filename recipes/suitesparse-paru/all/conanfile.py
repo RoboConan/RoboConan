@@ -32,7 +32,7 @@ class SuiteSparseParuConan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        # OpenBLAS and OpenMP are provided via suitesparse-config
+        # BLAS and OpenMP are provided via suitesparse-config
         self.requires("suitesparse-config/[^7.8.3]", transitive_headers=True, transitive_libs=True)
         self.requires("suitesparse-cholmod/[^5.3.0]", transitive_headers=True, transitive_libs=True)
         self.requires("suitesparse-umfpack/[^6.3.5]", transitive_headers=True, transitive_libs=True)
@@ -53,6 +53,7 @@ class SuiteSparseParuConan(ConanFile):
         tc.variables["SUITESPARSE_DEMOS"] = False
         tc.variables["SUITESPARSE_USE_FORTRAN"] = False  # Fortran sources are translated to C instead
         tc.variables["BUILD_TESTING"] = False
+        tc.variables["CMAKE_TRY_COMPILE_CONFIGURATION"] = str(self.settings.build_type)  # for BLAS try_compile()-s
         tc.generate()
 
         deps = CMakeDeps(self)
