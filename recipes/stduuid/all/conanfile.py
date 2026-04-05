@@ -55,7 +55,7 @@ class StduuidConan(ConanFile):
         if not self.options.get_safe("with_cxx20_span") or Version(self.version) == "1.0":
             self.requires("ms-gsl/[^4.0.0]", transitive_headers=True)
         if self.settings.os == "Linux" and Version(self.version) <= "1.0":
-            self.requires("util-linux-libuuid/2.41", transitive_headers=True, transitive_libs=True)
+            self.requires("util-linux-libuuid/[^2.41]", transitive_headers=True, transitive_libs=True)
 
     def package_id(self):
         self.info.clear()

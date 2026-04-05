@@ -162,7 +162,7 @@ class LibpqConan(ConanFile):
         if self.options.get_safe("with_systemd"):
             self.requires("libsystemd/[^255]")
         if self.options.with_uuid:
-            self.requires("util-linux-libuuid/2.41")
+            self.requires("util-linux-libuuid/[^2.41]")
         if self.options.with_zlib:
             self.requires("zlib-ng/[^2.0]")
         if self.options.with_zstd:

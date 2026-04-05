@@ -56,7 +56,7 @@ class CppCommon(ConanFile):
         else:
             self.requires("fmt/[>=5]", transitive_headers=True, transitive_libs=True)
         if self.settings.os == "Linux":
-            self.requires("util-linux-libuuid/2.41", transitive_headers=True)
+            self.requires("util-linux-libuuid/[^2.41]", transitive_headers=True)
 
     def validate(self):
         check_min_cppstd(self, self._min_cppstd)

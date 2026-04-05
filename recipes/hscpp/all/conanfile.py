@@ -40,7 +40,7 @@ class HscppConan(ConanFile):
         if not valid_min_cppstd(self, 17):
             self.requires("ghc-filesystem/1.5.14")
         if self.settings.os in ["Linux", "FreeBSD"]:
-            self.requires("util-linux-libuuid/2.41")
+            self.requires("util-linux-libuuid/[^2.41]")
 
     def validate(self):
         check_min_cppstd(self, 11)

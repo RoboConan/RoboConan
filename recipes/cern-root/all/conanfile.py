@@ -78,7 +78,7 @@ class CernRootConan(ConanFile):
             self.requires("xorg/system")
             self.requires("libxft/[^2.3.8]")
             self.requires("libxpm/[^3.5.17]")
-            self.requires("util-linux-libuuid/2.41")
+            self.requires("util-linux-libuuid/[^2.41]")
 
         if self.options.asimage:
             self.requires("giflib/[^5.2.1]")

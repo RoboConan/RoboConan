@@ -47,7 +47,7 @@ class GDCMConan(ConanFile):
         self.requires("openjpeg/[^2.5.2]")
         self.requires("zlib-ng/[^2.0]")
         if self.settings.os != "Windows":
-            self.requires("util-linux-libuuid/2.41")
+            self.requires("util-linux-libuuid/[^2.41]")
             self.requires("libiconv/[^1.17]")
         if self.options.with_json:
             self.requires("json-c/[>=0.17 <1]")

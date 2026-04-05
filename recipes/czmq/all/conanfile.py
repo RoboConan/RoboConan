@@ -70,7 +70,7 @@ class CzmqConan(ConanFile):
         if self.options.with_lz4:
             self.requires("lz4/[^1.9.4]")
         if self.options.get_safe("with_libuuid"):
-            self.requires("util-linux-libuuid/2.41")
+            self.requires("util-linux-libuuid/[^2.41]")
         if self.options.get_safe("with_systemd"):
             self.requires("libsystemd/[^255]")
 

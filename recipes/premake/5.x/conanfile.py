@@ -42,7 +42,7 @@ class PremakeConan(ConanFile):
 
     def requirements(self):
         if self.settings.os == "Linux":
-            self.requires("util-linux-libuuid/2.41")
+            self.requires("util-linux-libuuid/[^2.41]")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=False)

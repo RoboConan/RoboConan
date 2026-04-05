@@ -129,7 +129,7 @@ class CPythonConan(CPythonAutotools, CPythonMSVC):
         self.requires("mpdecimal/[>=2.5.0 <5]")
         if self.settings.os != "Windows":
             if not is_apple_os(self):
-                self.requires("util-linux-libuuid/2.41")
+                self.requires("util-linux-libuuid/[^2.41]")
             if Version(self.version) < "3.13":
                 self.requires("libxcrypt/4.4.36")
         if self.options.get_safe("with_bz2"):
