@@ -19,9 +19,11 @@ class EigenConan(ConanFile):
     package_type = "header-library"
     settings = "os", "arch", "compiler", "build_type"
     options = {
+        "with_openmp": [True, False],
         "MPL2_only": [True, False],
     }
     default_options = {
+        "with_openmp": True,
         # No longer applicable in Eigen 5.x.
         # As of Eigen 3.4.0, only the following were LGPL:
         #   Eigen/src/SparseCholesky/SimplicialCholesky.h
@@ -52,6 +54,10 @@ class EigenConan(ConanFile):
             check_min_cppstd(self, "14")
         else:
             check_min_cppstd(self, "03")
+
+    def requirements(self):
+        if self.options.with_openmp:
+            self.requires("openmp/system")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
@@ -100,3 +106,5 @@ class EigenConan(ConanFile):
             self.cpp_info.system_libs = ["m"]
         if self.options.get_safe("MPL2_only"):
             self.cpp_info.defines = ["EIGEN_MPL2_ONLY"]
+        if not self.options.with_openmp:
+            self.cpp_info.defines.append("EIGEN_DONT_PARALLELIZE")
