@@ -41,9 +41,7 @@ class NanoeigenpyConan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        # not yet compatible with Eigen v5.0.0 as of v0.4
-        # sparse-lu.hpp:67:23: error: ‘MappedSparseMatrix’ in namespace ‘Eigen’ does not name a template type
-        self.requires("eigen/[^3.4.0]", transitive_headers=True, transitive_libs=True)
+        self.requires("eigen/[>=3.4.0 <6]", transitive_headers=True, transitive_libs=True)
         self.requires("nanobind/[^2.5.0]", transitive_headers=True, transitive_libs=True)
         if self.options.get_safe("with_cholmod"):
             self.requires("suitesparse-cholmod/[^5]", transitive_headers=True, transitive_libs=True)
