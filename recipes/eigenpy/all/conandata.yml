@@ -1,4 +1,4 @@
 sources:
-  "3.11.0":
-    url: "https://github.com/stack-of-tasks/eigenpy/archive/refs/tags/v3.11.0.tar.gz"
-    sha256: "44a52d6a9307f4fb32e727c252083a4f6c809553a0c0d241c5b6e5b227e61aa9"
+  "3.12.0":
+    url: "https://github.com/stack-of-tasks/eigenpy/archive/refs/tags/v3.12.0.tar.gz"
+    sha256: "8564b96c1f7d5a53d4330b0e9ecbf9e0815319bbe43cdf9e9488a4e9b9aa7ce6"
