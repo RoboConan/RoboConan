@@ -77,12 +77,11 @@ class CPythonAutotools(ConanFile):
         ]
         openssl_root = unix_path(self, self.dependencies["openssl"].package_folder)
         tc.configure_args.append(f"--with-openssl={openssl_root}")
+        tc.configure_args.append("--disable-test-modules")
         if Version(self.version) >= "3.13" and self.options.freethreaded:
             tc.configure_args.append("--disable-gil")
         if Version(self.version) < "3.12":
             tc.configure_args.append("--with-system-ffi")
-        if Version(self.version) >= "3.10":
-            tc.configure_args.append("--disable-test-modules")
         if self.options.get_safe("with_sqlite3"):
             sqlite3_has_extensions = not self.dependencies["sqlite3"].options.omit_load_extension
             tc.configure_args.append(f"--enable-loadable-sqlite-extensions={yes_no(sqlite3_has_extensions)}")
@@ -150,9 +149,6 @@ class CPythonAutotools(ConanFile):
 
         if Version(self.version) < "3.11":
             replace_in_file(self, setup_py, "if (MACOS and self.detect_tkinter_darwin())", "if (False)")
-
-        if Version(self.version) < "3.10":
-            replace_in_file(self, setup_py, ":libmpdec.so.2", "mpdec")
 
     def _autotools_patch_sources(self):
         # <=3.10 requires a lot of manual injection of dependencies through setup.py

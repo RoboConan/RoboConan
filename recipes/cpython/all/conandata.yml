@@ -1,96 +1,39 @@
 sources:
-  "3.14.0-b2":
-    url: "https://www.python.org/ftp/python/3.14.0/Python-3.14.0b2.tgz"
-    sha256: "395e0daf993ddd6010dddef9ac6851996f69c2681a88c20190fa0dfe3e633930"
-  "3.13.5":
-    url: "https://www.python.org/ftp/python/3.13.5/Python-3.13.5.tgz"
-    sha256: "e6190f52699b534ee203d9f417bdbca05a92f23e35c19c691a50ed2942835385"
-  "3.12.11":
-    url: "https://www.python.org/ftp/python/3.12.11/Python-3.12.11.tgz"
-    sha256: "7b8d59af8216044d2313de8120bfc2cc00a9bd2e542f15795e1d616c51faf3d6"
-  "3.11.13":
-    url: "https://www.python.org/ftp/python/3.11.13/Python-3.11.13.tgz"
-    sha256: "0f1a22f4dfd34595a29cf69ee7ea73b9eff8b1cc89d7ab29b3ab0ec04179dad8"
-  "3.10.18":
-    url: "https://www.python.org/ftp/python/3.10.18/Python-3.10.18.tgz"
-    sha256: "1b19ab802518eb36a851f5ddef571862c7a31ece533109a99df6d5af0a1ceb99"
-  "3.9.23":
-    url: "https://www.python.org/ftp/python/3.9.23/Python-3.9.23.tgz"
-    sha256: "9a69aad184dc1d06f6819930741da3a328d34875a41f8ba33875774dbfc51b51"
+  "3.14.3":
+    url: "https://www.python.org/ftp/python/3.14.3/Python-3.14.3.tgz"
+    sha256: "d7fe130d0501ae047ca318fa92aa642603ab6f217901015a1df6ce650d5470cd"
+  "3.13.12":
+    url: "https://www.python.org/ftp/python/3.13.12/Python-3.13.12.tgz"
+    sha256: "12e7cb170ad2d1a69aee96a1cc7fc8de5b1e97a2bdac51683a3db016ec9a2996"
+  "3.12.13":
+    url: "https://www.python.org/ftp/python/3.12.13/Python-3.12.13.tgz"
+    sha256: "0816c4761c97ecdb3f50a3924de0a93fd78cb63ee8e6c04201ddfaedca500b0b"
+  "3.11.15":
+    url: "https://www.python.org/ftp/python/3.11.15/Python-3.11.15.tgz"
+    sha256: "f4de1b10bd6c70cbb9fa1cd71fc5038b832747a74ee59d599c69ce4846defb50"
+  "3.10.20":
+    url: "https://www.python.org/ftp/python/3.10.20/Python-3.10.20.tgz"
+    sha256: "4ff5fd4c5bab803b935019f3e31d7219cebd6f870d00389cea53b88bbe935d1a"
 patches:
-  "3.14.0-b2":
+  "3.14.3":
     - patch_file: "patches/3.14/3.14.0-0002-remove-module-deps.patch"
-      patch_description: "Remove section of solution file forcing projects to be built that might not be used for this recipe"
-      patch_type: "conan"
     - patch_file: "patches/3.13/3.13.0-0003-relocatable-python-config.patch"
-      patch_description: "Allow package to be relocatable"
-      patch_type: "conan"
-  "3.13.5":
+  "3.13.12":
     - patch_file: "patches/3.13/3.13.0-0002-remove-module-deps.patch"
-      patch_description: "Remove section of solution file forcing projects to be built that might not be used for this recipe"
-      patch_type: "conan"
     - patch_file: "patches/3.13/3.13.0-0003-relocatable-python-config.patch"
-      patch_description: "Allow package to be relocatable"
-      patch_type: "conan"
-  "3.12.11":
+  "3.12.13":
     - patch_file: "patches/3.9/3.9.7-0002-_msi-vcxproj.patch"
-      patch_description: "Fix ARM/ARM64 mismatch in project file"
-      patch_type: "bugfix"
     - patch_file: "patches/3.x-0001-relocatable-python-config.patch"
-      patch_description: "Allow package to be relocatable"
-      patch_type: "conan"
     - patch_file: "patches/3.12/3.12.1-0002-remove-module-deps.patch"
-      patch_description: "Remove section of solution file forcing projects to be built that might not be used for this recipe"
-      patch_type: "conan"
     - patch_file: "patches/3.12/3.12.2-0003-disable-nis.patch"
-      patch_description: "Avoid libnsl dependency, which is missing from newer glibc versions"
-      patch_type: "conan"
-  "3.11.13":
+  "3.11.15":
     - patch_file: "patches/3.9/3.9.7-0002-_msi-vcxproj.patch"
-      patch_description: "Fix ARM/ARM64 mismatch in project file"
-      patch_type: "bugfix"
     - patch_file: "patches/3.x-0001-relocatable-python-config.patch"
-      patch_description: "Allow package to be relocatable"
-      patch_type: "conan"
     - patch_file: "patches/3.x-0002-remove-module-deps.patch"
-      patch_description: "Remove section of solution file forcing projects to be built that might not be used for this recipe"
-      patch_type: "conan"
     - patch_file: "patches/3.11/3.11.9-0002-disable-nis.patch"
-      patch_description: "Avoid libnsl dependency, which is missing from newer glibc versions"
-      patch_type: "conan"
-  "3.10.18":
+  "3.10.20":
     - patch_file: "patches/3.9/3.9.7-0002-_msi-vcxproj.patch"
-      patch_description: "Fix ARM/ARM64 mismatch in project file"
-      patch_type: "bugfix"
     - patch_file: "patches/3.10/3.10.0-0003-_ctypes-ffi.patch"
-      patch_description: "Remove duplicate libffi symbols and support shared libffi"
-      patch_type: "portability"
     - patch_file: "patches/3.x-0001-relocatable-python-config.patch"
-      patch_description: "Allow package to be relocatable"
-      patch_type: "conan"
     - patch_file: "patches/3.x-0002-remove-module-deps.patch"
-      patch_description: "Remove section of solution file forcing projects to be built that might not be used for this recipe"
-      patch_type: "conan"
     - patch_file: "patches/3.10/3.10.14-0002-disable-nis.patch"
-      patch_description: "Avoid libnsl dependency, which is missing from newer glibc versions"
-      patch_type: "conan"
-  "3.9.23":
-    - patch_file: "patches/3.9/3.9.7-0002-_msi-vcxproj.patch"
-      patch_description: "Fix ARM/ARM64 mismatch in project file"
-      patch_type: "bugfix"
-    - patch_file: "patches/3.9/3.9.7-0003-_ctypes-ffi.patch"
-      patch_description: "Remove duplicate libffi symbols and support shared libffi"
-      patch_type: "portability"
-    - patch_file: "patches/3.x-0001-relocatable-python-config.patch"
-      patch_description: "Allow package to be relocatable"
-      patch_type: "conan"
-    - patch_file: "patches/3.x-0002-remove-module-deps.patch"
-      patch_description: "Remove section of solution file forcing projects to be built that might not be used for this recipe"
-      patch_type: "conan"
-    - patch_file: "patches/3.9/3.9.19-0004-disable-nis.patch"
-      patch_description: "Avoid libnsl dependency, which is missing from newer glibc versions"
-      patch_type: "conan"
-    - patch_file: "patches/3.9/3.9-0005-mpdecimal-2.5.1-support.patch"
-      patch_description: "Backport mpdecimal 2.5.1 support"
-      patch_source: "https://github.com/python/cpython/commit/73b20ae2fb7a5c1374aa5c3719f64c53d29fa0d2"
-      patch_type: "backport"
