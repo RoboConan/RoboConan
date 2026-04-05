@@ -130,11 +130,6 @@ class M4Conan(ConanFile):
         self._patch_sources()
         autotools = Autotools(self)
         autotools.configure()
-        # Fix MSVC build
-        # https://lists.nongnu.org/archive/html/bug-gnulib/2025-05/msg00154.html
-        replace_in_file(self, os.path.join(self.source_folder, "lib/obstack.in.h"),
-                        "(((_OBSTACK_CPTR) (h)->chunk < (OBSTACK_CPTR) (h)->temp.tempptr",
-                        "(((_OBSTACK_CPTR) (h)->chunk < (_OBSTACK_CPTR) (h)->temp.tempptr")
         autotools.make()
 
     def package(self):
