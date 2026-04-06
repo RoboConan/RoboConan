@@ -1,0 +1,264 @@
+diff --git a/symforce/opt/assert.h b/symforce/opt/assert.h
+index b42d618d..e5acfe29 100644
+--- a/symforce/opt/assert.h
++++ b/symforce/opt/assert.h
+@@ -9,6 +9,8 @@
+ 
+ #include <fmt/format.h>
+ 
++#include "./fmt_compat.h"
++
+ namespace sym {
+ 
+ /**
+@@ -24,7 +26,7 @@ inline std::string FormatFailure(const char* error, const char* func, const char
+  */
+ template <typename... T>
+ inline std::string FormatFailure(const char* error, const char* func, const char* file, int line,
+-                                 const char* fmt, T&&... args) {
++                                 fmt::format_string<T...> fmt, T&&... args) {
+   return fmt::format("SYM_ASSERT: {}\n    --> {}\n    --> {}:{}\n{}\n", error, func, file, line,
+                      fmt::format(fmt, std::forward<T>(args)...));
+ }
+diff --git a/symforce/opt/dense_linearizer.cc b/symforce/opt/dense_linearizer.cc
+index 3137b833..ccda8a18 100644
+--- a/symforce/opt/dense_linearizer.cc
++++ b/symforce/opt/dense_linearizer.cc
+@@ -7,6 +7,7 @@
+ 
+ #include <tuple>
+ 
++#include "./fmt_compat.h"
+ #include "./internal/linearizer_utils.h"
+ 
+ namespace sym {
+diff --git a/symforce/opt/dump_graph.h b/symforce/opt/dump_graph.h
+index 420dcfab..4ea14a33 100644
+--- a/symforce/opt/dump_graph.h
++++ b/symforce/opt/dump_graph.h
+@@ -11,6 +11,7 @@
+ #include <fmt/format.h>
+ 
+ #include "./factor.h"
++#include "./fmt_compat.h"
+ #include "./key.h"
+ 
+ namespace sym {
+diff --git a/symforce/opt/factor.cc b/symforce/opt/factor.cc
+index 78184bee..774c942c 100644
+--- a/symforce/opt/factor.cc
++++ b/symforce/opt/factor.cc
+@@ -10,6 +10,7 @@
+ #include <fmt/ranges.h>
+ 
+ #include "./assert.h"
++#include "./fmt_compat.h"
+ #include "./internal/factor_utils.h"
+ 
+ namespace sym {
+diff --git a/symforce/opt/fmt_compat.h b/symforce/opt/fmt_compat.h
+new file mode 100644
+index 00000000..86d7e979
+--- /dev/null
++++ b/symforce/opt/fmt_compat.h
+@@ -0,0 +1,57 @@
++/* ----------------------------------------------------------------------------
++ * fmt 11.x compatibility header for symforce
++ *
++ * fmt >= 11 no longer auto-discovers operator<< for formatting.  This header
++ * restores that behaviour for every class type that provides operator<< but
++ * is not already handled by fmt (strings, arithmetic, …).
++ *
++ * Two C++20 concepts do all the work:
++ *
++ *  1. EigenDerived  – disables fmt/ranges.h's range formatter for Eigen
++ *     expression types (Eigen 3.4+ exposes begin()/end()).
++ *
++ *  2. The formatter partial specialization – a single, universal catch-all
++ *     that delegates to fmt::ostream_formatter for any remaining class type
++ *     with operator<<.
++ * ---------------------------------------------------------------------------- */
++
++#pragma once
++
++#include <concepts>
++#include <ostream>
++#include <type_traits>
++
++#include <Eigen/Core>
++#include <Eigen/SparseCore>
++#include <fmt/ostream.h>
++#include <fmt/ranges.h>
++
++// ---------------------------------------------------------------------------
++// 1.  Disable fmt's range formatter for Eigen types.
++//
++//     Eigen 3.4+ types expose begin()/end() which makes fmt/ranges.h treat
++//     them as iterable ranges.  We want the human-readable matrix output from
++//     operator<< instead, so we mark them as range_format::disabled.
++// ---------------------------------------------------------------------------
++template <typename T>
++concept EigenDerived = requires(const T& t) { t.derived(); };
++
++template <EigenDerived T>
++struct fmt::range_format_kind<T, char>
++    : std::integral_constant<fmt::range_format, fmt::range_format::disabled> {};
++
++// ---------------------------------------------------------------------------
++// 2.  Universal ostream-based formatter for class types with operator<<.
++//
++//     Guards:
++//       • std::is_class_v           – excludes arithmetic, pointers, enums
++//                                     that fmt already handles natively.
++//       • !convertible to string_view – excludes std::string / string_view
++//                                     which have their own fmt formatter.
++//       • requires { os << t; }     – the type must actually support operator<<.
++// ---------------------------------------------------------------------------
++template <typename T>
++  requires std::is_class_v<T>
++        && (!std::is_convertible_v<const T&, fmt::string_view>)
++        && requires(std::ostream& os, const T& t) { os << t; }
++struct fmt::formatter<T, char> : fmt::ostream_formatter {};
+diff --git a/symforce/opt/internal/derivative_checker.h b/symforce/opt/internal/derivative_checker.h
+index 122f53f5..9430759a 100644
+--- a/symforce/opt/internal/derivative_checker.h
++++ b/symforce/opt/internal/derivative_checker.h
+@@ -5,6 +5,8 @@
+ 
+ #include <spdlog/spdlog.h>
+ 
++#include "../fmt_compat.h"
++
+ #include "../util.h"
+ #include "../values.h"
+ 
+diff --git a/symforce/opt/internal/linearizer_utils.h b/symforce/opt/internal/linearizer_utils.h
+index 960892fb..99c6fd7a 100644
+--- a/symforce/opt/internal/linearizer_utils.h
++++ b/symforce/opt/internal/linearizer_utils.h
+@@ -13,6 +13,8 @@
+ #include <fmt/ranges.h>
+ #include <spdlog/spdlog.h>
+ 
++#include "../fmt_compat.h"
++
+ #include <lcmtypes/sym/linearization_dense_factor_helper_t.hpp>
+ #include <lcmtypes/sym/linearization_sparse_factor_helper_t.hpp>
+ 
+diff --git a/symforce/opt/internal/optimizer_utils.h b/symforce/opt/internal/optimizer_utils.h
+index a5c775ac..aecbf832 100644
+--- a/symforce/opt/internal/optimizer_utils.h
++++ b/symforce/opt/internal/optimizer_utils.h
+@@ -7,6 +7,7 @@
+ 
+ #include <spdlog/spdlog.h>
+ 
++#include "../fmt_compat.h"
+ #include "../optimization_stats.h"
+ #include "../tic_toc.h"
+ 
+diff --git a/symforce/opt/internal/tic_toc.cc b/symforce/opt/internal/tic_toc.cc
+index 34d14b8d..a3a16e74 100644
+--- a/symforce/opt/internal/tic_toc.cc
++++ b/symforce/opt/internal/tic_toc.cc
+@@ -143,18 +143,18 @@ void TicTocManager::PrintTimingResults(std::ostream& out) const {
+     separator += std::string("+") + std::string(16, '-');
+   }
+ 
+-  const std::string legend = fmt::format(header_fmt, "   Name", "Count", "Total Time (s)",
++  const std::string legend = fmt::format(fmt::runtime(header_fmt), "   Name", "Count", "Total Time (s)",
+                                          "Mean Time (s)", "Max Time (s)", "Min Time (s)");
+ 
+   fmt::print(out, "\nSymForce TicToc Results:\n");
+-  fmt::print(out, legend);
+-  fmt::print(out, separator + "\n");
++  fmt::print(out, "{}", legend);
++  fmt::print(out, "{}\n", separator);
+ 
+   for (const auto& block_pair : blocks) {
+     const auto& name = block_pair.first;
+     const auto& block = block_pair.second;
+ 
+-    fmt::print(out, output_fmt, name, block.Count(), float(block.TotalTime()),
++    fmt::print(out, fmt::runtime(output_fmt), name, block.Count(), float(block.TotalTime()),
+                float(block.AverageTime()), float(block.MaxTime()), float(block.MinTime()));
+   }
+ }
+diff --git a/symforce/opt/levenberg_marquardt_solver.tcc b/symforce/opt/levenberg_marquardt_solver.tcc
+index dba9d91e..90fd0616 100644
+--- a/symforce/opt/levenberg_marquardt_solver.tcc
++++ b/symforce/opt/levenberg_marquardt_solver.tcc
+@@ -8,6 +8,8 @@
+ #include <fmt/ranges.h>
+ #include <spdlog/spdlog.h>
+ 
++#include "./fmt_compat.h"
++
+ #include "./assert.h"
+ #include "./levenberg_marquardt_solver.h"
+ #include "./tic_toc.h"
+diff --git a/symforce/opt/linearizer.cc b/symforce/opt/linearizer.cc
+index 26253a71..ad846cf2 100644
+--- a/symforce/opt/linearizer.cc
++++ b/symforce/opt/linearizer.cc
+@@ -8,6 +8,7 @@
+ #include <optional>
+ 
+ #include "./assert.h"
++#include "./fmt_compat.h"
+ #include "./internal/linearizer_utils.h"
+ #include "./tic_toc.h"
+ #include "symforce/opt/factor.h"
+diff --git a/symforce/opt/util.h b/symforce/opt/util.h
+index 6a8334aa..aa3282ca 100644
+--- a/symforce/opt/util.h
++++ b/symforce/opt/util.h
+@@ -100,7 +100,7 @@ auto NumericalDerivative(const F f, const X& x,
+                              kDefaultEpsilon<typename StorageOps<X>::Scalar>,
+                          const typename sym::StorageOps<X>::Scalar delta = 1e-2f) {
+   using Scalar = typename sym::StorageOps<X>::Scalar;
+-  using Y = typename std::result_of_t<F(X)>;
++  using Y = typename std::invoke_result_t<F, X>;
+   using JacobianMat =
+       Eigen::Matrix<Scalar, sym::LieGroupOps<Y>::TangentDim(), sym::LieGroupOps<X>::TangentDim()>;
+   static_assert(std::is_same<typename sym::StorageOps<Y>::Scalar, Scalar>::value,
+diff --git a/symforce/opt/values.cc b/symforce/opt/values.cc
+index cb797db2..051c0d73 100644
+--- a/symforce/opt/values.cc
++++ b/symforce/opt/values.cc
+@@ -8,6 +8,8 @@
+ #include <fmt/format.h>
+ #include <fmt/ostream.h>
+ 
++#include "./fmt_compat.h"
++
+ #include "./assert.h"
+ 
+ namespace sym {
+diff --git a/symforce/opt/values.tcc b/symforce/opt/values.tcc
+index 2829d30c..273ae2a4 100644
+--- a/symforce/opt/values.tcc
++++ b/symforce/opt/values.tcc
+@@ -10,6 +10,8 @@
+ #include <fmt/format.h>
+ #include <fmt/ostream.h>
+ 
++#include "./fmt_compat.h"
++
+ #include "./assert.h"
+ #include "./values.h"
+ 
+diff --git a/symforce/pybind/cc_factor.cc b/symforce/pybind/cc_factor.cc
+index 910649c3..912bd795 100644
+--- a/symforce/pybind/cc_factor.cc
++++ b/symforce/pybind/cc_factor.cc
+@@ -50,7 +50,8 @@ template <>
+ void ThrowIfSparsityMismatch<Eigen::SparseMatrix<double>>(const py::object& matrix) {
+   if (!py::isinstance(matrix, py::module_::import("scipy.sparse").attr("csc_matrix"))) {
+     throw py::value_error(
+-        fmt::format("scipy.sparse.csc_matrix expected, found {} instead.", py::type::of(matrix)));
++        fmt::format("scipy.sparse.csc_matrix expected, found {} instead.",
++          std::string(py::str(py::type::of(matrix)))));
+   }
+ }
+ 

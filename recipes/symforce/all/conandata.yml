@@ -2,7 +2,15 @@ sources:
   "0.11-git.20260328":
     url: "https://github.com/symforce-org/symforce/archive/392fa0df29c71b3dc68bea79097063ae0977cb55.tar.gz"
     sha256: "73f5dbd341dd25e615ad472ada07538b242d5b6fb576b41fafc1a84d386043e2"
+  "0.10.1":
+    url: "https://github.com/symforce-org/symforce/archive/f46d3aba4fa391847047473b6a6fefb71916e21b.tar.gz"
+    sha256: "7b5f0b62efad4d275f6a3cd110c0c358f64fbd66f60e8b71a9f73945d9c07279"
 patches:
   "0.11-git.20260328":
     - patch_file: "patches/0.11-update-fmt.patch"
       patch_source: "https://github.com/symforce-org/symforce/pull/454"
+    - patch_file: "patches/0.11-python-binding-fixes.patch"
+  "0.10.1":
+    - patch_file: "patches/0.10-allow-newer-cmake.patch"
+    - patch_file: "patches/0.10-fmt-v9-compatibility.patch"
+    - patch_file: "patches/0.10-python-binding-fixes.patch"

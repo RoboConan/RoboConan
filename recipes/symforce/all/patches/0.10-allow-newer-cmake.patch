@@ -1,0 +1,23 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 4dd9939d..faa67063 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -6,17 +6,9 @@
+ # NOTE(aaron): This is the minimum version for policy range support, not sure if we need newer;
+ # certainly no newer than 3.15 required.  This will use NEW policies up to CMake 3.25; this should
+ # be the maximum tested CMake version, matching requirements_dev.txt
+-cmake_minimum_required(VERSION 3.19...3.25)
+-
+-if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.27)
+-  message(FATAL_ERROR
+-    "SymForce does not support CMake >=3.27: https://github.com/symforce-org/symforce/issues/356"
+-    )
+-endif()
+-
++cmake_minimum_required(VERSION 3.19)
+ project(symforce)
+ 
+-set(CMAKE_CXX_STANDARD 17)
+ set(CMAKE_CXX_STANDARD_REQUIRED ON)
+ 
+ # ==============================================================================

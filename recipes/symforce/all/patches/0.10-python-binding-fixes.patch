@@ -1,0 +1,126 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index faa67063..c147b375 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -348,20 +348,8 @@ endif()
+ 
+ if(SYMFORCE_BUILD_SYMENGINE)
+ 
+-  # ------------------------------------------------------------------------------
+-  # SymEngine
+-  string(REPLACE ";" "$<SEMICOLON>" EXTERNAL_PREFIX_PATH "${CMAKE_PREFIX_PATH}")
++  find_package(SymEngine REQUIRED)
+   include(ExternalProject)
+-  ExternalProject_Add(symengine
+-    SOURCE_DIR ${PROJECT_SOURCE_DIR}/third_party/symengine
+-    INSTALL_DIR ${SYMFORCE_SYMENGINE_INSTALL_PREFIX}
+-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+-               -DBUILD_TESTS=OFF
+-               -DBUILD_BENCHMARKS=OFF
+-               -DCMAKE_OSX_ARCHITECTURES=${CMAKE_OSX_ARCHITECTURES}
+-               -DCMAKE_POLICY_DEFAULT_CMP0074=NEW
+-               -DCMAKE_PREFIX_PATH=${EXTERNAL_PREFIX_PATH}
+-  )
+ 
+   # ------------------------------------------------------------------------------
+   # symenginepy
+@@ -369,22 +357,18 @@ if(SYMFORCE_BUILD_SYMENGINE)
+   ExternalProject_Add(symenginepy
+     DEPENDS symengine
+     SOURCE_DIR ${PROJECT_SOURCE_DIR}/third_party/symenginepy
+-    CONFIGURE_COMMAND ""
+-    # TODO(aaron): This depends on SYMFORCE_PYTHON, which can change between builds (e.g. when
+-    # running `python -m build` multiple times on the same build directory), currently if you're
+-    # doing that you need to clean this manually
+-    BUILD_COMMAND ${SYMFORCE_PYTHON} ${PROJECT_SOURCE_DIR}/third_party/symenginepy/setup.py
+-        --verbose
+-        build_ext
+-        --build-type=Release
+-        --symengine-dir ${SYMFORCE_SYMENGINE_INSTALL_PREFIX}/lib/
+-        --define CMAKE_OSX_ARCHITECTURES=${CMAKE_OSX_ARCHITECTURES}
+-    INSTALL_COMMAND env ${SYMENGINEPY_INSTALL_ENV} ${SYMFORCE_PYTHON}
+-        ${PROJECT_SOURCE_DIR}/third_party/symenginepy/setup.py
+-        --verbose
+-        install
+-        --prefix ${SYMFORCE_SYMENGINE_INSTALL_PREFIX}
+-        --define CMAKE_OSX_ARCHITECTURES=${CMAKE_OSX_ARCHITECTURES}
++    CONFIGURE_COMMAND ${CMAKE_COMMAND}
++          -S ${PROJECT_SOURCE_DIR}/third_party/symenginepy
++          -B <BINARY_DIR>
++          -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
++          -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
++          -DCMAKE_OSX_ARCHITECTURES=${CMAKE_OSX_ARCHITECTURES}
++          -DPYTHON_BIN=${SYMFORCE_PYTHON_OVERRIDE}
++          -DCYTHON_BIN=${CYTHON_BIN}
++          -DPYTHON_INSTALL_PATH=${SYMFORCE_SYMENGINE_INSTALL_PREFIX}
++          -DCMAKE_POLICY_VERSION_MINIMUM=3.10
++    BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR>
++    INSTALL_COMMAND ${CMAKE_COMMAND} --install <BINARY_DIR>
+   )
+ 
+   # Rebuild symengine[py] on changed files
+@@ -402,7 +386,4 @@ if(SYMFORCE_BUILD_SYMENGINE)
+     add_dependencies(${project_name} ${git_check_rulename})
+   endfunction()
+ 
+-  add_sourcechanged_dependency(symengine)
+-  add_sourcechanged_dependency(symenginepy)
+-
+ endif(SYMFORCE_BUILD_SYMENGINE)
+diff --git a/symforce/pybind/CMakeLists.txt b/symforce/pybind/CMakeLists.txt
+index 2fb3c29d..945c1c18 100644
+--- a/symforce/pybind/CMakeLists.txt
++++ b/symforce/pybind/CMakeLists.txt
+@@ -9,7 +9,7 @@
+ 
+ include(FetchContent)
+ 
+-find_package(pybind11 2.13.6 QUIET)
++find_package(pybind11 REQUIRED)
+ if (NOT pybind11_FOUND)
+   message(STATUS "pybind11 not found, adding with FetchContent")
+   # NOTE(brad): Set PYTHON_EXECUTABLE to ensure pybind11 uses the same
+diff --git a/symforce/pybind/cc_factor.cc b/symforce/pybind/cc_factor.cc
+index 912bd795..733fa030 100644
+--- a/symforce/pybind/cc_factor.cc
++++ b/symforce/pybind/cc_factor.cc
+@@ -195,7 +195,7 @@ void AddFactorWrapper(pybind11::module_ module) {
+            )")
+       .def(
+           "linearize",
+-          [](const sym::Factord& factor, const sym::Valuesd& values) {
++          [](const sym::Factord& factor, const sym::Valuesd& values) -> py::tuple {
+             if (factor.IsSparse()) {
+               Eigen::VectorXd residual;
+               Eigen::SparseMatrix<double> jacobian;
+diff --git a/third_party/symenginepy/CMakeLists.txt b/third_party/symenginepy/CMakeLists.txt
+index c4b13eb7..9435713e 100644
+--- a/third_party/symenginepy/CMakeLists.txt
++++ b/third_party/symenginepy/CMakeLists.txt
+@@ -13,9 +13,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SYMENGINE_CXX_FLAGS}")
+ include_directories(${SYMENGINE_INCLUDE_DIRS})
+ 
+ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
+-find_package(Python REQUIRED)
++find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
+ find_package(Cython REQUIRED)
+-include_directories(${PYTHON_INCLUDE_PATH})
+ 
+ if (MINGW AND ("${CMAKE_SIZEOF_VOID_P}" STREQUAL "8"))
+     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DMS_WIN64")
+diff --git a/third_party/symenginepy/symengine/lib/CMakeLists.txt b/third_party/symenginepy/symengine/lib/CMakeLists.txt
+index 33f813ff..81245d26 100644
+--- a/third_party/symenginepy/symengine/lib/CMakeLists.txt
++++ b/third_party/symenginepy/symengine/lib/CMakeLists.txt
+@@ -8,8 +8,9 @@ configure_file(config.pxi.in config.pxi)
+ include_directories(BEFORE ${python_wrapper_BINARY_DIR}/symengine/lib)
+ 
+ cython_add_module_pyx(symengine_wrapper symengine.pxd)
+-add_python_library(symengine_wrapper ${SRC})
+-target_link_libraries(symengine_wrapper ${SYMENGINE_LIBRARIES})
++find_package(Python REQUIRED)
++Python_add_library(symengine_wrapper ${SRC})
++target_link_libraries(symengine_wrapper PRIVATE ${SYMENGINE_LIBRARIES})
+ if (CMAKE_CXX_COMPILER_ID MATCHES GNU|Clang)
+   # Must suppress strict aliasing for this file
+   set_source_files_properties(
