@@ -40,7 +40,6 @@ class SymengineConan(ConanFile):
 
     def validate(self):
         check_min_cppstd(self, 11)
-
         if self.settings.compiler == "gcc" and Version(self.settings.compiler.version) < "7":
             raise ConanInvalidConfiguration(f"{self.ref} requires GCC >= 7")
 
@@ -58,7 +57,12 @@ class SymengineConan(ConanFile):
             self.requires("fast_float/[^6.1.5]")
 
     def source(self):
-        get(self, **self.conan_data["sources"][self.version], strip_root=True)
+        if "symforce" not in self.version:
+            get(self, **self.conan_data["sources"][self.version], strip_root=True)
+        else:
+            get(self, **self.conan_data["sources"][self.version], strip_root=True,
+                pattern="*/third_party/symengine/*", destination="..")
+            move_folder_contents(self, "../third_party/symengine", self.source_folder)
         apply_conandata_patches(self)
         # Disable hardcoded C++11
         replace_in_file(self, "CMakeLists.txt",
@@ -72,25 +76,28 @@ class SymengineConan(ConanFile):
         replace_in_file(self, "CMakeLists.txt",
                         "set(LIBS ${LIBS} ${GMP_TARGETS})",
                         "set(LIBS ${LIBS} gmp::gmp)")
+        if Version(self.version) < "0.9":
+            replace_in_file(self, "cmake/cotire.cmake",
+                            "cmake_minimum_required(VERSION 2.8.12)",
+                            "cmake_minimum_required(VERSION 3.10)")
 
     def generate(self):
         tc = CMakeToolchain(self)
-        tc.variables["BUILD_TESTS"] = False
-        tc.variables["BUILD_BENCHMARKS"] = False
-        tc.variables["INTEGER_CLASS"] = self.options.integer_class
-        tc.variables["MSVC_USE_MT"] = is_msvc_static_runtime(self)
+        tc.cache_variables["BUILD_TESTS"] = False
+        tc.cache_variables["BUILD_BENCHMARKS"] = False
+        tc.cache_variables["INTEGER_CLASS"] = self.options.integer_class
+        tc.cache_variables["MSVC_USE_MT"] = is_msvc_static_runtime(self)
         if self._needs_fast_float:
-            tc.variables["WITH_SYSTEM_FASTFLOAT"] = True
+            tc.cache_variables["WITH_SYSTEM_FASTFLOAT"] = True
+        if Version(self.version) < "0.14":
+            tc.cache_variables["CMAKE_POLICY_VERSION_MINIMUM"] = "3.5" # CMake 4 support
         tc.generate()
 
         deps = CMakeDeps(self)
-        if self.options.integer_class == "gmp":
-            deps.set_property("gmp", "cmake_file_name", "GMP")
-            # If we ever add support for gmpxx, we should set this property
-            # if self.dependencies["gmp"].options.enable_cxx:
-            #     deps.set_property("gmp::gmpxx", "cmake_target_name", "gmpxx")
-        if self._needs_fast_float:
-            deps.set_property("fast_float", "cmake_file_name", "FASTFLOAT")
+        deps.set_property("gmp", "cmake_file_name", "GMP")
+        # If we ever add support for gmpxx, we should set this property
+        # deps.set_property("gmp::gmpxx", "cmake_target_name", "gmpxx")
+        deps.set_property("fast_float", "cmake_file_name", "FASTFLOAT")
         deps.generate()
 
     def build(self):

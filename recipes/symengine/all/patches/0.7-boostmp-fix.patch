@@ -1,0 +1,21 @@
+https://github.com/symengine/symengine/pull/1803
+
+diff --git a/symengine/mp_boost.cpp b/symengine/mp_boost.cpp
+index db20930c4f..f3997707e9 100644
+--- a/symengine/mp_boost.cpp
++++ b/symengine/mp_boost.cpp
+@@ -278,7 +278,7 @@
+     if (i == 0) {
+         return ULONG_MAX;
+     }
+-    return find_lsb(i, int_<0>());
++    return find_lsb(i, {});
+ }
+ 
+ // define simple 2x2 matrix with exponentiation by repeated squaring
+diff --git a/symengine/mp_boost.cpp b/symengine/mp_boost.cpp
+index f3997707e9..5b563cbbc9 100644
+--- a/symengine/mp_boost.cpp
++++ b/symengine/mp_boost.cpp
+@@ -13,1 +13,0 @@
+-using boost::mpl::int_;
