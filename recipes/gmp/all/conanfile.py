@@ -132,11 +132,11 @@ class GmpConan(ConanFile):
         self._patch_sources()
         autotools = Autotools(self)
         autotools.autoreconf()
-        autotools.configure()
         # fix build error on C++23 due to removal of unprototyped functions (#27479)
         replace_in_file(self, os.path.join(self.source_folder, "configure"),
                         "void g(){}",
                         "void g(int a,t1 const* b,t1 c,t2 d,t1 const* e,int f){}")
+        autotools.configure()
         autotools.make()
 
     def package(self):
