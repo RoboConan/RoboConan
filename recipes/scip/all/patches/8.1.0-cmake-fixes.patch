@@ -80,8 +80,8 @@ diff --git a/CMakeLists.txt b/CMakeLists.txt
  endif()
  
  #set sources files, libraries and defines for tpi
-+find_package(tinycthread REQUIRED)
-+link_libraries(tinycthread::tinycthread)
++# find_package(tinycthread REQUIRED)
++# link_libraries(tinycthread::tinycthread)
  if(TPI STREQUAL "none")
      set(tpisources tpi/tpi_none.c)
      set(THREAD_LIBRARIES "")

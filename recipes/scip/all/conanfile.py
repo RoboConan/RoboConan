@@ -72,6 +72,7 @@ class SCIPConan(ConanFile):
             self.options["boost"].with_iostreams = True
             self.options["boost"].with_program_options = True
             self.options["boost"].with_serialization = True
+            self.options["boost"].with_random = True
 
     def layout(self):
         cmake_layout(self, src_folder="src")
@@ -87,7 +88,7 @@ class SCIPConan(ConanFile):
         if self.options.with_lapack:
             self.requires("lapack/latest")
         if self.options.with_papilo:
-            self.requires("papilo/[^2]")
+            self.requires("papilo/[>=2 <4]")
         if self.options.with_readline:
             self.requires("readline/[^8.1]")
         if self.options.with_worhp:
@@ -125,8 +126,8 @@ class SCIPConan(ConanFile):
         # Threading dependencies
         if self.options.threading == "omp":
             self.requires("openmp/system")
-        # tinycthread is used even if not enabled
-        self.requires("tinycthread/[*]")
+        elif self.options.threading == "tny":
+            self.requires("tinycthread/[*]")
 
         # CppAD cannot be unvendored as it's quite old (20180000.0) and with modifications
 
@@ -163,17 +164,15 @@ class SCIPConan(ConanFile):
             "src/tpi/type_tpi_tnycthrd.h",
         ]
         if Version(self.version) >= "9.0":
-            tny_files += [
-                "src/tpi/tpi_tnycthrd.c",
-                "src/symmetry/compute_symmetry_nauty.c",
-                "src/symmetry/compute_symmetry_sassy_nauty.cpp",
-            ]
+            tny_files.append("src/tpi/tpi_tnycthrd.c")
         for f in tny_files:
             replace_in_file(self, f, "tinycthread/tinycthread.h", "tinycthread.h")
 
         replace_in_file(self, "src/symmetry/compute_symmetry_nauty.c", "nauty/", "")
         if Version(self.version) >= "9.0":
             replace_in_file(self, "src/symmetry/compute_symmetry_sassy_nauty.cpp", "nauty/", "")
+            replace_in_file(self, "src/symmetry/compute_symmetry_nauty.c", '#include "tinycthread/tinycthread.h"', "")
+            replace_in_file(self, "src/symmetry/compute_symmetry_sassy_nauty.cpp", '#include "tinycthread/tinycthread.h"', "")
 
         # Don't embed build-time paths in RPATHS
         replace_in_file(self, "src/CMakeLists.txt", "INSTALL_RPATH_USE_LINK_PATH TRUE", "")
