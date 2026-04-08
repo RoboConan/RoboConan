@@ -54,9 +54,8 @@ class OpenJPH(ConanFile):
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
-        replace_in_file(self, "CMakeLists.txt", "set(CMAKE_CXX_STANDARD 14)", "")
-        replace_in_file(self, "src/apps/ojph_stream_expand/CMakeLists.txt", "set(CMAKE_CXX_STANDARD 14)", "")
-        replace_in_file(self, "src/core/CMakeLists.txt", "set_target_properties(openjph PROPERTIES POSITION_INDEPENDENT_CODE ON)", "")
+        replace_in_file(self, "src/core/CMakeLists.txt",
+                        "set_target_properties(openjph PROPERTIES POSITION_INDEPENDENT_CODE ON)", "")
 
     def generate(self):
         tc = CMakeToolchain(self)
