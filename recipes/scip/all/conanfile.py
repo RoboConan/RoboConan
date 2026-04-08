@@ -26,7 +26,7 @@ class SCIPConan(ConanFile):
         "tools": [True, False],
         "threading": ["none", "omp", "tny"],
         "lp_solver": ["clp", "cplex", "gurobi", "highs", "mosek", "xpress", "soplex"],
-        "sym": ["none", "bliss", "sbliss", "nauty", "snauty"],
+        "sym": ["none", "bliss", "sbliss", "nauty", "snauty", "dejavu"],
         "with_ampl": [True, False],
         "with_gmp": [True, False],
         "with_ipopt": [True, False],
@@ -62,7 +62,9 @@ class SCIPConan(ConanFile):
         if Version(self.version) < "9.0":
             # snauty is not available for older versions
             self.options.sym = "sbliss"
-            del self.options.lapack
+            # highs is not available for older versions
+            self.options.lp_solver = "soplex"
+            del self.options.with_lapack
 
     def configure(self):
         if self.options.shared:
@@ -85,7 +87,7 @@ class SCIPConan(ConanFile):
             self.requires("coin-ipopt/[^3]")
         if self.options.with_gmp:
             self.requires("gmp/[^6.3.0]")
-        if self.options.with_lapack:
+        if self.options.get_safe("with_lapack"):
             self.requires("lapack/latest")
         if self.options.with_papilo:
             self.requires("papilo/[>=2 <4]")
@@ -138,6 +140,8 @@ class SCIPConan(ConanFile):
         if self.options.lp_solver == "soplex":
             if self.dependencies["soplex"].options.with_gmp and not self.options.with_gmp:
                 raise ConanInvalidConfiguration("The options 'with_gmp' should be aligned with 'soplex:with_gmp' too.")
+        if Version(self.version) < "10.0" and self.options.sym == "dejavu":
+            raise ConanInvalidConfiguration("Symmetry option 'dejavu' is only supported in SCIP v10 and above.")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
@@ -203,7 +207,7 @@ class SCIPConan(ConanFile):
         tc.cache_variables["ZIMPL"] = self.options.with_zimpl
         tc.cache_variables["AMPL"] = self.options.with_ampl
         tc.cache_variables["IPOPT"] = self.options.with_ipopt
-        tc.cache_variables["LAPACK"] = self.options.with_lapack
+        tc.cache_variables["LAPACK"] = self.options.get_safe("with_lapack", False)
         tc.cache_variables["WORHP"] = self.options.with_worhp
         tc.cache_variables["CONOPT"] = self.options.get_safe("with_conopt", False)
         tc.cache_variables["THREADSAFE"] = True
