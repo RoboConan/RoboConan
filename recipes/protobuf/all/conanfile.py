@@ -82,7 +82,7 @@ class ProtobufConan(ConanFile):
         if Version(self.version) >= "6.30":
             self.requires("abseil/[>=20240722.0]", transitive_headers=True, transitive_libs=True)
         elif self._protobuf_release >= "22.0":
-            self.requires("abseil/[>=20230802.1]", transitive_headers=True, transitive_libs=True)
+            self.requires("abseil/[>=20230802.1 <=20250127.0]", transitive_headers=True, transitive_libs=True)
 
     def validate(self):
         if self.options.shared and is_msvc_static_runtime(self):

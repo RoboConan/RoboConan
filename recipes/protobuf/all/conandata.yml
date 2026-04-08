@@ -1,20 +1,23 @@
 # See https://protobuf.dev/support/version-support/ for the versioning logic and EOL dates.
 sources:
-  "6.32.0":
-    url: "https://github.com/protocolbuffers/protobuf/archive/refs/tags/v32.0.tar.gz"
-    sha256: "3ad017543e502ffaa9cd1f4bd4fe96cf117ce7175970f191705fa0518aff80cd"
-  "6.31.1":
-    url: "https://github.com/protocolbuffers/protobuf/archive/refs/tags/v6.31.1.tar.gz"
-    sha256: "597071a340acc5346494c119ba3a541825c3f81071fc783521b24e29a485d60f"
-  "5.29.5":
-    url: "https://github.com/protocolbuffers/protobuf/archive/refs/tags/v5.29.5.tar.gz"
-    sha256: "2e70ae9292e4ddfdeff911e034bc953287fc74381fc1cb36ee39cd6ccf142990"
+  "6.34.1":
+    url: "https://github.com/protocolbuffers/protobuf/archive/refs/tags/v34.1.tar.gz"
+    sha256: "a83103b7ed3afaeedee9a212c8f65825444f58144f5e075b73c83f2b4ff27b62"
+  "6.33.6":
+    url: "https://github.com/protocolbuffers/protobuf/archive/refs/tags/v33.6.tar.gz"
+    sha256: "e825cac584256f88840ab6cf37add69ba0c6145811329d75642698a622d13498"
+  "6.32.1":
+    url: "https://github.com/protocolbuffers/protobuf/archive/refs/tags/v32.1.tar.gz"
+    sha256: "d2081ab9528292f7980ef2d88d2be472453eea4222141046ad4f660874d5f24e"
+  "5.29.6":
+    url: "https://github.com/protocolbuffers/protobuf/archive/refs/tags/v5.29.6-cpp.tar.gz"
+    sha256: "a1507124de443b5712c2f4e6e4e9f71da9c6050a60e509bcef5602f92da2245c"
   "4.31.1":
     url: "https://github.com/protocolbuffers/protobuf/archive/refs/tags/v4.31.1.tar.gz"
     sha256: "bb2a16efabdc943efd9240575295d9a6011a6ba4b59d0c381915fd6e4ab1f47f"
-  "4.25.8":
-    url: "https://github.com/protocolbuffers/protobuf/archive/refs/tags/v4.25.8.tar.gz"
-    sha256: "fae145cac12c7c8f2b770d925038e12b32a59e26428f3d8858df86e41a9e60dd"
+  "4.25.9":
+    url: "https://github.com/protocolbuffers/protobuf/archive/refs/tags/v4.25.9-cpp.tar.gz"
+    sha256: "bac7d64d82c9a508dee1e69ba5d63fc2831b0d5da178ce7c0d0409312d8b8f5c"
   "3.29.5":
     url: "https://github.com/protocolbuffers/protobuf/archive/refs/tags/v3.29.5.tar.gz"
     sha256: "ccff8964efdc4052f0b3579ad503dba28729c28fb0cf4245c060ec17667666aa"
