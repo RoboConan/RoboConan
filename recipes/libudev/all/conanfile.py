@@ -29,24 +29,12 @@ class LibUdevConan(ConanFile):
     def layout(self):
         basic_layout(self, src_folder="src")
 
-    @property
-    def _compilers_minimum_version(self):
-        return {
-            "gcc": "7",
-            "clang": "10"
-        }
-
     def requirements(self):
         self.requires("libcap/[^2.69]")
 
     def validate(self):
         if self.settings.os != "Linux":
             raise ConanInvalidConfiguration("libudev is only supported on Linux.")
-        minimum_version = self._compilers_minimum_version.get(str(self.settings.compiler), False)
-        if minimum_version and Version(self.settings.compiler.version) < minimum_version:
-            raise ConanInvalidConfiguration(
-                f"{self.ref} requires {str(self.settings.compiler)} >= {minimum_version}."
-            )
 
     def build_requirements(self):
         self.tool_requires("meson/[>=1.2.3 <2]")
@@ -61,47 +49,23 @@ class LibUdevConan(ConanFile):
         download(self, **self.conan_data["sources"][self.version], filename="sources.tar.gz")
         with tarfile.open("sources.tar.gz", "r:gz") as tar:
             tar.extractall()
-        move_folder_contents(self, os.path.join(self.source_folder, f"systemd-stable-{self.version}"), self.source_folder)
+        move_folder_contents(self, os.path.join(self.source_folder, f"systemd-{self.version}"), self.source_folder)
         apply_conandata_patches(self)
         # These shared files are only used to build systemd, tools or tests and need libmount or libcrypt.
-        for src_file in ["bus-unit-util.c", "libmount-util.c", "mount-util.c", "libcrypt-util.c"]:
-            replace_in_file(self, os.path.join("src", "shared", "meson.build"), f"'{src_file}',", "")
+        # for src_file in ["bus-unit-util.c", "mount-util.c", "libcrypt-util.c"]:
+        #     replace_in_file(self, os.path.join("src", "shared", "meson.build"), f"'{src_file}',", "")
 
     def generate(self):
         tc = MesonToolchain(self)
         tc.project_options["auto_features"] = "disabled"
         tc.project_options["tests"] = "false"
-        tc.project_options["selinux"] = "false"
-        tc.project_options["lz4"] = "false"
-        tc.project_options["xz"] = "false"
-        tc.project_options["zstd"] = "false"
+        tc.project_options["selinux"] = "disabled"
+        tc.project_options["lz4"] = "disabled"
+        tc.project_options["xz"] = "disabled"
+        tc.project_options["zstd"] = "disabled"
         tc.project_options["static-libudev"] = "false"
         # sys/capability.h is treated as a system header by meson.build
         tc.extra_cflags.append(f"-I{self.dependencies['libcap'].cpp_info.includedirs[0]}")
-
-        # options unrelated to libsystemd
-        unrelated = [
-            "fdisk", "seccomp", "pwquality", "apparmor", "polkit", "audit",
-            "kmod", "microhttpd", "libcryptsetup", "libcurl", "libidn",
-            "libidn2", "qrencode", "openssl", "libfido2", "zlib", "xkbcommon",
-            "pcre2", "glib", "dbus", "blkid", "gcrypt", "p11kit", "ima",
-            "smack", "bzip2", "gnutls", "idn", "initrd", "binfmt", "vconsole",
-            "quotacheck", "tmpfiles", "environment-d", "sysusers", "firstboot",
-            "randomseed", "backlight", "rfkill", "xdg-autostart", "logind",
-            "hibernate", "machined", "portabled", "userdb", "hostnamed",
-            "timedated", "timesyncd", "localed", "networkd", "resolve",
-            "coredump", "pstore", "efi", "nss-myhostname", "nss-mymachines",
-            "nss-resolve", "nss-systemd", "hwdb", "tpm", "man", "html", "utmp",
-            "ldconfig", "adm-group", "wheel-group", "gshadow", "install-tests",
-            "link-udev-shared", "link-systemctl-shared", "analyze", "pam",
-            "link-networkd-shared", "link-timesyncd-shared", "kernel-install",
-            "libiptc", "elfutils", "repart", "homed", "importd", "acl",
-            "dns-over-tls", "log-trace", "oomd", "sysext", "nscd",
-            "link-boot-shared", "link-journalctl-shared", "passwdqc", "bootloader",
-            "link-portabled-shared"]
-        for opt in unrelated:
-            tc.project_options[opt] = "false"
-
         tc.generate()
 
         deps = PkgConfigDeps(self)

@@ -36,7 +36,7 @@ class LibgudevConan(ConanFile):
         basic_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("libudev/[^255.18]")
+        self.requires("libudev/[>=255 <system]")
         self.requires("glib/[^2.70.0]", transitive_headers=True)
         if self.options.with_introspection:
             self.requires("glib-gir/[^2.82]")

@@ -45,7 +45,7 @@ class PackageConan(ConanFile):
 
     def requirements(self):
         self.requires("libnl/[^3.8.0]")
-        self.requires("libudev/[^255.18]")
+        self.requires("libudev/[>=255 <system]")
 
     def validate(self):
         if self.settings.os not in ["Linux", "FreeBSD"]:

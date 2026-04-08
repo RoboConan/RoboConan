@@ -51,7 +51,7 @@ class Libv4lConan(ConanFile):
 
     def requirements(self):
         if self.options.build_libdvbv5:
-            self.requires("libudev/[^255.18]")
+            self.requires("libudev/[>=255 <system]")
         if self.options.with_jpeg:
             self.requires("libjpeg-meta/latest")
 

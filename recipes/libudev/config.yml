@@ -1,7 +1,5 @@
 versions:
-  "255.18":
-    folder: all
-  "255.13":
+  "260":
     folder: all
   "system":
     folder: system

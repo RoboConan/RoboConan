@@ -87,7 +87,7 @@ class PipeWireConan(ConanFile):
         if self.options.with_libsndfile:
             self.requires("libsndfile/[^1.2.2]")
         if self.options.with_libudev:
-            self.requires("libudev/[^255]")
+            self.requires("libudev/[>=255 <system]")
         if self.options.with_ncurses:
             self.requires("ncurses/[^6.4]")
         if self.options.with_opus:

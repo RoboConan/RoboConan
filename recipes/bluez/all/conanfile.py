@@ -51,7 +51,7 @@ class BluezConan(ConanFile):
         if self.options.with_jsonc:
             self.requires("json-c/[>=0.17 <1]")
         if self.options.with_udev:
-            self.requires("libudev/[^255]")
+            self.requires("libudev/[>=255 <system]")
         if self.options.with_systemd:
             self.requires("libsystemd/[^255]")
 

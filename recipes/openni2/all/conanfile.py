@@ -37,7 +37,7 @@ class Openni2Conan(ConanFile):
     def requirements(self):
         self.requires("libjpeg-meta/latest")
         if self.settings.os == "Linux":
-            self.requires("libudev/[^255.18]")
+            self.requires("libudev/[>=255 <system]")
         if self.settings.os != "Windows":
             self.requires("libusb/[^1.0.26]")
 

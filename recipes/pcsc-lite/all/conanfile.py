@@ -44,7 +44,7 @@ class PCSCLiteConan(ConanFile):
 
     def requirements(self):
         if self.options.with_libudev:
-            self.requires("libudev/[^255]")
+            self.requires("libudev/[>=255 <system]")
         if self.options.with_libusb:
             self.requires("libusb/[^1.0]")
 

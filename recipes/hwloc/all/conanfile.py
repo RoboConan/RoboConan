@@ -70,7 +70,7 @@ class HwlocConan(ConanFile):
         if self.options.with_pci:
             self.requires("libpciaccess/[>=0.17 <1]")
         if self.options.with_udev:
-            self.requires("libudev/[^255]")
+            self.requires("libudev/[>=255 <system]")
 
     def validate(self):
         if self.options.with_cuda:
