@@ -3,6 +3,7 @@ import os
 from conan import ConanFile
 from conan.tools.apple import fix_apple_shared_install_name
 from conan.tools.files import *
+from conan.tools.gnu import PkgConfigDeps
 from conan.tools.layout import basic_layout
 from conan.tools.meson import Meson, MesonToolchain
 
@@ -20,10 +21,14 @@ class LcmsConan(ConanFile):
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
+        "jpeg": [True, False],
+        "tiff": [True, False],
     }
     default_options = {
         "shared": False,
         "fPIC": True,
+        "jpeg": False,
+        "tiff": False,
     }
     implements = ["auto_shared_fpic"]
     languages = ["C"]
@@ -33,17 +38,31 @@ class LcmsConan(ConanFile):
     def layout(self):
         basic_layout(self, src_folder="src")
 
+    def requirements(self):
+        if self.options.jpeg:
+            self.requires("libjpeg-meta/latest")
+        if self.options.tiff:
+            self.requires("libtiff/[^4.5]")
+
     def build_requirements(self):
         self.tool_requires("meson/[>=1.2.3 <2]")
+        if self.options.jpeg or self.options.tiff:
+            if not self.conf.get("tools.gnu:pkg_config", default=False, check_type=str):
+                self.tool_requires("pkgconf/[^2.2]")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
         apply_conandata_patches(self)
 
     def generate(self):
+        def feature(v): return "enabled" if v else "disabled"
         tc = MesonToolchain(self)
         tc.project_options["auto_features"] = "enabled"
+        tc.project_options["jpeg"] = feature(self.options.jpeg)
+        tc.project_options["tiff"] = feature(self.options.tiff)
         tc.generate()
+        deps = PkgConfigDeps(self)
+        deps.generate()
 
     def build(self):
         meson = Meson(self)
