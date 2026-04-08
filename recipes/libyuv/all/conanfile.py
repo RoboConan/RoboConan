@@ -50,8 +50,11 @@ class LibyuvConan(ConanFile):
         if self.options.with_jpeg:
             self.requires("libjpeg-meta/latest")
 
+    def build_requirements(self):
+        self.tool_requires("cmake/[>=3.16 <5]")
+
     def source(self):
-        get(self, **self.conan_data["sources"][self.version])
+        get(self, **self.conan_data["sources"][self.version], strip_root=True)
         apply_conandata_patches(self)
 
     def generate(self):
