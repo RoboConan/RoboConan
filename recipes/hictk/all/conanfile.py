@@ -5,7 +5,6 @@ from conan.errors import ConanInvalidConfiguration
 from conan.tools.build import check_min_cppstd
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
-from conan.tools.scm import Version
 
 required_conan_version = ">=2.1"
 
@@ -33,18 +32,15 @@ class HictkConan(ConanFile):
     def requirements(self):
         if self.options.with_arrow:
             self.requires("arrow/16.1.0")
-        if Version(self.version) < "2.0.0":
-            self.requires("bshoshany-thread-pool/4.1.0")
-        else:
-            self.requires("bshoshany-thread-pool/5.0.0")
+        self.requires("bshoshany-thread-pool/5.0.0")
         self.requires("concurrentqueue/1.0.4")
         self.requires("fast_float/[^6.1.1]")
         if self.options.with_eigen:
             self.requires("eigen/[>=3.3 <6]")
-        self.requires("fmt/[>=10 <12]")
-        self.requires("spdlog/[^1.12 <1.15]")
+        self.requires("fmt/[>=10]")
+        self.requires("spdlog/[^1.12]")
         self.requires("hdf5/[^1.8]")
-        self.requires("highfive/[^2.9.0]")
+        self.requires("highfive/[>=2.9.0 <4]")
         self.requires("libdeflate/[^1.19]")
         self.requires("parallel-hashmap/1.3.12") # Note: v1.3.12 is more recent than v1.37
         self.requires("readerwriterqueue/1.0.6")
@@ -80,8 +76,8 @@ class HictkConan(ConanFile):
         tc.cache_variables["HICTK_WITH_EIGEN"] = self.options.with_eigen
         tc.generate()
 
-        cmakedeps = CMakeDeps(self)
-        cmakedeps.generate()
+        deps = CMakeDeps(self)
+        deps .generate()
 
     def build(self):
         cmake = CMake(self)
@@ -96,10 +92,11 @@ class HictkConan(ConanFile):
         rmdir(self, os.path.join(self.package_folder, "share"))
 
     def package_info(self):
-        self.cpp_info.bindirs = []
-        self.cpp_info.libdirs = []
         self.cpp_info.set_property("cmake_file_name", "hictk")
         self.cpp_info.set_property("cmake_target_name", "hictk::libhictk")
+
+        self.cpp_info.bindirs = []
+        self.cpp_info.libdirs = []
 
         if self.options.get_safe("with_arrow"):
             self.cpp_info.defines.append("HICTK_WITH_ARROW")
