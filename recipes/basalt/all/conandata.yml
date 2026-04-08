@@ -1,5 +1,5 @@
 sources:
-  "git.20240831":
+  "0.0+git.20240831":
     source:
       url: "https://gitlab.com/VladyslavUsenko/basalt/-/archive/47b063e64fa7dd56ac04eb2d579c5cb5e72c743e/basalt-47b063e64fa7dd56ac04eb2d579c5cb5e72c743e.tar.bz2"
       sha256: "5ccbfdc4c6ec1a4f10374515d8151bfcec60a38262da4961a666a04afa59944f"
@@ -7,6 +7,6 @@ sources:
       url: "https://gitlab.com/VladyslavUsenko/basalt-headers/-/archive/1598a78b8498357406b66e6065e627915c5c58f1/basalt-headers-1598a78b8498357406b66e6065e627915c5c58f1.tar.bz2"
       sha256: "f98ac6835ea05985033175155e558cb3c6255d0189397199e62b4fda8f8981c0"
 patches:
-  "git.20240831":
+  "0.0+git.20240831":
     - patch_file: "patches/cmake-fixes.patch"
     - patch_file: "patches/disable-rosbag.patch"

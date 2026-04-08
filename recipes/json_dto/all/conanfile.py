@@ -24,7 +24,7 @@ class JsonDtoConan(ConanFile):
         basic_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("rapidjson/[>=cci.20250205]")
+        self.requires("rapidjson/[>=0.0+git.20250205]")
 
     def package_id(self):
         self.info.clear()

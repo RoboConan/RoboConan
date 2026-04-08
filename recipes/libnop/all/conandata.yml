@@ -1,4 +1,4 @@
 sources:
-  "cci.20211103":
+  "0.0+git.20211103":
     url: "https://github.com/google/libnop/archive/35e800d81f28c632956c5a592e3cbe8085ecd430.zip"
     sha256: "92405c397ef5de8b1cd009b739ff26329d3d5cdeb7e5b67fa33b70dfa8be9863"

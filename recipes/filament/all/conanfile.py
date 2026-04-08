@@ -132,7 +132,7 @@ class FilamentConan(ConanFile):
 
         # WebGPU dependencies
         if self.options.with_webgpu:
-            self.requires("dawn/[^1.0]")
+            self.requires("dawn/[*]")
 
     def validate(self):
         check_min_cppstd(self, 20)

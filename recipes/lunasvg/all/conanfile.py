@@ -37,7 +37,7 @@ class LunaSVGConan(ConanFile):
         if Version(self.version) >= "3.0":
             self.requires("plutovg/[^1.3.0]")
         else:
-            self.requires("plutovg/0.0.0+git.20230103")
+            self.requires("plutovg/0.0+git.20230103")
 
     def validate(self):
         check_min_cppstd(self, 17 if Version(self.version) >= "3.0" else 11)

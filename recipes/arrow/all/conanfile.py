@@ -168,7 +168,7 @@ class ArrowConan(ConanFile):
         if self.options.with_grpc:
             self.requires("grpc/[^1.50.2]")
         if self._requires_rapidjson:
-            self.requires("rapidjson/[>=cci.20250205]")
+            self.requires("rapidjson/[>=0.0+git.20250205]")
         if self.options.gandiva:
             self.requires("llvm-core/[>=19]")
         if self.options.with_openssl:
@@ -196,7 +196,7 @@ class ArrowConan(ConanFile):
         if self.options.get_safe("with_utf8proc"):
             self.requires("utf8proc/[^2.8.0]")
         if self.options.with_backtrace:
-            self.requires("libbacktrace/[>=cci.20210118]")
+            self.requires("libbacktrace/[>=0.0+git.20210118]")
         if self.options.with_orc:
             self.requires("orc/[^2.0.0]")
 

@@ -60,7 +60,7 @@ class MatplotplusplusCppConan(ConanFile):
 
     def requirements(self):
         self.requires("cimg/[^3.3.5]")
-        self.requires("nodesoup/cci.20200905")
+        self.requires("nodesoup/0.0+git.20200905")
         self.requires("opengl/system")
         self.requires("glfw/[^3.4]")
         self.requires("glad/0.1.36")

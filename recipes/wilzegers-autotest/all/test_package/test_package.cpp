@@ -1,4 +1,4 @@
-// Workaround for a missing <limits> include in wilzegers-autotest/cci.20200921
+// Workaround for a missing <limits> include in wilzegers-autotest/0.0+git.20200921
 #include <limits>
 
 #include <autotest/autotest.hpp>

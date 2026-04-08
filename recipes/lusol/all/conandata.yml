@@ -1,4 +1,4 @@
 sources:
-  "0.0.0+git.20160215":
+  "0.0+git.20160215":
     url: "https://github.com/nwh/lusol/archive/a494d1649c56cf809a53341311658495386b00b5.tar.gz"
     sha256: "fcac3e02382b8fc23ee998defc55b192a1d81343efd9a3cd281382faf8895dee"

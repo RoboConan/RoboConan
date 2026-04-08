@@ -1,9 +1,9 @@
 sources:
-  "cci.20250127":
+  "0.0+git.20250127":
     url: "https://codeload.github.com/chichengcn/gici-open/zip/f2b8579f4fab9dff2b0950b11cc04aefe6d48e3a"
     sha256: "d6604aa2ce830d92b6d1279f5767b6e43208936e258a04a02d41b89afd18c63e"
 patches:
-  "cci.20250127":
+  "0.0+git.20250127":
     - patch_file: "patches/001-cmake-tweaks.patch"
       patch_description: "Allow shared builds, bump CMake standard"
       patch_type: "conan"

@@ -1,4 +1,4 @@
 sources:
-  "0.0.0+git.20241130":
+  "0.0+git.20241130":
     url: "https://github.com/mreineck/pocketfft/archive/0fa0ef591e38c2758e3184c6c23e497b9f732ffa.tar.gz"
     sha256: "1cfd0494ac6fe88e034579cb655b0ef9731b39a0432558e50fe41c4abd6d8684"

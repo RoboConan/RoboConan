@@ -1,7 +1,7 @@
 sources:
-  "0.0.0+git.20190828":
+  "0.0+git.20190828":
     url: "https://github.com/pytorch/QNNPACK/archive/7d2a4e9931a82adc3814275b6219a03e24e36b4c.tar.gz"
     sha256: "0d752bd75f46ce4d7c6f0a60b0d6c0e5918a7b4683c825284f8db3706dd24f76"
 patches:
-  "0.0.0+git.20190828":
+  "0.0+git.20190828":
     - patch_file: "patches/cmake-fixes.patch"

@@ -21,7 +21,7 @@ class MathfuConan(ConanFile):
         basic_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("vectorial/cci.20190628")
+        self.requires("vectorial/0.0+git.20190628")
 
     def package_id(self):
         self.info.clear()

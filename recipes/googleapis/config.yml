@@ -1,5 +1,5 @@
 versions:
-  "cci.20250506":
+  "0.0+git.20250506":
     folder: all
-  "cci.20230501":
+  "0.0+git.20230501":
     folder: all

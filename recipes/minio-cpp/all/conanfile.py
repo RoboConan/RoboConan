@@ -49,7 +49,7 @@ class MinioCppConan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("curlpp/0.8.1.cci.20240530", transitive_headers=True)
+        self.requires("curlpp/0.8.1+git.20240530", transitive_headers=True)
         self.requires("inih/58")
         self.requires("nlohmann_json/[^3]", transitive_headers=True)
         self.requires("openssl/[>=1.1 <4]")

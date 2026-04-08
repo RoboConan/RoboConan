@@ -1,4 +1,4 @@
 sources:
-  "0.0.0.cci.20240816":
+  "0.0+git.20240816":
     url: "https://github.com/codeplaysoftware/portFFT/archive/f29d8e7c103f8b981f719e1194199ca4d5216895.tar.gz"
     sha256: "52501845d84e5d5078648b5b33db976dc813c926e778123ba5b5c07f06f6fd5d"

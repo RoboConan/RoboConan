@@ -76,7 +76,7 @@ class CrashpadConan(ConanFile):
 
     def build_requirements(self):
         self.tool_requires("ninja/[>=1.10.2 <2]")
-        self.tool_requires("gn/[>=cci.20210429]")
+        self.tool_requires("gn/[>=0.0+git.20210429]")
         self.tool_requires("cpython/[^3.12]")
         if self.settings_build.os == "Windows":
             self.win_bash = True

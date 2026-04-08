@@ -177,9 +177,9 @@ class GStPluginsBaseConan(ConanFile):
         if self.options.with_gl:
             self.requires("opengl/system", transitive_headers=True, transitive_libs=True)
             if self.settings.os == "Windows":
-                self.requires("wglext/cci.20200813", transitive_headers=True, transitive_libs=True)
-                self.requires("glext/cci.20210420", transitive_headers=True, transitive_libs=True)
-                self.requires("khrplatform/cci.20200529", transitive_headers=True, transitive_libs=True)
+                self.requires("wglext/0.0+git.20200813", transitive_headers=True, transitive_libs=True)
+                self.requires("glext/0.0+git.20210420", transitive_headers=True, transitive_libs=True)
+                self.requires("khrplatform/0.0+git.20200529", transitive_headers=True, transitive_libs=True)
             if self.options.get_safe("with_egl"):
                 self.requires("egl/system", transitive_headers=True, transitive_libs=True)
             if self.options.get_safe("with_wayland"):

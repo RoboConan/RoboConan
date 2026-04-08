@@ -79,7 +79,7 @@ class DaliConan(ConanFile):
 
     def requirements(self):
         self.requires("openmp/system")
-        self.requires("rapidjson/[>=cci.20250205]")
+        self.requires("rapidjson/[>=0.0+git.20250205]")
         self.requires("cocoapi/[*]")
         self.requires("cutlass/[^4]")
         self.requires("dlpack/[^1]")

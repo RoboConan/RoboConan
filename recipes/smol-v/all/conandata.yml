@@ -1,4 +1,4 @@
 sources:
-  "0.0.0+git.20240926":
+  "0.0+git.20240926":
     url: "https://github.com/aras-p/smol-v/archive/9dd54c379ac29fa148cb1b829bb939ba7381d8f4.tar.gz"
     sha256: "6a0e81cf028f90211fa29819a67ba3710397c652e039750b857d18130f3e05f4"

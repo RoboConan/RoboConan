@@ -1,4 +1,4 @@
 sources:
-  "6.68.cci.20250422":
+  "6.68+git.20250422":
     url: "https://github.com/herumi/xbyak_riscv/archive/6a2981a5ec501cbacd8373162a48713ec3ed3e8a.tar.gz"
     sha256: "c9486f037cb5e293134edff9339c6911d287eec119000e6efedb2c3754bdaa10"

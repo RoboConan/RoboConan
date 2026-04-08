@@ -76,13 +76,13 @@ class OnnxRuntimeConan(ConanFile):
         eigen_version = "[^5.0]" if Version(self.version) >= "1.19.0" else "3.4.0"
         self.requires(f"eigen/{eigen_version}")
         self.requires("ms-gsl/[^4.0.0]")
-        self.requires("cpuinfo/[>=cci.20231129]")
+        self.requires("cpuinfo/[>=0.0+git.20231129]")
         if self.settings.os == "Windows":
             self.requires("wil/[^1.0.240803.1]")
         else:
             self.requires("nsync/[^1.26.0]")
         if self.options.with_xnnpack:
-            self.requires("xnnpack/[>=cci.20230715]")
+            self.requires("xnnpack/[>=0.0+git.20230715]")
         if self.options.with_cuda:
             # Included in the public onnxruntime/core/providers/cuda/cuda_context.h header
             self.cuda.requires("cudart", transitive_headers=True, transitive_libs=True)

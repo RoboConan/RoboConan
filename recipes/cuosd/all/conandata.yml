@@ -1,7 +1,7 @@
 sources:
-  "0.0.0+git.20230516":
+  "0.0+git.20230516":
     url: "https://github.com/NVIDIA-AI-IOT/Lidar_AI_Solution/archive/30dac933e540c3c08052dc62c51f55e803df8dac.tar.gz"
     sha256: "1fc0289325cc7b0923c8ad005648fa0eb9ff4c0ba22d64a88c1e0994755f4a2b"
 patches:
-  "0.0.0+git.20230516":
+  "0.0+git.20230516":
     - patch_file: "patches/add-missing-include.patch"

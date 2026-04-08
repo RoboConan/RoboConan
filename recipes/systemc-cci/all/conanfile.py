@@ -39,7 +39,7 @@ class SystemccciConan(ConanFile):
 
     def requirements(self):
         self.requires("systemc/2.3.4", transitive_headers=True, transitive_libs=True)
-        self.requires("rapidjson/[>=cci.20250205]")
+        self.requires("rapidjson/[>=0.0+git.20250205]")
 
     def validate(self):
         if is_apple_os(self):

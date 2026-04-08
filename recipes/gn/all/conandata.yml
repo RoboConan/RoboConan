@@ -1,8 +1,8 @@
 sources:
   # Note: bundles from googlesource.com are typically not sha stable
-  "cci.20250528":
+  "0.0+git.20250528":
     url: "https://gn.googlesource.com/gn/+archive/afd24ed11bc5fbef775a3ffe46c72e6bdca0fa60.tar.gz"
-  "cci.20240611":
+  "0.0+git.20240611":
     url: "https://gn.googlesource.com/gn/+archive/b2afae122eeb6ce09c52d63f67dc53fc517dbdc8.tar.gz"
   # Experimental fork of GN by Qt, used to build QtWebEngine
   "qt-6.9.0":

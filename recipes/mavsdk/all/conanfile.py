@@ -48,7 +48,7 @@ class MavsdkConan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("mavlink/1.0.12.cci.20240530", transitive_headers=True)
+        self.requires("mavlink/1.0.12+git.20240530", transitive_headers=True)
         self.requires("jsoncpp/[^1.9.6]")
         self.requires("tinyxml2/[^10.0.0]")
         self.requires("libcurl/[>=7.86 <9]")

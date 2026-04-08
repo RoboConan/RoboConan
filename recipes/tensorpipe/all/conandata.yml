@@ -1,4 +1,4 @@
 sources:
-  "cci.20250815":
+  "0.0+git.20250815":
     url: "https://github.com/pytorch/tensorpipe/archive/af0118d13e52f5a08841464a768e01a0bf3e3075.tar.gz"
     sha256: "c7f7f2016d4fdcbf12733508cfa6fd57c4843d018804055eb9f2a4fb9d9441e4"

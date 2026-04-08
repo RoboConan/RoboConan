@@ -3,5 +3,5 @@ versions:
     folder: all
   "0.0.13":
     folder: all
-  "0.0.0+git.20230103":
+  "0.0+git.20230103":
     folder: all

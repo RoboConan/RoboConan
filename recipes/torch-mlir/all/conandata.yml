@@ -1,9 +1,9 @@
 sources:
-  "cci.20250203":
+  "0.0+git.20250203":
     url: "https://github.com/llvm/torch-mlir/archive/eefc553ffca45fd2432641918a73b810f64bba39.tar.gz"
     sha256: "49b619b2cac5e30975c0e65a239a5c542315976be242999d4e747c7fc3821e4f"
 patches:
-  "cci.20250203":
+  "0.0+git.20250203":
     - patch_file: "patches/add-missing-mlir-dependency.patch"
       patch_description: "Add a missing MLIR dependency"
       patch_type: "portability"

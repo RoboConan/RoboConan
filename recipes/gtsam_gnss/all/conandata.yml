@@ -1,4 +1,4 @@
 sources:
-  "0.0.0.cci.20250213":
+  "0.0+git.20250213":
     url: "https://github.com/taroz/gtsam_gnss/archive/b2a70470621c28d4c40883d6fab9949bf24c5064.tar.gz"
     sha256: "fba772e5704c1fcdddb26907ba139f4b05812607017f6a95f10bf826c2a72fc6"

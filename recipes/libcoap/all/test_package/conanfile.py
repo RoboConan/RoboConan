@@ -18,7 +18,7 @@ class TestPackageConan(ConanFile):
     def generate(self):
         tc = CMakeToolchain(self)
         version = self.dependencies["libcoap"].ref.version
-        if version == "cci.20200424":
+        if version == "0.0+git.20200424":
             tc.preprocessor_definitions["LIB_VERSION"] = "2"
         else:
             tc.preprocessor_definitions["LIB_VERSION"] = "3"

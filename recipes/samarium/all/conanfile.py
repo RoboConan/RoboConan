@@ -48,7 +48,7 @@ class SamariumConan(ConanFile):
         # Undefined symbols for architecture arm64: "sf::Keyboard::isKeyPressed(sf::Keyboard::Key)"
         # when using inlined is_key_pressed function
         self.requires("sfml/[^2.6.1]", transitive_headers=True, transitive_libs=True)
-        self.requires("range-v3/cci.20240905", transitive_headers=True)
+        self.requires("range-v3/[>=0.12.0 <1]", transitive_headers=True)
         self.requires("stb/[*]")
         self.requires("tl-expected/20190710", transitive_headers=True)
 

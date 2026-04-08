@@ -43,14 +43,14 @@ class IridescenceConan(ConanFile):
         self.requires("glm/1.0.1")
         self.requires("libjpeg-meta/latest")
         self.requires("libpng/[~1.6]")
-        self.requires("portable-file-dialogs/cci.20221111", transitive_headers=True)
+        self.requires("portable-file-dialogs/0.1.0+git.20221111", transitive_headers=True)
         self.requires("imgui/[^1 <1.91]", transitive_headers=True, transitive_libs=True)
         self.requires("implot/[>=0.16 <1]")
-        self.requires("imguizmo/cci.20231114")
+        self.requires("imguizmo/1.83+git.20231114")
         self.requires("glfw/[^3.4]", transitive_headers=True, transitive_libs=True)
         self.requires("opengl/system")
         # https://github.com/koide3/iridescence/blob/7034275ee6516eb4d155f645cd8327173edfeb9d/thirdparty/gl3w/GL/glcorearb.h#L82
-        self.requires("khrplatform/cci.20200529", transitive_headers=True)
+        self.requires("khrplatform/0.0+git.20200529", transitive_headers=True)
 
     def validate(self):
         check_min_cppstd(self, 17)

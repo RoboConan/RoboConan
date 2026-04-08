@@ -35,7 +35,7 @@ class JungleConan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("forestdb/cci.20220727")
+        self.requires("forestdb/0.0+git.20220727")
 
     def validate(self):
         check_min_cppstd(self, 11)

@@ -46,16 +46,16 @@ class XnnpackConan(ConanFile):
 
     def requirements(self):
         #  https://github.com/google/XNNPACK/blob/ed5f9c0562e016a08b274a4579de5ef500fec134/include/xnnpack.h#L15
-        self.requires("pthreadpool/[>=cci.20250723]", transitive_headers=True)
-        self.requires("cpuinfo/[>=cci.20231129]")
-        self.requires("fp16/[>=cci.20210320]")
-        self.requires("fxdiv/[>=cci.20200417]")
+        self.requires("pthreadpool/[>=0.0+git.20250723]", transitive_headers=True)
+        self.requires("cpuinfo/[>=0.0+git.20231129]")
+        self.requires("fp16/[>=0.0+git.20210320]")
+        self.requires("fxdiv/[>=0.0+git.20200417]")
 
     def validate(self):
         check_min_vs(self, 192)
         compiler = self.settings.compiler
         compiler_version = Version(compiler.version)
-        # since cci.20230715, xnnpack requires avx512 header file
+        # since 0.0+git.20230715, xnnpack requires avx512 header file
         if (compiler == "gcc" and compiler_version < "11") or \
             (compiler == "clang" and compiler_version < "8"):
             raise ConanInvalidConfiguration(f"{self.ref} doesn't support {compiler} {compiler.version}")
@@ -132,9 +132,9 @@ class XnnpackConan(ConanFile):
             self.cpp_info.components["core"].system_libs = ["m"]
         self.cpp_info.components["core"].requires = ["cpuinfo::cpuinfo", "fp16::fp16", "fxdiv::fxdiv", "pthreadpool::pthreadpool"]
         if not self.options.shared:
-            if Version(self.version) >= "cci.20250610":
+            if Version(self.version) >= "0.0+git.20250610":
                 self.cpp_info.components["microkernels-prod"].libs = ["xnnpack-microkernels-prod"]
                 self.cpp_info.components["core"].requires.append("microkernels-prod")
-            elif Version(self.version) >= "cci.20240823":
+            elif Version(self.version) >= "0.0+git.20240823":
                 self.cpp_info.components["microkernels-prod"].libs = ["microkernels-prod"]
                 self.cpp_info.components["core"].requires.append("microkernels-prod")

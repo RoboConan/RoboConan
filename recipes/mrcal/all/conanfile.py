@@ -38,7 +38,7 @@ class MrcalConan(ConanFile):
         self.requires("suitesparse-cholmod/[^5.3.0]", transitive_headers=True, transitive_libs=True)
         self.requires("freeimage/3.18.0")
         if self.options.with_libelas:
-            self.requires("libelas/cci.20150630")
+            self.requires("libelas/0.0+git.20150630")
 
     def validate(self):
         if self.settings.os not in ["Linux", "FreeBSD"] and not is_apple_os(self):

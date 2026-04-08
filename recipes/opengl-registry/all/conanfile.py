@@ -21,7 +21,7 @@ class OpenGLRegistryConan(ConanFile):
         basic_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("khrplatform/cci.20200529")
+        self.requires("khrplatform/0.0+git.20200529")
 
     def package_id(self):
         self.info.clear()

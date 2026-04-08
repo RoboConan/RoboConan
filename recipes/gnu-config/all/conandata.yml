@@ -1,11 +1,11 @@
 sources:
-  "cci.20210814":
+  "0.0+git.20210814":
     url:
       - "http://git.savannah.gnu.org/cgit/config.git/snapshot/config-191bcb948f7191c36eefe634336f5fc5c0c4c2be.tar.gz"
       - "https://c3i.jfrog.io/artifactory/conan-center-backup-sources/302e5e7f3c4996976c58efde8b2f28f71d51357e784330eeed738e129300dc33"
     sha256: "302e5e7f3c4996976c58efde8b2f28f71d51357e784330eeed738e129300dc33"
 patches:
-  "cci.20210814":
-    - patch_file: "patches/cci.20210814-0001-tvos-support.patch"
+  "0.0+git.20210814":
+    - patch_file: "patches/20210814-0001-tvos-support.patch"
       patch_description: "add support to tvOS"
       patch_type: "portability"

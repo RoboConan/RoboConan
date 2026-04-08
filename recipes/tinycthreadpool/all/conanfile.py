@@ -40,7 +40,7 @@ class TinyCThreadPoolConan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("tinycthread/cci.20161001", transitive_headers=True)
+        self.requires("tinycthread/0.0+git.20161001", transitive_headers=True)
 
     def generate(self):
         tc = CMakeToolchain(self)

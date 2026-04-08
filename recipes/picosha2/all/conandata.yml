@@ -1,5 +1,5 @@
 sources:
-  "cci.20220808":
+  "0.0+git.20220808":
     url: "https://github.com/okdshin/PicoSHA2/archive/27fcf6979298949e8a462e16d09a0351c18fcaf2.tar.gz"
     sha256: "18d82bb79c021ccf4ce58125b64691accef54237ba5194462740bacf8b39d8a9"
   "1.0.0":

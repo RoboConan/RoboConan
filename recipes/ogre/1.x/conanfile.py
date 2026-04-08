@@ -270,7 +270,7 @@ class OgreConanFile(ConanFile):
             # Used in the public headers of RenderSystems
             self.requires("opengl/system", transitive_headers=True, transitive_libs=True)
             self.requires("glad/0.1.36", transitive_headers=True, transitive_libs=True)
-            self.requires("khrplatform/cci.20200529", transitive_headers=True)
+            self.requires("khrplatform/0.0+git.20200529", transitive_headers=True)
             if self.options.glsupport_use_egl:
                 self.requires("egl/system")
         if self.settings.os in ["Linux", "FreeBSD"]:

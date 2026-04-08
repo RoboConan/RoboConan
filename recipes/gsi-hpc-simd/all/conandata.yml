@@ -1,4 +1,4 @@
 sources:
-  "0.0.0+git.20250901":
+  "0.0+git.20250901":
     url: "https://github.com/GSI-HPC/simd/archive/91a4477dd70145f6dc3f070601005117e99a3e06.tar.gz"
     sha256: "c89e8b98644dbabb4328d7e4fad7f9c2b63a330bff0b5aa8440c5f4e02aa1fe3"

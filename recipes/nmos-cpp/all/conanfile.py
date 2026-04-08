@@ -58,7 +58,7 @@ class NmosCppConan(ConanFile):
         self.requires("openssl/[>=1.1 <4]")
         self.requires("json-schema-validator/2.3.0")
         self.requires("nlohmann_json/[^3]")
-        if Version(self.version) >= "cci.20240222":
+        if Version(self.version) >= "0.0+git.20240222":
             self.requires("jwt-cpp/0.7.0")
 
         if self.options.get_safe("with_dnssd") == "mdnsresponder":
@@ -213,7 +213,7 @@ class NmosCppConan(ConanFile):
 
         # until https://github.com/sony/nmos-cpp/commit/9489d84098ddc8cc514b7e4d5afe740dee4518ee
         # direct dependency on nlohmann_json was missing
-        if Version(self.version) < "cci.20221203":
+        if Version(self.version) < "0.0+git.20221203":
             components["json_schema_validator"].setdefault("requires", []).append("nlohmann_json::nlohmann_json")
 
         # Save components informations in json file

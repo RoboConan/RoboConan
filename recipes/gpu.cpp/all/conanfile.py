@@ -22,7 +22,7 @@ class GpuCppConan(ConanFile):
         basic_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("dawn/cci.20240726")
+        self.requires("dawn/0.0+git.20240726")
 
     def package_id(self):
         self.info.clear()

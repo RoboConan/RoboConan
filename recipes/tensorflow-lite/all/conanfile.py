@@ -54,17 +54,17 @@ class TensorflowLiteConan(ConanFile):
         self.requires("flatbuffers/24.3.25", transitive_headers=True)
         self.requires("protobuf/[*]")
         self.requires("eigen/[>=3.3 <6]")
-        self.requires("farmhash/[>=cci.20190513]")
-        self.requires("fp16/[>=cci.20210320]")
-        self.requires("fxdiv/[>=cci.20200417]")
-        self.requires("gemmlowp/[>=cci.20210928]")
-        self.requires("ooura-fft/[>=cci.20061228]")
-        self.requires("pthreadpool/[>=cci.20231129]")
-        self.requires("ruy/[>=cci.20231129]")
+        self.requires("farmhash/[>=0.0+git.20190513]")
+        self.requires("fp16/[>=0.0+git.20210320]")
+        self.requires("fxdiv/[>=0.0+git.20200417]")
+        self.requires("gemmlowp/[>=0.0+git.20210928]")
+        self.requires("ooura-fft/[>=0.0+git.20061228]")
+        self.requires("pthreadpool/[>=0.0+git.20231129]")
+        self.requires("ruy/[>=0.0+git.20231129]")
         if self.settings.arch in ["x86", "x86_64"]:
-            self.requires("intel-neon2sse/[>=cci.20210225]")
+            self.requires("intel-neon2sse/[>=0.0+git.20210225]")
         if self.options.with_xnnpack:
-            self.requires("xnnpack/[>=cci.20231026]")
+            self.requires("xnnpack/[>=0.0+git.20231026]")
 
     def validate(self):
         check_min_cppstd(self, 20)

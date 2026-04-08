@@ -61,7 +61,7 @@ class CassandraCppDriverConan(ConanFile):
     def requirements(self):
         self.requires("libuv/[^1.45.0]")
         self.requires("http_parser/2.9.4")
-        self.requires("rapidjson/[>=cci.20250205]")
+        self.requires("rapidjson/[>=0.0+git.20250205]")
 
         if self.options.with_openssl:
             self.requires("openssl/[>=1.1 <4]")

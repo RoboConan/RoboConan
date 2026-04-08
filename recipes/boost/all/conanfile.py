@@ -586,7 +586,7 @@ class BoostConan(ConanFile):
         if self._with_zstd:
             self.requires("zstd/[>=1.5 <1.6]")
         if self._with_stacktrace_backtrace:
-            self.requires("libbacktrace/cci.20210118", transitive_headers=True, transitive_libs=True)
+            self.requires("libbacktrace/0.0+git.20210118", transitive_headers=True, transitive_libs=True)
         if self._with_icu:
             self.requires("icu/[*]")
         if self._with_iconv:

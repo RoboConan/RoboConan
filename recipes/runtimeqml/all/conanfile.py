@@ -42,7 +42,7 @@ class RuntimeQml(ConanFile):
         }
 
     def requirements(self):
-        qt_version = "[>=6.6 <7]" if Version(self.version) >= "cci.20220923" else "[~5.15]"
+        qt_version = "[>=6.6 <7]" if Version(self.version) >= "0.0+git.20220923" else "[~5.15]"
         self.requires(f"qt/{qt_version}", transitive_headers=True, transitive_libs=True, options=self._qt_options)
 
     def validate(self):

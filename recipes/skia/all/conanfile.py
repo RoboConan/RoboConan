@@ -38,7 +38,7 @@ class SkiaConan(ConanFile):
         bazel_layout(self, src_folder="src", build_folder="src")
 
     def requirements(self):
-        self.requires("dawn/cci.20240726")
+        self.requires("dawn/0.0+git.20240726")
         self.requires("spirv-tools/[^1.3.239.0]")
         self.requires("spirv-cross/[^1.3.239.0]")
         self.requires("expat/[>=2.6.2 <3]")

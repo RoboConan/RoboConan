@@ -51,7 +51,7 @@ class GoogleCloudCppConan(ConanFile):
         # TODO: googleapis is hard to unvendorize, as it creates google-cloud-cpp:: targets
         #  and it's not trivial to replace them with the googleapis:: targets,
         #  there's not clean 1:1 mapping between them either way
-        # self.requires("googleapis/cci.20220531")
+        # self.requires("googleapis/0.0+git.20220531")
 
     def build_requirements(self):
         self.tool_requires("grpc/<host_version>")

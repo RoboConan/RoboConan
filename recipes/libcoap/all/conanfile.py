@@ -56,7 +56,7 @@ class LibCoapConan(ConanFile):
         tc.variables["WITH_EPOLL"] = self.options.with_epoll
         tc.variables["ENABLE_DTLS"] = self.options.dtls_backend is not None
         tc.variables["DTLS_BACKEND"] = self.options.dtls_backend
-        if self.version != "cci.20200424":
+        if self.version != "0.0+git.20200424":
             tc.variables["ENABLE_DOCS"] = False
             tc.variables["ENABLE_EXAMPLES"] = False
         tc.generate()
@@ -76,7 +76,7 @@ class LibCoapConan(ConanFile):
         rmdir(self, os.path.join(self.package_folder, "lib", "cmake"))
 
     def package_info(self):
-        if self.version == "cci.20200424":
+        if self.version == "0.0+git.20200424":
             library_name = "coap"
             cmake_target_name = "coap"
             pkgconfig_filename = "libcoap-2"

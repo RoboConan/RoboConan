@@ -1,5 +1,5 @@
 sources:
-  "cci.20250623":
+  "0.0+git.20250623":
     cmake:
       url: "https://github.com/jrl-umi3218/jrl-cmakemodules/archive/9982101b22135509d684e2228dac747e7afa3bcf.zip"
       sha256: "0a140d5826e68ab9f1f1488acd9acaf9ce1b0c571f8225dbff1f0de372515009"

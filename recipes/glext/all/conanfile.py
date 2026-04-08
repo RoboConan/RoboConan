@@ -23,7 +23,7 @@ class GlextConan(ConanFile):
 
     def requirements(self):
         self.requires("opengl/system")
-        self.requires("khrplatform/cci.20200529")
+        self.requires("khrplatform/0.0+git.20200529")
 
     def package_id(self):
         self.info.clear()

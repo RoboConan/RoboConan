@@ -289,7 +289,7 @@ class VtkConan(ConanFile):
             # Dawn option has been disabled because its support is still very experimental.
             # https://gitlab.kitware.com/vtk/vtk/-/blob/v9.3.1/Rendering/WebGPU/README.md?ref_type=tags#how-to-build-vtk-with-dawn-highly-experimental
             # Dawn recipe is not yet merged: #24735
-            self.requires("dawn/cci.20240726")
+            self.requires("dawn/0.0+git.20240726")
         if self.options.with_eigen:
             self.requires("eigen/[>=3.3 <6]")
         if self.options.with_expat:

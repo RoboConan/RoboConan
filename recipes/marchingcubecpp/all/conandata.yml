@@ -1,4 +1,4 @@
 sources:
-  "git.20230911":
+  "0.0+git.20230911":
     url: "https://github.com/aparis69/MarchingCubeCpp/archive/f03a1b3ec29b1d7d865691ca8aea4f1eb2c2873d.tar.gz"
     sha256: "227c10b2cffe886454b92a0e9ef9f0c9e8e001d00ea156cc37c8fc43055c9ca6"

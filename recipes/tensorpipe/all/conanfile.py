@@ -60,7 +60,7 @@ class TensorpipeConan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("libnop/cci.20211103")
+        self.requires("libnop/0.0+git.20211103")
         self.requires("libuv/[^1.45.0]")
         if self.options.cuda:
             self.cuda.requires("cuda-driver-stubs")

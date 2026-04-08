@@ -44,12 +44,12 @@ class NnpackConan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("pthreadpool/[>=cci.20231129]", transitive_headers=True)
-        self.requires("cpuinfo/[>=cci.20231129]")
-        self.requires("fp16/[>=cci.20210320]")
-        self.requires("fxdiv/[>=cci.20200417]")
+        self.requires("pthreadpool/[>=0.0+git.20231129]", transitive_headers=True)
+        self.requires("cpuinfo/[>=0.0+git.20231129]")
+        self.requires("fp16/[>=0.0+git.20210320]")
+        self.requires("fxdiv/[>=0.0+git.20200417]")
         if self.options.backend == "psimd":
-            self.requires("psimd/[>=cci.20200517]")
+            self.requires("psimd/[>=0.0+git.20200517]")
 
     def validate(self):
         check_min_cppstd(self, 11)

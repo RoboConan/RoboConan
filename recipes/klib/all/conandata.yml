@@ -1,4 +1,4 @@
 sources:
-  "cci.20250205":
+  "0.0+git.20250205":
     url: "https://github.com/attractivechaos/klib/archive/5c1451caa1ee476624d00eed71810532c89b82d1.zip"
     sha256: "47fcc520a9b3163b667d0cebe9c4bfe08fd9ef885168c0ad89cc3e7f8f350d66"

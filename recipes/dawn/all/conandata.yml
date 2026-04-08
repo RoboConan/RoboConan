@@ -1,8 +1,8 @@
 sources:
-  "cci.20240726":
+  "0.0+git.20240726":
     url: "https://dawn.googlesource.com/dawn/+archive/076d076106a07f8a68ea7566f6b9f64fbe0c0687.tar.gz"
 patches:
-  "cci.20240726":
+  "0.0+git.20240726":
     - patch_file: "patches/0001-unvendor-third-party.patch"
 spirv-tools-sources:
   "1.3.290.0":

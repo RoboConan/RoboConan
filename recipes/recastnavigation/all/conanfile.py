@@ -56,7 +56,7 @@ class RecastNavigationConan(ConanFile):
         rmdir(self, os.path.join(self.package_folder, "lib", "pkgconfig"))
         rmdir(self, os.path.join(self.package_folder, "lib", "cmake"))
         rm(self, "*.pdb", self.package_folder, recursive=True)
-        if self.version == "cci.20200511":
+        if self.version == "0.0+git.20200511":
             # Move the includes under recastnavigation/ prefix for future compatibility
             mkdir(self, os.path.join(self.package_folder, "include", "recastnavigation"))
             move_folder_contents(self, os.path.join(self.package_folder, "include"),
@@ -67,7 +67,7 @@ class RecastNavigationConan(ConanFile):
         self.cpp_info.set_property("pkg_config_name", "recastnavigation")
 
         suffix = ""
-        if self.settings.build_type == "Debug" and self.version != "cci.20200511":
+        if self.settings.build_type == "Debug" and self.version != "0.0+git.20200511":
             suffix = "-d"
 
         self.cpp_info.components["Recast"].set_property("cmake_target_name", "RecastNavigation::Recast")
@@ -88,6 +88,6 @@ class RecastNavigationConan(ConanFile):
         self.cpp_info.components["DebugUtils"].libs = ["DebugUtils" + suffix]
         self.cpp_info.components["DebugUtils"].requires = ["Recast", "Detour", "DetourTileCache"]
 
-        if self.version == "cci.20200511":
+        if self.version == "0.0+git.20200511":
             for component in self.cpp_info.components.values():
                 component.includedirs.append(os.path.join("include", "recastnavigation"))

@@ -48,7 +48,7 @@ class CppBenchmark(ConanFile):
 
     def requirements(self):
         self.requires("hdrhistogram-c/0.11.6")
-        self.requires("cpp-optparse/cci.20171104")
+        self.requires("cpp-optparse/0.0+git.20171104")
 
     def validate(self):
         check_min_cppstd(self, self._min_cppstd)

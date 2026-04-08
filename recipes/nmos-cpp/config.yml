@@ -1,13 +1,13 @@
 versions:
-  "cci.20240223":
+  "0.0+git.20240223":
     folder: all
-  "cci.20221203":
+  "0.0+git.20221203":
     folder: all
-  "cci.20220620":
+  "0.0+git.20220620":
     folder: all
-  "cci.20220428":
+  "0.0+git.20220428":
     folder: all
-  "cci.20220208":
+  "0.0+git.20220208":
     folder: all
-  "cci.20220120":
+  "0.0+git.20220120":
     folder: all

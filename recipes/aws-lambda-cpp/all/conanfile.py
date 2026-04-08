@@ -48,7 +48,7 @@ class AwsLambdaRuntimeConan(ConanFile):
     def requirements(self):
         self.requires("libcurl/[>=7.78.0 <9]")
         if self.options.get_safe("with_backtrace", True):
-            self.requires("libbacktrace/cci.20210118")
+            self.requires("libbacktrace/0.0+git.20210118")
 
     def validate(self):
         check_min_cppstd(self, self._min_cppstd)

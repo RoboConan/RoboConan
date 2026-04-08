@@ -55,7 +55,7 @@ class SentryBreakpadConan(ConanFile):
         if self.settings.os in ("FreeBSD", "Linux"):
             # linux-syscal-support is a public dependency
             # see https://github.com/conan-io/conan-center-index/pull/16752#issuecomment-1487241864
-            self.requires("linux-syscall-support/cci.20200813", transitive_headers=True)
+            self.requires("linux-syscall-support/0.0+git.20200813", transitive_headers=True)
 
     def validate(self):
         check_min_cppstd(self, self._min_cppstd)

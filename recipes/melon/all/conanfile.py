@@ -21,7 +21,7 @@ class PackageConan(ConanFile):
         basic_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("range-v3/[0.12.0 <1]")
+        self.requires("range-v3/[>=0.12.0 <1]")
         self.requires("fmt/[>=5]")
 
     def package_id(self):

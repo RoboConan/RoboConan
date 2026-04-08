@@ -111,7 +111,7 @@ class BehaviorTreeCPPConan(ConanFile):
         if self._with_lexy:
             self.requires("foonathan-lexy/2022.12.1")
         if self._with_minitrace:
-            self.requires("minitrace/cci.20230905")
+            self.requires("minitrace/0.0+git.20230905")
         if self._with_sqlite3:
             self.requires("sqlite3/[>=3.45.0 <4]")
         if self._with_tinyxml2:

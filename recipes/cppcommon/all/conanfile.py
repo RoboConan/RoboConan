@@ -51,7 +51,7 @@ class CppCommon(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        if Version(self.version) < "1.0.3" or self.version == "cci.20201104":
+        if Version(self.version) < "1.0.3" or self.version == "0.0+git.20201104":
             self.requires("fmt/[>=5 <9]", transitive_headers=True)
         else:
             self.requires("fmt/[>=5]", transitive_headers=True, transitive_libs=True)

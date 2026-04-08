@@ -1,7 +1,7 @@
 sources:
-  "0.0.0+git.20201222":
+  "0.0+git.20201222":
     url: "https://github.com/Maratyszcza/NNPACK/archive/c07e3a0400713d546e0dea2d5466dd22ea389c73.tar.gz"
     sha256: "7af7792ba33873fd8c0ca80f261c565e254ffb1348497da74541bf2909bf013d"
 patches:
-  "0.0.0+git.20201222":
+  "0.0+git.20201222":
     - patch_file: "patches/cmake-fixes.patch"

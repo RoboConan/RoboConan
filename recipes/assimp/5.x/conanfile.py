@@ -174,9 +174,9 @@ class AssimpConan(ConanFile):
         if self._depends_on_kuba_zip:
             self.requires("kuba-zip/[>=0.3.0 <1]")
         if self._depends_on_poly2tri:
-            self.requires("poly2tri/cci.20130502")
+            self.requires("poly2tri/0.0+git.20130502")
         if self._depends_on_rapidjson:
-            self.requires("rapidjson/[>=cci.20250205]")
+            self.requires("rapidjson/[>=0.0+git.20250205]")
         if self._depends_on_draco:
             self.requires("draco/1.5.6")
         if self._depends_on_clipper:

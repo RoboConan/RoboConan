@@ -56,7 +56,7 @@ class SkyrUrlConan(ConanFile):
 
     def requirements(self):
         self.requires("tl-expected/1.1.0", transitive_headers=True)
-        self.requires("range-v3/0.12.0", transitive_headers=True)
+        self.requires("range-v3/[>=0.12.0 <1]", transitive_headers=True)
         if self.options.with_json:
             self.requires("nlohmann_json/[^3]")
 

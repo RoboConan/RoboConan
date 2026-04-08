@@ -61,7 +61,7 @@ class RoundingSatConan(ConanFile):
             self.requires("gmp/[^6]")
 
     def validate(self):
-        check_min_cppstd(self, 20 if Version(self.version) > "0.0.0+git.20240602" else 17)
+        check_min_cppstd(self, 20 if Version(self.version) > "0.0+git.20240602" else 17)
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
@@ -79,7 +79,7 @@ class RoundingSatConan(ConanFile):
         tc = CMakeToolchain(self)
         tc.cache_variables["soplex"] = self.options.with_soplex
         tc.cache_variables["gmp"] = self.options.with_gmp
-        if Version(self.version) > "0.0.0+git.20240602":
+        if Version(self.version) > "0.0+git.20240602":
             commit = self.conan_data["sources"][self.version]["url"].split("/")[-2]
             tc.preprocessor_definitions["GIT_BRANCH"] = '"master"'
             tc.preprocessor_definitions["GIT_COMMIT_HASH"] = f'"{commit}"'

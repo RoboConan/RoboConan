@@ -32,7 +32,7 @@ class MsdfAtlasGenConan(ConanFile):
         if Version(self.version) < "1.3":
             self.requires("msdfgen/[^1.9.1]")
             self.requires("artery-font-format/1.0")
-            self.requires("lodepng/cci.20200615")
+            self.requires("lodepng/0.0+git.20200615")
         else:
             self.requires("msdfgen/[^1.12]")
             self.requires("artery-font-format/1.1")

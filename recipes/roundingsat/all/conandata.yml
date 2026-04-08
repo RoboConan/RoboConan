@@ -1,8 +1,8 @@
 sources:
-  "0.0.0+git.20250909":
+  "0.0+git.20250909":
     url: "https://gitlab.com/MIAOresearch/software/roundingsat/-/archive/a5c28f990cf4c7f3dc5fd7ad3797a83befc2d620/roundingsat-a5c28f990cf4c7f3dc5fd7ad3797a83befc2d620.tar.bz2"
     sha256: "b94cc3f25f39cec97b376960155abbe24653671b5dba02285412ddbd332238b6"
   # last version with C++17
-  "0.0.0+git.20240602":
+  "0.0+git.20240602":
     url: "https://gitlab.com/MIAOresearch/software/roundingsat/-/archive/455ea9bc581c81aa17c2f8a3c6b8610971535c77/roundingsat-455ea9bc581c81aa17c2f8a3c6b8610971535c77.tar.bz2"
     sha256: "5270129c4d4bd059c93985aa488d202403e22b09d9cb2fc19dc83d33ed527708"

@@ -1,4 +1,4 @@
 sources:
-  "git.20171214":
+  "0.0+git.20171214":
     url: "https://github.com/acados/qpDUNES-dev/archive/4f5bdb4ff19a4a2896abe5bfd8fbde5710f34950.tar.gz"
     sha256: "ec4ff906e55866c61ba4faa7f65d00ef61839b01838ba78a244f7415654b2e0d"

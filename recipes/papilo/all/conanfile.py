@@ -95,7 +95,7 @@ class PapiloConan(ConanFile):
             if self.options.with_gurobi:
                 self.requires("gurobi/[*]")
             if self.options.with_roundingsat:
-                self.requires("roundingsat/[<0.0.0+git.20250909]")
+                self.requires("roundingsat/[<0.0+git.20250909]")
 
     def validate(self):
         check_min_cppstd(self, 14)

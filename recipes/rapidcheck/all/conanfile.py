@@ -57,7 +57,7 @@ class RapidcheckConan(ConanFile):
             raise ConanInvalidConfiguration("The option `rapidcheck:enable_gmock` requires `gtest/*:build_gmock=True`")
 
     def build_requirements(self):
-        if Version(self.version) >= "cci.20231215":
+        if Version(self.version) >= "0.0+git.20231215":
             self.tool_requires("cmake/[>=3.16 <5]")
 
     def source(self):

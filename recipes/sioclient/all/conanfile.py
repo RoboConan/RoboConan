@@ -46,7 +46,7 @@ class SioclientConan(ConanFile):
     def requirements(self):
         self.requires("websocketpp/[>=0.8.2 <1]")
         self.requires("asio/[>=1.30.2 <1.32]")
-        self.requires("rapidjson/[>=cci.20250205]")
+        self.requires("rapidjson/[>=0.0+git.20250205]")
         if self.options.with_openssl:
             self.requires("openssl/[>=1.1 <4]")
 

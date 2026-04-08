@@ -98,7 +98,7 @@ class SDLMixerConan(ConanFile):
         if self.options.mpg123:
             self.requires("mpg123/[^1.31.2]")
         if self.options.minimp3:
-            self.requires("minimp3/cci.20211201")
+            self.requires("minimp3/0.0+git.20211201")
         if self.options.vorbis == "stb":
             self.requires("stb/[*]")
         elif self.options.vorbis == "vorbisfile":
@@ -124,7 +124,7 @@ class SDLMixerConan(ConanFile):
             # self.requires("fluidsynth/2.2")
             pass
         if self.options.get_safe("tinymidi"):
-            self.requires("tinymidi/cci.20130325")
+            self.requires("tinymidi/0.0+git.20130325")
         # https://github.com/libsdl-org/SDL_mixer/blob/release-2.6.3/CMakeLists.txt#L148-L162
         if self.options.vorbis or self.options.flac or self.options.opus:
             self.requires("ogg/[^1.3.5]")

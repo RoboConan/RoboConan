@@ -59,7 +59,7 @@ class SfmlConan(ConanFile):
             self.requires("openal-soft/1.22.2")
             self.requires("vorbis/[^1.3.7]")
             if Version(self.version) >= "2.6.0":
-                self.requires("minimp3/cci.20211201")
+                self.requires("minimp3/0.0+git.20211201")
 
     def validate(self):
         if self.settings.os not in ["Windows", "Linux", "FreeBSD", "Android", "Macos", "iOS"]:

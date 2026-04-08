@@ -1,4 +1,4 @@
 sources:
-  "2.6.5.cci.20240911":
+  "2.6.5+git.20240911":
     url: "https://github.com/hpc/xpmem/archive/3bcab55479489fdd93847fa04c58ab16e9c0b3fd.zip"
     sha256: "70a5c42004c9f805b715ae2ed2203b8e4d3113b1efe65ff0a4f2f413af8e657b"

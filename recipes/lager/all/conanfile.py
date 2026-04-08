@@ -38,7 +38,7 @@ class LagerConan(ConanFile):
 
     def requirements(self):
         self.requires("boost/[^1.71.0]", libs=False)
-        self.requires("zug/0.1.0")
+        self.requires("zug/0.1.1")
 
     def package_id(self):
         self.info.clear()

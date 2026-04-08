@@ -1,4 +1,4 @@
 sources:
-  "cci.20231122":
+  "0.0+git.20231122":
     url: "https://github.com/connormanning/arbiter/archive/f794bc2d6995bf88affa1ed8ca26a6b9814506ad.tar.gz"
     sha256: "8e0da3148ea1b354ec4edeacfe1d125a4c2c7cd12ee0b6b731ad31235fbdf2ea"

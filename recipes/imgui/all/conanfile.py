@@ -200,7 +200,7 @@ class ImguiConan(ConanFile):
         if self.options.get_safe("backend_glfw") and self.settings.os != "Emscripten":
             self.requires("glfw/[^3.4]")
         # if self.options.get_safe("backend_wgpu"):
-        #     self.requires("dawn/cci.20240726")
+        #     self.requires("dawn/0.0+git.20240726")
         if self.options.enable_freetype:
             self.requires("freetype/[^2.13.2]")
             if self.options.get_safe("enable_freetype_lunasvg"):

@@ -66,7 +66,7 @@ class bimgConan(ConanFile):
 
     @property
     def _bx_version(self): #mapping of bimg version to required/used bx version
-        return {"cci.20230114": "cci.20221116"}
+        return {"0.0+git.20230114": "0.0+git.20221116"}
 
     def layout(self):
         basic_layout(self, src_folder="src")

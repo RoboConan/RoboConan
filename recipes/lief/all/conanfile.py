@@ -63,7 +63,7 @@ class LiefConan(ConanFile):
             self.requires("utfcpp/[^3.2.3]")
         self.requires("spdlog/[^1.9]")
         self.requires("boost/[^1.71.0]", transitive_headers=True, libs=False)
-        self.requires("tcb-span/cci.20220616", transitive_headers=True)
+        self.requires("tcb-span/0.0+git.20220616", transitive_headers=True)
         if self.options.with_json:
             self.requires("nlohmann_json/[^3]")
         if self.options.with_frozen:

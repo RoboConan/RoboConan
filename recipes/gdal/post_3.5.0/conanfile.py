@@ -197,7 +197,7 @@ class GdalConan(ConanFile):
         if self.options.with_blosc:
             self.requires("c-blosc/[^1.21.5]")
         if self.options.with_brunsli:
-            self.requires("brunsli/cci.20231024")
+            self.requires("brunsli/0.0+git.20231024")
         if self.options.with_cfitsio:
             self.requires("cfitsio/[^4.3.1]")
         if self.options.with_cryptopp:
@@ -205,7 +205,7 @@ class GdalConan(ConanFile):
         if self.options.with_curl:
             self.requires("libcurl/[>=7.78 <9]")
         if self.options.with_dds:
-            self.requires("crunch/cci.20190615")
+            self.requires("crunch/0.0+git.20190615")
         if self.options.with_ecw:
             self.requires("libecwj2/3.3")
         if self.options.with_expat:

@@ -1,4 +1,4 @@
 sources:
-  "8.5.0-cci.20240507":
+  "8.5.0-git.20240507":
     url: "https://github.com/OSGeo/grass/archive/7c7162b5ea80d387b870b1f4cb84f6064c266029.tar.gz"
     sha256: "926ea358a25446b6b5c8ac054f79df76608c6a9dcb8249337161d350aeb86aa1"

@@ -246,7 +246,7 @@ class LibtorchConan(ConanFile):
         if self.options.with_glog:
             self.requires("glog/[~0.6]", transitive_headers=True, transitive_libs=True)
         if self.options.with_xnnpack:
-            self.requires("xnnpack/cci.20241203", transitive_headers=True, transitive_libs=True)
+            self.requires("xnnpack/0.0+git.20241203", transitive_headers=True, transitive_libs=True)
         if self.options.build_qnnpack:
             # PyTorch's QNNPACK has significant modifications and can't be unvendored
             self.requires("fp16/[*]")

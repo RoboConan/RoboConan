@@ -21,7 +21,7 @@ class Fp16Conan(ConanFile):
         basic_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("psimd/cci.20200517")
+        self.requires("psimd/0.0+git.20200517")
 
     def package_id(self):
         self.info.clear()

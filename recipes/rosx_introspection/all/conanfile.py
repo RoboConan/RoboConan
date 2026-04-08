@@ -43,7 +43,7 @@ class RosxIntrospectionConan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("rapidjson/[>=cci.20250205]")
+        self.requires("rapidjson/[>=0.0+git.20250205]")
         self.requires("fast-cdr/[^2.2.0]")
 
     def validate(self):

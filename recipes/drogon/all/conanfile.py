@@ -84,7 +84,7 @@ class DrogonConan(ConanFile):
         if self.settings.os == "Linux":
             self.requires("util-linux-libuuid/[^2.41]")
         if self.options.with_profile:
-            self.requires("coz/cci.20210322")
+            self.requires("coz/0.0+git.20210322")
         if self.options.with_boost:
             self.requires("boost/[^1.71.0]", transitive_headers=True, libs=False)
         if self.options.with_brotli:

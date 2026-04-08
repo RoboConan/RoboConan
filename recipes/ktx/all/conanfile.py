@@ -59,7 +59,7 @@ class KtxConan(ConanFile):
         if Version(self.version) < "4.2.0":
             # Newer versions use modified lodepng
             # https://github.com/KhronosGroup/KTX-Software/blob/v4.2.1/tools/imageio/png.imageio/lodepng.h#L26-L32
-            self.requires("lodepng/cci.20230410")
+            self.requires("lodepng/0.0+git.20230410")
         self.requires("zstd/[~1.5]")
         if self.options.tools:
             self.requires("fmt/[>=9]")

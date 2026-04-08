@@ -30,7 +30,7 @@ class TCSBankUconfigConan(ConanFile):
 
     def requirements(self):
         if self.options.with_rapidjson:
-            self.requires("rapidjson/[>=cci.20250205]")
+            self.requires("rapidjson/[>=0.0+git.20250205]")
 
     def package_id(self):
         self.info.clear()

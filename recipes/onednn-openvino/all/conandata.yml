@@ -1,10 +1,10 @@
 sources:
-  "3.6.2.cci.20250514":
+  "3.6.2+git.20250514":
     onednn:
       url: "https://github.com/openvinotoolkit/oneDNN/archive/2b484815778e793afcd37289aef6aae17b7964b8.tar.gz"
       sha256: "eb670396c0f068af1f1fe3a045687699c78137eaa76724f71e419dfde819f37c"
 patches:
-  "3.6.2.cci.20250514":
+  "3.6.2+git.20250514":
     - patch_file: "patches/3.6-unvendor.patch"
       patch_description: "Unvendor third-party dependencies"
       patch_type: "conan"

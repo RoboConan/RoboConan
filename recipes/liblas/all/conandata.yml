@@ -1,4 +1,4 @@
 sources:
-  "1.8.1.cci.20240916":
+  "1.8.1+git.20240916":
     url: "https://github.com/libLAS/libLAS/archive/62f3d57215ba1b074a84ff08a1539b69e69e38fb.zip"
     sha256: "a2ee325541021572b3d2a16ed62999fda49ca222707fecfec3b8464f8d81472b"

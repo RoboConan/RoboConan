@@ -32,7 +32,7 @@ class YandexOzoConan(ConanFile):
         # Used in ozo/detail/bind.h public header
         # version range matches resource_pool
         self.requires("boost/[^1.71.0 <1.81]", transitive_headers=True)
-        self.requires("resource_pool/cci.20210322")
+        self.requires("resource_pool/0.0+git.20210322")
         self.requires("libpq/[^17.0]")
 
     def package_id(self):

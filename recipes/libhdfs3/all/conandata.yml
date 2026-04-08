@@ -1,4 +1,4 @@
 sources:
-  "cci.20191105":
+  "0.0+git.20191105":
     url: "https://codeload.github.com/erikmuttersbach/libhdfs3/zip/9a60d79812d6dee72455f61bff57a93c3c7d56f5"
     sha256: "5cac8e879ab84b637f65efdcd53ee4b362ffcb9ae53e361f4e597f95fd899e43"

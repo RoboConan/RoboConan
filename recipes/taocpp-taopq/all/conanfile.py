@@ -35,8 +35,8 @@ class TaoCPPTaopqConan(ConanFile):
     @property
     def _compilers_minimum_version(self):
         return {
-            "gcc": "7" if self.version < "cci.20231219" else "8",
-            "clang": "6" if self.version < "cci.20231219" else "7",
+            "gcc": "7" if self.version < "0.0+git.20231219" else "8",
+            "clang": "6" if self.version < "0.0+git.20231219" else "7",
             "apple-clang": "10",
             "msvc": "191",
         }
@@ -62,7 +62,7 @@ class TaoCPPTaopqConan(ConanFile):
     def generate(self):
         tc = CMakeToolchain(self)
         # Option names changed in https://github.com/taocpp/taopq/commit/d77896ab80369f13512a7f0ba8af818a03de1cdf
-        if Version(self.version) < "cci.20211017":
+        if Version(self.version) < "0.0+git.20211017":
             tc.variables["TAOPQ_BUILD_TESTS"] = False
             tc.variables["TAOPQ_INSTALL_DOC_DIR"] = "licenses"
         else:

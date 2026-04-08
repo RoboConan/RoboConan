@@ -28,7 +28,7 @@ class AsmjitConan(ConanFile):
     def requirements(self):
         # INFO: asmtk/globals.h: #include <asmjit/core.h>
         # INFO asmtk consumes asmjit directly
-        self.requires("asmjit/[>=cci.20240531]", transitive_headers=True)
+        self.requires("asmjit/[>=0.0+git.20240531]", transitive_headers=True)
 
     def export_sources(self):
         export_conandata_patches(self)

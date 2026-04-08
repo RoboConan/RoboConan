@@ -46,7 +46,7 @@ class Jinja2cppConan(ConanFile):
         self.requires("boost/[^1.79.0]")
         self.requires("expected-lite/[>=0.6.3 <1]", transitive_headers=True)
         self.requires("optional-lite/[^3.5.0]", transitive_headers=True)
-        self.requires("rapidjson/[>=cci.20250205]")
+        self.requires("rapidjson/[>=0.0+git.20250205]")
         self.requires("string-view-lite/1.7.0", transitive_headers=True)
         self.requires("variant-lite/2.0.0", transitive_headers=True)
         self.requires("nlohmann_json/[^3]")

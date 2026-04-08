@@ -113,7 +113,7 @@ class OsgearthConan(ConanFile):
         self.requires("libzip/[^1.11.1]")
         self.requires("opengl/system")
         self.requires("openscenegraph/3.6.5", transitive_headers=True, transitive_libs=True)
-        self.requires("rapidjson/[>=cci.20250205]")
+        self.requires("rapidjson/[>=0.0+git.20250205]")
 
         if self.options.enable_profiling:
             self.requires("tracy/[>=0.11.1 <1]")
@@ -134,7 +134,7 @@ class OsgearthConan(ConanFile):
         if self.options.with_imgui:
             # TODO: unvendor
             # self.requires("imgui/[^1.90.2]")
-            # self.requires("portable-file-dialogs/cci.20221111")
+            # self.requires("portable-file-dialogs/0.1.0+git.20221111")
             pass
         if self.options.with_protobuf:
             # Used transitively by the generated headers

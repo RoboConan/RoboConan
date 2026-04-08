@@ -1,7 +1,7 @@
 versions:
-  "cci.20250528":
+  "0.0+git.20250528":
     folder: all
-  "cci.20240611":
+  "0.0+git.20240611":
     folder: all
   "qt-6.9.0":
     folder: all

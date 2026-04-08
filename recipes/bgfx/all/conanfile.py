@@ -85,11 +85,11 @@ class bgfxConan(ConanFile):
 
     @property
     def _bx_version(self): #mapping of bgfx version to required/used bx version
-        return {"cci.20230216": "cci.20221116"}
+        return {"0.0+git.20230216": "0.0+git.20221116"}
 
     @property
     def _bimg_version(self): #mapping of bgfx version to required/used bimg version
-        return {"cci.20230216": "cci.20230114"}
+        return {"0.0+git.20230216": "0.0+git.20230114"}
 
     def layout(self):
         basic_layout(self, src_folder="src")

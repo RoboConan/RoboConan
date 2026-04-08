@@ -14,7 +14,7 @@ class TestPackageConan(ConanFile):
 
     def requirements(self):
         self.requires("nlohmann_json/[^3]")
-        self.requires("rapidjson/[>=cci.20250205]")
+        self.requires("rapidjson/[>=0.0+git.20250205]")
         self.requires("picojson/1.3.0")
         self.requires(self.tested_reference_str)
 

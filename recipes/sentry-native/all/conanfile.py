@@ -86,14 +86,14 @@ class SentryNativeConan(ConanFile):
             self.requires("libcurl/[>=7.78.0 <9]")
         if self.options.backend == "crashpad":
             if self.options.with_crashpad == "google":
-                self.requires("crashpad/cci.20220219")
+                self.requires("crashpad/0.0+git.20220219")
             else:
                 self.requires("zlib-ng/[^2.0]")
                 if self.options.get_safe("crashpad_with_tls"):
                     self.requires("openssl/[>=1.1 <4]")
         elif self.options.backend == "breakpad":
             if self.options.with_breakpad == "google":
-                self.requires("breakpad/cci.20210521")
+                self.requires("breakpad/0.0+git.20210521")
         if self.options.get_safe("qt"):
             self.requires("qt/[>=5.15 <7]")
             if not (self.options.backend == "crashpad" and self.options.get_safe("crashpad_with_tls")):

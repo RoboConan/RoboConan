@@ -1,7 +1,7 @@
 sources:
-  "cci.20200603":
+  "0.0+git.20200603":
     url: "https://github.com/cose-wg/COSE-C/archive/4432ae11f7a9711c46e8b4442fa2b35055c5cf98.zip"
     sha256: "fef43742cba828a35640eefba774be11562cab6d7bcbdcfd62613019965f87c3"
-  "cci.20200430":
+  "0.0+git.20200430":
     url: "https://github.com/cose-wg/COSE-C/archive/4432ae11f7a9711c46e8b4442fa2b35055c5cf98.zip"
     sha256: "fef43742cba828a35640eefba774be11562cab6d7bcbdcfd62613019965f87c3"
