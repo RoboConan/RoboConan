@@ -1,0 +1,10 @@
+--- a/include/nmea/sentence.hpp
++++ b/include/nmea/sentence.hpp
+@@ -3,6 +3,7 @@
+ #ifndef NMEA___SENTENCE_H
+ #define NMEA___SENTENCE_H
+ 
++#include <cstdint>
+ #include <string>
+ #include <vector>
+ 

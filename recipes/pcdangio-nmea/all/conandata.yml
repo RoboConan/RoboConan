@@ -1,0 +1,7 @@
+sources:
+  "1.0+git.20220415":
+    url: "https://github.com/pcdangio/nmea/archive/1d6e507dd08f3a646513dfdc5eea71470f366d59.tar.gz"
+    sha256: "65aac4e581b418e7de962964f9b51a65f53e25ede7d12f85b611cfe59e60363f"
+patches:
+  "1.0+git.20220415":
+    - patch_file: "patches/missing-headers.patch"
