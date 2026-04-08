@@ -255,7 +255,7 @@ class GStPluginsBadConan(ConanFile):
         if "libxml2" in reqs:
             self.requires("libxml2/[^2.12.5]")
         if "lcms" in reqs:
-            self.requires("lcms/2.16")
+            self.requires("lcms/[^2.16]")
         if "libmodplug" in reqs:
             self.requires("libmodplug/0.8.9.0")
         if self.options.webrtc:

@@ -64,7 +64,7 @@ class LibRawConan(ConanFile):
         if self.options.with_jpeg:
             self.requires("libjpeg-meta/latest")
         if self.options.with_lcms:
-            self.requires("lcms/2.16")
+            self.requires("lcms/[^2.16]")
         if self.options.with_jasper:
             self.requires("jasper/[^4.2]")
 

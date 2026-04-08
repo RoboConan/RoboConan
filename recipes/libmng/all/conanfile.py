@@ -32,7 +32,7 @@ class LibmngConan(ConanFile):
 
     def requirements(self):
         self.requires("zlib-ng/[^2.0]")
-        self.requires("lcms/2.16")
+        self.requires("lcms/[^2.16]")
         self.requires("libjpeg-meta/latest")
 
     def source(self):

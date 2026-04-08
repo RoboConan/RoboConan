@@ -55,7 +55,7 @@ class OpenColorIOConan(ConanFile):
         self.requires("minizip-ng/[^4.0.3]")
 
         # for tools only
-        self.requires("lcms/[>=2.16 <3]")
+        self.requires("lcms/[^2.16]")
         # TODO: add GLUT (needed for ociodisplay tool)
 
     def validate(self):

@@ -60,7 +60,7 @@ class DevilConan(ConanFile):
         if self.options.with_squish:
             self.requires("libsquish/1.15")
         if self.options.with_lcms:
-            self.requires("lcms/2.16")
+            self.requires("lcms/[^2.16]")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)

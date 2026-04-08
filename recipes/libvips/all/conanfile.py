@@ -157,7 +157,7 @@ class LibvipsConan(ConanFile):
         if self.options.with_jpeg_xl:
             self.requires("libjxl/0.11.1")
         if self.options.with_lcms:
-            self.requires("lcms/2.16")
+            self.requires("lcms/[^2.16]")
         if self.options.with_magick:
             self.requires("imagemagick/7.0.11-14")
         if self.options.with_matio:
