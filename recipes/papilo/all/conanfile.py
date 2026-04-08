@@ -67,6 +67,7 @@ class PapiloConan(ConanFile):
         self.options["boost"].with_iostreams = True
         self.options["boost"].with_program_options = True
         self.options["boost"].with_serialization = True
+        self.options["boost"].with_random = True
 
     def layout(self):
         cmake_layout(self, src_folder="src")
@@ -104,6 +105,11 @@ class PapiloConan(ConanFile):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
         apply_conandata_patches(self)
         replace_in_file(self, "CMakeLists.txt", "set(CMAKE_CXX_STANDARD", "# set(CMAKE_CXX_STANDARD")
+        save(self, "CMakeLists.txt", "target_link_libraries(papilo INTERFACE Boost::random)", append=True)
+        # Require all Boost components
+        replace_in_file(self, "CMakeLists.txt",
+                        "OPTIONAL_COMPONENTS iostreams",
+                        "REQUIRED_COMPONENTS iostreams random")
         rmdir(self, "src/papilo/external")
 
     def generate(self):
@@ -121,7 +127,11 @@ class PapiloConan(ConanFile):
         tc.cache_variables["SOPLEX"] = self.options.get_safe("with_soplex", False)
         tc.cache_variables["TBB"] = self.options.with_tbb
         tc.cache_variables["PAPILO_BYTELL_HASHMAP_WORKS"] = True
+        tc.cache_variables["Boost_IOSTREAMS_FOUND"] = True
+        tc.cache_variables["Boost_PROGRAM_OPTIONS_FOUND"] = True
+        tc.cache_variables["Boost_SERIALIZATION_FOUND"] = True
         tc.cache_variables["CMAKE_TRY_COMPILE_CONFIGURATION"] = str(self.settings.build_type)
+        tc.cache_variables["FETCHCONTENT_FULLY_DISCONNECTED"] = True
         tc.generate()
 
         deps = CMakeDeps(self)

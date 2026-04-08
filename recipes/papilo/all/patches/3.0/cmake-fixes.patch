@@ -1,0 +1,133 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -100,9 +100,18 @@
+    message("WARNING: Boost iostreams, program_options or serialization not found. PaPILO can only be used as a library!")
+ endif()
+ 
++find_package(skarupke-flat-hash-map REQUIRED)
++find_package(pdqsort REQUIRED)
++find_package(fmt REQUIRED)
++link_libraries(
++  skarupke-flat-hash-map::skarupke-flat-hash-map
++  pdqsort::pdqsort
++  fmt::fmt
++)
++
+ # Search for GMP.
+ if(GMP)
+-   find_package(GMP)
++   find_package(GMP REQUIRED)
+ endif()
+ if(GMP_FOUND)
+    set(PAPILO_HAVE_GMP 1)
+@@ -115,7 +124,7 @@
+ 
+ # Search for Quadmath.
+ if(QUADMATH)
+-   find_package(Quadmath)
++   find_package(Quadmath REQUIRED)
+ endif()
+ if(Quadmath_FOUND)
+    set(PAPILO_HAVE_FLOAT128 1)
+@@ -255,33 +264,8 @@
+ 
+ # Search for BLAS and build clusol.
+ if(LUSOL)
+-   include(CheckLanguage)
+-   check_language(Fortran)
+-   find_package(BLAS)
+-endif()
+-if(CMAKE_Fortran_COMPILER AND BLAS_FOUND)
+-   enable_language(Fortran)
+-
+-   add_library(clusol STATIC
+-      src/papilo/external/lusol/src/lusol6b.f
+-      src/papilo/external/lusol/src/lusol7b.f
+-      src/papilo/external/lusol/src/lusol8b.f
+-      src/papilo/external/lusol/src/lusol_util.f
+-      src/papilo/external/lusol/src/lusol.f90
+-      src/papilo/external/lusol/src/clusol.c
+-      src/papilo/external/lusol/src/lusol_precision.f90)
+-   set_property(TARGET clusol PROPERTY POSITION_INDEPENDENT_CODE ON)
+-   target_include_directories(clusol PRIVATE src/papilo/external/lusol)
+-   target_link_libraries(clusol ${BLAS_LIBRARIES})
+-   target_link_libraries(papilo INTERFACE clusol)
+-   set(PAPILO_HAVE_LUSOL 1)
+-   set(CLUSOL_TARGET clusol)
+-   install(FILES
+-       ${PROJECT_SOURCE_DIR}/src/papilo/external/lusol/LICENSE.md DESTINATION ${CMAKE_INSTALL_DATADIR}/licenses/papilo/lusol)
+-else()
+-   set(PAPILO_HAVE_LUSOL 0)
+-   set(CLUSOL_TARGET "")
+-   message(STATUS "LUSOL is not built")
++   find_package(lusol REQUIRED)
++   link_libraries(lusol::lusol)
+ endif()
+ 
+ # For `check_cxx_source_compiles` function.
+@@ -511,6 +495,7 @@
+    ${PROJECT_SOURCE_DIR}/src/papilo/presolvers/CliqueMerging.hpp
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/papilo/presolvers)
+ 
++if(0)
+ install(FILES
+    ${PROJECT_SOURCE_DIR}/src/papilo/external/fmt/chrono.h
+    ${PROJECT_SOURCE_DIR}/src/papilo/external/fmt/color.h
+@@ -591,6 +576,7 @@
+       install(FILES "${TBB_tbbmalloc_DLL}" DESTINATION ${CMAKE_INSTALL_BINDIR})
+    endif()
+ endif()
++endif()
+ 
+ # Export targets for the build-tree.
+ export(TARGETS papilo papilo-core ${CLUSOL_TARGET} FILE "${CMAKE_BINARY_DIR}/papilo-targets.cmake")
+
+diff --git a/binaries/CMakeLists.txt b/binaries/CMakeLists.txt
+--- a/binaries/CMakeLists.txt	(revision a214e2d1134eb68344a3606cbfe898528708c713)
++++ b/binaries/CMakeLists.txt	(date 1757510925420)
+@@ -4,7 +4,7 @@
+ include(GenerateExportHeader)
+ 
+ if(SCIP)
+-   find_package(SCIP REQUIRED CONFIG HINTS ${SCIP_DIR})
++   find_package(SCIP REQUIRED CONFIG REQUIRED)
+ endif()
+ if(SCIP_FOUND)
+    message(STATUS "Found SCIP: ${SCIP_INCLUDE_DIRS}")
+@@ -39,7 +39,7 @@
+ endif()
+ 
+ if(SOPLEX)
+-   find_package(SOPLEX REQUIRED CONFIG HINTS ${SOPLEX_DIR})
++   find_package(SOPLEX REQUIRED CONFIG REQUIRED)
+ endif()
+ if(SOPLEX_FOUND)
+    message(STATUS "Found SOPLEX: ${SOPLEX_INCLUDE_DIRS}")
+@@ -60,16 +60,9 @@
+    set(PAPILO_HAVE_HIGHS 0)
+ endif()
+ 
+-if(ROUNDINGSAT_DIR)
++if(ROUNDINGSAT)
++   find_package(roundingsat REQUIRED)
+    set(PAPILO_HAVE_ROUNDINGSAT 1)
+-endif()
+-set(CMAKE_CXX_STANDARD 14)
+-if(ROUNDINGSAT_DIR)
+-   message(STATUS "Found ROUNDINGSAT: ${ROUNDINGSAT_DIR}")
+-   set(CMAKE_CXX_STANDARD 17)
+-else()
+-   message(STATUS "Finding ROUNDINGSAT - not found")
+-   set(PAPILO_HAVE_ROUNDINGSAT 0)
+ endif()
+ 
+ # Enable the Fortran language support when the clusol target is included.
+@@ -135,6 +128,7 @@
+    if(PAPILO_HAVE_ROUNDINGSAT)
+       list(APPEND linked_solvers "Roundingsat")
+       set(PAPILO_HAVE_ROUNDINGSAT 1 PARENT_SCOPE)
++      target_link_libraries(papilo-executable roundingsat::roundingsat)
+       target_compile_definitions(papilo-executable PRIVATE PAPILO_HAVE_ROUNDINGSAT)
+    endif()
+    if(PAPILO_HAVE_SCIP)

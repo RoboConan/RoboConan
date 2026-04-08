@@ -1,8 +1,14 @@
 sources:
-  "2.4.3":
-    url: "https://github.com/scipopt/papilo/archive/refs/tags/v2.4.3.tar.gz"
-    sha256: "49e990e6ed86a3ef189aa6c31051b6a58f717b5653652ace4514674bdf6098c6"
+  "3.0.0":
+    url: "https://github.com/scipopt/papilo/archive/refs/tags/v3.0.0.tar.gz"
+    sha256: "04e2437c41404782fa31cd74a881b475d75a6e692e4c88a24bf48cf5d263a93d"
+  "2.4.4":
+    url: "https://github.com/scipopt/papilo/archive/refs/tags/v2.4.4.tar.gz"
+    sha256: "c3b137895e4fdc1e48f70b681b475936ef8a825dc60bf61532a2d2db6610cb94"
 patches:
-  "2.4.3":
-    - patch_file: "patches/cmake-fixes.patch"
-    - patch_file: "patches/fix-unvendored-includes.patch"
+  "3.0.0":
+    - patch_file: "patches/3.0/cmake-fixes.patch"
+    - patch_file: "patches/3.0/fix-unvendored-includes.patch"
+  "2.4.4":
+    - patch_file: "patches/2.4/cmake-fixes.patch"
+    - patch_file: "patches/2.4/fix-unvendored-includes.patch"
