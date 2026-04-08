@@ -15,7 +15,6 @@ class XXSDSSDSLLite(ConanFile):
     license = "BSD-3-Clause"
     homepage = "https://github.com/xxsds/sdsl-lite"
     topics = ("sdsl", "succint", "data-structures", "header-only")
-
     package_type = "header-library"
     settings = "os", "arch", "compiler", "build_type"
     no_copy_source = True
@@ -31,27 +30,23 @@ class XXSDSSDSLLite(ConanFile):
         self.info.clear()
 
     def validate(self):
-        check_min_cppstd(self, 11)
+        check_min_cppstd(self, 17)
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
         apply_conandata_patches(self)
 
     def package(self):
-        copy(self, "*.hpp",
-             dst=os.path.join(self.package_folder, "include"),
-             src=os.path.join(self.source_folder, "include"))
-        copy(self, "LICENSE",
-             dst=os.path.join(self.package_folder, "licenses"),
-             src=self.source_folder)
+        copy(self, "LICENSE", self.source_folder, os.path.join(self.package_folder, "licenses"))
+        copy(self, "*.hpp", os.path.join(self.source_folder, "include"), os.path.join(self.package_folder, "include"))
 
     def package_info(self):
-        self.cpp_info.bindirs = []
-        self.cpp_info.libdirs = []
-
         self.cpp_info.set_property("cmake_file_name", "sdsl-lite")
         self.cpp_info.set_property("cmake_target_name", "sdsl-lite::sdsl-lite")
         self.cpp_info.set_property("pkg_config_name", "sdsl-lite")
+
+        self.cpp_info.bindirs = []
+        self.cpp_info.libdirs = []
 
         if is_msvc(self):
             self.cpp_info.defines.append("MSVC_COMPILER")

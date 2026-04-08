@@ -2,9 +2,9 @@ diff --git a/include/sdsl/util.hpp b/include/sdsl/util.hpp
 index 9ce5726..f2b65a5 100644
 --- a/include/sdsl/util.hpp
 +++ b/include/sdsl/util.hpp
-@@ -266,7 +266,7 @@ inline std::string dirname(std::string file)
+@@ -262,7 +262,7 @@
   */
- inline std::string demangle(const std::string & name)
+ inline std::string demangle(std::string const & name)
  {
 -#if 1
 +#ifndef _WIN32
