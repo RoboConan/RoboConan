@@ -35,15 +35,13 @@ class FlacConan(ConanFile):
     def requirements(self):
         self.requires("ogg/[^1.3.5]")
 
-    def build_requirements(self):
-        if Version(self.version) < "1.4.2" and self.settings.arch in ["x86", "x86_64"]:
-            self.tool_requires("nasm/[*]")
-
     def layout(self):
         cmake_layout(self, src_folder="src")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
+        apply_conandata_patches(self)
+        replace_in_file(self, "src/share/getopt/CMakeLists.txt", "find_package(Intl)", "")
 
     def generate(self):
         tc = CMakeToolchain(self)
@@ -53,19 +51,11 @@ class FlacConan(ConanFile):
         tc.variables["BUILD_TESTING"] = False
         tc.variables["BUILD_CXXLIBS"] = self.options.cxx
         tc.cache_variables["CMAKE_POLICY_DEFAULT_CMP0077"] = "NEW"
-        if Version(self.version) < "1.3.4":
-            tc.cache_variables["CMAKE_POLICY_VERSION_MINIMUM"] = "3.5" # CMake 4 support
         tc.generate()
         cd = CMakeDeps(self)
         cd.generate()
 
-    def _patch_sources(self):
-        apply_conandata_patches(self)
-        replace_in_file(self, os.path.join(self.source_folder, "src", "share", "getopt", "CMakeLists.txt"),
-                        "find_package(Intl)", "")
-
     def build(self):
-        self._patch_sources()
         cmake = CMake(self)
         cmake.configure()
         cmake.build()
