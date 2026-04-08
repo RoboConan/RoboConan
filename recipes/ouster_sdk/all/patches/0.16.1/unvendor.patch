@@ -1,0 +1,160 @@
+diff --git a/ouster_client/CMakeLists.txt b/ouster_client/CMakeLists.txt
+index f17eeb4..58b3af8 100644
+--- a/ouster_client/CMakeLists.txt
++++ b/ouster_client/CMakeLists.txt
+@@ -1,9 +1,12 @@
+ # ==== Requirements ====
+ find_package(Eigen3 REQUIRED)
+ find_package(Threads REQUIRED)
+-find_package(nmea REQUIRED)
++find_package(pcdangio-nmea REQUIRED)
+ find_package(libzip REQUIRED)
+ find_package(OpenSSL REQUIRED)
++find_package(jsoncons REQUIRED)
++find_package(spdlog REQUIRED)
++find_package(optional-lite REQUIRED)
+ 
+ include(Coverage)
+ 
+@@ -43,9 +46,12 @@ target_link_libraries(ouster_client
+     Eigen3::Eigen
+     $<BUILD_INTERFACE:ouster_build>
+     Threads::Threads
++    nonstd::optional-lite
++    jsoncons
+   PRIVATE
+-    nmea
++    pcdangio-nmea::pcdangio-nmea
+     libzip::zip
++    spdlog::spdlog
+     ${OPENSSL_LIBRARIES}
+     )
+ target_compile_definitions(ouster_client PRIVATE EIGEN_MPL2_ONLY)
+@@ -82,13 +88,13 @@ target_include_directories(ouster_client SYSTEM
+       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../thirdparty>)
+ 
+ # ==== Install ====
+-install(TARGETS ouster_client nmea
++install(TARGETS ouster_client
+         EXPORT ouster-sdk-targets
+         RUNTIME DESTINATION bin
+         ARCHIVE DESTINATION lib
+         INCLUDES DESTINATION include)
+ 
+-install(DIRECTORY include/ouster include/optional-lite
++install(DIRECTORY include/ouster
+   DESTINATION include
+ )
+ 
+diff --git a/ouster_client/src/logging.cpp b/ouster_client/src/logging.cpp
+index bf0fc72..d8b4b9a 100644
+--- a/ouster_client/src/logging.cpp
++++ b/ouster_client/src/logging.cpp
+@@ -1,6 +1,7 @@
+ #include "ouster/impl/logging.h"
+ 
+-#include <spdlog/fmt/bundled/args.h>
++#include <fmt/args.h>
++#include <spdlog/pattern_formatter.h>
+ #include <spdlog/sinks/basic_file_sink.h>
+ #include <spdlog/sinks/ringbuffer_sink.h>
+ #include <spdlog/sinks/rotating_file_sink.h>
+diff --git a/ouster_mapping/CMakeLists.txt b/ouster_mapping/CMakeLists.txt
+index c29c808..2f19395 100644
+--- a/ouster_mapping/CMakeLists.txt
++++ b/ouster_mapping/CMakeLists.txt
+@@ -76,15 +76,15 @@ endif()
+ 
+ target_link_libraries(ouster_mapping
+   PRIVATE
++    Sophus::Sophus
+     ${MAPPING_OS_LIBRARIES}
+-    $<BUILD_INTERFACE:Sophus::Sophus>
+-    $<BUILD_INTERFACE:kiss_icp_core>
++    kiss_icp_core
++    kiss_icp_pipeline
+     ${CERES_LIBRARIES_INTERNAL}
+     Eigen3::Eigen
+     OusterSDK::ouster_client
+     OusterSDK::ouster_osf
+     ${OPENMP_LIBRARIES_INTERNAL}
+-    ${kiss_icp_cpp_LIBRARIES}
+ )
+ 
+ target_compile_definitions(ouster_mapping PUBLIC GLOG_USE_GLOG_EXPORT)
+diff --git a/ouster_osf/CMakeLists.txt b/ouster_osf/CMakeLists.txt
+index aa9f85e..f56e1d6 100644
+--- a/ouster_osf/CMakeLists.txt
++++ b/ouster_osf/CMakeLists.txt
+@@ -10,6 +10,7 @@ option(OUSTER_OSF_NO_THREADING "Don't use threads, useful for WASM targets" OFF)
+ find_package(ZLIB REQUIRED)
+ find_package(PNG REQUIRED)
+ find_package(Eigen3 REQUIRED)
++find_package(zstd REQUIRED)
+ find_package(Threads)
+ include(Coverage)
+ 
+@@ -148,6 +149,7 @@ target_link_libraries(ouster_osf
+     PNG::PNG
+     ZLIB::ZLIB
+     zpng
++    zstd::libzstd
+ )
+ target_include_directories(ouster_osf
+   PUBLIC
+diff --git a/ouster_viz/CMakeLists.txt b/ouster_viz/CMakeLists.txt
+index c569f26..6f9fa4e 100644
+--- a/ouster_viz/CMakeLists.txt
++++ b/ouster_viz/CMakeLists.txt
+@@ -7,6 +7,7 @@ find_package(glad REQUIRED)
+ find_package(glfw3 REQUIRED)
+ find_package(Eigen3 REQUIRED)
+ find_package(PNG REQUIRED)
++find_package(glad REQUIRED CONFIG)
+ 
+ # ==== Libraries ====
+ # use only MPL-licensed parts of eigen
+@@ -16,7 +17,7 @@ add_library(ouster_viz STATIC src/point_viz.cpp src/cloud.cpp src/camera.cpp src
+   src/gltext.cpp src/misc.cpp src/glfw.cpp src/framebuffer.cpp src/screenshot_utils.cpp src/mesh.cpp
+   src/zone_monitor_voxel_mesh.cpp)
+ target_link_libraries(ouster_viz
+-  PRIVATE Eigen3::Eigen glfw ${GL_LOADER} OpenGL::GL ouster_client glad PNG::PNG)
++  PRIVATE Eigen3::Eigen glfw ${GL_LOADER} OpenGL::GL ouster_client glad::glad PNG::PNG)
+ set_property(TARGET ouster_viz PROPERTY POSITION_INDEPENDENT_CODE ON)
+ if(BUILD_SHARED_LIBRARY)
+   set_target_properties(ouster_viz PROPERTIES CXX_VISIBILITY_PRESET hidden)
+@@ -34,7 +35,7 @@ target_include_directories(ouster_viz
+ add_library(OusterSDK::ouster_viz ALIAS ouster_viz)
+ 
+ # ==== Install ====
+-install(TARGETS ouster_viz glad
++install(TARGETS ouster_viz
+         EXPORT ouster-sdk-targets
+         RUNTIME DESTINATION bin
+         ARCHIVE DESTINATION lib
+diff --git a/ouster_viz/src/glfw.h b/ouster_viz/src/glfw.h
+index 73f4abe..434f2f3 100644
+--- a/ouster_viz/src/glfw.h
++++ b/ouster_viz/src/glfw.h
+@@ -7,7 +7,7 @@
+ 
+ // clang-format off
+ // GLAD must be included before GLFW
+-#include "glad.h"
++#include <glad/gl.h>
+ #include <GLFW/glfw3.h>
+ // clang-format on
+ 
+diff --git a/thirdparty/zpng/CMakeLists.txt b/thirdparty/zpng/CMakeLists.txt
+index c8ee1fa..da62d9e 100644
+--- a/thirdparty/zpng/CMakeLists.txt
++++ b/thirdparty/zpng/CMakeLists.txt
+@@ -6,7 +6,7 @@ target_include_directories(zpng PUBLIC
+     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+ target_link_libraries(zpng
+   PRIVATE
+-    zstd
++    zstd::libzstd
+ )
+ install(TARGETS zpng
+     EXPORT ouster-sdk-targets

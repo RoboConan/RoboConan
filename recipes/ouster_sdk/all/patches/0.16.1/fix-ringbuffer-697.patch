@@ -1,0 +1,14 @@
+https://github.com/ouster-lidar/ouster-sdk/pull/697
+
+diff --git a/ouster_client/include/ouster/impl/ring_buffer.h b/ouster_client/include/ouster/impl/ring_buffer.h
+--- a/ouster_client/include/ouster/impl/ring_buffer.h	(revision 9d2132dc5ebd74518eead6dba608460ef9723c24)
++++ b/ouster_client/include/ouster/impl/ring_buffer.h	(revision 409b4529fcf853f656840d627e991ad869febbfc)
+@@ -148,7 +148,7 @@
+         if (full()) {
+             throw std::overflow_error("pushed a full ring buffer");
+         }
+-        size_t write_idx = r_idx_.load();
++        size_t write_idx = w_idx_.load();
+         // atomic increment modulo
+         while (!w_idx_.compare_exchange_strong(write_idx,
+                                                (write_idx + 1) % _capacity())) {

@@ -12,7 +12,7 @@ required_conan_version = ">=2.1"
 class OusterSdkConan(ConanFile):
     name = "ouster_sdk"
     description = "Ouster SDK - tools for working with Ouster Lidars"
-    license = "BSD 3-Clause"
+    license = "BSD-3-Clause"
     homepage = "https://github.com/ouster-lidar/ouster-sdk"
     topics = ("ouster", "lidar", "driver", "hardware", "point cloud", "3d", "robotics", "automotive")
 
@@ -21,23 +21,31 @@ class OusterSdkConan(ConanFile):
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
+        "build_sensor": [True, False],
         "build_osf": [True, False],
         "build_pcap": [True, False],
         "build_viz": [True, False],
+        "build_mapping": [True, False],
         "eigen_max_align_bytes": [True, False],
+        "with_openmp": [True, False],
     }
     default_options = {
         "shared": False,
         "fPIC": True,
+        "build_sensor": True,
         "build_osf": True,
         "build_pcap": True,
         "build_viz": False,
+        "build_mapping": False,
         "eigen_max_align_bytes": False,
+        "with_openmp": True,
     }
     options_description = {
+        "build_sensor": "Build Ouster Sensor library.",
         "build_osf": "Build Ouster OSF library.",
         "build_pcap": "Build pcap utils.",
         "build_viz": "Build Ouster visualizer.",
+        "build_mapping": "Build Ouster mapping library.",
         "eigen_max_align_bytes": "Force maximum alignment of Eigen data to 32 bytes.",
     }
     implements = ["auto_shared_fpic"]
@@ -45,73 +53,89 @@ class OusterSdkConan(ConanFile):
     def export_sources(self):
         export_conandata_patches(self)
 
+    def configure(self):
+        if self.options.shared:
+            self.options.rm_safe("fPIC")
+        if not self.options.build_mapping:
+            del self.options.with_openmp
+            self.options.build_osf.value = True
+        if self.options.build_osf:
+            self.options.build_pcap.value = True
+
     def layout(self):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        # Used in ouster/types.h
         self.requires("eigen/[>=3.3 <6]", transitive_headers=True)
-        # Used in ouster/sensor_http.h
-        self.requires("jsoncpp/[^1.9.5]", transitive_headers=True, transitive_libs=True)
-        self.requires("spdlog/[^1.8]")
-        self.requires("fmt/[>=5]")
-        self.requires("libcurl/[>=7.78 <9]")
-        # Replaces vendored optional-lite
+        self.requires("libzip/[^1]")
+        self.requires("openssl/[>=1.1 <4]")
+        self.requires("jsoncons/[>=0.173 <1]", transitive_headers=True, transitive_libs=True)
+        self.requires("spdlog/[^1.14]")
         self.requires("optional-lite/[^3.6.0]", transitive_headers=True)
+        self.requires("pcdangio-nmea/[*]")
+
+        if self.options.build_sensor:
+            self.requires("libcurl/[>=7.78 <9]")
 
         if self.options.build_pcap:
             self.requires("libtins/[^4.5]")
+            self.requires("libpcap/[^1.10.5]")
+
+        if self.options.build_osf or self.options.build_viz:
+            self.requires("libpng/[~1.6]", transitive_headers=True)
 
         if self.options.build_osf:
-            # Used in fb_generated/*.h
-            self.requires("flatbuffers/24.3.7", transitive_headers=True)
-            self.requires("libpng/[~1.6]")
-            self.requires("zlib-ng/[^2.0]", transitive_libs=True)
+            self.requires("flatbuffers/[^24.3.7]")
+            self.requires("zlib-ng/[^2.0]")
+            self.requires("zstd/[^1]")
 
         if self.options.build_viz:
-            self.requires("glad/0.1.36")
             self.requires("glfw/[^3.4]")
+            self.requires("glad/[^2.0.8]")
+
+        if self.options.build_mapping:
+            self.requires("ceres-solver/[^2.1.0]", transitive_headers=True, transitive_libs=True)
+            self.requires("kiss-icp/[^1.2.3]")
+            self.requires("sophus/[^1.22.10]")
+            if self.options.with_openmp:
+                self.requires("openmp/system")
 
     def validate(self):
-        check_min_cppstd(self, 17)
-
-        if self.options.build_osf and not self.options.build_pcap:
-            raise ConanInvalidConfiguration("build_osf=True requires build_pcap=True")
-
+        check_min_cppstd(self, 14)
         if self.options.shared and self.settings.os == "Windows":
             raise ConanInvalidConfiguration("Shared builds are not supported on Windows")
 
     def build_requirements(self):
+        self.tool_requires("cmake/[>=3.16.3]")
         if self.options.build_osf:
             self.tool_requires("flatbuffers/<host_version>")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
         apply_conandata_patches(self)
-        # Unvendor optional-lite
         rmdir(self, "ouster_client/include/optional-lite")
-        replace_in_file(self, "ouster_client/CMakeLists.txt", " include/optional-lite", "")
-        save(self, "ouster_client/CMakeLists.txt",
-             "find_package(optional-lite REQUIRED)\n"
-             "target_link_libraries(ouster_client PUBLIC nonstd::optional-lite)\n",
-             append=True)
-        # Allow non-static ouster_osf for consistency with other components
-        replace_in_file(self, "ouster_osf/CMakeLists.txt",
-                        "add_library(ouster_osf STATIC",
-                        "add_library(ouster_osf")
-        # Add a missing include
-        replace_in_file(self, "ouster_client/include/ouster/impl/lidar_scan_impl.h", "#include <cstdint>", "#include <cassert>\n#include <cstdint>")
+        rmdir(self, "thirdparty/glad")
+        rmdir(self, "thirdparty/jsoncons")
+        rmdir(self, "thirdparty/jsoncons_ext")
+        rmdir(self, "thirdparty/kiss-icp")
+        rmdir(self, "thirdparty/nmea")
+        rmdir(self, "thirdparty/sophus")
+        rmdir(self, "thirdparty/spdlog")
 
     def generate(self):
         tc = CMakeToolchain(self)
-        tc.variables["BUILD_VIZ"] = self.options.build_viz
-        tc.variables["BUILD_PCAP"] = self.options.build_pcap
-        tc.variables["BUILD_OSF"] = self.options.build_osf
-        tc.variables["OUSTER_USE_EIGEN_MAX_ALIGN_BYTES_32"] = self.options.eigen_max_align_bytes
-        tc.cache_variables["CMAKE_POLICY_DEFAULT_CMP0077"] = "NEW"
+        tc.cache_variables["BUILD_VIZ"] = self.options.build_viz
+        tc.cache_variables["BUILD_PCAP"] = self.options.build_pcap
+        tc.cache_variables["BUILD_OSF"] = self.options.build_osf
+        tc.cache_variables["BUILD_SENSOR"] = self.options.build_sensor
+        tc.cache_variables["BUILD_MAPPING"] = self.options.build_mapping
+        tc.cache_variables["OUSTER_USE_EIGEN_MAX_ALIGN_BYTES_32"] = self.options.eigen_max_align_bytes
+        tc.cache_variables["BUILD_SHARED_LIBRARY"] = self.options.shared
+        tc.cache_variables["USE_OPENMP"] = self.options.get_safe("with_openmp", False)
         tc.generate()
         deps = CMakeDeps(self)
         deps.set_property("flatbuffers", "cmake_target_name", "flatbuffers::flatbuffers")
+        deps.set_property("kiss-icp", "cmake_file_name", "KissIcp")
         deps.generate()
 
     def build(self):
@@ -120,53 +144,112 @@ class OusterSdkConan(ConanFile):
         cmake.build()
 
     def package(self):
-        copy(self, "LICENSE", self.source_folder, os.path.join(self.package_folder, "licenses"))
+        copy(self, "LICENSE*", self.source_folder, os.path.join(self.package_folder, "licenses"))
         cmake = CMake(self)
         cmake.install()
         rmdir(self, os.path.join(self.package_folder, "lib", "cmake"))
         rmdir(self, os.path.join(self.package_folder, "share"))
         rm(self, "*.pdb", self.package_folder, recursive=True)
+        if self.options.shared:
+            # INFO: Version 0.14.0+ produces both shared and static libraries when shared=True
+            rm(self, "*.a", os.path.join(self.package_folder, "lib"))
 
     def package_info(self):
         self.cpp_info.set_property("cmake_file_name", "OusterSDK")
         self.cpp_info.set_property("cmake_target_name", "OusterSDK::OusterSDK")
+        produce_library = not self.options.shared
 
         self.cpp_info.components["ouster_client"].set_property("cmake_target_name", "OusterSDK::ouster_client")
-        self.cpp_info.components["ouster_client"].libs = ["ouster_client"]
+        self.cpp_info.components["ouster_client"].libs = ["ouster_client"] if produce_library else []
         self.cpp_info.components["ouster_client"].requires = [
             "eigen::eigen",
-            "jsoncpp::jsoncpp",
-            "spdlog::spdlog",
-            "fmt::fmt",
-            "libcurl::libcurl",
             "optional-lite::optional-lite",
+            "libzip::libzip",
+            "openssl::openssl",
+            "jsoncons::jsoncons",
+            "spdlog::spdlog",
+            "pcdangio-nmea::pcdangio-nmea",
         ]
+        if self.settings.os == "Windows":
+            self.cpp_info.components["ouster_client"].system_libs = ["ws2_32"]
+        if self.settings.os in ["Linux", "FreeBSD"]:
+            self.cpp_info.components["ouster_client"].system_libs = ["pthread"]
+        if self.options.eigen_max_align_bytes:
+            self.cpp_info.components["ouster_client"].defines = ["EIGEN_MAX_ALIGN_BYTES=32"]
+
+        if self.options.build_sensor:
+            self.cpp_info.components["ouster_sensor"].set_property("cmake_target_name", "OusterSDK::ouster_sensor")
+            self.cpp_info.components["ouster_sensor"].libs = ["ouster_sensor"] if produce_library else []
+            self.cpp_info.components["ouster_sensor"].requires = [
+                "ouster_client",
+                "eigen::eigen",
+                "libcurl::libcurl",
+            ]
+            if self.settings.os == "Windows":
+                self.cpp_info.components["ouster_sensor"].system_libs = ["ws2_32"]
+            if self.settings.os in ["Linux", "FreeBSD"]:
+                self.cpp_info.components["ouster_sensor"].system_libs = ["pthread"]
 
         if self.options.build_osf:
             self.cpp_info.components["ouster_osf"].set_property("cmake_target_name", "OusterSDK::ouster_osf")
-            self.cpp_info.components["ouster_osf"].libs = ["ouster_osf"]
-            self.cpp_info.components["ouster_osf"].includedirs.append(os.path.join("include", "fb_generated"))
+            self.cpp_info.components["ouster_osf"].libs = ["ouster_osf"] if produce_library else []
             self.cpp_info.components["ouster_osf"].requires = [
                 "ouster_client",
                 "ouster_pcap",
+                "zpng",
                 "flatbuffers::flatbuffers",
                 "libpng::libpng",
                 "zlib-ng::zlib-ng",
+                "zstd::zstd",
             ]
+            self.cpp_info.components["zpng"].libs = ["zpng"] if produce_library else []
+            self.cpp_info.components["zpng"].requires = ["zstd::zstd"]
 
         if self.options.build_pcap:
             self.cpp_info.components["ouster_pcap"].set_property("cmake_target_name", "OusterSDK::ouster_pcap")
-            self.cpp_info.components["ouster_pcap"].libs = ["ouster_pcap"]
+            self.cpp_info.components["ouster_pcap"].libs = ["ouster_pcap"] if produce_library else []
             self.cpp_info.components["ouster_pcap"].requires = [
                 "ouster_client",
                 "libtins::libtins",
+                "libpcap::libpcap",
             ]
 
         if self.options.build_viz:
             self.cpp_info.components["ouster_viz"].set_property("cmake_target_name", "OusterSDK::ouster_viz")
-            self.cpp_info.components["ouster_viz"].libs = ["ouster_viz"]
+            self.cpp_info.components["ouster_viz"].libs = ["ouster_viz"] if produce_library else []
             self.cpp_info.components["ouster_viz"].requires = [
                 "ouster_client",
                 "glad::glad",
                 "glfw::glfw",
+                "glad::glad",
+                "libpng::libpng",
             ]
+
+        if self.options.build_mapping:
+            self.cpp_info.components["ouster_mapping"].set_property("cmake_target_name", "OusterSDK::ouster_mapping")
+            self.cpp_info.components["ouster_mapping"].libs = ["ouster_mapping"] if produce_library else []
+            self.cpp_info.components["ouster_mapping"].requires = [
+                "ouster_client",
+                "ouster_osf",
+                "ceres-solver::ceres",
+                "kiss-icp::core",
+                "kiss-icp::pipeline",
+                "sophus::sophus",
+            ]
+            if self.options.with_openmp:
+                self.cpp_info.components["ouster_mapping"].requires.append("openmp::openmp")
+
+        if self.options.shared:
+            self.cpp_info.components["shared_library"].set_property("cmake_target_name", "OusterSDK::shared_library")
+            self.cpp_info.components["shared_library"].libs = ["shared_library"]
+            self.cpp_info.components["shared_library"].requires = ["ouster_client"]
+            if self.options.build_sensor:
+                self.cpp_info.components["shared_library"].requires.append("ouster_sensor")
+            if self.options.build_osf:
+                self.cpp_info.components["shared_library"].requires.append("ouster_osf")
+            if self.options.build_pcap:
+                self.cpp_info.components["shared_library"].requires.append("ouster_pcap")
+            if self.options.build_viz:
+                self.cpp_info.components["shared_library"].requires.append("ouster_viz")
+            if self.options.build_mapping:
+                self.cpp_info.components["shared_library"].requires.append("ouster_mapping")
