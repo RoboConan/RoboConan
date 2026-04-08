@@ -84,7 +84,7 @@ class ReflectCppConan(ConanFile):
             self.requires("capnproto/1.1.0", transitive_headers=True)
         if self.options.with_cbor:
             if Version(self.version) >= Version("0.17.0"):
-                self.requires("jsoncons/0.176.0", transitive_headers=True)
+                self.requires("jsoncons/[>=0.176.0 <1]", transitive_headers=True)
             else:
                 self.requires("tinycbor/0.6.0", transitive_headers=True)
         if self.options.with_flatbuffers:
@@ -97,7 +97,7 @@ class ReflectCppConan(ConanFile):
             else:
                 self.requires("tomlplusplus/3.4.0", transitive_headers=True)
         if self.options.with_ubjson:
-            self.requires("jsoncons/0.176.0", transitive_headers=True)
+            self.requires("jsoncons/[>=0.176.0 <1]", transitive_headers=True)
         if self.options.with_xml:
             self.requires("pugixml/[^1.14]", transitive_headers=True)
         if self.options.with_yaml:
@@ -113,7 +113,7 @@ class ReflectCppConan(ConanFile):
             raise ConanInvalidConfiguration(f"{self.ref} requires C++20 features, which your compiler does not fully support.")
         if Version(self.version) < "0.22" and self.settings.compiler == "msvc" and self.options.shared:
             raise ConanInvalidConfiguration("Old versions of this library do not support MSVC-shared builds")
-    
+
     def layout(self):
         cmake_layout(self, src_folder="src")
 
