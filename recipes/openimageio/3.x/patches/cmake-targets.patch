@@ -1,0 +1,57 @@
+diff --git src/heif.imageio/CMakeLists.txt src/heif.imageio/CMakeLists.txt
+index 25606a139..5f520249a 100644
+--- src/heif.imageio/CMakeLists.txt
++++ src/heif.imageio/CMakeLists.txt
+@@ -2,7 +2,7 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # https://github.com/AcademySoftwareFoundation/OpenImageIO
+ 
+-if (Libheif_FOUND)
++if (0)
+     # Some extra care is needed if the libheif we found was static
+     set (_static_suffixes .lib .a)
+     set (_static_libraries_found 0)
+@@ -21,7 +21,8 @@
+         message (STATUS "dynamically-linked libheif.")
+         message ("${ColorReset}")
+     endif()
+-
++endif ()
++if (USE_LIBHEIF)
+     add_oiio_plugin (heifinput.cpp heifoutput.cpp
+                      LINK_LIBRARIES heif
+                      DEFINITIONS "USE_HEIF=1")
+
+diff --git src/include/CMakeLists.txt src/include/CMakeLists.txt
+index 3ab45a570..9b6511b78 100644
+--- src/include/CMakeLists.txt
++++ src/include/CMakeLists.txt
+@@ -49,7 +49,7 @@ install (FILES ${detail_headers}
+          DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}/detail
+          COMPONENT developer)
+ 
+-if (OIIO_INTERNALIZE_FMT OR fmt_LOCAL_BUILD)
++if (0)
+     set (fmt_headers_base_names)
+     foreach (header_name core.h format-inl.h format.h ostream.h printf.h
+              std.h base.h chrono.h)
+diff --git src/ptex.imageio/CMakeLists.txt src/ptex.imageio/CMakeLists.txt
+index 73e3ad843..da45e8c5f 100644
+--- src/ptex.imageio/CMakeLists.txt
++++ src/ptex.imageio/CMakeLists.txt
+@@ -2,12 +2,9 @@
+ # SPDX-License-Identifier: Apache-2.0
+ # https://github.com/AcademySoftwareFoundation/OpenImageIO
+ 
+-if (Ptex_FOUND)
+-    set(ptex_target Ptex::Ptex_dynamic)
+-    if (TARGET Ptex::Ptex_static AND (NOT TARGET Ptex::Ptex_dynamic OR LINKSTATIC))
+-        set(ptex_target Ptex::Ptex_static)
+-    endif()
++if (USE_PTEX)
+     add_oiio_plugin (ptexinput.cpp
+-                     LINK_LIBRARIES ${ptex_target} ZLIB::ZLIB
++                     LINK_LIBRARIES ${ptex_LIBRARIES} ZLIB::ZLIB
++                     INCLUDE_DIRS ${ptex_INCLUDE_DIRS}
+                      DEFINITIONS "USE_PTEX")
+ endif ()
