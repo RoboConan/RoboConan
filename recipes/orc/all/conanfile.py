@@ -90,6 +90,7 @@ class OrcRecipe(ConanFile):
         tc.variables["BUILD_ENABLE_AVX512"] = self.options.get_safe("build_avx512", False)
         tc.variables["STOP_BUILD_ON_WARNING"] = False
         tc.variables["CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS"] = True
+        tc.variables["CMAKE_TRY_COMPILE_CONFIGURATION"] = str(self.settings.build_type)
 
         protoc_path = os.path.join(self.dependencies.build["protobuf"].cpp_info.bindir, "protoc")
         tc.variables["PROTOBUF_EXECUTABLE"] = protoc_path.replace("\\", "/")
