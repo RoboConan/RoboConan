@@ -34,8 +34,8 @@ class ArrowConan(ConanFile):
         "encryption": [True, False],
         "filesystem_layer":  [True, False],
         "hdfs_bridgs": [True, False],
-        "simd_level": [None, "default", "sse4_2", "avx2", "avx512", "neon"],
-        "runtime_simd_level": [None, "sse4_2", "avx2", "avx512", "max"],
+        "simd_level": ["none", "default", "sse4_2", "avx2", "avx512", "neon"],
+        "runtime_simd_level": ["none", "sse4_2", "avx2", "avx512", "max"],
         "with_backtrace": [True, False],
         "with_boost": [True, False],
         "with_csv": [True, False],
@@ -92,7 +92,7 @@ class ArrowConan(ConanFile):
         "with_gcs": False,
         "with_gflags": False,
         "with_jemalloc": False,
-        "with_mimalloc": False,
+        "with_mimalloc": True,
         "with_glog": False,
         "with_grpc": False,
         "with_json": False,
@@ -110,6 +110,17 @@ class ArrowConan(ConanFile):
         "with_zstd": False,
     }
 
+    @property
+    def _min_cppstd(self):
+        if Version(self.version) >= "23.0.0":
+            # arrow >= 23.0.0 requires C++20.
+            # https://github.com/apache/arrow/issues/45885
+            return "20"
+        else:
+            # arrow >= 10.0.0 requires C++17.
+            # https://github.com/apache/arrow/pull/13991
+            return "17"
+
     def export_sources(self):
         export_conandata_patches(self)
         copy(self, "conan_cmake_project_include.cmake", self.recipe_folder, os.path.join(self.export_sources_folder, "src"))
@@ -119,8 +130,6 @@ class ArrowConan(ConanFile):
             del self.options.fPIC
         if is_msvc(self):
             self.options.with_boost = True
-        if Version(self.version) >= "19.0.0":
-            self.options.with_mimalloc = True
 
     def configure(self):
         if self.options.shared:
@@ -130,6 +139,19 @@ class ArrowConan(ConanFile):
             del self.options.with_utf8proc
         if not self.options.with_cuda:
             del self.settings.cuda
+
+        if is_msvc(self) and self.settings.arch == "armv8":
+            # xsimd does not yet support msvc+arm64
+            # see: https://github.com/xtensor-stack/xsimd/issues/611
+            # see: https://github.com/xtensor-stack/xsimd/pull/612
+            self.options.simd_level = "none"
+            self.options.runtime_simd_level = "none"
+        else:
+            self.options.simd_level = "default"
+            self.options.runtime_simd_level = "max"
+
+        if Version(self.version) >= "22.0.0":
+            del self.options.skyhook
 
     def layout(self):
         cmake_layout(self, src_folder="src")
@@ -141,7 +163,7 @@ class ArrowConan(ConanFile):
 
     @property
     def _requires_xsimd(self):
-        return self.options.simd_level.value is not None or self.options.runtime_simd_level.value is not None
+        return self.options.simd_level.value != "none" or self.options.runtime_simd_level.value != "none"
 
     def requirements(self):
         if self.options.with_thrift:
@@ -159,10 +181,7 @@ class ArrowConan(ConanFile):
         if self.options.with_gflags:
             self.requires("gflags/2.2.2")
         if self.options.with_glog:
-            if Version(self.version) >= "16.0":
-                self.requires("glog/[>=0.6.0 <1]")
-            else:
-                self.requires("glog/0.6.0")
+            self.requires("glog/[>=0.6.0 <1]")
         if self.options.get_safe("with_gcs"):
             self.requires("google-cloud-cpp/[^1.40.1]")
         if self.options.with_grpc:
@@ -226,7 +245,7 @@ class ArrowConan(ConanFile):
         if self.options.with_flight_rpc and not self.options.with_protobuf:
             raise ConanException("'with_protobuf' option should be True when 'with_flight_rpc=True'")
 
-        check_min_cppstd(self, 17)
+        check_min_cppstd(self, self._min_cppstd)
 
         if self.options.get_safe("skyhook", False):
             raise ConanInvalidConfiguration("CCI has no librados recipe (yet)")
@@ -244,7 +263,7 @@ class ArrowConan(ConanFile):
             raise ConanInvalidConfiguration("arrow:parquet requires arrow:with_thrift")
 
     def build_requirements(self):
-        self.tool_requires("cmake/[>=3.25 <5]")
+        self.tool_requires("cmake/[>=3.26 <5]")
         if self.options.with_grpc:
             self.tool_requires("grpc/<host_version>")
         if self.options.gandiva and self.settings.compiler not in ["clang", "apple-clang"]:
@@ -361,6 +380,7 @@ class ArrowConan(ConanFile):
             tc.variables["ARROW_OPENSSL_USE_SHARED"] = bool(self.dependencies["openssl"].options.shared)
         if self.options.with_boost:
             tc.variables["ARROW_USE_BOOST"] = True
+            tc.variables["ARROW_BOOST_USE_SHARED"] = bool(self.dependencies["boost"].options.get_safe("shared", False))
         tc.variables["ARROW_S3"] = bool(self.options.with_s3)
         tc.variables["AWSSDK_SOURCE"] = "SYSTEM"
         tc.variables["ARROW_BUILD_UTILITIES"] = bool(self.options.cli)
@@ -470,7 +490,7 @@ class ArrowConan(ConanFile):
                 self.cpp_info.components["libgandiva"].requires.append("re2::re2")
             if self.options.get_safe("with_utf8proc"):
                 self.cpp_info.components["libgandiva"].requires.append("utf8proc::utf8proc")
-            if Version(self.version) >= "16.0" and self._requires_xsimd:
+            if self._requires_xsimd:
                 self.cpp_info.components["libgandiva"].requires.append("xsimd::xsimd")
             if not self.options.shared:
                 self.cpp_info.components["libgandiva"].defines = ["GANDIVA_STATIC"]
@@ -481,7 +501,7 @@ class ArrowConan(ConanFile):
             self.cpp_info.components["libarrow_flight"].libs = [f"arrow_flight{suffix}"]
             self.cpp_info.components["libarrow_flight"].requires = ["libarrow"]
             # https://github.com/apache/arrow/pull/43137#pullrequestreview-2267476893
-            if Version(self.version) >= "18.0.0" and self.options.with_openssl:
+            if self.options.with_openssl:
                 self.cpp_info.components["libarrow_flight"].requires.append("openssl::openssl")
 
         if self.options.get_safe("with_flight_sql"):
@@ -494,7 +514,7 @@ class ArrowConan(ConanFile):
             self.cpp_info.components["dataset"].libs = ["arrow_dataset"]
             if self.options.parquet:
                 self.cpp_info.components["dataset"].requires = ["libparquet"]
-            if self.options.acero and Version(self.version) >= "19.0.0":
+            if self.options.acero:
                 self.cpp_info.components["dataset"].requires = ["libacero"]
 
         if self.options.with_boost:
