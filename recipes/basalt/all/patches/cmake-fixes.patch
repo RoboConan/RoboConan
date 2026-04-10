@@ -1,97 +1,99 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
+index b827394..f36f82d 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -9,7 +9,6 @@
- endif()
+@@ -25,16 +25,6 @@ endif()
+ option(BASALT_BUILD_SHARED_LIB "Build basalt core library as shared" ON)
+ option(BASALT_FULLY_STATIC_BINARIES "Link executables fully static" ON)
  
- string(TOLOWER "${PROJECT_NAME}" PROJECT_NAME_LOWERCASE)
--find_program(DPKG_PROGRAM dpkg DOC "dpkg program of Debian-based systems")
- if(DPKG_PROGRAM)
-   execute_process(
-     COMMAND ${DPKG_PROGRAM} --print-architecture
-@@ -18,7 +17,6 @@
- endif(DPKG_PROGRAM)
- 
- 
--find_program(LSB_RELEASE_PROGRAM lsb_release DOC "lsb_release program of Debian-based systems")
- if(LSB_RELEASE_PROGRAM)
-   execute_process(COMMAND ${LSB_RELEASE_PROGRAM} -rs
-     OUTPUT_VARIABLE LSB_RELEASE_ID_SHORT
-@@ -84,7 +82,6 @@
- 
- 
- 
--set(CMAKE_CXX_STANDARD 17)
+-if(NOT CXX_MARCH)
+-  set(CXX_MARCH native)
+-endif()
+-
+-if(NOT APPLE OR NOT CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
+-  set(BASALT_MARCH_FLAGS "-march=${CXX_MARCH}")
+-else()
+-  message(STATUS "Running on Apple ${CMAKE_SYSTEM_PROCESSOR}. Disabled -march flag.")
+-endif()
+-
+ set(CMAKE_CXX_STANDARD 17)
  set(CMAKE_CXX_STANDARD_REQUIRED ON)
  set(CMAKE_CXX_EXTENSIONS OFF)
- set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-@@ -104,7 +101,7 @@
- set(CMAKE_CXX_FLAGS_CIRELWITHDEBINFO "-O3 -DEIGEN_INITIALIZE_MATRICES_BY_NAN")  # CI version with no debug symbols
+@@ -119,7 +109,7 @@ else()
+   endif()
+ endif()
  
- # base set of compile flags
--set(BASALT_CXX_FLAGS "-Wall -Wextra -Werror -Wno-error=unused-parameter -ftemplate-backtrace-limit=0")
-+set(BASALT_CXX_FLAGS "-Wall -Wextra -Wno-error=unused-parameter -ftemplate-backtrace-limit=0")
- 
- # clang-specific compile flags
- if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
-@@ -158,18 +155,6 @@
-   # See: https://github.com/openMVG/openMVG/issues/1349#issuecomment-401492811
+-if(APPLE)
++if(0)
    set(CMAKE_FIND_FRAMEWORK LAST)
  
--  if(CMAKE_SYSTEM_VERSION VERSION_LESS 19.0.0)
--      # use brewed llvm's libc++
--      include_directories("/usr/local/opt/llvm/include/c++/v1")
--      link_directories("/usr/local/opt/llvm/lib")
--      add_compile_options("-nostdinc++")
--      #set(STD_CXX_FS c++fs)
+   if(CMAKE_SYSTEM_VERSION VERSION_LESS 19.0.0)
+@@ -153,8 +143,6 @@ else()
+   message(WARNING "Only Linux and macOS are currently supported")
+ endif()
+ 
+-set(BASALT_CXX_FLAGS "${BASALT_CXX_FLAGS} -DEIGEN_DONT_PARALLELIZE")
 -
--      # Workaround for cmake not to filter the manually added standard include path
--      # See: https://gitlab.kitware.com/cmake/cmake/issues/19227#note_669894
--      list(REMOVE_ITEM CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "/usr/local/opt/llvm/include/c++/v1")
--  endif()
+ option(BASALT_INSTANTIATIONS_DOUBLE "Instantiate templates for Scalar=double." ON)
+ option(BASALT_INSTANTIATIONS_FLOAT "Instantiate templates for Scalar=float." ON)
+ 
+@@ -179,14 +167,12 @@ endif()
+ find_package(Boost CONFIG REQUIRED COMPONENTS date_time filesystem format program_options regex thread)
+ find_package(lz4 CONFIG REQUIRED)
+ find_package(fmt CONFIG REQUIRED)
+-find_package(CLI11 CONFIG REQUIRED)
+ find_package(magic_enum CONFIG REQUIRED)
+ find_package(nlohmann_json CONFIG REQUIRED)
+ find_package(opengv CONFIG REQUIRED)
+ find_package(rosbag CONFIG REQUIRED)
+ find_package(Pangolin CONFIG REQUIRED)
+ find_package(basalt-headers CONFIG REQUIRED)
+-find_package(GTest CONFIG REQUIRED)
+ 
+ get_target_property(BASALT_EIGEN_INCLUDE_DIRS Eigen3::Eigen INTERFACE_INCLUDE_DIRECTORIES)
+ if(NOT BASALT_EIGEN_INCLUDE_DIRS)
+@@ -230,13 +216,7 @@ set_property(TARGET basalt::opencv PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${Open
+ set_property(TARGET basalt::opencv PROPERTY INTERFACE_LINK_LIBRARIES ${OpenCV_LIBS})
+ 
+ # Build bundled apriltag library (needs basalt::opencv above)
+-add_subdirectory(thirdparty/apriltag EXCLUDE_FROM_ALL)
 -
-   if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-     message(STATUS "Detected macOS with non-Apple clang")
- 
-@@ -262,9 +247,6 @@
- set(EIGEN_INCLUDE_DIR_HINTS ${EIGEN_ROOT})
- find_package(Eigen3 3.4.0 EXACT REQUIRED MODULE)
- message(STATUS "Found Eigen headers in: ${EIGEN3_INCLUDE_DIR}")
--if(NOT EIGEN3_INCLUDE_DIR MATCHES "^${EIGEN_ROOT}")
--  message(WARNING "Found Eigen headers are outside of specified EIGEN_ROOT '${EIGEN_ROOT}'")
--endif()
- 
- find_package(TBB REQUIRED)
- message(STATUS "Found TBB ${TBB_VERSION_MAJOR}.${TBB_VERSION_MINOR} (interface version ${TBB_INTERFACE_VERSION}) headers in: ${TBB_INCLUDE_DIRS}")
-@@ -288,15 +270,8 @@
- 
- set(BASALT_PANGO_TARGETS pango_display pango_image pango_windowing pango_plot pango_video)
- 
--add_subdirectory(thirdparty)
--
--# custom scoped cli11 target
 -add_library(basalt::cli11 INTERFACE IMPORTED)
--set_property(TARGET basalt::cli11 PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/CLI11/include)
+-set_property(TARGET basalt::cli11 PROPERTY INTERFACE_LINK_LIBRARIES CLI11::CLI11)
 -
--# custom scoped magic_enum target
 -add_library(basalt::magic_enum INTERFACE IMPORTED)
--set_property(TARGET basalt::magic_enum PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/magic_enum/include)
-+add_subdirectory(thirdparty/basalt-headers)
+-set_property(TARGET basalt::magic_enum PROPERTY INTERFACE_LINK_LIBRARIES magic_enum::magic_enum)
 +add_subdirectory(thirdparty/apriltag)
  
- # main library
- add_library(basalt SHARED)
-@@ -392,12 +367,19 @@
+ set(BASALT_PANGO_TARGETS ${Pangolin_LIBRARIES})
+ 
+@@ -344,17 +324,22 @@ target_sources(basalt
+     ${CMAKE_CURRENT_SOURCE_DIR}/src/vi_estimator/sqrt_keypoint_vio.cpp
+     ${CMAKE_CURRENT_SOURCE_DIR}/src/vi_estimator/sqrt_keypoint_vo.cpp
+     ${CMAKE_CURRENT_SOURCE_DIR}/src/vi_estimator/vio_estimator.cpp
++    $<TARGET_OBJECTS:apriltag>
  )
  
  target_link_libraries(basalt
--  PUBLIC ${STD_CXX_FS} basalt::opencv basalt::basalt-headers TBB::tbb
--  PRIVATE basalt::magic_enum rosbag apriltag opengv nlohmann::json fmt::fmt)
-+  PUBLIC basalt::opencv basalt::basalt-headers TBB::tbb
-+  PRIVATE basalt::magic_enum apriltag opengv nlohmann::json fmt::fmt)
- target_include_directories(basalt PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+   PUBLIC ${STD_CXX_FS} Eigen3::Eigen basalt::opencv basalt::basalt-headers TBB::tbb
+-  PRIVATE basalt::magic_enum rosbag apriltag opengv nlohmann_json::nlohmann_json fmt::fmt)
++  PRIVATE basalt::magic_enum rosbag opengv nlohmann_json::nlohmann_json fmt::fmt)
+ target_include_directories(basalt PUBLIC
+   ${CMAKE_CURRENT_SOURCE_DIR}/include
++  ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/apriltag/include
+   ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/ros/include)
  target_compile_definitions(basalt PUBLIC ${BASALT_COMPILE_DEFINITIONS})
  #target_compile_definitions(basalt PUBLIC BASALT_DISABLE_ASSERTS)
+ 
++if(BASALT_BUILD_TOOLS)
++find_package(CLI11 CONFIG REQUIRED)
++
+ add_executable(basalt_calibrate src/calibrate.cpp src/calibration/cam_calib.cpp)
+ target_link_libraries(basalt_calibrate basalt ${BASALT_PANGO_TARGETS} basalt::cli11)
+ basalt_add_gui_link_options(basalt_calibrate)
+@@ -465,6 +450,22 @@ if(realsense2_FOUND)
+       ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
+ endif()
  
 +if(BASALT_USE_CHOLMOD)
 +  find_package(CHOLMOD REQUIRED)
@@ -99,94 +101,34 @@ diff --git a/CMakeLists.txt b/CMakeLists.txt
 +  target_compile_definitions(basalt PUBLIC BASALT_USE_CHOLMOD)
 +endif()
 +
-+if(BASALT_BUILD_TOOLS)
- add_executable(basalt_calibrate src/calibrate.cpp src/calibration/cam_calib.cpp)
- target_link_libraries(basalt_calibrate basalt ${BASALT_PANGO_TARGETS} basalt::cli11)
- 
-@@ -433,7 +415,8 @@
- add_executable(basalt_kitti_eval src/kitti_eval.cpp)
- target_link_libraries(basalt_kitti_eval basalt::basalt-headers basalt::cli11)
- 
--find_package(realsense2 QUIET)
-+if(BASALT_USE_REALSENSE2)
-+find_package(realsense2 REQUIRED)
- if(realsense2_FOUND)
-   add_executable(basalt_rs_t265_record src/rs_t265_record.cpp src/device/rs_t265.cpp)
-   target_link_libraries(basalt_rs_t265_record basalt realsense2::realsense2 ${BASALT_PANGO_TARGETS} basalt::cli11)
-@@ -441,47 +424,41 @@
-   add_executable(basalt_rs_t265_vio src/rs_t265_vio.cpp src/device/rs_t265.cpp)
-   target_link_libraries(basalt_rs_t265_vio basalt realsense2::realsense2 ${BASALT_PANGO_TARGETS} basalt::cli11)
- endif()
-+endif()
- 
- 
--
--install(TARGETS basalt_calibrate basalt_calibrate_imu basalt_vio_sim basalt_mapper_sim basalt_mapper basalt_opt_flow basalt_vio basalt_kitti_eval basalt_time_alignment basalt
-+install(TARGETS basalt_calibrate basalt_calibrate_imu basalt_vio_sim basalt_mapper_sim basalt_mapper basalt_opt_flow basalt_vio basalt_kitti_eval basalt_time_alignment
-   EXPORT BasaltTargets
--  RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
--  LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
--  ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
-+  DESTINATION bin)
-+
-+endif()
- 
--if(BASALT_INSTANTIATIONS_DOUBLE)
++endif(BASALT_BUILD_TOOLS)
 +
 +install(TARGETS basalt
-+  EXPORT BasaltTargets
-+  RUNTIME DESTINATION bin
-+  LIBRARY DESTINATION lib
-+  ARCHIVE DESTINATION lib)
++        EXPORT BasaltTargets
++        RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
++        LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
++        ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
 +
-+if(BASALT_INSTANTIATIONS_DOUBLE AND BASALT_BUILD_TOOLS)
-   install(TARGETS basalt_mapper_sim_naive
-     EXPORT BasaltTargets
--    RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
--    LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
--    ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
-+    RUNTIME DESTINATION bin
-+    LIBRARY DESTINATION lib
-+    ARCHIVE DESTINATION lib)
- endif()
- 
--if(realsense2_FOUND)
-+if(realsense2_FOUND AND BASALT_BUILD_TOOLS)
-     install(TARGETS basalt_rs_t265_record basalt_rs_t265_vio
-       EXPORT BasaltTargets
--      RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
--      LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
--      ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
-+      RUNTIME DESTINATION bin
-+      LIBRARY DESTINATION lib
-+      ARCHIVE DESTINATION lib)
- endif()
- 
++install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
++
  file(GLOB SCRIPTS_TO_INSTALL "${CMAKE_CURRENT_SOURCE_DIR}/scripts/basalt_*.py")
--install(PROGRAMS ${SCRIPTS_TO_INSTALL} DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
-+install(PROGRAMS ${SCRIPTS_TO_INSTALL} DESTINATION bin)
+ install(PROGRAMS ${SCRIPTS_TO_INSTALL} DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
  
- file(GLOB CONFIG_FILES "${CMAKE_CURRENT_SOURCE_DIR}/data/*.json")
- install(FILES ${CONFIG_FILES}
--  DESTINATION ${CMAKE_INSTALL_PREFIX}/etc/basalt)
+@@ -474,5 +475,7 @@ install(FILES ${CONFIG_FILES}
+ install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/data/udev"
+   DESTINATION ${CMAKE_INSTALL_PREFIX}/etc/basalt)
+ 
 -
--
--# Replace install() to do-nothing macro.
--macro(install)
--endmacro()
--# Include subproject (or any other CMake code) with "disabled" install().
--enable_testing()
--add_subdirectory(thirdparty/basalt-headers/test)
 -add_subdirectory(test)
--# Restore original install() behavior.
--macro(install)
--  _install(${ARGN})
--endmacro()
-+  DESTINATION etc/basalt)
++if(BUILD_TESTING)
++  find_package(GTest CONFIG REQUIRED)
++  add_subdirectory(test)
++endif()
 diff --git a/thirdparty/apriltag/CMakeLists.txt b/thirdparty/apriltag/CMakeLists.txt
+index 9c36fa8..d1b659a 100644
 --- a/thirdparty/apriltag/CMakeLists.txt
 +++ b/thirdparty/apriltag/CMakeLists.txt
-@@ -1,25 +1,12 @@
+@@ -1,25 +1,8 @@
 -cmake_minimum_required(VERSION 3.2...3.18)
 -
 -
@@ -198,22 +140,21 @@ diff --git a/thirdparty/apriltag/CMakeLists.txt b/thirdparty/apriltag/CMakeLists
 -
 -include_directories(${OpenCV_INCLUDE_DIR})
 -
--file(GLOB APRILTAG_SRCS "ethz_apriltag2/src/*.cc")
+ file(GLOB APRILTAG_SRCS "ethz_apriltag2/src/*.cc")
 -include_directories(ethz_apriltag2/include)
 -
 -
- include_directories(../../include)
- include_directories(../basalt-headers/include)
+-include_directories(../../include)
+-include_directories(../basalt-headers/include)
 -include_directories(../basalt-headers/thirdparty/Sophus)
-+
-+file(GLOB APRILTAG_SRCS "ethz_apriltag2/src/*.cc")
-+include_directories(ethz_apriltag2/include)
- 
- add_library(apriltag STATIC ${APRILTAG_SRCS} include/basalt/utils/apriltag.h src/apriltag.cpp)
- 
-+find_package(Sophus REQUIRED)
-+
- target_include_directories(apriltag PUBLIC include)
- target_link_libraries(apriltag PUBLIC basalt::opencv Sophus::Sophus)
 -
--
+-add_library(apriltag STATIC ${APRILTAG_SRCS} include/basalt/utils/apriltag.h src/apriltag.cpp)
+ 
+-target_include_directories(apriltag PUBLIC include)
+-target_link_libraries(apriltag PUBLIC basalt::opencv Sophus::Sophus)
++add_library(apriltag OBJECT ${APRILTAG_SRCS} include/basalt/utils/apriltag.h src/apriltag.cpp)
+ 
++target_include_directories(apriltag PRIVATE ${PROJECT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/ethz_apriltag2/include)
++target_include_directories(apriltag PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
++target_link_libraries(apriltag PUBLIC basalt::basalt-headers basalt::opencv Sophus::Sophus)
+ 
