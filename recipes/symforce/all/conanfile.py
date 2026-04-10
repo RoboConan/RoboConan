@@ -133,6 +133,7 @@ class SymforceConan(ConanFile):
                     graphviz
                     jinja2
                     numpy
+                    numba
                     scipy
                     sympy>=1.11
                     sortedcontainers
