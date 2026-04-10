@@ -1,0 +1,13 @@
+diff --git a/include/hyperion/groups/group_ops.hpp b/include/hyperion/groups/group_ops.hpp
+index 5dee645..dd8000d 100644
+--- a/include/hyperion/groups/group_ops.hpp
++++ b/include/hyperion/groups/group_ops.hpp
+@@ -40,7 +40,7 @@ template <typename TGroup>
+ struct GroupOps {
+   // Definitions.
+   using Value = TGroup;
+-  using AmbientVector = Vector<sym::StorageOps<TGroup>::StorageDim()>;
++  using AmbientVector = Eigen::Matrix<Scalar, sym::StorageOps<TGroup>::StorageDim(), 1, Eigen::DontAlign>;
+   using AmbientMatrix = Matrix<sym::StorageOps<TGroup>::StorageDim()>;
+   using TangentVector = Vector<sym::LieGroupOps<TGroup>::TangentDim()>;
+   using TangentMatrix = Matrix<sym::LieGroupOps<TGroup>::TangentDim()>;

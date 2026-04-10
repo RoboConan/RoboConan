@@ -1,0 +1,159 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index daaf444..687a8df 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -8,63 +8,41 @@ option(BUILD_BENCHMARKS "Builds the benchmarks" OFF)
+ if (PROJECT_IS_TOP_LEVEL)
+     set(CMAKE_CXX_STANDARD 20)
+     set(CMAKE_CXX_STANDARD_REQUIRED YES)
+-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -ffast-math -march=native -Wall -Wextra -Wnon-virtual-dtor -Wno-unused-function -pedantic")
++    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffast-math -Wall -Wextra -Wnon-virtual-dtor -Wno-unused-function -pedantic")
+ endif ()
+ 
+-find_package(ament_cmake REQUIRED)
+-
++find_package(symforce REQUIRED)
+ find_package(absl REQUIRED)
+ find_package(Ceres REQUIRED)
+ find_package(Eigen3 REQUIRED)
+ find_package(glog REQUIRED)
+-find_package(nav_msgs REQUIRED)
+-find_package(rclcpp REQUIRED)
+-find_package(std_msgs REQUIRED)
+-find_package(tf2_ros REQUIRED)
+-find_package(visualization_msgs REQUIRED)
+ find_package(yaml-cpp REQUIRED)
+ find_package(fmt REQUIRED)
++find_package(Boost REQUIRED)
+ 
+ file(GLOB_RECURSE PROJECT_FILES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/include/*.hpp ${PROJECT_SOURCE_DIR}/include/*.cpp)
+-add_library(${PROJECT_NAME} STATIC ${PROJECT_FILES})
++add_library(${PROJECT_NAME} ${PROJECT_FILES})
+ add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
+-ament_export_libraries(${PROJECT_NAME}_export HAS_LIBRARY_TARGET)
+ 
+ target_include_directories(${PROJECT_NAME} PUBLIC
+         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+         $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+-        "/usr/local/include/sym")
++)
+ 
+-set(PROJECT_LIBRARIES
++target_link_libraries(${PROJECT_NAME} PUBLIC
+         absl::base
+         absl::flat_hash_map
+         absl::strings
+         Ceres::ceres
+         Eigen3::Eigen
+         glog::glog
+-        symforce_gen
+-        symforce_opt
++        symforce::symforce_gen
++        symforce::symforce_opt
+         yaml-cpp
+         fmt::fmt
++        Boost::headers
+ )
+ 
+-set(PROJECT_DEPENDENCIES
+-        absl
+-        Ceres
+-        Eigen3
+-        glog
+-        nav_msgs
+-        rclcpp
+-        std_msgs
+-        tf2_ros
+-        visualization_msgs
+-        fmt
+-)
+-
+-target_link_libraries(${PROJECT_NAME} ${PROJECT_LIBRARIES})
+-ament_target_dependencies(${PROJECT_NAME} ${PROJECT_DEPENDENCIES})
+-ament_export_dependencies(${PROJECT_DEPENDENCIES})
+-
+ install(
+         DIRECTORY include/
+         DESTINATION include
+@@ -98,13 +76,10 @@ if (BUILD_EXAMPLES)
+ endif ()
+ 
+ if (BUILD_TESTING)
++    enable_testing()
+     add_subdirectory(tests)
+-    #find_package(ament_lint_auto REQUIRED)
+-    #ament_lint_auto_find_test_dependencies()
+ endif ()
+ 
+ if (BUILD_BENCHMARKS)
+     add_subdirectory(benchmarks)
+ endif ()
+-
+-ament_package()
+diff --git a/benchmarks/CMakeLists.txt b/benchmarks/CMakeLists.txt
+index cfeda84..9a9c34b 100644
+--- a/benchmarks/CMakeLists.txt
++++ b/benchmarks/CMakeLists.txt
+@@ -1,19 +1,30 @@
+ project(hyperion_benchmarks)
+ 
+-include(FetchContent)
+-FetchContent_Declare(lie_spline_experiments GIT_REPOSITORY https://gitlab.com/tum-vision/lie-spline-experiments.git)
+-FetchContent_MakeAvailable(lie_spline_experiments)
++find_package(basalt-headers REQUIRED)
++
++cmake_policy(SET CMP0135 OLD)
++include(ExternalProject)
++set(lie_spline_experiments_SOURCE_DIR ${CMAKE_BINARY_DIR}/lie_spline_experiments-src)
++ExternalProject_Add(lie_spline_experiments
++    URL https://gitlab.com/tum-vision/lie-spline-experiments/-/archive/master/lie-spline-experiments-master.tar.bz2
++    SOURCE_DIR ${lie_spline_experiments_SOURCE_DIR}
++    CONFIGURE_COMMAND ""
++    BUILD_COMMAND ""
++    INSTALL_COMMAND ""
++)
+ 
+ find_package(Catch2 REQUIRED)
+-find_package(ament_cmake_catch2 REQUIRED)
+ file(GLOB_RECURSE PROJECT_FILES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/include/*.hpp ${PROJECT_SOURCE_DIR}/src/*.cpp)
+ 
+ if (PROJECT_FILES)
+-    ament_add_catch2(${PROJECT_NAME} ${PROJECT_FILES})
++    add_executable(${PROJECT_NAME} ${PROJECT_FILES})
+     target_include_directories(${PROJECT_NAME} PRIVATE
+             $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+             $<INSTALL_INTERFACE:include>
+             ${lie_spline_experiments_SOURCE_DIR}/include
+     )
+-    target_link_libraries(${PROJECT_NAME} PRIVATE hyperion::hyperion PRIVATE basalt::basalt-headers PRIVATE Catch2::Catch2WithMain)
++    target_link_libraries(${PROJECT_NAME} PRIVATE hyperion::hyperion basalt::basalt-headers Catch2::Catch2WithMain)
++
++    include(Catch)
++    catch_discover_tests(${PROJECT_NAME})
+ endif ()
+diff --git a/tests/CMakeLists.txt b/tests/CMakeLists.txt
+index 0c19bb4..5d45425 100644
+--- a/tests/CMakeLists.txt
++++ b/tests/CMakeLists.txt
+@@ -1,14 +1,16 @@
+ project(hyperion_tests)
+ 
+ find_package(Catch2 REQUIRED)
+-find_package(ament_cmake_catch2 REQUIRED)
+ file(GLOB_RECURSE PROJECT_FILES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/include/*.hpp ${PROJECT_SOURCE_DIR}/src/*.cpp)
+ 
+ if (PROJECT_FILES)
+-    ament_add_catch2(${PROJECT_NAME} ${PROJECT_FILES})
++    add_executable(${PROJECT_NAME} ${PROJECT_FILES})
+     target_include_directories(${PROJECT_NAME} PRIVATE
+-            $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+-            $<INSTALL_INTERFACE:include>
++        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
++        $<INSTALL_INTERFACE:include>
+     )
+-    target_link_libraries(${PROJECT_NAME} PRIVATE hyperion::hyperion PRIVATE Catch2::Catch2WithMain)
++    target_link_libraries(${PROJECT_NAME} PRIVATE hyperion::hyperion Catch2::Catch2WithMain)
++
++    include(Catch)
++    catch_discover_tests(${PROJECT_NAME})
+ endif ()

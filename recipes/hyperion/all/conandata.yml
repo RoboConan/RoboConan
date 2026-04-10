@@ -1,0 +1,11 @@
+sources:
+  "23.05.09":
+    url: "https://github.com/VIS4ROB-lab/hyperion/archive/33465c9a1ec1d8efa78cd800e784d510f8dae0e8.tar.gz"
+    sha256: "e278bdd3fc2e77608d8e607f5fb978374c7fbbea6641b0646e11dfa6f86c1801"
+patches:
+  "23.05.09":
+    - patch_file: "patches/0001-catch-v3-support.patch"
+    - patch_file: "patches/0002-no-ros2.patch"
+    - patch_file: "patches/0003-fix-missing-include.patch"
+    - patch_file: "patches/0004-symforce-compatibility.patch"
+    - patch_file: "patches/0005-cmake-fixes.patch"

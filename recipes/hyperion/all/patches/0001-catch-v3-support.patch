@@ -1,0 +1,60 @@
+diff --git a/benchmarks/src/hyperion_benchmarks/benchmarks_main.cpp b/benchmarks/src/hyperion_benchmarks/benchmarks_main.cpp
+index c71161e..46ea667 100644
+--- a/benchmarks/src/hyperion_benchmarks/benchmarks_main.cpp
++++ b/benchmarks/src/hyperion_benchmarks/benchmarks_main.cpp
+@@ -4,4 +4,4 @@
+ #define CATCH_CONFIG_MAIN
+ #define CATCH_CONFIG_ENABLE_BENCHMARKING
+ 
+-#include <catch2/catch.hpp>
++#include <catch2/catch_all.hpp>
+diff --git a/benchmarks/src/hyperion_benchmarks/splines/basalt_spline_benchmarks.cpp b/benchmarks/src/hyperion_benchmarks/splines/basalt_spline_benchmarks.cpp
+index 44eb045..2a878d5 100644
+--- a/benchmarks/src/hyperion_benchmarks/splines/basalt_spline_benchmarks.cpp
++++ b/benchmarks/src/hyperion_benchmarks/splines/basalt_spline_benchmarks.cpp
+@@ -6,7 +6,7 @@
+ #include <ceres/ceres.h>
+ #include <ceres_lie_spline.h>
+ 
+-#include <catch2/catch.hpp>
++#include <catch2/catch_all.hpp>
+ #include <Eigen/Dense>
+ #include <hyperion/utils/random.hpp>
+ #include <iomanip>
+diff --git a/benchmarks/src/hyperion_benchmarks/splines/hyperion_spline_benchmarks.cpp b/benchmarks/src/hyperion_benchmarks/splines/hyperion_spline_benchmarks.cpp
+index 1974779..1778746 100644
+--- a/benchmarks/src/hyperion_benchmarks/splines/hyperion_spline_benchmarks.cpp
++++ b/benchmarks/src/hyperion_benchmarks/splines/hyperion_spline_benchmarks.cpp
+@@ -3,7 +3,7 @@
+ 
+ #define CATCH_CONFIG_ENABLE_BENCHMARKING
+ 
+-#include <catch2/catch.hpp>
++#include <catch2/catch_all.hpp>
+ 
+ #include "hyperion/ceres/cost_functions/cost_functions.hpp"
+ #include "hyperion/splines/interpolator.hpp"
+diff --git a/tests/src/hyperion_tests/splines/spline_evaluator_tests.cpp b/tests/src/hyperion_tests/splines/spline_evaluator_tests.cpp
+index 085a368..f918892 100644
+--- a/tests/src/hyperion_tests/splines/spline_evaluator_tests.cpp
++++ b/tests/src/hyperion_tests/splines/spline_evaluator_tests.cpp
+@@ -1,7 +1,7 @@
+ /// This file is subject to the terms and conditions defined in
+ /// the 'LICENSE' file, which is part of this repository.
+ 
+-#include <catch2/catch.hpp>
++#include <catch2/catch_all.hpp>
+ 
+ #include "hyperion/splines/evaluator.hpp"
+ #include "hyperion/splines/interpolator.hpp"
+diff --git a/tests/src/hyperion_tests/tests_main.cpp b/tests/src/hyperion_tests/tests_main.cpp
+index bbd7eff..03f0ab8 100644
+--- a/tests/src/hyperion_tests/tests_main.cpp
++++ b/tests/src/hyperion_tests/tests_main.cpp
+@@ -3,4 +3,5 @@
+ 
+ #define CATCH_CONFIG_MAIN
+ 
+-#include <catch2/catch.hpp>
++#include <catch2/catch_all.hpp>
++

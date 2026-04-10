@@ -1,0 +1,26 @@
+diff --git a/include/hyperion/splines/spline.cpp b/include/hyperion/splines/spline.cpp
+index a4a2d9c..85cb791 100644
+--- a/include/hyperion/splines/spline.cpp
++++ b/include/hyperion/splines/spline.cpp
+@@ -5,6 +5,8 @@
+ 
+ #include <glog/logging.h>
+ 
++#include <utility>
++
+ #include "hyperion/groups/group_ops.hpp"
+ #include "hyperion/utils/random.hpp"
+ 
+diff --git a/include/hyperion/splines/spline_with_covariance.cpp b/include/hyperion/splines/spline_with_covariance.cpp
+index 6708b00..f619b9e 100644
+--- a/include/hyperion/splines/spline_with_covariance.cpp
++++ b/include/hyperion/splines/spline_with_covariance.cpp
+@@ -5,6 +5,8 @@
+ 
+ #include <glog/logging.h>
+ 
++#include <utility>
++
+ #include "hyperion/groups/group_ops.hpp"
+ #include "hyperion/utils/random.hpp"
+ 
