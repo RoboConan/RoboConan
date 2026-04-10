@@ -16,7 +16,7 @@ from conan.tools.layout import basic_layout
 from conan.tools.microsoft import is_msvc, unix_path
 from conan.tools.scm import Version
 
-required_conan_version = ">=2.1.0"
+required_conan_version = ">=2.1"
 
 
 class ICUConan(ConanFile):
@@ -67,8 +67,7 @@ class ICUConan(ConanFile):
         if self.options.dat_package_file:
             if not os.path.exists(str(self.options.dat_package_file)):
                 raise ConanInvalidConfiguration("Non-existent dat_package_file specified")
-        if Version(self.version) >= "75.1":
-            check_min_cppstd(self, 17)
+        check_min_cppstd(self, 17)
 
     def layout(self):
         basic_layout(self, src_folder="src")
