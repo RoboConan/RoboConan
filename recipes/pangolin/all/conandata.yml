@@ -1,10 +1,4 @@
 sources:
-  "0.9.3":
-    url: "https://github.com/stevenlovegrove/Pangolin/archive/v0.9.3.tar.gz"
-    sha256: "4c57edfa7a380afa12565c1c2a3b6a61824769c11eedfca7bfa090e5cf8c1366"
-patches:
-  "0.9.3":
-    - patch_file: "patches/openexr-v3-support.patch"
-      patch_description: "Add OpenEXR v3 support"
-      patch_type: "portability"
-      patch_source: "https://github.com/stevenlovegrove/Pangolin/pull/977"
+  "0.9.4":
+    url: "https://github.com/stevenlovegrove/Pangolin/archive/v0.9.4.tar.gz"
+    sha256: "fb95a354dc64bb151881192703db461a59089f7bcdb2c2c9185cfb5393586d97"
