@@ -1,0 +1,11 @@
+sources:
+  "1.12.14":
+    ros_comm:
+      url: "https://github.com/ros/ros_comm/archive/194c776737134a429619f6851f1850734843e210.tar.gz"
+      sha256: "27f9f6c9b744baa377c89b27d1c3c0dad25265ca4d335cf00af5778d2e2f7d9c"
+    roscpp_core:
+      url: "https://github.com/NikolausDemmel/roscpp_core/archive/1a74781ce707b1a2198d1bd6799b892b3c1fa195.tar.gz"
+      sha256: "e71563b60b177e8ee607944a2dfd60615f53966359fc1a0f771a6eecbbfb6703"
+    license:
+      url: "https://raw.githubusercontent.com/ros/rosdistro/883b7edee070bcc777026d5a2e13d0c6a28268de/LICENSE"
+      sha256: "4f1b5efa596b265ca3a799f845179dda1dc616d345166b236db5791023770f93"
