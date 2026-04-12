@@ -84,6 +84,9 @@ class SuiteSparseConfigConan(ConanFile):
         tc.cache_variables["BUILD_TESTING"] = False
         tc.cache_variables["CMAKE_TRY_COMPILE_CONFIGURATION"] = str(self.settings.build_type)  # for BLAS try_compile()-s
         tc.cache_variables.update(self._blas_variables)
+        # Force single-underscore Fortran name mangling so that SuiteSparse_config.h
+        # uses the BLAS_UNDERSCORE branch instead of the CMake-detected #else fallback.
+        tc.preprocessor_definitions["BLAS_UNDERSCORE"] = None
         tc.generate()
 
         deps = CMakeDeps(self)
@@ -123,7 +126,10 @@ class SuiteSparseConfigConan(ConanFile):
         if self.settings.os in ["Linux", "FreeBSD"]:
             self.cpp_info.system_libs.append("m")
 
-        # All available BLAS implementations currently available under blas/latest use a single underscore suffix
-        self.cpp_info.defines.append("BLAS64_SUFFIX=_")
+        # Force single-underscore Fortran name mangling (the standard convention
+        # for all BLAS implementations available via blas/latest: OpenBLAS, MKL, etc.).
+        # Without this, the SUITESPARSE_USE_FORTRAN=False fallback in SuiteSparse_config.h
+        # may pick up a wrong convention from CMake's try_compile on some systems.
+        self.cpp_info.defines.append("BLAS_UNDERSCORE")
 
         self.cpp_info.set_property("cmake_extra_variables", self._blas_variables)
