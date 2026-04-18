@@ -25,25 +25,44 @@ class LibTomCryptConan(ConanFile):
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
+        "easy": [True, False],
+        "argtype": [0, 1, 2, 3, 4],
+        "no_test": [True, False],
+        "no_file": [True, False],
+        "small_code": [True, False],
+        "small_stack": [True, False],
     }
     default_options = {
         "shared": False,
         "fPIC": True,
+        "argtype": 0,
+        "easy": False,
+        "no_test": False,
+        "no_file": False,
+        "small_code": False,
+        "small_stack": False,
+    }
+    options_description = {
+        # see https://github.com/libtom/libtomcrypt/blob/v1.18.2/src/headers/tomcrypt_argchk.h
+        "argtype": "Type of argument checking, 0=default, 1=fatal and 2=error+continue, 3=nothing, 4=return value",
+        "easy": "Build just a subset of all the algos",
+        "no_test": "Remove all algorithm self-tests from the library",
+        "no_file": "Remove all API functions requiring a pre-defined FILE data-type (mostly useful for embedded targets)",
+        "small_code": "Use small code where possible",
+        "small_stack": "Always use small stack sizes where possible",
     }
     implements = ["auto_shared_fpic"]
     languages = ["C"]
 
     def export_sources(self):
         export_conandata_patches(self)
-        copy(self, f"tomcrypt-{self.version}.def",
-             self.recipe_folder,
-             os.path.join(self.export_sources_folder, "src"))
+        copy(self, f"tomcrypt-{self.version}.def", self.recipe_folder, os.path.join(self.export_sources_folder, "src"))
 
     def layout(self):
         basic_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("libtommath/1.3.0")
+        self.requires("libtommath/[^1.3.0]")
 
     def build_requirements(self):
         if not is_msvc(self):
@@ -57,10 +76,25 @@ class LibTomCryptConan(ConanFile):
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
         apply_conandata_patches(self)
-        replace_in_file(self, os.path.join(self.source_folder, "makefile_include.mk"),
+        replace_in_file(self, "makefile_include.mk",
                         "PKG_CONFIG_PATH=$(LIBPATH)/pkgconfig pkg-config",
                         self.conf.get("tools.gnu:pkg_config", default="pkgconf", check_type=str))
 
+    @property
+    def _defines(self):
+        # https://github.com/libtom/libtomcrypt/blob/2e441a1/src/headers/tomcrypt_custom.h#L139-L177
+        defines = ["LTM_DESC"]
+        if self.options.easy:
+            defines.append("LTC_EASY")
+        if self.options.no_test:
+            defines.append("LTC_NO_TEST")
+        if self.options.no_file:
+            defines.append("LTC_NO_FILE")
+        if self.options.small_code:
+            defines.append("LTC_SMALL_CODE")
+        if self.options.small_stack:
+            defines.append("LTC_SMALL_STACK")
+        return defines
 
     def generate(self):
         if not cross_building(self):
@@ -70,7 +104,10 @@ class LibTomCryptConan(ConanFile):
         tc = GnuToolchain(self)
         if self.settings.os == "Windows" and not is_msvc(self):
             tc.ldflags.append("-lcrypt32")
-        cflags = tc.cflags + ["-DUSE_LTM", "-DLTM_DESC"] + [f"-D{d}" for d in tc.defines]
+        tc.extra_defines = self._defines
+        tc.extra_defines.append("USE_LTM")
+        tc.extra_defines.append(f"ARGTYPE={self.options.argtype}")
+        cflags = tc.cflags + [f"-D{d}" for d in list(tc.defines) + list(tc.extra_defines)]
         ldflags = list(tc.ldflags)
         deps = AutotoolsDeps(self)
         dep_vars = deps.environment.vars(self)
@@ -94,6 +131,16 @@ class LibTomCryptConan(ConanFile):
             deps = PkgConfigDeps(self)
             deps.generate()
 
+    @property
+    def _makefile(self):
+        if self.settings.os == "Windows":
+            return "makefile.mingw"
+        else:
+            if self.options.shared:
+                return "makefile.shared"
+            else:
+                return "makefile.unix"
+
     def build(self):
         with chdir(self, self.source_folder):
             if is_msvc(self):
@@ -111,14 +158,7 @@ class LibTomCryptConan(ConanFile):
                 else:
                     target = "libtomcrypt.a"
                 autotools = Autotools(self)
-                if self.settings.os == "Windows":
-                    makefile = "makefile.mingw"
-                else:
-                    if self.options.shared:
-                        makefile = "makefile.shared"
-                    else:
-                        makefile = "makefile.unix"
-                autotools.make(target=target, args=[f"-f {makefile}"])
+                autotools.make(target=target, makefile=self._makefile)
 
     def package(self):
         copy(self, "LICENSE", self.source_folder, os.path.join(self.package_folder, "licenses"))
@@ -133,7 +173,9 @@ class LibTomCryptConan(ConanFile):
         else:
             with chdir(self, self.source_folder):
                 autotools = Autotools(self)
-                autotools.make(target="install", args=[f"PREFIX={self.package_folder}"])
+                autotools.make(target="install", args=[f"PREFIX={self.package_folder}"], makefile=self._makefile)
+            if not self.options.shared:
+                rm(self, "*.a", os.path.join(self.package_folder, "lib"))
 
         rm(self, "*.la", os.path.join(self.package_folder, "lib"))
         rmdir(self, os.path.join(self.package_folder, "lib", "pkgconfig"))
@@ -147,3 +189,4 @@ class LibTomCryptConan(ConanFile):
         self.cpp_info.libs = ["tomcrypt"]
         if self.settings.os == "Windows":
             self.cpp_info.system_libs = ["advapi32", "crypt32"]
+        self.cpp_info.defines = self._defines
