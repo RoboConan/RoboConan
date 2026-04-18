@@ -1,0 +1,7 @@
+sources:
+  "4.0.2":
+    url: "https://github.com/LoupVaillant/Monocypher/archive/refs/tags/4.0.2.tar.gz"
+    sha256: "bc1ca30b1b2654e4e7daf2492c0d204200e55137f23fda6b7142fd7d523bd6b4"
+  "3.1.3":
+    url: "https://github.com/LoupVaillant/Monocypher/archive/refs/tags/3.1.3.tar.gz"
+    sha256: "a6fab9456eb90ba8ad52530abab404ea115dcde2dd168c9289dbaa7daaa49c2c"
