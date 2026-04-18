@@ -1,0 +1,4 @@
+sources:
+  "0.8.0+git.20260321":
+    url: "https://github.com/libopencm3/libopencm3/archive/87a080c94ce67643216464821c752c1c406c6414.tar.gz"
+    sha256: "2c405e13c519337551cf8cc018dbdf4278d1951cfaf6ed92be50375333145947"
