@@ -1,0 +1,18 @@
+Fix -Wincompatible-pointer-types error with GCC 14+ on 32-bit systems.
+
+On 32-bit systems, int32_t is typically long int, which is a distinct type
+from int. GCC 14+ treats -Wincompatible-pointer-types as a hard error by
+default, causing the build to fail when &J (int32_t *) is passed to
+mp_kronecker() which expects int *.
+
+--- a/bn_mp_prime_strong_lucas_selfridge.c
++++ b/bn_mp_prime_strong_lucas_selfridge.c
+@@ -95,7 +95,7 @@
+       if (Ds < 0) {
+          Dz.sign = MP_NEG;
+       }
+-      if ((err = mp_kronecker(&Dz, a, &J)) != MP_OKAY)            goto LBL_LS_ERR;
++      if ((err = mp_kronecker(&Dz, a, (int*)&J)) != MP_OKAY)            goto LBL_LS_ERR;
+ 
+       if (J == -1) {
+          break;

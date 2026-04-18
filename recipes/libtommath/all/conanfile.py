@@ -1,10 +1,8 @@
 import os
 
 from conan import ConanFile
-from conan.errors import ConanInvalidConfiguration
 from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
 from conan.tools.files import *
-from conan.tools.microsoft import is_msvc
 
 required_conan_version = ">=2.1"
 
@@ -25,6 +23,10 @@ class LibTomMathConan(ConanFile):
         "shared": False,
         "fPIC": True,
     }
+    languages = "C"
+
+    def export_sources(self):
+        export_conandata_patches(self)
 
     def config_options(self):
         if self.settings.os == "Windows":
@@ -34,8 +36,6 @@ class LibTomMathConan(ConanFile):
     def configure(self):
         if self.options.get_safe("shared"):
             self.options.rm_safe("fPIC")
-        self.settings.rm_safe("compiler.libcxx")
-        self.settings.rm_safe("compiler.cppstd")
         if self.settings.os == "Windows":
             self.package_type = "static-library"
 
@@ -44,18 +44,11 @@ class LibTomMathConan(ConanFile):
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
+        apply_conandata_patches(self)
 
     def generate(self):
         tc = CMakeToolchain(self)
         tc.generate()
-
-    def validate(self):
-        if is_msvc(self) and self.settings.build_type == "Debug":
-            # libtommath requires /O1 on MSVC Debug builds for dead code elimination.
-            # Otherwise, the build will fail with error LNK2019: unresolved external symbol s_read_arc4random
-            # https://github.com/libtom/libtommath/blob/42b3fb07e7d504f61a04c7fca12e996d76a25251/s_mp_rand_platform.c#L120-L138
-            # https://github.com/libtom/libtommath/issues/485
-            raise ConanInvalidConfiguration("Could not build with MSVC Debug build_type due compiler optization requirement. Please, try to build with build_type=RelWithDebInfo")
 
     def build(self):
         cmake = CMake(self)
