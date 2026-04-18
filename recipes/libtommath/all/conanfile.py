@@ -18,10 +18,15 @@ class LibTomMathConan(ConanFile):
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
+        "low_memory": [True, False],
     }
     default_options = {
         "shared": False,
         "fPIC": True,
+        "low_memory": False,
+    }
+    options_description = {
+        "low_memory": "Use lower memory usage routines (exptmods mostly)",
     }
     languages = "C"
 
@@ -48,6 +53,8 @@ class LibTomMathConan(ConanFile):
 
     def generate(self):
         tc = CMakeToolchain(self)
+        if self.options.low_memory:
+            tc.preprocessor_definitions["MP_LOW_MEM"] = ""
         tc.generate()
 
     def build(self):
