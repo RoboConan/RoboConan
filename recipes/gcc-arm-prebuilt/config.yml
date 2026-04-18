@@ -1,4 +1,8 @@
 versions:
+  15.2.rel1:
+    folder: all
+  14.3.rel1:
+    folder: all
   14.2.rel1:
     folder: all
   13.2.rel1:

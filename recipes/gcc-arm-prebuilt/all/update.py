@@ -17,6 +17,7 @@ def load_urls(downloads_url):
     urls = []
     for url in raw_urls:
         url = urllib.parse.urljoin(downloads_url, url.split("?")[0])
+        url = url.replace("/files/", "/Files/")  # both work, be consistent
         if "src-snapshot" in url:
             continue
         if (url.endswith(".tar.xz") or url.endswith(".zip")) and ("gcc-arm" in url or "gnu-toolchain-" in url):
