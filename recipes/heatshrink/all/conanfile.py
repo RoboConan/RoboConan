@@ -13,7 +13,6 @@ class HeatshrinkConan(ConanFile):
     description = "data compression library for embedded/real-time systems"
     topics = ("compression", "embedded", "realtime")
     homepage = "https://github.com/atomicobject/heatshrink"
-
     settings = "os", "arch", "compiler", "build_type"
     options = {
         "shared": [False, True],
@@ -34,11 +33,15 @@ class HeatshrinkConan(ConanFile):
 
     exports_sources = "CMakeLists.txt"
 
+    def export_sources(self):
+        export_conandata_patches(self)
+
     def layout(self):
         cmake_layout(self, src_folder="src")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
+        apply_conandata_patches(self)
 
     def generate(self):
         tc = CMakeToolchain(self)

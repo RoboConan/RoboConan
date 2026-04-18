@@ -1,0 +1,57 @@
+https://github.com/PX4/heatshrink/commit/cb4644708779927557a6ca98b38d5e31ef8d2aa5
+From cb4644708779927557a6ca98b38d5e31ef8d2aa5 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Beat=20K=C3=BCng?= <beat-kueng@gmx.net>
+Date: Tue, 22 Aug 2023 15:15:41 +0200
+Subject: [PATCH] add 'extern "C" {' for usage in C++
+
+---
+ heatshrink_decoder.h | 7 +++++++
+ heatshrink_encoder.h | 7 +++++++
+ 2 files changed, 14 insertions(+)
+
+diff --git a/heatshrink_decoder.h b/heatshrink_decoder.h
+index c148a6d..86de89c 100644
+--- a/heatshrink_decoder.h
++++ b/heatshrink_decoder.h
+@@ -6,6 +6,10 @@
+ #include "heatshrink_common.h"
+ #include "heatshrink_config.h"
+ 
++#ifdef __cplusplus
++extern "C" {
++#endif
++
+ typedef enum {
+     HSDR_SINK_OK,               /* data sunk, ready to poll */
+     HSDR_SINK_FULL,             /* out of space in internal buffer */
+@@ -97,4 +101,7 @@ HSD_poll_res heatshrink_decoder_poll(heatshrink_decoder *hsd,
+  * call heatshrink_decoder_poll and repeat. */
+ HSD_finish_res heatshrink_decoder_finish(heatshrink_decoder *hsd);
+ 
++#ifdef __cplusplus
++}
++#endif
+ #endif
+diff --git a/heatshrink_encoder.h b/heatshrink_encoder.h
+index 18c1773..350bc52 100644
+--- a/heatshrink_encoder.h
++++ b/heatshrink_encoder.h
+@@ -6,6 +6,10 @@
+ #include "heatshrink_common.h"
+ #include "heatshrink_config.h"
+ 
++#ifdef __cplusplus
++extern "C" {
++#endif
++
+ typedef enum {
+     HSER_SINK_OK,               /* data sunk into input buffer */
+     HSER_SINK_ERROR_NULL=-1,    /* NULL argument */
+@@ -106,4 +110,7 @@ HSE_poll_res heatshrink_encoder_poll(heatshrink_encoder *hse,
+  * call heatshrink_encoder_poll and repeat. */
+ HSE_finish_res heatshrink_encoder_finish(heatshrink_encoder *hse);
+ 
++#ifdef __cplusplus
++}
++#endif
+ #endif
