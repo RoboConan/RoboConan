@@ -45,6 +45,7 @@ class GccArmPrebuiltConan(ConanFile):
             # The platform info is captured in
             #   self.info.options.target_triplet
             self.info.settings_target.clear()
+        del self.info.options.add_unprefixed_to_path
 
     def layout(self):
         basic_layout(self, src_folder="src")
