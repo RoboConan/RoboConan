@@ -64,6 +64,7 @@ class QtConan(ConanFile):
         "with_md4c": [True, False],
         "with_x11": [True, False],
         "with_egl": [True, False],
+        "with_liburing": [True, False],
 
         "gui": [True, False],
         "widgets": [True, False],
@@ -108,6 +109,7 @@ class QtConan(ConanFile):
         "with_md4c": True,
         "with_x11": True,
         "with_egl": False,
+        "with_liburing": False,
 
         "gui": True,
         "widgets": True,
@@ -122,6 +124,7 @@ class QtConan(ConanFile):
         "qt3d",
         "qt5compat",
         "qtactiveqt",
+        "qtcanvaspainter",
         "qtcharts",
         "qtcoap",
         "qtconnectivity",
@@ -139,6 +142,7 @@ class QtConan(ConanFile):
         "qtmultimedia",
         "qtnetworkauth",
         "qtopcua",
+        "qtopenapi",
         "qtpositioning",
         "qtquick3d",
         "qtquick3dphysics",
@@ -152,6 +156,7 @@ class QtConan(ConanFile):
         "qtshadertools",
         "qtspeech",
         "qtsvg",
+        "qttasktree",
         "qttools",
         "qttranslations",
         "qtvirtualkeyboard",
@@ -224,6 +229,8 @@ class QtConan(ConanFile):
             del self.options.with_x11
             del self.options.with_egl
             self.options.with_glib = False
+        if self.settings.os != "Linux":
+            del self.options.with_liburing
         if self.settings.os == "Windows":
             self.options.opengl = "dynamic"
             del self.options.with_gssapi
@@ -362,6 +369,7 @@ class QtConan(ConanFile):
             for module in [
                 "qt3d",
                 "qtactiveqt",
+                "qtcanvaspainter",
                 "qtcharts",
                 "qtdatavis3d",
                 "qtimageformats",
@@ -493,6 +501,8 @@ class QtConan(ConanFile):
             self.requires("krb5/[^1.21.2]")
         if self.options.get_safe("with_md4c"):
             self.requires("md4c/[^0.5]")
+        if self.options.get_safe("with_liburing"):
+            self.requires("liburing/[^2.6]")
 
         # https://github.com/qt/qtimageformats/blob/v6.8.3/src/imageformats/configure.cmake
         if self.options.qtimageformats:
@@ -525,6 +535,7 @@ class QtConan(ConanFile):
         if cross_building(self):
             need_gui = bool(self._enabled_modules & {
                 "qtactiveqt",
+                "qtcanvaspainter",
                 "qtquick3d",
                 "qtquick3dphysics",
                 "qtquickeffectmaker",
@@ -537,6 +548,7 @@ class QtConan(ConanFile):
                 # Make sure all required tools are built
                 "qttools": self.options.get_safe("qttools"),
                 "qtactiveqt": self.options.get_safe("qtactiveqt"),
+                "qtcanvaspainter": self.options.get_safe("qtcanvaspainter"),
                 "qtconnectivity": self.options.get_safe("qtconnectivity") and self.options.get_safe("with_bluez", False),
                 "qtdeclarative": self.options.qtdeclarative,
                 "qtdoc": self.options.qtdoc,
@@ -663,6 +675,8 @@ class QtConan(ConanFile):
         with_wayland = self.options.get_safe("qtwayland", False)
         tc.variables["CMAKE_DISABLE_FIND_PACKAGE_Wayland"] = not with_wayland
         tc.variables["FEATURE_wayland"] = with_wayland
+
+        tc.variables["CMAKE_DISABLE_FIND_PACKAGE_Liburing"] = not self.options.get_safe("with_liburing", False)
 
         with_egl = self.options.get_safe("with_egl", False)
         tc.variables["CMAKE_DISABLE_FIND_PACKAGE_EGL"] = not with_egl
@@ -1177,6 +1191,8 @@ class QtConan(ConanFile):
             qtCore.requires.append("glib::glib")
         if self.options.openssl:
             qtCore.requires.append("openssl::openssl") # used by QCryptographicHash
+        if self.options.get_safe("with_liburing"):
+            qtCore.requires.append("liburing::liburing")
         if self.settings.build_type != "Debug":
             qtCore.defines.append("QT_NO_DEBUG")
         if not self.options.shared:
@@ -1286,6 +1302,8 @@ class QtConan(ConanFile):
                     if Version(self.version) >= "6.8.0" and has_metal:
                         # https://github.com/qt/qtbase/blob/6.8.0/src/gui/CMakeLists.txt#L432-L437
                         qtGui.frameworks.append("QuartzCore")
+                    if Version(self.version) >= "6.11":
+                        qtGui.frameworks.append("Accelerate")
 
             _create_plugin("QGifPlugin", "qgif", "imageformats", ["Gui"])
             _create_plugin("QIcoPlugin", "qico", "imageformats", ["Gui"])
@@ -1306,7 +1324,9 @@ class QtConan(ConanFile):
                     ]
                 # https://github.com/qt/qtbase/commit/65d58e6c41e3c549c89ea4f05a8e467466e79ca3
                 if Version(self.version) >= "6.7.0":
-                    _create_plugin("QModernWindowsStylePlugin", "qmodernwindowsstyle", "styles", ["Core", "Gui"])
+                    QModernWindowsStylePlugin = _create_plugin("QModernWindowsStylePlugin", "qmodernwindowsstyle", "styles", ["Core", "Gui"])
+                    if not self.options.shared and Version(self.version) >= "6.11":
+                        QModernWindowsStylePlugin.system_libs += ["dwmapi", "gdi32", "user32", "uxtheme"]
                 else:
                     _create_plugin("QWindowsVistaStylePlugin", "qwindowsvistastyle", "styles", ["Core", "Gui"])
             elif self.settings.os == "Android":
@@ -1395,6 +1415,8 @@ class QtConan(ConanFile):
                     qtNetwork.frameworks.append("SystemConfiguration")
                 if Version(self.version) >= "6.10":
                     qtNetwork.frameworks.append("Network")
+        if self.settings.os == "Linux" and self.options.with_dbus and Version(self.version) >= "6.11":
+            _create_plugin("QConnManNetworkInformationPlugin", "qconnman", "networkinformation", ["DBus", "Network"])
 
         _create_module("Sql")
         _create_module("Test")
@@ -1623,6 +1645,19 @@ class QtConan(ConanFile):
         if self.options.get_safe("qtgrpc"):
             _create_module("Protobuf")
             _create_module("Grpc", ["Core", "Protobuf", "Network"])
+
+        if self.options.get_safe("qttasktree"):
+            _create_module("TaskTree")
+
+        if self.options.get_safe("qtopenapi"):
+            _create_module("OpenApiCommon", ["Network"])
+            _create_module("OpenApi", ["Network"])
+
+        if self.options.get_safe("qtcanvaspainter") and self.options.gui and self.options.qtshadertools:
+            canvaspainter_deps = ["Gui"]
+            if qt_quick_enabled:
+                canvaspainter_deps.append("Quick")
+            _create_module("CanvasPainter", canvaspainter_deps)
 
         if self.settings.os in ["Windows", "iOS"]:
             if self.settings.os == "Windows":
