@@ -1,6 +1,8 @@
+diff --git a/build/gen.py b/build/gen.py
 --- a/build/gen.py
 +++ b/build/gen.py
-@@ -418,38 +418,41 @@
+@@ -418,40 +418,43 @@ def WriteGenericNinja(path, static_libraries, executables,
+ 
  
  def WriteGNNinja(path, platform, host, options, args_list):
 -  # QTBUG-64759
@@ -56,12 +58,13 @@
  
 -  cc = options.cc
 -  cxx = options.cxx
--  ld = options.ld
--  ar = options.ar
 +  if options.cc:
 +    cc = options.cc
 +  if options.cxx:
 +    cxx = options.cxx
+   cxx_wrapper = '"' + options.cxx_wrapper + '"' if options.cxx_wrapper else ''
+-  ld = options.ld
+-  ar = options.ar
 +  if options.ld:
 +    ld = options.ld
 +  if options.ar:

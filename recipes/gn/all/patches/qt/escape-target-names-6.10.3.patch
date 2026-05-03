@@ -1,17 +1,19 @@
 Escape all invalid characters in targets, not just :/()+.
 QtWebEngine otherwise fails to build when special characters (such as @) are present in the build dir path.
 
+diff --git a/src/gn/ninja_action_target_writer.cc b/src/gn/ninja_action_target_writer.cc
 --- a/src/gn/ninja_action_target_writer.cc
 +++ b/src/gn/ninja_action_target_writer.cc
-@@ -4,6 +4,7 @@
+@@ -4,6 +4,8 @@
  
  #include "gn/ninja_action_target_writer.h"
  
 +#include <regex>
++
  #include <stddef.h>
  
  #include "base/strings/string_util.h"
-@@ -140,7 +141,7 @@
+@@ -140,7 +142,7 @@ std::string NinjaActionTargetWriter::WriteRuleDefinition() {
    // there will be only one invocation so we can use a simple name.
    std::string target_label = target_->label().GetUserVisibleName(true);
    std::string custom_rule_name(target_label);
@@ -20,6 +22,7 @@ QtWebEngine otherwise fails to build when special characters (such as @) are pre
    custom_rule_name.append("_rule");
  
    const SubstitutionList& args = target_->action_values().args();
+diff --git a/src/gn/ninja_create_bundle_target_writer.cc b/src/gn/ninja_create_bundle_target_writer.cc
 --- a/src/gn/ninja_create_bundle_target_writer.cc
 +++ b/src/gn/ninja_create_bundle_target_writer.cc
 @@ -5,6 +5,7 @@
@@ -30,7 +33,7 @@ QtWebEngine otherwise fails to build when special characters (such as @) are pre
  
  #include "base/strings/string_util.h"
  #include "gn/builtin_tool.h"
-@@ -122,7 +123,7 @@
+@@ -122,7 +123,7 @@ std::string NinjaCreateBundleTargetWriter::WritePostProcessingRuleDefinition() {
  
    std::string target_label = target_->label().GetUserVisibleName(true);
    std::string custom_rule_name(target_label);

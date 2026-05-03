@@ -4,14 +4,29 @@ sources:
     url: "https://gn.googlesource.com/gn/+archive/afd24ed11bc5fbef775a3ffe46c72e6bdca0fa60.tar.gz"
   "0.0+git.20240611":
     url: "https://gn.googlesource.com/gn/+archive/b2afae122eeb6ce09c52d63f67dc53fc517dbdc8.tar.gz"
-  # Experimental fork of GN by Qt, used to build QtWebEngine
-  "qt-6.9.0":
-    url: "https://gn.googlesource.com/gn/+archive/95b0f8fe31a992a33c040bbe3867901335c12762.tar.gz"
+  # Fork of GN by Qt, used to build QtWebEngine
+  "qt-6.11.0":
+    url: "https://github.com/valgur/qt-gn/archive/refs/tags/v6.11.0.tar.gz"
+    sha256: "1136d84378b27a1112982aba8d22670343cd83d8f1132cbee94cd50c4e3392b0"
+  "qt-6.10.3":
+    url: "https://github.com/valgur/qt-gn/archive/refs/tags/v6.10.3.tar.gz"
+    sha256: "38f8fd9a69601651c1a5c5fb4d686680b24779043e9a7ded0289757654f0fb3a"
+  "qt-6.9.3":
+    url: "https://github.com/valgur/qt-gn/archive/refs/tags/v6.9.3.tar.gz"
+    sha256: "a337d912aca49c06be10ae27942a0ebe5b2474cb7011bb79c53c44c748d998c7"
+  "qt-6.8.3":
+    url: "https://github.com/valgur/qt-gn/archive/refs/tags/v6.8.3.tar.gz"
+    sha256: "2dc47f01ce5133a2162314b32a889a6197d5608ae1c1cec9aad584f4c94272db"
 patches:
-  "qt-6.9.0":
-    - patch_file: "patches/qt/qt-6.9.0.patch"
-      patch_description: "Diff between Qt 6.9.0 GN fixes and upstream"
-      patch_type: "official"
-      patch_source: "https://github.com/qt/qtwebengine-chromium/tree/45d204bccd41e0f9ec166e47e2a15714e26f384b"
-    - patch_file: "patches/qt/relax-compiler-executables.patch"
-    - patch_file: "patches/qt/escape-target-names.patch"
+  "qt-6.11.0":
+    - patch_file: "patches/qt/relax-compiler-executables-6.11.0.patch"
+    - patch_file: "patches/qt/escape-target-names-6.11.0.patch"
+  "qt-6.10.3":
+    - patch_file: "patches/qt/relax-compiler-executables-6.10.3.patch"
+    - patch_file: "patches/qt/escape-target-names-6.10.3.patch"
+  "qt-6.9.3":
+    - patch_file: "patches/qt/relax-compiler-executables-6.9.3.patch"
+    - patch_file: "patches/qt/escape-target-names-6.9.3.patch"
+  "qt-6.8.3":
+    - patch_file: "patches/qt/relax-compiler-executables-6.8.3.patch"
+    - patch_file: "patches/qt/escape-target-names-6.8.3.patch"

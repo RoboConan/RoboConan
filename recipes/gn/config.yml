@@ -3,5 +3,11 @@ versions:
     folder: all
   "0.0+git.20240611":
     folder: all
-  "qt-6.9.0":
+  "qt-6.11.0":
+    folder: all
+  "qt-6.10.3":
+    folder: all
+  "qt-6.9.3":
+    folder: all
+  "qt-6.8.3":
     folder: all

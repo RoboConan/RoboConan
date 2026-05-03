@@ -36,7 +36,8 @@ class GnConan(ConanFile):
         self.tool_requires("ninja/[>=1.11.1 <2]")
 
     def source(self):
-        get(self, **self.conan_data["sources"][self.version])
+        strip_root = self.version.startswith("qt-")
+        get(self, **self.conan_data["sources"][self.version], strip_root=strip_root)
         apply_conandata_patches(self)
 
         # if compiler is not defined via Conan config (e.g. CXX buildenv flag, or compiler config),

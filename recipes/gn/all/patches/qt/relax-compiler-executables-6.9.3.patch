@@ -1,0 +1,73 @@
+diff --git a/build/gen.py b/build/gen.py
+--- a/build/gen.py
++++ b/build/gen.py
+@@ -416,39 +416,42 @@ def WriteGenericNinja(path, static_libraries, executables,
+ 
+ 
+ def WriteGNNinja(path, platform, host, options, args_list):
+-  # QTBUG-64759
+-  # if platform.is_msvc():
+-  #   cxx = os.environ.get('CXX', 'cl.exe')
+-  #   ld = os.environ.get('LD', 'link.exe')
+-  #   ar = os.environ.get('AR', 'lib.exe')
+-  # elif platform.is_aix():
+-  #   cxx = os.environ.get('CXX', 'g++')
+-  #   ld = os.environ.get('LD', 'g++')
+-  #   ar = os.environ.get('AR', 'ar -X64')
+-  # elif platform.is_msys() or platform.is_mingw():
+-  #   cxx = os.environ.get('CXX', 'g++')
+-  #   ld = os.environ.get('LD', 'g++')
+-  #   ar = os.environ.get('AR', 'ar')
+-  # else:
+-  #   cxx = os.environ.get('CXX', 'c++')
+-  #  ld = cxx
+-  #  ar = os.environ.get('AR', 'ar')
+-
+-
+-  # cflags = os.environ.get('CFLAGS', '').split()
+-  # cflags += os.environ.get('CXXFLAGS', '').split()
+-  # ldflags = os.environ.get('LDFLAGS', '').split()
+-  # libflags = os.environ.get('LIBFLAGS', '').split()
++  if platform.is_msvc():
++    cxx = os.environ.get('CXX', 'cl.exe')
++    ld = os.environ.get('LD', 'link.exe')
++    ar = os.environ.get('AR', 'lib.exe')
++  elif platform.is_aix():
++    cxx = os.environ.get('CXX', 'g++')
++    ld = os.environ.get('LD', 'g++')
++    ar = os.environ.get('AR', 'ar -X64')
++  elif platform.is_msys() or platform.is_mingw():
++    cxx = os.environ.get('CXX', 'g++')
++    ld = os.environ.get('LD', 'g++')
++    ar = os.environ.get('AR', 'ar')
++  else:
++    cxx = os.environ.get('CXX', 'c++')
++    ld = cxx
++    ar = os.environ.get('AR', 'ar')
++
++
++  cflags = os.environ.get('CFLAGS', '').split()
++  cflags += os.environ.get('CXXFLAGS', '').split()
++  ldflags = os.environ.get('LDFLAGS', '').split()
++  libflags = os.environ.get('LIBFLAGS', '').split()
+ 
+   cflags = []
+   cflags_cc = []
+   ldflags = []
+   libflags = []
+ 
+-  cc = options.cc
+-  cxx = options.cxx
+-  ld = options.ld
+-  ar = options.ar
++  if options.cc:
++    cc = options.cc
++  if options.cxx:
++    cxx = options.cxx
++  if options.ld:
++    ld = options.ld
++  if options.ar:
++    ar = options.ar
+ 
+   if not ar:
+      if platform.is_msvc():
