@@ -1,0 +1,142 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -256,7 +256,7 @@ endif()
+ endif()
+
+
+-add_subdirectory(fmt-11.2.0 EXCLUDE_FROM_ALL)
++find_package(fmt REQUIRED CONFIG)
+
+
+ set(CPP_DEFS ) # C pre-processor, not C++
+@@ -1571,7 +1571,7 @@ target_include_directories(alsoft.common PUBLIC
+     PUBLIC ${OpenAL_BINARY_DIR} ${OpenAL_SOURCE_DIR}/common ${OpenAL_SOURCE_DIR}/gsl/include)
+ target_compile_definitions(alsoft.common PRIVATE ${CPP_DEFS})
+ target_compile_options(alsoft.common PRIVATE ${C_FLAGS})
+-target_link_libraries(alsoft.common PRIVATE alsoft::fmt)
++target_link_libraries(alsoft.common PRIVATE fmt::fmt)
+ set_target_properties(alsoft.common PROPERTIES ${ALSOFT_STD_VERSION_PROPS}
+     POSITION_INDEPENDENT_CODE TRUE)
+ if(HAVE_CXXMODULES)
+@@ -1610,7 +1610,7 @@ if(ENABLE_STATIC OR NOT ENABLE_DYNAMIC)
+     target_compile_definitions(${IMPL_TARGET} PUBLIC AL_LIBTYPE_STATIC)
+     target_include_directories(${IMPL_TARGET} PRIVATE ${OpenAL_SOURCE_DIR}/gsl/include)
+     target_link_libraries(${IMPL_TARGET} PRIVATE ${LINKER_FLAGS} ${EXTRA_LIBS} ${MATH_LIB}
+-        $<BUILD_LOCAL_INTERFACE:alsoft::fmt>)
++        $<BUILD_LOCAL_INTERFACE:fmt::fmt>)
+
+     if(CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND DEFINED CMAKE_OSX_DEPLOYMENT_TARGET
+         AND CMAKE_OSX_DEPLOYMENT_TARGET VERSION_LESS "10.13")
+@@ -1638,7 +1638,7 @@ if(ENABLE_STATIC OR NOT ENABLE_DYNAMIC)
+             target_compile_definitions(alsoft.router-modules PRIVATE AL_ALEXT_PROTOTYPES
+                 "ALC_API=${EXPORT_DECL}" "AL_API=${EXPORT_DECL}" ${CPP_DEFS})
+             target_compile_options(alsoft.router-modules PRIVATE ${C_FLAGS})
+-            target_link_libraries(alsoft.router-modules PRIVATE alsoft::fmt alsoft.modules)
++            target_link_libraries(alsoft.router-modules PRIVATE fmt::fmt alsoft.modules)
+             set_target_properties(alsoft.router-modules PROPERTIES ${ALSOFT_STD_VERSION_PROPS}
+                 POSITION_INDEPENDENT_CODE TRUE)
+             list(APPEND NEED_ANALYZE_SOURCE_FILES "${OpenAL_SOURCE_DIR}/alsoft-modules/router.cppm")
+@@ -1655,7 +1655,7 @@ else()
+             PRIVATE AL_BUILD_LIBRARY AL_ALEXT_PROTOTYPES "ALC_API=${EXPORT_DECL}"
+             "AL_API=${EXPORT_DECL}" ${CPP_DEFS})
+         target_compile_options(OpenAL PRIVATE ${C_FLAGS})
+-        target_link_libraries(OpenAL PRIVATE alsoft.common ${LINKER_FLAGS} alsoft::fmt
++        target_link_libraries(OpenAL PRIVATE alsoft.common ${LINKER_FLAGS} fmt::fmt
+             $<$<BOOL:${HAVE_CXXMODULES}>:alsoft.modules alsoft.router-modules>)
+         target_include_directories(OpenAL
+           PUBLIC
+@@ -1688,7 +1688,7 @@ else()
+         set_target_properties(${IMPL_TARGET} PROPERTIES PREFIX "")
+     endif()
+     target_link_libraries(${IMPL_TARGET} PRIVATE alsoft.common ${LINKER_FLAGS} ${EXTRA_LIBS}
+-        ${MATH_LIB} alsoft::fmt)
++        ${MATH_LIB} fmt::fmt)
+
+     if(ALSOFT_UWP)
+         find_package(cppwinrt CONFIG)
+@@ -1924,7 +1924,7 @@ if(HAVE_PORTAUDIO)
+             PRIVATE ${OpenAL_BINARY_DIR} ${OpenAL_SOURCE_DIR}/common)
+         target_compile_options(uhjdecoder PRIVATE ${C_FLAGS})
+         target_link_libraries(uhjdecoder PUBLIC alsoft.common
+-            PRIVATE ${LINKER_FLAGS} SndFile::SndFile ${UNICODE_FLAG} alsoft::fmt)
++            PRIVATE ${LINKER_FLAGS} SndFile::SndFile ${UNICODE_FLAG} fmt::fmt)
+         set_target_properties(uhjdecoder PROPERTIES ${ALSOFT_STD_VERSION_PROPS})
+         list(APPEND NEED_ANALYZE_SOURCE_FILES "${OpenAL_SOURCE_DIR}/utils/uhjdecoder.cpp")
+
+@@ -1934,7 +1934,7 @@ if(HAVE_PORTAUDIO)
+             PRIVATE ${OpenAL_BINARY_DIR} ${OpenAL_SOURCE_DIR}/common)
+         target_compile_options(uhjencoder PRIVATE ${C_FLAGS})
+         target_link_libraries(uhjencoder PUBLIC alsoft.common
+-            PRIVATE ${LINKER_FLAGS} SndFile::SndFile ${UNICODE_FLAG} alsoft::fmt)
++            PRIVATE ${LINKER_FLAGS} SndFile::SndFile ${UNICODE_FLAG} fmt::fmt)
+         set_target_properties(uhjencoder PROPERTIES ${ALSOFT_STD_VERSION_PROPS})
+         list(APPEND NEED_ANALYZE_SOURCE_FILES "${OpenAL_SOURCE_DIR}/utils/uhjencoder.cpp")
+     endif()
+@@ -1948,7 +1948,7 @@ if(ALSOFT_UTILS)
+         target_include_directories(alsoft.sofa-support PUBLIC ${OpenAL_SOURCE_DIR}/common)
+         target_compile_options(alsoft.sofa-support PRIVATE ${C_FLAGS})
+         target_link_libraries(alsoft.sofa-support PUBLIC alsoft.common MySOFA::MySOFA
+-            PRIVATE ${LINKER_FLAGS} alsoft::fmt)
++            PRIVATE ${LINKER_FLAGS} fmt::fmt)
+         set_target_properties(alsoft.sofa-support PROPERTIES ${ALSOFT_STD_VERSION_PROPS})
+         list(APPEND NEED_ANALYZE_SOURCE_FILES "${OpenAL_SOURCE_DIR}/utils/sofa-support.cpp"
+             "${OpenAL_SOURCE_DIR}/utils/sofa-support.h")
+@@ -1966,7 +1966,7 @@ if(ALSOFT_UTILS)
+             PRIVATE ${OpenAL_BINARY_DIR} ${OpenAL_SOURCE_DIR}/utils)
+         target_compile_options(makemhr PRIVATE ${C_FLAGS})
+         target_link_libraries(makemhr PRIVATE ${LINKER_FLAGS} alsoft.sofa-support ${UNICODE_FLAG}
+-            alsoft::fmt)
++            fmt::fmt)
+         set_target_properties(makemhr PROPERTIES ${ALSOFT_STD_VERSION_PROPS})
+         list(APPEND NEED_ANALYZE_SOURCE_FILES "${OpenAL_SOURCE_DIR}/utils/makemhr/loaddef.cpp"
+             "${OpenAL_SOURCE_DIR}/utils/makemhr/loaddef.h"
+@@ -1985,7 +1985,7 @@ if(ALSOFT_UTILS)
+             PRIVATE ${OpenAL_BINARY_DIR} ${OpenAL_SOURCE_DIR}/utils)
+         target_compile_options(sofa-info PRIVATE ${C_FLAGS})
+         target_link_libraries(sofa-info PRIVATE alsoft.common ${LINKER_FLAGS} alsoft.sofa-support
+-            ${UNICODE_FLAG} alsoft::fmt)
++            ${UNICODE_FLAG} fmt::fmt)
+         set_target_properties(sofa-info PROPERTIES ${ALSOFT_STD_VERSION_PROPS})
+         list(APPEND NEED_ANALYZE_SOURCE_FILES "${OpenAL_SOURCE_DIR}/utils/sofa-info.cpp")
+     endif()
+@@ -2041,13 +2041,13 @@ if(ALSOFT_EXAMPLES)
+
+     add_executable(aldebug examples/aldebug.cpp)
+     target_link_libraries(aldebug PRIVATE ${LINKER_FLAGS} alsoft.common alsoft.excommon
+-        ${UNICODE_FLAG} alsoft::fmt ${MODULES_TARGET})
++        ${UNICODE_FLAG} fmt::fmt ${MODULES_TARGET})
+     set_target_properties(aldebug PROPERTIES ${ALSOFT_STD_VERSION_PROPS})
+     list(APPEND NEED_ANALYZE_SOURCE_FILES "${OpenAL_SOURCE_DIR}/examples/aldebug.cpp")
+
+     add_executable(allafplay examples/allafplay.cpp)
+     target_link_libraries(allafplay PRIVATE ${LINKER_FLAGS} alsoft.common alsoft.excommon
+-        ${UNICODE_FLAG} alsoft::fmt ${MODULES_TARGET})
++        ${UNICODE_FLAG} fmt::fmt ${MODULES_TARGET})
+     set_target_properties(allafplay PROPERTIES ${ALSOFT_STD_VERSION_PROPS})
+     list(APPEND NEED_ANALYZE_SOURCE_FILES "${OpenAL_SOURCE_DIR}/examples/allafplay.cpp")
+
+@@ -2096,13 +2096,13 @@ if(ALSOFT_EXAMPLES)
+
+         add_executable(alstreamcb examples/alstreamcb.cpp)
+         target_link_libraries(alstreamcb PRIVATE ${LINKER_FLAGS} SndFile::SndFile alsoft.common
+-            alsoft.excommon ${UNICODE_FLAG} alsoft::fmt ${MODULES_TARGET})
++            alsoft.excommon ${UNICODE_FLAG} fmt::fmt ${MODULES_TARGET})
+         set_target_properties(alstreamcb PROPERTIES ${ALSOFT_STD_VERSION_PROPS})
+         list(APPEND NEED_ANALYZE_SOURCE_FILES "${OpenAL_SOURCE_DIR}/examples/alstreamcb.cpp")
+
+         add_executable(aldirect examples/aldirect.cpp)
+         target_link_libraries(aldirect PRIVATE ${LINKER_FLAGS} SndFile::SndFile alsoft.common
+-            alsoft.excommon ${UNICODE_FLAG} alsoft::fmt ${MODULES_TARGET})
++            alsoft.excommon ${UNICODE_FLAG} fmt::fmt ${MODULES_TARGET})
+         set_target_properties(aldirect PROPERTIES ${ALSOFT_STD_VERSION_PROPS})
+         list(APPEND NEED_ANALYZE_SOURCE_FILES "${OpenAL_SOURCE_DIR}/examples/aldirect.cpp")
+
+@@ -2163,7 +2163,7 @@ if(ALSOFT_EXAMPLES)
+             target_include_directories(alffplay PRIVATE ${FFMPEG_INCLUDE_DIRS})
+             target_link_libraries(alffplay
+                 PRIVATE ${LINKER_FLAGS} SDL3::SDL3 ${FFMPEG_LIBRARIES} alsoft.common
+-                alsoft.excommon alsoft::fmt ${MODULES_TARGET})
++                alsoft.excommon fmt::fmt ${MODULES_TARGET})
+             set_target_properties(alffplay PROPERTIES ${ALSOFT_STD_VERSION_PROPS})
+             list(APPEND NEED_ANALYZE_SOURCE_FILES "${OpenAL_SOURCE_DIR}/examples/alffplay.cpp")
+

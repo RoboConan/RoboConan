@@ -2,10 +2,9 @@ import os
 import textwrap
 
 from conan import ConanFile
-from conan.errors import ConanInvalidConfiguration
 from conan.tools.apple import is_apple_os
 from conan.tools.build import check_min_cppstd, stdcpp_library
-from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
+from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
 from conan.tools.scm import Version
 
@@ -42,23 +41,20 @@ class OpenALSoftConan(ConanFile):
         del self.info.settings.compiler.cppstd
 
     def requirements(self):
+        self.requires("fmt/[>=10]")
         if self.settings.os == "Linux":
             self.requires("libalsa/[^1.2.10]")
 
     def validate(self):
         check_min_cppstd(self, 14)
-        compiler = self.settings.compiler
-        if compiler == "clang" and Version(compiler.version) < "9" and \
-           compiler.get_safe("libcxx") in ("libstdc++", "libstdc++11"):
-            raise ConanInvalidConfiguration(
-                f"{self.ref} cannot be built with {compiler} {compiler.version} and stdlibc++(11) C++ runtime",
-            )
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
         apply_conandata_patches(self)
 
     def generate(self):
+        deps = CMakeDeps(self)
+        deps.generate()
         tc = CMakeToolchain(self)
         tc.variables["LIBTYPE"] = "SHARED" if self.options.shared else "STATIC"
         tc.variables["ALSOFT_UTILS"] = False
