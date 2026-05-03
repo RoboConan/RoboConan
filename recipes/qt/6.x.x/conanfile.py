@@ -1186,20 +1186,19 @@ class QtConan(ConanFile):
         if self.settings.build_type != "Debug":
             qtCore.defines.append("QT_NO_DEBUG")
         if not self.options.shared:
-            if is_msvc(self):
-                qtCore.system_libs.append("synchronization")
-                qtCore.system_libs.append("runtimeobject")
             if self.settings.os == "Windows":
                 # https://github.com/qt/qtbase/blob/v6.8.0/src/corelib/CMakeLists.txt#L527-L541
                 qtCore.system_libs.extend([
                     "advapi32", "authz", "kernel32", "netapi32", "ole32", "shell32",
-                    "user32", "uuid", "version", "winmm", "ws2_32", "mpr", "userenv",
+                    "synchronization", "user32", "uuid", "version", "winmm", "ws2_32", "mpr", "userenv",
                 ])
                 if Version(self.version) >= "6.10":
                     qtCore.system_libs.extend(["ntdll", "runtimeobject"])
+                elif is_msvc(self):
+                    qtCore.system_libs.append("runtimeobject")
             elif is_apple_os(self):
                 # https://github.com/qt/qtbase/blob/v6.8.0/src/corelib/CMakeLists.txt#L626-L630
-                qtCore.frameworks.extend(["CoreFoundation", "Foundation", "IOKit"])
+                qtCore.frameworks.extend(["CoreFoundation", "Foundation", "IOKit", "UniformTypeIdentifiers"])
                 if self.settings.os == "Macos":
                     # https://github.com/qt/qtbase/blob/v6.8.0/src/corelib/CMakeLists.txt#L645-L651
                     qtCore.frameworks.extend([
@@ -1272,8 +1271,6 @@ class QtConan(ConanFile):
                     qtGui.system_libs.append("d3d12")
                     # https://github.com/qt/qtbase/blob/v6.8.0/src/gui/CMakeLists.txt#L430
                     qtGui.system_libs.append("uxtheme")
-                    if self.settings.compiler == "gcc":
-                        qtGui.system_libs.append("uuid")
                     # https://github.com/qt/qtbase/blob/v6.8.0/src/plugins/platforms/direct2d/CMakeLists.txt#L59-L81
                     qtGui.system_libs += [
                         "advapi32", "d2d1", "d3d11", "dwmapi", "dwrite", "dxgi", "dxguid", "gdi32", "imm32", "ole32",
@@ -1315,8 +1312,10 @@ class QtConan(ConanFile):
                         QWindowsIntegrationPlugin.system_libs.append("uxtheme")
                 # https://github.com/qt/qtbase/commit/65d58e6c41e3c549c89ea4f05a8e467466e79ca3
                 QModernWindowsStylePlugin = _create_plugin("QModernWindowsStylePlugin", "qmodernwindowsstyle", "styles", ["Core", "Gui"])
-                if not self.options.shared and Version(self.version) >= "6.11":
-                    QModernWindowsStylePlugin.system_libs += ["dwmapi", "gdi32", "user32", "uxtheme"]
+                if not self.options.shared:
+                    QModernWindowsStylePlugin.system_libs += ["gdi32", "user32", "uxtheme"]
+                    if Version(self.version) >= "6.11":
+                        QModernWindowsStylePlugin.system_libs.append("dwmapi")
             elif self.settings.os == "Android":
                 QAndroidIntegrationPlugin = _create_plugin("QAndroidIntegrationPlugin", "qtforandroid", "platforms", ["Core", "Gui"])
                 if not self.options.shared:
@@ -1347,19 +1346,22 @@ class QtConan(ConanFile):
         if self.options.widgets:
             qtWidgets = _create_module("Widgets", ["Gui"])
             _add_build_module("qtWidgets", self._cmake_qt6_private_file("Widgets"))
-            if not self.options.shared and self.settings.os == "Windows":
-                # https://github.com/qt/qtbase/blob/v6.8.0/src/widgets/CMakeLists.txt#L383-L385
-                qtWidgets.system_libs += ["dwmapi", "shell32", "uxtheme"]
+            if not self.options.shared:
+                if self.settings.os == "Windows":
+                    # https://github.com/qt/qtbase/blob/v6.8.0/src/widgets/CMakeLists.txt#L383-L385
+                    qtWidgets.system_libs += ["dwmapi", "shell32", "uxtheme"]
+                elif self.settings.os == "Macos":
+                    qtWidgets.frameworks.append("AppKit")
+                    qtWidgets.requires.append("zlib-ng::zlib-ng")
 
         if self.options.gui and self.options.widgets:
             qtPrintSupport = _create_module("PrintSupport", ["Gui", "Widgets"])
             if not self.options.shared:
                 if self.settings.os == "Windows":
                     qtPrintSupport.system_libs.extend(["gdi32", "user32", "comdlg32", "winspool"])
-                elif is_apple_os(self):
-                    # https://github.com/qt/qtbase/blob/v6.8.0/src/printsupport/CMakeLists.txt#L59-L61
+                elif self.settings.os == "Macos":
                     qtPrintSupport.system_libs.append("cups")
-                    qtPrintSupport.frameworks.append("ApplicationServices")
+                    qtPrintSupport.frameworks.extend(["AppKit", "ApplicationServices"])
 
         if self.options.with_dbus:
             qtDBus = _create_module("DBus", ["dbus::dbus"])
@@ -1393,6 +1395,7 @@ class QtConan(ConanFile):
                 qtNetwork.system_libs.extend(["advapi32", "dnsapi", "iphlpapi", "secur32", "winhttp"])
             elif is_apple_os(self):
                 qtNetwork.system_libs.append("resolv")
+                qtNetwork.frameworks.append("CFNetwork")
                 if self.options.with_gssapi:
                     # https://github.com/qt/qtbase/blob/v6.8.0/src/network/CMakeLists.txt#L273
                     qtNetwork.frameworks.append("GSS")
@@ -1405,7 +1408,9 @@ class QtConan(ConanFile):
             _create_plugin("QConnManNetworkInformationPlugin", "qconnman", "networkinformation", ["DBus", "Network"])
 
         _create_module("Sql")
-        _create_module("Test")
+        qtTest = _create_module("Test")
+        if not self.options.shared and self.settings.os == "Macos":
+            qtTest.frameworks.extend(["AppKit", "ApplicationServices", "Foundation", "IOKit"])
         _create_module("Concurrent")
         _create_module("Xml")
         if self.options.get_safe("opengl", "no") != "no":
@@ -1418,19 +1423,28 @@ class QtConan(ConanFile):
         qt_quick_enabled = self.options.qtdeclarative and self.options.gui and self.options.qtshadertools
 
         if self.options.qtdeclarative:
-            _create_module("Qml", ["Network"])
+            qtQml = _create_module("Qml", ["Network"])
             _add_build_module("qtQml", self._cmake_qt6_private_file("Qml"))
+            if not self.options.shared:
+                if self.settings.os == "Windows":
+                    qtQml.system_libs.append("shell32")
+                elif is_apple_os(self):
+                    qtQml.frameworks.append("CoreFoundation")
             _create_module("QmlModels", ["Qml"])
             qtQmlImportScanner = self.cpp_info.components["qtQmlImportScanner"]
             qtQmlImportScanner.set_property("cmake_target_name", "Qt6::QmlImportScanner")
             qtQmlImportScanner.set_property("cmake_target_aliases", ["Qt::QmlImportScanner"])
             qtQmlImportScanner.requires = _get_corrected_reqs(["Qml"])
+            _create_module("QmlCompiler", ["Qml"])
             _create_module("QmlWorkerScript", ["Qml"])
             if qt_quick_enabled:
-                _create_module("Quick", ["Gui", "Qml", "QmlModels"])
+                qtQuick = _create_module("Quick", ["Gui", "Qml", "QmlModels"])
                 _add_build_module("qtQuick", self._cmake_qt6_private_file("Quick"))
+                if not self.options.shared and self.settings.os == "Windows":
+                    qtQuick.system_libs.append("user32")
                 if self.options.widgets:
                     _create_module("QuickWidgets", ["Gui", "Qml", "Quick", "Widgets"])
+                _create_module("QuickDialogs2Utils", ["Gui"])
                 _create_module("QuickShapes", ["Gui", "Qml", "Quick"])
                 _create_module("QuickTest", ["Test", "Quick"])
 
@@ -1455,8 +1469,9 @@ class QtConan(ConanFile):
             _create_module("Quick3DAssetImport", ["Gui", "Qml", "Quick3DUtils"])
             _create_module("Quick3DRuntimeRender", ["Gui", "Quick", "Quick3DAssetImport", "Quick3DUtils", "ShaderTools"])
             _create_module("Quick3D", ["Gui", "Qml", "Quick", "Quick3DRuntimeRender"])
+            _create_module("Quick3DIblBaker", ["Gui", "Quick", "Quick3DRuntimeRender"])
 
-        if self.options.get_safe("qtquickcontrols2") and qt_quick_enabled:
+        if qt_quick_enabled:
             _create_module("QuickControls2", ["Gui", "Quick"])
             _create_module("QuickTemplates2", ["Gui", "Quick"])
 
@@ -1479,7 +1494,12 @@ class QtConan(ConanFile):
                 qtAxServer.system_libs.append("shell32")
             _create_module("AxContainer", ["AxBase"])
         if self.options.get_safe("qtcharts"):
-            _create_module("Charts", ["Gui", "Widgets"])
+            charts_deps = ["Gui", "Widgets"]
+            if self.options.get_safe("opengl", "no") != "no":
+                charts_deps += ["OpenGL", "OpenGLWidgets"]
+            qtCharts = _create_module("Charts", charts_deps)
+            if not self.options.shared and self.settings.os == "Windows":
+                qtCharts.system_libs.append("user32")
         if self.options.get_safe("qtgraphs") and qt_quick_enabled:
             graphs_deps = ["Gui", "Quick"]
             if self.options.get_safe("qtquick3d"):
@@ -1488,7 +1508,7 @@ class QtConan(ConanFile):
             if self.options.get_safe("qtquick3d") and self.options.widgets:
                 _create_module("GraphsWidgets", ["Graphs", "QuickWidgets"])
         if self.options.get_safe("qtdatavis3d") and qt_quick_enabled:
-            _create_module("DataVisualization", ["Gui", "OpenGL", "Qml", "Quick"])
+            _create_module("DataVisualization", ["Gui", "OpenGL"])
         if self.options.get_safe("qtlottie"):
             if Version(self.version) >= "6.10":
                 _create_module("LottieVectorImageGeneratorPrivate", ["Gui"], has_include_dir=False)
@@ -1507,7 +1527,7 @@ class QtConan(ConanFile):
             _create_plugin("QtVirtualKeyboardMyScriptPlugin", "qtvirtualkeyboard_myscript", "virtualkeyboard", ["Gui", "Qml", "VirtualKeyboard"])
             _create_plugin("QtVirtualKeyboardThaiPlugin", "qtvirtualkeyboard_thai", "virtualkeyboard", ["Gui", "Qml", "VirtualKeyboard"])
         if self.options.get_safe("qt3d"):
-            _create_module("3DCore", ["Gui", "Network"])
+            _create_module("3DCore", ["Concurrent", "Gui", "Network"])
             _create_module("3DRender", ["3DCore", "OpenGL"])
             _create_module("3DAnimation", ["3DCore", "3DRender", "Gui"])
             _create_module("3DInput", ["3DCore", "Gui"])
@@ -1576,8 +1596,9 @@ class QtConan(ConanFile):
                 if Version(self.version) >= "6.9":
                     qtMultimedia.frameworks += ["AVFoundation", "CoreMedia", "CoreVideo"]
             _create_module("MultimediaWidgets", ["Multimedia", "Widgets", "Gui"])
+            _create_module("SpatialAudio", ["Multimedia"])
             if qt_quick_enabled:
-                _create_module("MultimediaQuick", ["Multimedia", "Quick"])
+                _create_module("MultimediaQuickPrivate", ["Multimedia", "Quick"], has_include_dir=False)
             if self.options.with_gstreamer:
                 _create_plugin("QGstreamerMediaPlugin", "gstreamermediaplugin", "multimedia", [
                     "gstreamer::gstreamer",
@@ -1585,8 +1606,13 @@ class QtConan(ConanFile):
 
         if self.options.get_safe("qtpositioning"):
             _create_module("Positioning")
+            if qt_quick_enabled:
+                _create_module("PositioningQuick", ["Positioning", "Qml", "Quick"])
             _create_plugin("QGeoPositionInfoSourceFactoryGeoclue2", "qtposition_geoclue2", "position")
             _create_plugin("QGeoPositionInfoSourceFactoryPoll", "qtposition_positionpoll", "position")
+
+        if self.options.get_safe("qtlocation") and self.options.get_safe("qtpositioning") and qt_quick_enabled:
+            _create_module("Location", ["Positioning", "PositioningQuick"])
 
         if self.options.get_safe("qtsensors"):
             _create_module("Sensors")
@@ -1598,14 +1624,32 @@ class QtConan(ConanFile):
             _create_plugin("QShakeSensorGesturePlugin", "qtsensorgestures_shakeplugin", "sensorgestures")
 
         if self.options.get_safe("qtconnectivity"):
-            _create_module("Bluetooth", ["Network"])
+            bluetooth_deps = ["Network"]
+            if self.options.get_safe("with_bluez"):
+                bluetooth_deps.append("DBus")
+            qtBluetooth = _create_module("Bluetooth", bluetooth_deps)
+            if not self.options.shared:
+                if self.settings.os == "Macos":
+                    qtBluetooth.frameworks.extend(["Foundation", "IOBluetooth"])
+                elif self.settings.os == "iOS":
+                    qtBluetooth.frameworks.extend(["CoreBluetooth", "Foundation"])
+                elif self.settings.os == "Windows":
+                    qtBluetooth.system_libs.extend(["runtimeobject", "user32"])
             _create_module("Nfc")
 
         if self.options.get_safe("qtserialport"):
-            _create_module("SerialPort")
+            qtSerialPort = _create_module("SerialPort")
+            if not self.options.shared:
+                if self.settings.os == "Windows":
+                    qtSerialPort.system_libs.extend(["advapi32", "setupapi"])
+                elif self.settings.os == "Macos":
+                    qtSerialPort.frameworks.extend(["CoreFoundation", "IOKit"])
 
         if self.options.get_safe("qtserialbus"):
-            _create_module("SerialBus", ["SerialPort"] if self.options.get_safe("qtserialport") else [])
+            serialbus_deps = ["Network"]
+            if self.options.get_safe("qtserialport"):
+                serialbus_deps.append("SerialPort")
+            _create_module("SerialBus", serialbus_deps)
             _create_plugin("PassThruCanBusPlugin", "qtpassthrucanbus", "canbus")
             _create_plugin("PeakCanBusPlugin", "qtpeakcanbus", "canbus")
             _create_plugin("SocketCanBusPlugin", "qtsocketcanbus", "canbus")
@@ -1630,13 +1674,13 @@ class QtConan(ConanFile):
             _create_module("WebEngineWidgets", ["WebEngineCore", "Quick", "PrintSupport", "Widgets", "Gui", "Network"])
 
         if self.options.get_safe("qtremoteobjects"):
-            _create_module("RemoteObjects")
+            _create_module("RemoteObjects", ["Network"])
 
         if self.options.get_safe("qtwebview"):
             _create_module("WebView", ["Core", "Gui"])
 
         if self.options.get_safe("qtspeech"):
-            _create_module("TextToSpeech")
+            _create_module("TextToSpeech", ["Multimedia"])
 
         if self.options.get_safe("qthttpserver"):
             http_server_deps = ["Core", "Network"]
@@ -1649,16 +1693,17 @@ class QtConan(ConanFile):
             _create_module("Grpc", ["Core", "Protobuf", "Network"])
 
         if self.options.get_safe("qttasktree"):
-            _create_module("TaskTree")
+            _create_module("TaskTree", ["Concurrent", "Network"])
 
         if self.options.get_safe("qtopenapi"):
             _create_module("OpenApiCommon", ["Network"])
-            _create_module("OpenApi", ["Network"])
 
         if self.options.get_safe("qtcanvaspainter") and self.options.gui and self.options.qtshadertools:
             canvaspainter_deps = ["Gui"]
             if qt_quick_enabled:
                 canvaspainter_deps.append("Quick")
+            if self.options.widgets:
+                canvaspainter_deps.append("Widgets")
             _create_module("CanvasPainter", canvaspainter_deps)
 
         if self.settings.os in ["Windows", "iOS"]:
