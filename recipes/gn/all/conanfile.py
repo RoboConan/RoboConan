@@ -41,7 +41,9 @@ class GnConan(ConanFile):
 
         # if compiler is not defined via Conan config (e.g. CXX buildenv flag, or compiler config),
         # default to `c++` executable, which is the system default on most systems
-        replace_in_file(self, os.path.join(self.source_folder, "build/gen.py"), "'clang++'", "'c++'")
+        # Skip this for qt- versions as the patches already handle it
+        if not self.version.startswith("qt-"):
+            replace_in_file(self, os.path.join(self.source_folder, "build/gen.py"), "'clang++'", "'c++'")
 
         # support windows arm64
         replace_in_file(self, os.path.join(self.source_folder, "src", "util", "build_config.h"),
