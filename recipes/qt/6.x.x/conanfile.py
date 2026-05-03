@@ -526,7 +526,7 @@ class QtConan(ConanFile):
             self.tool_requires("pkgconf/[>=2.2 <3]")
         if self.options.get_safe("qtwebengine"):
             self.tool_requires(f"gn/qt-{self.version}")
-            self.tool_requires("nodejs/18.15.0")
+            self.tool_requires("nodejs/[>=20]")
             self.tool_requires("gperf/3.1")
             # gperf, bison, flex, python >= 2.7.5 & < 3
             if self.settings_build.os == "Windows":
