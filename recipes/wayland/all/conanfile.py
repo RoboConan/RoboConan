@@ -2,7 +2,7 @@ import os
 
 from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
-from conan.tools.build import can_run, cross_building
+from conan.tools.build import can_run
 from conan.tools.env import VirtualBuildEnv, VirtualRunEnv, Environment
 from conan.tools.files import *
 from conan.tools.gnu import PkgConfigDeps
@@ -76,21 +76,18 @@ class WaylandConan(ConanFile):
         tc.project_options["libraries"] = self.options.enable_libraries
         tc.project_options["dtd_validation"] = self.options.enable_dtd_validation
         tc.project_options["documentation"] = False
-        if not can_run(self):
-            tc.project_options["build.pkg_config_path"] = self.generators_folder
         tc.project_options["scanner"] = True
+        if not can_run(self):
+            tc.build_pkg_config_path = os.path.join(self.generators_folder, "build")
         tc.generate()
 
         deps = PkgConfigDeps(self)
-        if not can_run(self):
-            deps.build_context_activated.append("wayland")
-            deps.build_context_folder = os.path.join(self.generators_folder, "build")
-        elif self.dependencies["expat"].is_build_context:  # wayland is being built as build_require
-            # If wayland is the build_require, all its dependencies are treated as build_requires
-            deps.build_context_activated.extend(dep.ref.name for _, dep in self.dependencies.host.items())
+        # For cross-compilation support
+        deps.build_context_activated = [dep.ref.name for dep, _ in self.dependencies.build.items()]
+        deps.build_context_folder = os.path.join(self.generators_folder, "build")
         deps.generate()
 
-        if cross_building(self):
+        if not can_run(self):
             # required for dependency(..., native: true) in meson.build
             env = Environment()
             env.define_path("PKG_CONFIG_FOR_BUILD", self.conf.get("tools.gnu:pkg_config", default="pkgconf", check_type=str))
