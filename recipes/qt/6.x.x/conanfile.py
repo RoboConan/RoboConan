@@ -455,7 +455,7 @@ class QtConan(ConanFile):
         if self.options.with_odbc and self.settings.os != "Windows":
             self.requires("odbc/[^2.3.11]")
         if self.options.get_safe("with_openal"):
-            self.requires("openal-soft/1.22.2")
+            self.requires("openal-soft/[^1.22]")
         if self.options.get_safe("with_libalsa"):
             self.requires("libalsa/[^1.2.10]")
         if self.options.get_safe("with_x11") or self.options.get_safe("qtwayland"):

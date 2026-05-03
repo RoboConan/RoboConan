@@ -265,7 +265,7 @@ class GStPluginsBadConan(ConanFile):
         if "onnxruntime" in reqs:
             self.requires("onnxruntime/[~1.18.2]")
         if "openal-soft" in reqs:
-            self.requires("openal-soft/1.22.2")
+            self.requires("openal-soft/[^1.22]")
         if "opencv" in reqs:
             # Only < 3.5.0 is supported. 'contrib' is required for opencv_tracking.
             self.requires("opencv/[~3.4.20]", options={"contrib": True})

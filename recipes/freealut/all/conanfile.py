@@ -53,7 +53,7 @@ class FreeAlutConan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("openal-soft/1.22.2", transitive_headers=True, transitive_libs=True)
+        self.requires("openal-soft/[^1.22]", transitive_headers=True, transitive_libs=True)
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
