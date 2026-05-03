@@ -64,6 +64,7 @@ class QtConan(ConanFile):
         "with_md4c": [True, False],
         "with_x11": [True, False],
         "with_egl": [True, False],
+        "with_bluez": [True, False],
         "with_liburing": [True, False],
 
         "gui": [True, False],
@@ -109,6 +110,7 @@ class QtConan(ConanFile):
         "with_md4c": True,
         "with_x11": True,
         "with_egl": False,
+        "with_bluez": False,
         "with_liburing": False,
 
         "gui": True,
@@ -231,6 +233,7 @@ class QtConan(ConanFile):
             self.options.with_glib = False
         if self.settings.os != "Linux":
             del self.options.with_liburing
+            del self.options.with_bluez
         if self.settings.os == "Windows":
             self.options.opengl = "dynamic"
             del self.options.with_gssapi
@@ -358,6 +361,9 @@ class QtConan(ConanFile):
                 raise ConanInvalidConfiguration("option qt:qtwebengine requires also qt:gui, qt:qtdeclarative and qt:qtwebchannel")
             if not self.options.with_dbus and self.settings.os == "Linux":
                 raise ConanInvalidConfiguration("option qt:webengine requires also qt:with_dbus on Linux")
+
+        if self.options.get_safe("with_bluez") and not self.options.with_dbus:
+            raise ConanInvalidConfiguration("qt:with_bluez requires qt:with_dbus")
 
         if self.options.widgets and not self.options.gui:
             raise ConanInvalidConfiguration("using option qt:widgets without option qt:gui is not possible. "
@@ -675,6 +681,7 @@ class QtConan(ConanFile):
         tc.variables["FEATURE_wayland"] = with_wayland
 
         tc.variables["CMAKE_DISABLE_FIND_PACKAGE_Liburing"] = not self.options.get_safe("with_liburing", False)
+        tc.variables["CMAKE_DISABLE_FIND_PACKAGE_BlueZ"] = not self.options.get_safe("with_bluez", False)
 
         with_egl = self.options.get_safe("with_egl", False)
         tc.variables["CMAKE_DISABLE_FIND_PACKAGE_EGL"] = not with_egl
