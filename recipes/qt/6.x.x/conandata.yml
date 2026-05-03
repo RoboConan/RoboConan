@@ -1,8 +1,26 @@
 sources:
+  "6.10.3":
+  "6.9.3":
   "6.8.3":
-  "6.7.3":
-  "6.6.3":
 patches:
+  "6.10.3":
+    - "base_path": "qtwebengine"
+      "patch_description": "Workaround for too long .rps file name"
+      "patch_file": "patches/c72097e_6.8.0.diff"
+      "patch_source": "https://codereview.qt-project.org/c/yocto/meta-qt5/+/192172"
+      "patch_type": "bugfix"
+    - "patch_description": "Rewrite FindXCB.cmake to not ignore transitive dependencies"
+      "patch_file": "patches/fix-find-xcb.patch"
+      "patch_type": "conan"
+  "6.9.3":
+    - "base_path": "qtwebengine"
+      "patch_description": "Workaround for too long .rps file name"
+      "patch_file": "patches/c72097e_6.8.0.diff"
+      "patch_source": "https://codereview.qt-project.org/c/yocto/meta-qt5/+/192172"
+      "patch_type": "bugfix"
+    - "patch_description": "Rewrite FindXCB.cmake to not ignore transitive dependencies"
+      "patch_file": "patches/fix-find-xcb.patch"
+      "patch_type": "conan"
   "6.8.3":
     - "patch_file": "patches/remove-linkage-to-agl-framework.patch"
       "base_path": "qtbase"
@@ -16,26 +34,3 @@ patches:
     - "patch_description": "Rewrite FindXCB.cmake to not ignore transitive dependencies"
       "patch_file": "patches/fix-find-xcb.patch"
       "patch_type": "conan"
-  "6.7.3":
-    - "patch_file": "patches/remove-linkage-to-agl-framework.patch"
-      "base_path": "qtbase"
-    - "patch_file": "patches/macos-link-platform-plugin-to-foundation.patch"
-      "base_path": "qtbase"
-    - "base_path": "qtwebengine"
-      "patch_description": "Workaround for too long .rps file name"
-      "patch_file": "patches/c72097e_6.6.0.diff"
-      "patch_source": "https://codereview.qt-project.org/c/yocto/meta-qt5/+/192172"
-      "patch_type": "bugfix"
-    - "patch_description": "Rewrite FindXCB.cmake to not ignore transitive dependencies"
-      "patch_file": "patches/fix-find-xcb.patch"
-      "patch_type": "conan"
-  "6.6.3":
-    - "patch_file": "patches/remove-linkage-to-agl-framework.patch"
-      "base_path": "qtbase"
-    - "patch_file": "patches/macos-link-platform-plugin-to-foundation.patch"
-      "base_path": "qtbase"
-    - "base_path": "qtwebengine"
-      "patch_description": "Workaround for too long .rps file name"
-      "patch_file": "patches/c72097e_6.6.0.diff"
-      "patch_source": "https://codereview.qt-project.org/c/yocto/meta-qt5/+/192172"
-      "patch_type": "bugfix"

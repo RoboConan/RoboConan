@@ -9,7 +9,7 @@ from tqdm.auto import tqdm
 
 hashes_base_url = "https://download.qt.io/archive/"
 # qt.io does not provide Content-Length info, so using a mirror instead.
-sizes_base_url = "https://qt-mirror.dannhauer.de/archive/"
+sizes_base_url = "https://mirror.netcologne.de/qtproject/archive/"
 
 # Modules that are not available as a downloadable archive and which must be fetched from GitHub instead.
 git_components = [
