@@ -20,7 +20,7 @@ Change-Id: I73c5e64ae5174412be2a675e35b0b6047f2bf4c1
 diff --git a/src/3rdparty/gn/src/gn/ninja_action_target_writer.cc b/src/3rdparty/gn/src/gn/ninja_action_target_writer.cc
 index a5bc6cd..5cefbfe 100644
 --- a/src/3rdparty/gn/src/gn/ninja_action_target_writer.cc
-+++ b/src/3rdparty/gn/tosrcols/gn/ninja_action_target_writer.cc
++++ b/src/3rdparty/gn/src/gn/ninja_action_target_writer.cc
 @@ -151,9 +151,18 @@ std::string NinjaActionTargetWriter::WriteRuleDefinition() {
      // strictly necessary for regular one-shot actions, but it's easier to
      // just always define unique_name.
