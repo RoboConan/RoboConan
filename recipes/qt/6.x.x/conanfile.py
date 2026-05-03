@@ -309,14 +309,13 @@ class QtConan(ConanFile):
         if self.settings.os in ("FreeBSD", "Linux") and self.options.get_safe("qtwebengine"):
             self.options.with_fontconfig = True
 
-        if Version(self.version) >= "6.8.0":
-            # INT128 support is mandatory since 6.8.0, but this requires GNU extensions when using libstdc++.
-            # Force-enable the extensions for this recipe as a workaround.
-            # https://github.com/qt/qtbase/commit/7805b3c32f88a5405a4a12b402c93cf6cb5dedc4
-            # https://github.com/qt/qtbase/blob/v6.8.0/src/corelib/global/qtypes.cpp#L506-L511
-            if self.settings.compiler.get_safe("libcxx") in ["libstdc++", "libstdc++11"]:
-                if not "gnu" in str(self.settings.compiler.cppstd):
-                    self.settings.compiler.cppstd = f"gnu{self.settings.compiler.cppstd}"
+        # INT128 support is mandatory since 6.8.0, but this requires GNU extensions when using libstdc++.
+        # Force-enable the extensions for this recipe as a workaround.
+        # https://github.com/qt/qtbase/commit/7805b3c32f88a5405a4a12b402c93cf6cb5dedc4
+        # https://github.com/qt/qtbase/blob/v6.8.0/src/corelib/global/qtypes.cpp#L506-L511
+        if self.settings.compiler.get_safe("libcxx") in ["libstdc++", "libstdc++11"]:
+            if not "gnu" in str(self.settings.compiler.cppstd):
+                self.settings.compiler.cppstd = f"gnu{self.settings.compiler.cppstd}"
 
         if not self.options.qtimageformats:
             del self.options.with_jasper
@@ -346,12 +345,11 @@ class QtConan(ConanFile):
             # https://bugreports.qt.io/browse/QTBUG-119490
             raise ConanInvalidConfiguration("apple-clang >= 13.1 is required by qt >= 6.6.1 cf QTBUG-119490")
 
-        if Version(self.version) >= "6.8.3":
-            if self.settings.compiler == "msvc" and Version(self.settings.compiler.version) < "193":
-                raise ConanInvalidConfiguration("Visual Studio 2022 (MSVC 1930 or newer) is required by qt >= 6.8.3")
+        if self.settings.compiler == "msvc" and Version(self.settings.compiler.version) < "193":
+            raise ConanInvalidConfiguration("Visual Studio 2022 (MSVC 1930 or newer) is required by qt >= 6.8.3")
 
-            if self.settings.compiler == "apple-clang" and Version(self.settings.compiler.version) < "14":
-                raise ConanInvalidConfiguration("apple-clang >= 14 is required by qt >= 6.8.3")
+        if self.settings.compiler == "apple-clang" and Version(self.settings.compiler.version) < "14":
+            raise ConanInvalidConfiguration("apple-clang >= 14 is required by qt >= 6.8.3")
 
         if self.options.get_safe("qtwebengine"):
             if not self.options.shared:
@@ -865,13 +863,6 @@ class QtConan(ConanFile):
             if file.is_file():
                 file.unlink()
 
-        # workaround https://bugreports.qt.io/browse/QTBUG-94356
-        if Version(self.version) < "6.8.0":
-            replace_in_file(self, os.path.join(self.source_folder, "qtbase", "cmake", "FindWrapSystemZLIB.cmake"), '"-lz"', "ZLIB::ZLIB")
-            replace_in_file(self, os.path.join(self.source_folder, "qtbase", "configure.cmake"),
-                "set_property(TARGET ZLIB::ZLIB PROPERTY IMPORTED_GLOBAL TRUE)",
-                "")
-
         replace_in_file(self, os.path.join(self.source_folder, "qtbase", "cmake", "QtAutoDetectHelpers.cmake"),
                         "qt_auto_detect_vcpkg()",
                         "# qt_auto_detect_vcpkg()")
@@ -950,8 +941,7 @@ class QtConan(ConanFile):
         if self.options.qtdeclarative:
             targets.extend(["qmltyperegistrar", "qmlcachegen", "qmllint", "qmlimportscanner"])
             targets.extend(["qmlformat", "qml", "qmlprofiler", "qmlpreview", "qmltc"])
-            if Version(self.version) >= "6.8.0":
-                targets.append("qmlaotstats")
+            targets.append("qmlaotstats")
             # Note: consider "qmltestrunner", see https://github.com/conan-io/conan-center-index/issues/24276
         if self.options.get_safe("qtremoteobjects"):
             targets.append("repc")
@@ -1206,7 +1196,7 @@ class QtConan(ConanFile):
                     "user32", "uuid", "version", "winmm", "ws2_32", "mpr", "userenv",
                 ])
                 if Version(self.version) >= "6.10":
-                    qtCore.system_libs.extend(["icuuc", "icuin", "ntdll"])
+                    qtCore.system_libs.extend(["ntdll", "runtimeobject"])
             elif is_apple_os(self):
                 # https://github.com/qt/qtbase/blob/v6.8.0/src/corelib/CMakeLists.txt#L626-L630
                 qtCore.frameworks.extend(["CoreFoundation", "Foundation", "IOKit"])
@@ -1280,9 +1270,8 @@ class QtConan(ConanFile):
                         qtGui.system_libs.append("uuid")  # FIXME: should be util-linux-libuuid?
                     # https://github.com/qt/qtbase/blob/v6.6.0/src/gui/CMakeLists.txt#L428
                     qtGui.system_libs.append("d3d12")
-                    if Version(self.version) >= "6.7.0":
-                        # https://github.com/qt/qtbase/blob/v6.8.0/src/gui/CMakeLists.txt#L430
-                        qtGui.system_libs.append("uxtheme")
+                    # https://github.com/qt/qtbase/blob/v6.8.0/src/gui/CMakeLists.txt#L430
+                    qtGui.system_libs.append("uxtheme")
                     if self.settings.compiler == "gcc":
                         qtGui.system_libs.append("uuid")
                     # https://github.com/qt/qtbase/blob/v6.8.0/src/plugins/platforms/direct2d/CMakeLists.txt#L59-L81
@@ -1299,7 +1288,7 @@ class QtConan(ConanFile):
                         qtGui.frameworks += ["AppKit", "Carbon"]
                     # https://github.com/qt/qtbase/blob/6.8.0/src/gui/configure.cmake#L834-L837
                     has_metal = "metal" not in disabled_features and self.settings.os in ["Macos", "iOS", "visionOS"]
-                    if Version(self.version) >= "6.8.0" and has_metal:
+                    if has_metal:
                         # https://github.com/qt/qtbase/blob/6.8.0/src/gui/CMakeLists.txt#L432-L437
                         qtGui.frameworks.append("QuartzCore")
                     if Version(self.version) >= "6.11":
@@ -1322,13 +1311,12 @@ class QtConan(ConanFile):
                         "advapi32", "dwmapi", "gdi32", "imm32", "ole32", "oleaut32", "setupapi", "shell32", "shlwapi",
                         "user32", "winmm", "winspool", "wtsapi32", "shcore", "comdlg32", "d3d9", "runtimeobject"
                     ]
+                    if Version(self.version) >= "6.9":
+                        QWindowsIntegrationPlugin.system_libs.append("uxtheme")
                 # https://github.com/qt/qtbase/commit/65d58e6c41e3c549c89ea4f05a8e467466e79ca3
-                if Version(self.version) >= "6.7.0":
-                    QModernWindowsStylePlugin = _create_plugin("QModernWindowsStylePlugin", "qmodernwindowsstyle", "styles", ["Core", "Gui"])
-                    if not self.options.shared and Version(self.version) >= "6.11":
-                        QModernWindowsStylePlugin.system_libs += ["dwmapi", "gdi32", "user32", "uxtheme"]
-                else:
-                    _create_plugin("QWindowsVistaStylePlugin", "qwindowsvistastyle", "styles", ["Core", "Gui"])
+                QModernWindowsStylePlugin = _create_plugin("QModernWindowsStylePlugin", "qmodernwindowsstyle", "styles", ["Core", "Gui"])
+                if not self.options.shared and Version(self.version) >= "6.11":
+                    QModernWindowsStylePlugin.system_libs += ["dwmapi", "gdi32", "user32", "uxtheme"]
             elif self.settings.os == "Android":
                 QAndroidIntegrationPlugin = _create_plugin("QAndroidIntegrationPlugin", "qtforandroid", "platforms", ["Core", "Gui"])
                 if not self.options.shared:
@@ -1339,10 +1327,10 @@ class QtConan(ConanFile):
                 if not self.options.shared:
                     # https://github.com/qt/qtbase/blob/v6.8.0/src/plugins/platforms/cocoa/CMakeLists.txt#L51-L58
                     QCocoaIntegrationPlugin.frameworks = [
-                        "AppKit", "Carbon", "CoreServices", "CoreVideo", "IOKit", "IOSurface", "Metal", "QuartzCore"
+                        "AppKit", "Carbon", "CoreServices", "CoreVideo", "IOKit", "IOSurface", "Metal", "QuartzCore", "UniformTypeIdentifiers"
                     ]
-                    if Version(self.version) >= "6.8.0":
-                        QCocoaIntegrationPlugin.frameworks.append("UniformTypeIdentifiers")
+                    if Version(self.version) >= "6.9":
+                        QCocoaIntegrationPlugin.frameworks.append("Foundation")
             elif self.settings.os in ["iOS", "tvOS"]:
                 QIOSIntegrationPlugin = _create_plugin("QIOSIntegrationPlugin", "qios", "platforms")
                 if not self.options.shared:
@@ -1351,8 +1339,6 @@ class QtConan(ConanFile):
                     if self.settings.os != "tvOS":
                         # https://github.com/qt/qtbase/blob/v6.8.0/src/plugins/platforms/ios/CMakeLists.txt#L84-L85
                         QIOSIntegrationPlugin.frameworks += ["UniformTypeIdentifiers", "Photos"]
-                        if Version(self.version) < "6.8.0":
-                            QIOSIntegrationPlugin.frameworks.append("AssetsLibrary")
             elif self.settings.os == "watchOS":
                 _create_plugin("QMinimalIntegrationPlugin", "qminimal", "platforms")
             elif self.settings.os == "Emscripten":
@@ -1504,7 +1490,10 @@ class QtConan(ConanFile):
         if self.options.get_safe("qtdatavis3d") and qt_quick_enabled:
             _create_module("DataVisualization", ["Gui", "OpenGL", "Qml", "Quick"])
         if self.options.get_safe("qtlottie"):
-            _create_module("Bodymovin", ["Gui"])
+            if Version(self.version) >= "6.10":
+                _create_module("LottieVectorImageGeneratorPrivate", ["Gui"], has_include_dir=False)
+            else:
+                _create_module("BodymovinPrivate", ["Gui"], has_include_dir=False)
         if self.options.get_safe("qtscxml"):
             _create_module("StateMachine")
             _create_module("StateMachineQml", ["StateMachine", "Qml"])
@@ -1528,8 +1517,9 @@ class QtConan(ConanFile):
             _create_plugin("fbxGeometryLoaderPlugin", "fbxgeometryloader", "geometryloaders", ["3DCore", "3DRender", "Gui"])
             if qt_quick_enabled:
                 _create_module("3DQuick", ["3DCore", "Gui", "Qml", "Quick"])
-                _create_module("3DQuickAnimation", ["3DAnimation", "3DCore", "3DQuick", "3DRender", "Gui", "Qml"])
-                _create_module("3DQuickExtras", ["3DCore", "3DExtras", "3DInput", "3DQuick", "3DRender", "Gui", "Qml"])
+                if Version(self.version) < "6.9":
+                    _create_module("3DQuickAnimation", ["3DAnimation", "3DCore", "3DQuick", "3DRender", "Gui", "Qml"])
+                    _create_module("3DQuickExtras", ["3DCore", "3DExtras", "3DInput", "3DQuick", "3DRender", "Gui", "Qml"])
                 _create_module("3DQuickInput", ["3DCore", "3DInput", "3DQuick", "Gui", "Qml"])
                 _create_module("3DQuickRender", ["3DCore", "3DQuick", "3DRender", "Gui", "Qml"])
                 _create_module("3DQuickScene2D", ["3DCore", "3DQuick", "3DRender", "Gui", "Qml"])
@@ -1558,7 +1548,10 @@ class QtConan(ConanFile):
         if self.options.get_safe("qtcoap"):
             _create_module("Coap", ["Network"])
         if self.options.get_safe("qtmqtt"):
-            _create_module("Mqtt", ["Network"])
+            mqtt_deps = ["Network"]
+            if Version(self.version) >= "6.10" and self.options.get_safe("qtwebsockets"):
+                mqtt_deps.append("WebSockets")
+            _create_module("Mqtt", mqtt_deps)
         if self.options.get_safe("qtopcua"):
             _create_module("OpcUa", ["Network"])
             _create_plugin("QOpen62541Plugin", "open62541_backend", "opcua", ["Network", "OpcUa"])
@@ -1572,7 +1565,16 @@ class QtConan(ConanFile):
                 multimedia_reqs.append("openal-soft::openal-soft")
             if self.options.get_safe("with_pulseaudio"):
                 multimedia_reqs.append("pulseaudio::pulse")
-            _create_module("Multimedia", multimedia_reqs)
+            qtMultimedia = _create_module("Multimedia", multimedia_reqs)
+            if self.settings.os == "Windows":
+                if Version(self.version) >= "6.9":
+                    qtMultimedia.system_libs += ["avrt", "ksuser", "propsys", "uuid"]
+                else:
+                    qtMultimedia.system_libs += ["winmm", "ksuser"]
+            if is_apple_os(self):
+                qtMultimedia.frameworks += ["CoreAudio", "AudioToolbox"]
+                if Version(self.version) >= "6.9":
+                    qtMultimedia.frameworks += ["AVFoundation", "CoreMedia", "CoreVideo"]
             _create_module("MultimediaWidgets", ["Multimedia", "Widgets", "Gui"])
             if qt_quick_enabled:
                 _create_module("MultimediaQuick", ["Multimedia", "Quick"])
