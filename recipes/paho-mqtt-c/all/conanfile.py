@@ -3,7 +3,6 @@ import os
 from conan import ConanFile
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
-from conan.tools.scm import Version
 
 required_conan_version = ">=2.4"
 
@@ -64,29 +63,19 @@ class PahoMqttcConan(ConanFile):
             tc.cache_variables["OPENSSL_ROOT_DIR"] = self.dependencies["openssl"].package_folder.replace("\\", "/")
         tc.variables["PAHO_HIGH_PERFORMANCE"] = self.options.high_performance
         tc.cache_variables["CMAKE_POLICY_DEFAULT_CMP0042"] = "NEW"
-        if Version(self.version) < "1.3.14": # pylint: disable=conan-condition-evals-to-constant
-            tc.cache_variables["CMAKE_POLICY_VERSION_MINIMUM"] = "3.5" # CMake 4 support
         tc.generate()
 
         deps = CMakeDeps(self)
         deps.generate()
 
-    def _patch_source(self):
-        replace_in_file(self, os.path.join(self.source_folder, "CMakeLists.txt"),
-                        "SET(CMAKE_MODULE_PATH \"${CMAKE_SOURCE_DIR}/cmake/modules\")",
-                        "LIST(APPEND CMAKE_MODULE_PATH \"${CMAKE_SOURCE_DIR}/cmake/modules\")")
-        if not self.options.get_safe("fPIC", True):
-            replace_in_file(self, os.path.join(self.source_folder, "src", "CMakeLists.txt"), "POSITION_INDEPENDENT_CODE ON", "")
-
     def build(self):
-        self._patch_source()
         cmake = CMake(self)
         cmake.configure()
         cmake.build(target=self._cmake_target)
 
     def package(self):
         copy(self, "edl-v10", src=self.source_folder, dst=os.path.join(self.package_folder, "licenses"))
-        copy(self, self._epl_file, src=self.source_folder, dst=os.path.join(self.package_folder, "licenses"))
+        copy(self, "epl-v20", src=self.source_folder, dst=os.path.join(self.package_folder, "licenses"))
         copy(self, "notice.html", src=self.source_folder, dst=os.path.join(self.package_folder, "licenses"))
 
         # Manually copy since the CMake installs everything
@@ -119,10 +108,6 @@ class PahoMqttcConan(ConanFile):
             self.cpp_info.system_libs.extend(["c"])
         else:
             self.cpp_info.system_libs.extend(["c", "pthread"])
-
-    @property
-    def _epl_file(self):
-        return "epl-v10" if self.version in ['1.3.0', '1.3.1'] else "epl-v20" # EPL changed to V2
 
     @property
     def _cmake_target(self):

@@ -49,7 +49,7 @@ class PahoMqttCppConan(ConanFile):
     def requirements(self):
         # Headers are exposed https://github.com/conan-io/conan-center-index/pull/16760#issuecomment-1502420549
         # Symbols are exposed   "_MQTTProperties_free", referenced from: mqtt::connect_options::~connect_options() in test_package.cpp.o
-        self.requires("paho-mqtt-c/1.3.13", transitive_headers=True, transitive_libs=True)
+        self.requires("paho-mqtt-c/[^1.3]", transitive_headers=True, transitive_libs=True)
 
     def validate(self):
         check_min_cppstd(self, self._min_cppstd)
