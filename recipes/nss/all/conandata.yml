@@ -1,4 +1,7 @@
 sources:
+  "3.123.1":
+    url: "https://archive.mozilla.org/pub/security/nss/releases/NSS_3_123_1_RTM/src/nss-3.123.1.tar.gz"
+    sha256: "42065a3ff780a9710a3dddcd1cee9b9be2aa40628883cea851d562eb58b178b0"
   "3.110":
     url: "https://ftp.mozilla.org/pub/security/nss/releases/NSS_3_110_RTM/src/nss-3.110.tar.gz"
     sha256: "9cd610c40422a07771b9b45166be2d052ea2f00b605a7928129e1f2071b3ae27"
@@ -9,6 +12,10 @@ sources:
     url: "https://ftp.mozilla.org/pub/security/nss/releases/NSS_3_93_RTM/src/nss-3.93.tar.gz"
     sha256: "15f54bb72048eb105f8c0e936a04b899e74c3db9a19bbc1e00acee2af9476a8a"
 patches:
+  "3.123.3":
+    - patch_file: "patches/3.107-avoid-vswhere.patch"
+      patch_description: "Use VCVars env vars instead of vswhere"
+      patch_type: "conan"
   "3.110":
     - patch_file: "patches/3.107-avoid-vswhere.patch"
       patch_description: "Use VCVars env vars instead of vswhere"
