@@ -92,24 +92,23 @@ class XkbcommonConan(ConanFile):
         tc.project_options["enable-xkbregistry"] = self.options.xkbregistry
         if self.settings.os == "Android":
             tc.project_options["enable-tools"] = False
+        if self.options.get_safe("with_wayland") and not can_run(self):
+            tc.build_pkg_config_path = os.path.join(self.generators_folder, "build")
         tc.generate()
 
         deps = PkgConfigDeps(self)
-        if self.options.get_safe("with_wayland"):
-            deps.build_context_activated.append("wayland")
+        if self.options.get_safe("with_wayland") and not can_run(self):
+            deps.build_context_activated = [dep.ref.name for dep, _ in self.dependencies.build.items()]
             deps.build_context_folder = os.path.join(self.generators_folder, "build")
         deps.generate()
 
         if self.options.get_safe("with_wayland"):
-            env = Environment()
-            # required for dependency(..., native: true) in meson.build
-            env.define_path("PKG_CONFIG_FOR_BUILD", self.conf.get("tools.gnu:pkg_config", default="pkgconf", check_type=str))
-            env.define_path("PKG_CONFIG_PATH_FOR_BUILD", os.path.join(self.generators_folder, "build"))
-            env.vars(self).save_script("pkg_config_for_build_env")
-
-            # workaround for wayland-scanner not finding libxml.so
-            # FIXME: this should not be necessary.
-            if can_run(self):
+            if not can_run(self):
+                env = Environment()
+                env.define_path("PKG_CONFIG_FOR_BUILD", self.conf.get("tools.gnu:pkg_config", default="pkgconf", check_type=str))
+                env.define_path("PKG_CONFIG_PATH_FOR_BUILD", os.path.join(self.generators_folder, "build"))
+                env.vars(self).save_script("pkg_config_for_build_env")
+            else:
                 VirtualRunEnv(self).generate(scope="build")
 
     def build(self):
