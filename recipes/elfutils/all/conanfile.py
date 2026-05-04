@@ -2,9 +2,13 @@ import os
 
 from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
+from conan.tools import CppInfo
+from conan.tools.build import cross_building
+from conan.tools.env import Environment
 from conan.tools.files import *
 from conan.tools.gnu import Autotools, AutotoolsToolchain, AutotoolsDeps, PkgConfigDeps
 from conan.tools.layout import basic_layout
+from conan.tools.microsoft import unix_path
 from conan.tools.scm import Version
 
 required_conan_version = ">=2.1"
@@ -122,6 +126,13 @@ class ElfutilsConan(ConanFile):
         if self.options.get_safe("with_zstd"):
             # ./configure ignores system_libs
             tc.extra_ldflags.append("-pthread")
+        if self.options.shared and cross_building(self):
+            # When cross-compiling shared libraries, the linker needs -rpath-link to resolve
+            # transitive shared library dependencies (e.g. libdw.so -> libz.so) when linking
+            # executables against elfutils' own shared libs.
+            for dep in self.dependencies.host.values():
+                for libdir in dep.cpp_info.aggregated_components().libdirs:
+                    tc.extra_ldflags.append(f"-Wl,-rpath-link,{libdir}")
         tc.generate()
         if self.settings.compiler == "msvc":
             # Custom AutotoolsDeps for cl-like compilers
