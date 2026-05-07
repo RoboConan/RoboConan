@@ -36,7 +36,7 @@ class XcbUtilConan(ConanFile):
         basic_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("libxcb/1.17.0", transitive_headers=True)
+        self.requires("libxcb/[^1.17.0]", transitive_headers=True)
 
     def validate(self):
         if is_msvc(self):

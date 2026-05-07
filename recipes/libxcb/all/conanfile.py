@@ -48,8 +48,8 @@ class LibXcbConan(ConanFile):
         basic_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("libxau/1.0.11")
-        self.requires("libxdmcp/1.1.5")
+        self.requires("libxau/[^1.0.12]")
+        self.requires("libxdmcp/[^1.1.5]")
 
     def validate(self):
         if is_msvc(self):
@@ -66,7 +66,7 @@ class LibXcbConan(ConanFile):
             self.win_bash = True
             if not self.conf.get("tools.microsoft.bash:path", check_type=str):
                 self.tool_requires("msys2/latest")
-        self.tool_requires("xcb-proto/1.17.0")
+        self.tool_requires("xcb-proto/[^1.17.0]")
         if not self._have_python:
             self.tool_requires("cpython/[>=3.12 <3.13]")
 

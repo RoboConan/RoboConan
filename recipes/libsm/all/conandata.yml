@@ -1,6 +1,6 @@
 sources:
-  "1.2.4":
+  "1.2.6":
     url:
-      - "https://www.x.org/archive/individual/lib/libSM-1.2.4.tar.xz"
-      - "https://xorg.freedesktop.org/releases/individual/lib/libSM-1.2.4.tar.xz"
-    sha256: "fdcbe51e4d1276b1183da77a8a4e74a137ca203e0bcfb20972dd5f3347e97b84"
+      - "https://www.x.org/archive/individual/lib/libSM-1.2.6.tar.xz"
+      - "https://xorg.freedesktop.org/releases/individual/lib/libSM-1.2.6.tar.xz"
+    sha256: "be7c0abdb15cbfd29ac62573c1c82e877f9d4047ad15321e7ea97d1e43d835be"

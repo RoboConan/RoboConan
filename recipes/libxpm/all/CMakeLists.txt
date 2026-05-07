@@ -19,7 +19,6 @@ add_library(Xpm
     src/RdFToI.c
     src/rgb.c
     src/scan.c
-    src/simx.c
     src/WrFFrBuf.c
     src/WrFFrDat.c
     src/WrFFrI.c
@@ -84,6 +83,3 @@ install(
 
 install(DIRECTORY include/X11 DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
 
-if(WIN32)
-  install(FILES src/simx.h DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/X11")
-endif()

@@ -442,7 +442,7 @@ class QtConan(ConanFile):
             self.requires("expat/[>=2.6.2 <3]")
             self.requires("opus/[^1.4]")
             if not self.options.qtwayland:
-                self.requires("xorg-proto/2024.1")
+                self.requires("xorg-proto/[>=2024.1]")
             self.requires("libxshmfence/[^1.3]")
             self.requires("nss/[^3.93]")
             self.requires("libdrm/[~2.4.119]")

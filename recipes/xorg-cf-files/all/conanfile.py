@@ -32,7 +32,7 @@ class XorgCfFilesConan(ConanFile):
         basic_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("xorg-proto/2024.1")
+        self.requires("xorg-proto/[>=2024.1]")
 
     def package_id(self):
         del self.info.settings.compiler
@@ -54,7 +54,7 @@ class XorgCfFilesConan(ConanFile):
             self.win_bash = True
             if not self.conf.get("tools.microsoft.bash:path", check_type=str):
                 self.tool_requires("msys2/latest")
-        self.tool_requires("xorg-macros/1.20.2")
+        self.tool_requires("xorg-macros/[^1.20.2]")
         if is_msvc(self):
             self.tool_requires("automake/[^1.18.1]")
 

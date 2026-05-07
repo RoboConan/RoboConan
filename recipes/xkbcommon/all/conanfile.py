@@ -61,7 +61,7 @@ class XkbcommonConan(ConanFile):
             if self.options.use_xorg_system:
                 self.requires("xorg/system")
             else:
-                self.requires("libxcb/1.17.0")
+                self.requires("libxcb/[^1.17.0]")
         if self.options.xkbregistry:
             self.requires("libxml2/[^2.12.5]")
         if self.options.get_safe("with_wayland"):

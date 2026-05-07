@@ -1,6 +1,6 @@
 sources:
-  "1.2.2":
+  "1.2.3":
     url:
-      - "https://www.x.org/archive/individual/lib/libXcursor-1.2.2.tar.xz"
-      - "https://xorg.freedesktop.org/releases/individual/lib/libXcursor-1.2.2.tar.xz"
-    sha256: "53d071bd2cc56e517a30998d5e685c8a74556ddada43c6985d14da9a023a88ee"
+      - "https://www.x.org/archive/individual/lib/libXcursor-1.2.3.tar.xz"
+      - "https://xorg.freedesktop.org/releases/individual/lib/libXcursor-1.2.3.tar.xz"
+    sha256: "fde9402dd4cfe79da71e2d96bb980afc5e6ff4f8a7d74c159e1966afb2b2c2c0"

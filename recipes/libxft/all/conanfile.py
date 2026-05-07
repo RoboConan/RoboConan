@@ -35,11 +35,11 @@ class libxftConan(ConanFile):
         basic_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("xorg-proto/2024.1", transitive_headers=True)
+        self.requires("xorg-proto/[>=2024.1]", transitive_headers=True)
         if self.options.use_xorg_system:
             self.requires("xorg/system", transitive_headers=True)
         else:
-            self.requires("libxrender/0.9.11", transitive_headers=True)
+            self.requires("libxrender/[>=0.9.12 <1]", transitive_headers=True)
         self.requires("freetype/[^2.13.2]", transitive_headers=True)
         self.requires("fontconfig/[^2.15.0]", transitive_headers=True)
 
@@ -50,7 +50,7 @@ class libxftConan(ConanFile):
             self.win_bash = True
             if not self.conf.get("tools.microsoft.bash:path", check_type=str):
                 self.tool_requires("msys2/latest")
-        self.tool_requires("xorg-macros/1.20.2")
+        self.tool_requires("xorg-macros/[^1.20.2]")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)

@@ -36,10 +36,10 @@ class LibXmuConan(ConanFile):
         basic_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("xorg-proto/2024.1", transitive_headers=True)
-        self.requires("libx11/1.8.10", transitive_headers=True)
-        self.requires("libxt/1.3.0", transitive_headers=True)
-        self.requires("libxext/1.3.6")
+        self.requires("xorg-proto/[>=2024.1]", transitive_headers=True)
+        self.requires("libx11/[^1.8.13]", transitive_headers=True)
+        self.requires("libxt/[^1.3.1]", transitive_headers=True)
+        self.requires("libxext/[^1.3.7]")
 
     def validate(self):
         if is_msvc(self):
@@ -52,7 +52,7 @@ class LibXmuConan(ConanFile):
             self.win_bash = True
             if not self.conf.get("tools.microsoft.bash:path", check_type=str):
                 self.tool_requires("msys2/latest")
-        self.tool_requires("xorg-macros/1.20.2")
+        self.tool_requires("xorg-macros/[^1.20.2]")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)

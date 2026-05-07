@@ -52,7 +52,7 @@ class LibGlvndConan(ConanFile):
         if self.options.x11:
             self.requires("xorg/system")
         if self.options.glx:
-            self.requires("xorg-proto/2024.1")
+            self.requires("xorg-proto/[>=2024.1]")
 
     def validate(self):
         if self.settings.os not in ['Linux', 'FreeBSD']:

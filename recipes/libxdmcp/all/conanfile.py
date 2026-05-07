@@ -37,7 +37,7 @@ class LibXdmcpConan(ConanFile):
 
     def requirements(self):
         # Used in the public header
-        self.requires("xorg-proto/2024.1", transitive_headers=True)
+        self.requires("xorg-proto/[>=2024.1]", transitive_headers=True)
         # Might also need libbsd, if arc4random_buf is unavailable
 
     def validate(self):
@@ -51,7 +51,7 @@ class LibXdmcpConan(ConanFile):
             self.win_bash = True
             if not self.conf.get("tools.microsoft.bash:path", check_type=str):
                 self.tool_requires("msys2/latest")
-        self.tool_requires("xorg-macros/1.20.2")
+        self.tool_requires("xorg-macros/[^1.20.2]")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)

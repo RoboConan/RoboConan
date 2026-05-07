@@ -22,12 +22,12 @@ class XorgMakedepend(ConanFile):
         export_conandata_patches(self)
 
     def requirements(self):
-        self.requires("xorg-proto/2024.1")
+        self.requires("xorg-proto/[>=2024.1]")
 
     def build_requirements(self):
         if not self.conf.get("tools.gnu:pkg_config", default=False, check_type=str):
             self.tool_requires("pkgconf/[>=2.2 <3]")
-        self.tool_requires("xorg-macros/1.20.2")
+        self.tool_requires("xorg-macros/[^1.20.2]")
 
     def validate(self):
         if self.settings.os == "Windows":

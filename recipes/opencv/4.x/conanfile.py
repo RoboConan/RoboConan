@@ -1294,7 +1294,7 @@ class OpenCVConan(ConanFile):
             self.requires("ade/0.1.2d")
         # highgui module dependencies
         if self.options.get_safe("with_framebuffer"):
-            self.requires("xorg-proto/2024.1")
+            self.requires("xorg-proto/[>=2024.1]")
         if self.options.get_safe("with_gtk"):
             self.requires("gtk/[~3.24]")
         if self.options.get_safe("with_qt"):

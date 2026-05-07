@@ -36,8 +36,8 @@ class XcbUtilKeysymsConan(ConanFile):
         basic_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("libxcb/1.17.0", transitive_headers=True)
-        self.requires("xorg-proto/2024.1")
+        self.requires("libxcb/[^1.17.0]", transitive_headers=True)
+        self.requires("xorg-proto/[>=2024.1]")
 
     def validate(self):
         if is_msvc(self):

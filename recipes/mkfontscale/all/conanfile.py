@@ -29,9 +29,9 @@ class MkfontscaleConan(ConanFile):
 
     def requirements(self):
         self.requires("bzip2/[^1.0.8]")
-        self.requires("libfontenc/1.1.8")
+        self.requires("libfontenc/[^1.1.9]")
         self.requires("freetype/[^2.13.2]")
-        self.requires("xorg-proto/2024.1")
+        self.requires("xorg-proto/[>=2024.1]")
         self.requires("zlib-ng/[^2.0]")
 
     def validate(self):
@@ -45,7 +45,7 @@ class MkfontscaleConan(ConanFile):
             self.win_bash = True
             if not self.conf.get("tools.microsoft.bash:path", check_type=str):
                 self.tool_requires("msys2/latest")
-        self.tool_requires("xorg-macros/1.20.2")
+        self.tool_requires("xorg-macros/[^1.20.2]")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)

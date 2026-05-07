@@ -3,7 +3,7 @@
 #include <stddef.h>
 
 void dummy() {
-    XDamageCreate(NULL, NULL, 0);
+    XDamageCreate(NULL, 0, 0);
 }
 
 int main() {

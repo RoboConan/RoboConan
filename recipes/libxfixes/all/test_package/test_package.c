@@ -3,7 +3,7 @@
 #include <stddef.h>
 
 void dummy() {
-    XFixesGetCursorName(NULL, NULL, NULL);
+    XFixesGetCursorName(NULL, 0, NULL);
 }
 
 int main() {

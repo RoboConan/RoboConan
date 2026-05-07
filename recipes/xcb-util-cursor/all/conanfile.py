@@ -36,9 +36,9 @@ class XcbUtilCursorConan(ConanFile):
         basic_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("libxcb/1.17.0", transitive_headers=True)
-        self.requires("xcb-util-image/0.4.1")
-        self.requires("xcb-util-renderutil/0.3.10")
+        self.requires("libxcb/[^1.17.0]", transitive_headers=True)
+        self.requires("xcb-util-image/[>=0.4.1 <1]")
+        self.requires("xcb-util-renderutil/[>=0.3.10 <1]")
 
     def validate(self):
         if is_msvc(self):
