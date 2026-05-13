@@ -30,7 +30,7 @@ class LibcurlConan(ConanFile):
         "shared": [True, False],
         "fPIC": [True, False],
         "build_executable": [True, False],
-        "with_ssl": [False, "openssl", "wolfssl", "schannel", "darwinssl", "mbedtls", "libressl"],
+        "with_ssl": [False, "openssl", "wolfssl", "schannel", "mbedtls", "libressl"],
         "with_file": [True, False],
         "with_ftp": [True, False],
         "with_http": [True, False],
@@ -72,6 +72,7 @@ class LibcurlConan(ConanFile):
         "with_ca_fallback": [True, False],
         "with_form_api": [True, False],
         "with_websockets": [True, False],
+        "with_apple_sectrust": [True, False],
     }
     default_options = {
         "shared": False,
@@ -119,6 +120,7 @@ class LibcurlConan(ConanFile):
         "with_ca_fallback": False,
         "with_form_api": True,
         "with_websockets": True,
+        "with_apple_sectrust": False,
     }
 
     @property
@@ -141,6 +143,8 @@ class LibcurlConan(ConanFile):
             del self.options.fPIC
         if self._is_using_cmake_build:
             del self.options.with_libgsasl
+        if not is_apple_os(self):
+            del self.options.with_apple_sectrust
 
     def configure(self):
         if self.options.shared:
@@ -186,14 +190,14 @@ class LibcurlConan(ConanFile):
     def validate(self):
         if self.options.with_ssl == "schannel" and self.settings.os != "Windows":
             raise ConanInvalidConfiguration("schannel only suppported on Windows.")
-        if self.options.with_ssl == "darwinssl":
-            raise ConanInvalidConfiguration("darwinssl (Secure Transport) is no longer supported as of libcurl 8.15.0 - please choose a different SSL backend.")
         if self.options.with_ssl == "openssl":
             openssl = self.dependencies["openssl"]
             if self.options.with_ntlm and openssl.options.no_des:
                 raise ConanInvalidConfiguration("option with_ntlm=True requires openssl/*:no_des=False")
         if self.options.with_ssl == "wolfssl" and not self.dependencies["wolfssl"].options.with_curl:
             raise ConanInvalidConfiguration("option with_ssl=wolfssl requires wolfssl/*:with_curl=True")
+        if self.options.get_safe("with_apple_sectrust") and self.options.with_ssl != "openssl":
+            raise ConanInvalidConfiguration("Apple SecTrust is only supported for OpenSSL/GnuTLS builds")
 
     def build_requirements(self):
         if self._is_using_cmake_build:
@@ -444,6 +448,9 @@ class LibcurlConan(ConanFile):
         else:
             tc.configure_args.append("--without-libidn2")
 
+        if self.options.get_safe("with_apple_sectrust"):
+            tc.configure_args.append("--with-apple-sectrust")
+
         # Cross building flags
         if cross_building(self):
             if self.settings.os == "Linux" and "arm" in self.settings.arch:
@@ -667,6 +674,8 @@ class LibcurlConan(ConanFile):
             self.cpp_info.components["curl"].frameworks.append("CoreFoundation")
             self.cpp_info.components["curl"].frameworks.append("CoreServices")
             self.cpp_info.components["curl"].frameworks.append("SystemConfiguration")
+            if self.options.get_safe("with_apple_sectrust"):
+                self.cpp_info.components["curl"].frameworks.append("Security")
             if self.options.with_ldap:
                 self.cpp_info.components["curl"].system_libs.append("ldap")
 
