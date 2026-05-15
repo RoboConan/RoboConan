@@ -44,11 +44,11 @@ class LibuuidConan(ConanFile):
         if self.settings.os == "Windows":
             raise ConanInvalidConfiguration(f"{self.ref} is not supported on Windows")
 
-    def build_requirements(self):
-        self.tool_requires("libtool/[^2.4.7]")
-
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
+        replace_in_file(self, "configure",
+            "sys/socket.h sys/time.h unistd.h",
+            "sys/socket.h sys/syscall.h sys/time.h unistd.h")
         apply_conandata_patches(self)
 
     def generate(self):
@@ -63,7 +63,6 @@ class LibuuidConan(ConanFile):
 
     def build(self):
         autotools = Autotools(self)
-        autotools.autoreconf()
         autotools.configure()
         autotools.make()
 
@@ -78,4 +77,4 @@ class LibuuidConan(ConanFile):
     def package_info(self):
         self.cpp_info.set_property("pkg_config_name", "uuid")
         self.cpp_info.libs = ["uuid"]
-        self.cpp_info.includedirs.append(os.path.join("include", "uuid"))
+        self.cpp_info.includedirs.append("include/uuid")
