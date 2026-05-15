@@ -51,12 +51,15 @@ class LibEstConan(ConanFile):
     def requirements(self):
         self.requires("openssl/1.1.1w", transitive_headers=True, transitive_libs=True)
 
-    def build_requirements(self):
-        self.tool_requires("libtool/[^2.4.7]")
-
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
         apply_conandata_patches(self)
+        replace_in_file(self, "Makefile.in",
+                        "@ENABLE_CLIENT_ONLY_FALSE@SUBDIRS = safe_c_stub src java/jni example/client example/client-simple example/server example/proxy example/client-brski",
+                        "@ENABLE_CLIENT_ONLY_FALSE@SUBDIRS = safe_c_stub src")
+        replace_in_file(self, "Makefile.in",
+                        "@ENABLE_CLIENT_ONLY_TRUE@SUBDIRS = safe_c_stub src java/jni example/client example/client-simple example/client-brski",
+                        "@ENABLE_CLIENT_ONLY_TRUE@SUBDIRS = safe_c_stub src")
 
     def generate(self):
         if not cross_building(self):
@@ -67,16 +70,9 @@ class LibEstConan(ConanFile):
         deps = AutotoolsDeps(self)
         deps.generate()
 
-    def _patch_sources(self):
-        # Remove duplicate AM_INIT_AUTOMAKE
-        replace_in_file(self, os.path.join(self.source_folder, "configure.ac"),
-                        "AM_INIT_AUTOMAKE\n", "")
-
     def build(self):
-        self._patch_sources()
         with chdir(self, self.source_folder):
             autotools = Autotools(self)
-            autotools.autoreconf()
             autotools.configure()
             autotools.make()
 
