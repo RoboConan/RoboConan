@@ -1,4 +1,4 @@
 sources:
-  "8.2.0":
-    url: "https://dev.mysql.com/get/Downloads/MySQL-8.2/mysql-8.2.0.tar.gz"
-    sha256: "8ad3e3f1c5ae2154be638acf556e8981f702d052acc5957e776df1722c211979"
+  "8.4.9":
+    url: "https://dev.mysql.com/get/Downloads/MySQL-8.4/mysql-8.4.9.tar.gz"
+    sha256: "e4aa8b39e42d1fe078f33bbd73695fac2b54dbc7bb137f0bdbe63f7be1a02d6b"
