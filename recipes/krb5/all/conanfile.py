@@ -1,11 +1,12 @@
 import os
 
 from conan import ConanFile
-from conan.tools.build import cross_building, can_run
+from conan.tools.build import can_run, cross_building
 from conan.tools.env import VirtualRunEnv
 from conan.tools.files import *
-from conan.tools.gnu import Autotools, AutotoolsToolchain, AutotoolsDeps, PkgConfigDeps
+from conan.tools.gnu import Autotools, AutotoolsDeps, AutotoolsToolchain, PkgConfigDeps
 from conan.tools.layout import basic_layout
+from conan.tools.scm import Version
 
 required_conan_version = ">=2.4"
 
@@ -40,9 +41,6 @@ class Krb5Conan(ConanFile):
     implements = ["auto_shared_fpic"]
     languages = ["C"]
 
-    def export_sources(self):
-        export_conandata_patches(self)
-
     def layout(self):
         basic_layout(self, src_folder="src")
 
@@ -58,12 +56,19 @@ class Krb5Conan(ConanFile):
             self.tool_requires("gettext/[>=0.21 <1]", options={"tools": True})
         if not self.conf.get("tools.gnu:pkg_config", check_type=str):
             self.tool_requires("pkgconf/[>=2.2 <3]")
-        self.tool_requires("automake/[^1.18.1]")
         self.tool_requires("bison/[^3.8.2]")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
-        apply_conandata_patches(self)
+        replace_in_file(self, "src/Makefile.in",
+            "\tkdc kadmin kprop clients appl tests ",
+            "\tkdc kadmin kprop clients appl ")
+        replace_in_file(self, "src/config/pre.in",
+            "INSTALL_SETUID=$(INSTALL) $(INSTALL_STRIP) -m 4755 -o root",
+            "INSTALL_SETUID=$(INSTALL) $(INSTALL_STRIP) -m 755")
+        replace_in_file(self, "src/configure",
+            '    TLS_IMPL_LIBS="-lssl -lcrypto"',
+            '    TLS_IMPL_LIBS=$(pkg-config --libs openssl 2>/dev/null)')
 
     def generate(self):
         if not cross_building(self):
@@ -96,6 +101,10 @@ class Krb5Conan(ConanFile):
                 "ac_cv_func_regcomp=yes",
                 "ac_cv_printf_positional=yes",
             ])
+        if self.settings.compiler == "gcc" and Version(self.settings.compiler.version) >= 15:
+            # GCC 15 makes strchr/strstr type-generic (const-preserving); suppress -Werror=discarded-qualifiers
+            # by pre-setting WARN_CFLAGS so configure skips its extra warning flag injection
+            tc.configure_args.append("WARN_CFLAGS=")
         tc.generate()
 
         pkg = AutotoolsDeps(self)
@@ -104,8 +113,6 @@ class Krb5Conan(ConanFile):
         pkg.generate()
 
     def build(self):
-        with chdir(self, os.path.join(self.source_folder, "src")):
-            self.run("autoreconf -vif")
         autotools = Autotools(self)
         autotools.configure(build_script_folder="src")
         autotools.make()
