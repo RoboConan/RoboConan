@@ -51,7 +51,6 @@ class XqillaConan(ConanFile):
 
     def build_requirements(self):
         self.tool_requires("gnu-config/[*]")
-        self.tool_requires("libtool/[^2.4.7]")
         if self.settings_build.os == "Windows":
             self.win_bash = True
             if not self.conf.get("tools.microsoft.bash:path", check_type=str):
@@ -59,6 +58,9 @@ class XqillaConan(ConanFile):
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
+        replace_in_file(self, "Makefile.in",
+            "LDFLAGS = -L$(xerces_lib) -R$(xerces_lib) $(faxpp_lib) $(tidy_lib) -lxerces-c $(faxpp_library) $(tidy_library)",
+            "LDFLAGS += -L$(xerces_lib) -R$(xerces_lib) $(faxpp_lib) $(tidy_lib) $(faxpp_library) $(tidy_library)")
         apply_conandata_patches(self)
 
     def generate(self):
@@ -70,8 +72,6 @@ class XqillaConan(ConanFile):
 
         tc = AutotoolsToolchain(self)
         tc.configure_args.append(f"--with-xerces={unix_path(self, self.dependencies['xerces-c'].package_folder)}")
-        if not valid_min_cppstd(self, self._min_cppstd):
-            tc.extra_cxxflags.append(f"-std=c++{self._min_cppstd}")
         # warning: ISO C++17 does not allow 'register' storage class specifier
         tc.extra_defines.append("register=")
         tc.generate()
@@ -92,7 +92,6 @@ class XqillaConan(ConanFile):
     def build(self):
         self._patch_sources()
         autotools = Autotools(self)
-        autotools.autoreconf()
         autotools.configure()
         autotools.make()
 
