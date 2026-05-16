@@ -1,0 +1,27 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -32,15 +32,15 @@
+ endif()
+
+ # Find Brotli dependencies
+-set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+-find_package(BrotliDec)
+-if (NOT BROTLIDEC_FOUND)
+-    message(FATAL_ERROR "librotlidec is needed to build woff2.")
+-endif ()
+-find_package(BrotliEnc)
+-if (NOT BROTLIENC_FOUND)
+-    message(FATAL_ERROR "librotlienc is needed to build woff2.")
+-endif ()
++find_package(PkgConfig REQUIRED)
++pkg_check_modules(BROTLIDEC REQUIRED IMPORTED_TARGET libbrotlidec)
++pkg_check_modules(BROTLIENC REQUIRED IMPORTED_TARGET libbrotlienc)
++
++set(BROTLIDEC_LIBRARIES PkgConfig::BROTLIDEC)
++set(BROTLIENC_LIBRARIES PkgConfig::BROTLIENC)
++set(BROTLIDEC_INCLUDE_DIRS)
++set(BROTLIENC_INCLUDE_DIRS)
++
+
+ # Set compiler flags
+ if (NOT CANONICAL_PREFIXES)

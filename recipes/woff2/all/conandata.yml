@@ -1,0 +1,12 @@
+sources:
+  "1.0.2":
+    url: "https://github.com/google/woff2/archive/refs/tags/v1.0.2.tar.gz"
+    sha256: "add272bb09e6384a4833ffca4896350fdb16e0ca22df68c0384773c67a175594"
+patches:
+  "1.0.2":
+    - patch_file: "patches/0001-stdint-include.patch"
+      patch_description: "Add missing stdint.h include in output.h"
+      patch_type: "portability"
+    - patch_file: "patches/0002-use-pkg-check-modules.patch"
+      patch_description: "Use pkg_check_modules directly for brotli to get proper transitive linking"
+      patch_type: "conan"
