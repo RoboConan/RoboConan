@@ -140,7 +140,8 @@ class HarfbuzzConan(ConanFile):
         tc.project_options["icu"] = is_enabled(self.options.with_icu)
         tc.project_options["graphite2"] = "disabled"  # TODO
         tc.project_options["freetype"] = is_enabled(self.options.with_freetype)
-        tc.project_options["fontations"] = "disabled"  # TODO
+        if Version(self.version) >= "9.0.0":
+            tc.project_options["fontations"] = "disabled"  # TODO
         tc.project_options["gdi"] = is_enabled(self.options.get_safe("with_gdi"))
         tc.project_options["directwrite"] = is_enabled(self.options.get_safe("with_directwrite"))
         tc.project_options["coretext"] = is_enabled(self.options.get_safe("with_coretext"))
