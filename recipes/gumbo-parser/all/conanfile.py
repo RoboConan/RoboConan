@@ -42,6 +42,7 @@ class GumboParserConan(ConanFile):
     def generate(self):
         tc = MesonToolchain(self)
         tc.project_options["auto_features"] = "enabled"
+        tc.project_options["tests"] = False
         tc.generate()
 
     def build(self):
