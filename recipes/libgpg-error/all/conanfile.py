@@ -67,7 +67,13 @@ class GPGErrorConan(ConanFile):
         autotools = Autotools(self)
         autotools.install()
         rm(self, "*la", os.path.join(self.package_folder, "lib"))
-        rmdir(self, os.path.join(self.package_folder, "lib", "pkgconfig"))
+
+    def finalize(self):
+        copy(self, "*", src=self.immutable_package_folder, dst=self.package_folder)
+        # Fix .pc so gpgrt-config reports correct paths
+        pc_file = os.path.join(self.package_folder, "lib", "pkgconfig", "gpg-error.pc")
+        replace_in_file(self, pc_file, "prefix=/", f"prefix={self.package_folder}")
+        replace_in_file(self, pc_file, "Cflags: \n", "Cflags: -I${includedir}\n")
 
     def package_info(self):
         self.cpp_info.set_property("pkg_config_name", "gpg-error")
@@ -77,3 +83,6 @@ class GPGErrorConan(ConanFile):
             self.cpp_info.system_libs = ["pthread"]
         aclocal_path = os.path.join(self.package_folder, "share", "aclocal")
         self.buildenv_info.append_path("ACLOCAL_PATH", aclocal_path)
+        # for gpgrt-config
+        bin_path = os.path.join(self.package_folder, "bin")
+        self.buildenv_info.prepend_path("PATH", bin_path)

@@ -4,7 +4,6 @@ from conan import ConanFile
 from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
 from conan.tools.env import VirtualBuildEnv
 from conan.tools.files import *
-from conan.tools.scm import Version
 
 required_conan_version = ">=2.1"
 
@@ -15,7 +14,6 @@ class LibaomAv1Conan(ConanFile):
     topics = ("av1", "codec", "video", "encoding", "decoding")
     homepage = "https://aomedia.googlesource.com/aom"
     license = "BSD-2-Clause"
-
     package_type = "library"
     settings = "os", "arch", "compiler", "build_type"
     options = {
@@ -54,7 +52,7 @@ class LibaomAv1Conan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def source(self):
-        get(self, **self.conan_data["sources"][self.version], strip_root=Version(self.version) >= "3.3.0")
+        get(self, **self.conan_data["sources"][self.version], strip_root=True)
         apply_conandata_patches(self)
 
     def generate(self):
@@ -91,7 +89,7 @@ class LibaomAv1Conan(ConanFile):
     def package_info(self):
         self.cpp_info.set_property("pkg_config_name", "aom")
         lib = "aom"
-        if Version(self.version) >= "3.8.0" and self.settings.os == "Windows" and self.options.shared:
+        if self.settings.os == "Windows" and self.options.shared:
             lib = "aom_dll"
         self.cpp_info.libs = [lib]
         if self.settings.os in ("FreeBSD", "Linux"):
