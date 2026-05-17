@@ -131,7 +131,7 @@ class PackageConan(ConanFile):
         if self.options.get_safe("with_drm"):
             self.cpp_info.components["drm"].libs = ["va-drm"]
             self.cpp_info.components["drm"].set_property("pkg_config_name", "libva-drm")
-            self.cpp_info.components["drm"].requires = ["va", "libdrm::libdrm"]
+            self.cpp_info.components["drm"].requires = ["va", "libdrm::libdrm_libdrm"]
 
         if self.options.get_safe("with_x11"):
             self.cpp_info.components["x11"].libs = ["va-x11"]
