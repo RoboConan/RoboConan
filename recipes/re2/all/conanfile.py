@@ -40,7 +40,7 @@ class Re2Conan(ConanFile):
         if Version(self.version) >= "20240702":
             self.requires("abseil/[>=20240116.1]", transitive_headers=True)
         elif self.version == "20230601":
-            self.requires("abseil/[>=20220623.1]", transitive_headers=True)
+            self.requires("abseil/[>=20240116.1 <=20250127.0]", transitive_headers=True)
 
     def validate(self):
         min_cppstd = 14 if Version(self.version) >= "20230601" else 11
@@ -50,6 +50,10 @@ class Re2Conan(ConanFile):
             abseil_cppstd = self.dependencies.host["abseil"].info.settings.compiler.cppstd
             if abseil_cppstd != self.settings.compiler.cppstd:
                 raise ConanInvalidConfiguration(f"re2 and abseil must be built with the same compiler.cppstd setting")
+
+    def build_requirements(self):
+        if Version(self.version) >= "20250805":
+            self.tool_requires("cmake/[>=3.22]")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)

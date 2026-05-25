@@ -1,10 +1,7 @@
 sources:
-  "20250812":
-    url: "https://github.com/google/re2/releases/download/2025-08-12/re2-2025-08-12.tar.gz"
-    sha256: "2f3bec634c3e51ea1faf0d441e0a8718b73ef758d7020175ed7e352df3f6ae12"
-  "20240702":
-    url: "https://github.com/google/re2/releases/download/2024-07-02/re2-2024-07-02.tar.gz"
-    sha256: "eb2df807c781601c14a260a507a5bb4509be1ee626024cb45acbd57cb9d4032b"
+  "20251105":
+    url: "https://github.com/google/re2/releases/download/2025-11-05/re2-2025-11-05.tar.gz"
+    sha256: "87f6029d2f6de8aa023654240a03ada90e876ce9a4676e258dd01ea4c26ffd67"
   "20230301":
     url: "https://github.com/google/re2/archive/refs/tags/2023-03-01.tar.gz"
     sha256: "7a9a4824958586980926a300b4717202485c4b4115ac031822e29aa4ef207e48"
@@ -13,7 +10,6 @@ sources:
     sha256: "f89c61410a072e5cbcf8c27e3a778da7d6fd2f2b5b1445cd4f4508bee946ab0f"
 # https://github.com/google/re2/blob/2024-07-02/CMakeLists.txt#L33
 soversion:
-  "20250812": 11
-  "20240702": 11
+  "20251105": 11
   "20230301": 10
   "20220601": 9
