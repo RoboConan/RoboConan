@@ -1,11 +1,9 @@
 import os
 
 from conan import ConanFile
-from conan.errors import ConanInvalidConfiguration
 from conan.tools.build import check_min_cppstd
 from conan.tools.files import *
 from conan.tools.layout import basic_layout
-from conan.tools.scm import Version
 
 required_conan_version = ">=2.1"
 
@@ -20,19 +18,6 @@ class PackageConan(ConanFile):
     settings = "os", "arch", "compiler", "build_type"
     no_copy_source = True
 
-    @property
-    def _minimum_cpp_standard(self):
-        return 17
-
-    @property
-    def _compilers_minimum_version(self):
-        return {
-            "msvc": "191",
-            "gcc": "7",
-            "clang": "7",
-            "apple-clang": "11",
-        }
-
     def layout(self):
         basic_layout(self, src_folder="src")
 
@@ -40,24 +25,17 @@ class PackageConan(ConanFile):
         self.info.clear()
 
     def validate(self):
-        check_min_cppstd(self, self._minimum_cpp_standard)
-        minimum_version = self._compilers_minimum_version.get(str(self.settings.compiler), False)
-        if minimum_version and Version(self.settings.get_safe("compiler.version")) < minimum_version:
-            raise ConanInvalidConfiguration(f"{self.ref} requires C++{self._minimum_cpp_standard}, which your compiler does not support.")
+        check_min_cppstd(self, 17)
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
 
-    def build(self):
-        pass
-
     def package(self):
-        copy(self, pattern="LICENSE", dst=os.path.join(self.package_folder, "licenses"), src=self.source_folder)
-        copy(self, pattern="*.h", dst=os.path.join(self.package_folder, "include", "ankerl"), src=os.path.join(self.source_folder, "include", "ankerl"))
+        copy(self, "LICENSE", self.source_folder, os.path.join(self.package_folder, "licenses"))
+        copy(self, "*.h", os.path.join(self.source_folder, "include"),  os.path.join(self.package_folder, "include"))
 
     def package_info(self):
-        self.cpp_info.bindirs = []
-        self.cpp_info.libdirs = []
-
         self.cpp_info.set_property("cmake_file_name", "unordered_dense")
         self.cpp_info.set_property("cmake_target_name", "unordered_dense::unordered_dense")
+        self.cpp_info.bindirs = []
+        self.cpp_info.libdirs = []
