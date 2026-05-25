@@ -3,7 +3,6 @@ import os
 from conan import ConanFile
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
-from conan.tools.scm import Version
 
 required_conan_version = ">=2.4"
 
@@ -31,50 +30,30 @@ class TreeSitterCConan(ConanFile):
     def layout(self):
         cmake_layout(self, src_folder="src")
 
-    def export_sources(self):
-        export_conandata_patches(self)
-        if Version(self.version) < "0.23.2":
-            copy(self, "CMakeLists.txt", src=self.recipe_folder, dst=os.path.join(self.export_sources_folder, "src"))
-
     def generate(self):
         tc = CMakeToolchain(self)
-        if Version(self.version) < "0.23.2":
-            tc.variables["TREE_SITTER_C_SRC_DIR"] = self.source_folder.replace("\\", "/")
         tc.generate()
         deps = CMakeDeps(self)
         deps.generate()
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
-        apply_conandata_patches(self)
+        replace_in_file(self, "CMakeLists.txt", " POSITION_INDEPENDENT_CODE ON", "")
 
     def requirements(self):
-        self.requires("tree-sitter/0.24.3", transitive_headers=True, transitive_libs=True)
-
-    def _patch_sources(self):
-        if Version(self.version) < "0.23.2" and not self.options.shared:
-            replace_in_file(
-                self,
-                os.path.join(self.source_folder, "src", "parser.c"),
-                "__declspec(dllexport)", ""
-            )
+        self.requires("tree-sitter/[<1]", transitive_headers=True, transitive_libs=True)
 
     def build(self):
-        self._patch_sources()
         cmake = CMake(self)
         cmake.configure()
         cmake.build()
 
     def package(self):
-        copy(
-            self,
-            "LICENSE",
-            src=self.source_folder,
-            dst=os.path.join(self.package_folder, "licenses"),
-        )
+        copy(self, "LICENSE", self.source_folder, os.path.join(self.package_folder, "licenses"))
         cmake = CMake(self)
         cmake.install()
         rmdir(self, os.path.join(self.package_folder, "share"))
 
     def package_info(self):
+        self.cpp_info.set_property("pkg_config_name", "tree-sitter-c")
         self.cpp_info.libs = ["tree-sitter-c"]
