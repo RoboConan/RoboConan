@@ -33,8 +33,7 @@ class TreeSitterCUDAConan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        tree_sitter_version = self.conan_data["tree-sitter-version"][self.version]
-        self.requires(f"tree-sitter/{tree_sitter_version}", transitive_headers=True, transitive_libs=True)
+        self.requires("tree-sitter/[>=0.25 <1]", transitive_headers=True, transitive_libs=True)
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
