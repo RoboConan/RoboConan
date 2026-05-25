@@ -24,7 +24,7 @@ class CtreConan(ConanFile):
         self.tool_requires("cmake/[>=3.19]")
 
     def validate(self):
-        check_min_cppstd(self, "17")
+        check_min_cppstd(self, 17)
 
     def generate(self):
         tc = CMakeToolchain(self)
