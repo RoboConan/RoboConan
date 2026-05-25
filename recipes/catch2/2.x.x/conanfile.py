@@ -1,10 +1,8 @@
 import os
 
 from conan import ConanFile
-from conan.errors import ConanInvalidConfiguration
 from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
 from conan.tools.files import *
-from conan.tools.scm import Version
 
 required_conan_version = ">=2.1"
 
@@ -51,12 +49,6 @@ class Catch2Conan(ConanFile):
     def package_id(self):
         if not self.info.options.with_main:
             self.info.clear()
-
-    def validate(self):
-        if Version(self.version) < "2.13.1" and self.settings.arch == "armv8":
-            raise ConanInvalidConfiguration("ARMv8 is not supported by versions < 2.13.1+")
-        if self.options.get_safe("with_main") and Version(self.version) < "2.13.4":
-            raise ConanInvalidConfiguration("Option with_main not supported by versions < 2.13.4")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)

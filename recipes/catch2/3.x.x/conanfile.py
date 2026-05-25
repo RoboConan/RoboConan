@@ -5,7 +5,6 @@ from conan.errors import ConanInvalidConfiguration
 from conan.tools.build import check_min_cppstd
 from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
 from conan.tools.files import *
-from conan.tools.scm import Version
 
 required_conan_version = ">=2.1"
 
@@ -53,8 +52,7 @@ class Catch2Conan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def build_requirements(self):
-        if Version(self.version) >= "3.8.0":
-            self.tool_requires("cmake/[>=3.16 <5]")
+        self.tool_requires("cmake/[>=3.16 <5]")
 
     def validate(self):
         check_min_cppstd(self, 14)
