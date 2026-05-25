@@ -33,7 +33,7 @@ class TreeSitterCPPConan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("tree-sitter/0.24.3", transitive_headers=True, transitive_libs=True)
+        self.requires("tree-sitter/[<1]", transitive_headers=True, transitive_libs=True)
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
@@ -51,10 +51,11 @@ class TreeSitterCPPConan(ConanFile):
         cmake.build()
 
     def package(self):
-        copy(self, "LICENSE", src=self.source_folder, dst=os.path.join(self.package_folder, "licenses"))
+        copy(self, "LICENSE", self.source_folder, os.path.join(self.package_folder, "licenses"))
         cmake = CMake(self)
         cmake.install()
         rmdir(self, os.path.join(self.package_folder, "share"))
 
     def package_info(self):
+        self.cpp_info.set_property("pkg_config_name", "tree-sitter-cpp")
         self.cpp_info.libs = ["tree-sitter-cpp"]
