@@ -25,21 +25,16 @@ class TreeSitterCQLConan(ConanFile):
         "fPIC": True,
     }
     implements = ["auto_shared_fpic"]
+    languages = ["C"]
 
     def export_sources(self):
-        copy(self, "CMakeLists.txt", src=self.recipe_folder, dst=self.export_sources_folder)
-
-    def configure(self):
-        if self.options.get_safe("shared"):
-            self.options.rm_safe("fPIC")
-        self.settings.rm_safe("compiler.cppstd")
-        self.settings.rm_safe("compiler.libcxx")
+        copy(self, "CMakeLists.txt", self.recipe_folder, os.path.join(self.export_sources_folder, "src"))
 
     def layout(self):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("tree-sitter/0.24.3", transitive_headers=True, transitive_libs=True)
+        self.requires("tree-sitter/[<1]", transitive_headers=True, transitive_libs=True)
 
     def generate(self):
         tc = CMakeToolchain(self)
@@ -54,19 +49,14 @@ class TreeSitterCQLConan(ConanFile):
 
     def build(self):
         cmake = CMake(self)
-        cmake.configure(build_script_folder=os.path.join(self.source_folder,  os.pardir))
+        cmake.configure()
         cmake.build()
 
     def package(self):
-        copy(
-            self,
-            "LICENSE",
-            src=self.source_folder,
-            dst=os.path.join(self.package_folder, "licenses"),
-        )
+        copy(self, "LICENSE", self.source_folder, dst=os.path.join(self.package_folder, "licenses"),)
         cmake = CMake(self)
         cmake.install()
 
     def package_info(self):
-        self.cpp_info.libs = ["tree-sitter-cql"]
         self.cpp_info.set_property("pkg_config_name", "tree-sitter-cql")
+        self.cpp_info.libs = ["tree-sitter-cql"]

@@ -4,7 +4,7 @@ project(tree-sitter-cql LANGUAGES C)
 find_package(tree-sitter REQUIRED CONFIG)
 
 add_library(${PROJECT_NAME}
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/src/parser.c"
+    "src/parser.c"
 )
 target_link_libraries(${PROJECT_NAME}
     PUBLIC
@@ -17,7 +17,7 @@ target_include_directories(${PROJECT_NAME}
 set_target_properties(${PROJECT_NAME}
     PROPERTIES
         C_STANDARD 99
-        PUBLIC_HEADER "${CMAKE_CURRENT_SOURCE_DIR}/src/bindings/c/tree-sitter-cql.h"
+        PUBLIC_HEADER "bindings/c/tree-sitter-cql.h"
 )
 
 include(GNUInstallDirs)
