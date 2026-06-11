@@ -24,13 +24,23 @@ class SymengineConan(ConanFile):
         "shared": [True, False],
         "fPIC": [True, False],
         "integer_class": ["boostmp", "gmp"],
+        "openmp": [True, False],
+        "thread_safe": [True, False],
     }
     default_options = {
         "shared": False,
         "fPIC": True,
         "integer_class": "gmp",
+        "openmp": True,
+        "thread_safe": True,
     }
     implements = ["auto_shared_fpic"]
+
+    def configure(self):
+        if self.options.shared:
+            self.options.rm_safe("fPIC")
+        if self.options.openmp:
+            self.options.thread_safe.value = True
 
     def export_sources(self):
         export_conandata_patches(self)
@@ -43,18 +53,19 @@ class SymengineConan(ConanFile):
         if self.settings.compiler == "gcc" and Version(self.settings.compiler.version) < "7":
             raise ConanInvalidConfiguration(f"{self.ref} requires GCC >= 7")
 
-    @property
-    def _needs_fast_float(self):
-        return Version(self.version) >= "0.13.0"
-
     def requirements(self):
         if self.options.integer_class == "boostmp":
             # symengine/mp_class.h:12
             self.requires("boost/[^1.71.0]", transitive_headers=True, libs=False)
         else:
             self.requires("gmp/[^6.3.0]", transitive_headers=True, transitive_libs=True)
-        if self._needs_fast_float:
+        if Version(self.version) >= "0.13.0":
             self.requires("fast_float/[^6.1.5]")
+        if Version(self.version) >= "0.9.0":
+            self.requires("cereal/[^1.3]")
+        if self.options.openmp:
+            self.requires("openmp/system")
+        # TODO: primesieve, mpfr, mpc, arb, piranha, llvm, bfd, tcmalloc
 
     def source(self):
         if "symforce" not in self.version:
@@ -80,6 +91,10 @@ class SymengineConan(ConanFile):
             replace_in_file(self, "cmake/cotire.cmake",
                             "cmake_minimum_required(VERSION 2.8.12)",
                             "cmake_minimum_required(VERSION 3.10)")
+        # Unvendor
+        rmdir(self, "symengine/utilities/cereal")
+        rmdir(self, "symengine/utilities/fast_float")
+        rmdir(self, "symengine/utilities/catch")
 
     def generate(self):
         tc = CMakeToolchain(self)
@@ -87,8 +102,10 @@ class SymengineConan(ConanFile):
         tc.cache_variables["BUILD_BENCHMARKS"] = False
         tc.cache_variables["INTEGER_CLASS"] = self.options.integer_class
         tc.cache_variables["MSVC_USE_MT"] = is_msvc_static_runtime(self)
-        if self._needs_fast_float:
-            tc.cache_variables["WITH_SYSTEM_FASTFLOAT"] = True
+        tc.cache_variables["WITH_OPENMP"] = self.options.openmp
+        tc.cache_variables["WITH_SYMENGINE_THREAD_SAFE"] = self.options.thread_safe
+        tc.cache_variables["WITH_SYSTEM_FASTFLOAT"] = True
+        tc.cache_variables["WITH_SYSTEM_CEREAL"] = True
         if Version(self.version) < "0.14":
             tc.cache_variables["CMAKE_POLICY_VERSION_MINIMUM"] = "3.5" # CMake 4 support
         tc.generate()
@@ -98,6 +115,7 @@ class SymengineConan(ConanFile):
         # If we ever add support for gmpxx, we should set this property
         # deps.set_property("gmp::gmpxx", "cmake_target_name", "gmpxx")
         deps.set_property("fast_float", "cmake_file_name", "FASTFLOAT")
+        deps.set_property("cereal", "cmake_file_name", "CEREAL")
         deps.generate()
 
     def build(self):
