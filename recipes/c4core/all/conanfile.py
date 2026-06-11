@@ -40,7 +40,7 @@ class C4CoreConan(ConanFile):
 
     def requirements(self):
         if self.options.with_fast_float:
-            self.requires("fast_float/[^6.1.0]", transitive_headers=True)
+            self.requires("fast_float/[<9]", transitive_headers=True)
 
     def validate(self):
         check_min_cppstd(self, "11")

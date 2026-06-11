@@ -53,7 +53,7 @@ class ScnlibConan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("fast_float/[^6.1.0]")
+        self.requires("fast_float/[<9]")
         if Version(self.version) < "3.0":
             self.requires("simdutf/4.0.5")
         if self.options.regex_backend in ["boost", "boost_icu"]:

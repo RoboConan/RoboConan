@@ -34,7 +34,7 @@ class HictkConan(ConanFile):
             self.requires("arrow/16.1.0")
         self.requires("bshoshany-thread-pool/5.0.0")
         self.requires("concurrentqueue/1.0.4")
-        self.requires("fast_float/[^6.1.1]")
+        self.requires("fast_float/[<9]")
         if self.options.with_eigen:
             self.requires("eigen/[>=3.3 <6]")
         self.requires("fmt/[>=10]")
