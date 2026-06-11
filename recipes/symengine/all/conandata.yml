@@ -14,15 +14,9 @@ sources:
   "0.10.1":
     url: "https://github.com/symengine/symengine/releases/download/v0.10.1/symengine-0.10.1.tar.gz"
     sha256: "9c007c99e9633f5549a55fa7a66ebcbcf9e04092eb55f7bb781c22b9cf0570c4"
-  "0.9.0":
-    url: "https://github.com/symengine/symengine/releases/download/v0.9.0/symengine-0.9.0.tar.gz"
-    sha256: "dcf174ac708ed2acea46691f6e78b9eb946d8a2ba62f75e87cf3bf4f0d651724"
-  "0.8.1":
-    url: "https://github.com/symengine/symengine/releases/download/v0.8.1/symengine-0.8.1.tar.gz"
-    sha256: "41eb6ae6901c09e53d7f61f0758f9201e81fc534bfeecd4b2bd4b4e6f6768693"
-  "0.7.0-symforce.20250325":
-    url: "https://github.com/symforce-org/symforce/archive/d0203757407e39a88872209c01f2cb2ec47f2940.tar.gz"
-    sha256: "51be836fbce70a3fd645167322c174c2d691fa54912f5c19f32daaab29448bcc"
+  "0.10.1-symforce.20260517":
+    url: "https://github.com/symforce-org/symforce/archive/refs/tags/v0.11.0.tar.gz"
+    sha256: "7565bb6fe62a23ae5e7720509139352781e878e0715d41be18102d583c2ba824"
 patches:
   "0.14.0":
     - patch_file: "patches/0.14.0-0001-gcc15-ciso646.patch"
@@ -38,13 +32,7 @@ patches:
   "0.10.1":
     - patch_file: "patches/0.14.0-0001-gcc15-ciso646.patch"
     - patch_file: "patches/0.10-support-all-build-types.patch"
-  "0.9.0":
+  "0.10.1-symforce.20260517":
     - patch_file: "patches/0.14.0-0001-gcc15-ciso646.patch"
-    - patch_file: "patches/0.9-support-all-build-types.patch"
-  "0.8.1":
-    - patch_file: "patches/0.14.0-0001-gcc15-ciso646.patch"
-    - patch_file: "patches/0.8-support-all-build-types.patch"
-  "0.7.0-symforce.20250325":
-    - patch_file: "patches/0.7-0001-gcc15-ciso646.patch"
-    - patch_file: "patches/0.8-support-all-build-types.patch"
-    - patch_file: "patches/0.7-boostmp-fix.patch"
+    - patch_file: "patches/0.10-support-all-build-types.patch"
+    - patch_file: "patches/0.10.1-symforce-matrixbase-fix.patch"

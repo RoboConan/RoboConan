@@ -8,10 +8,6 @@ versions:
   "0.11.2":
     folder: all
   "0.10.1":
-    folder:
-  "0.9.0":
     folder: all
-  "0.8.1":
-    folder: all
-  "0.7.0-symforce.20250325":
+  "0.10.1-symforce.20260517":
     folder: all

@@ -1,0 +1,32 @@
+Make MatrixBase a plain class instead of an EnableRCPFromThis<MatrixBase> subclass.
+
+This reverts a SymForce-fork-only change ("[SymEngine] Skydio patch", 2021); upstream
+SymEngine never had this inheritance and uses a plain `class MatrixBase`.
+
+EnableRCPFromThis<T> carries the intrusive reference counter used by RCP-managed
+objects. With WITH_SYMENGINE_THREAD_SAFE (forced on by openmp, or set directly) that
+counter is a std::atomic<unsigned int>, which is non-copyable. That deletes the
+implicit copy ops of MatrixBase and hence DenseMatrix's `= default` copy
+assignment/ctor, while diophantine.cpp et al. use DenseMatrix as a value type
+(copy-assignment, std::vector<DenseMatrix>) -> hard "use of deleted function" build
+errors. In the default (plain unsigned int) build the counter is trivially copyable,
+so the contradiction is silently masked.
+
+The inheritance is vestigial here: no matrix is ever held in an RCP or uses
+rcp_from_this() anywhere in symengine/symenginepy/symforce, so dropping it is
+behavior-preserving and lets the thread-safe / OpenMP build compile.
+
+--- a/symengine/matrix.h
++++ b/symengine/matrix.h
+@@ -7,9 +7,8 @@ namespace SymEngine
+ namespace SymEngine
+ {
+ 
+-// TODO(hayk): It's pretty lame that this doesn't inherit from the Basic type
+-// and skirts around all the visitor patterns
+-class MatrixBase : public EnableRCPFromThis<MatrixBase>
++// Base class for matrices
++class MatrixBase
+ {
+ public:
+     virtual ~MatrixBase(){};
