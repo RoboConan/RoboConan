@@ -1,0 +1,4 @@
+sources:
+  "7.0.7":
+    url: "https://gitlab.inria.fr/zimmerma/ecm/-/archive/git-7.0.7/ecm-git-7.0.7.tar.bz2"
+    sha256: "1779921d2f76caae0ec02f1614025105728f971c6e961f497ee9fa9f3e824cbc"
