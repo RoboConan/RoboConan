@@ -45,7 +45,7 @@ class SymforceConan(ConanFile):
             self.options.build_opt.value = True
 
     def validate(self):
-        check_min_cppstd(self, 20)
+        check_min_cppstd(self, 17)
 
     def requirements(self):
         self.requires("eigen/[>=3.4 <6]", transitive_headers=True, transitive_libs=True)
@@ -54,14 +54,11 @@ class SymforceConan(ConanFile):
             self.requires("spdlog/[*]", transitive_headers=True, transitive_libs=True)
             self.requires("metis/[^5]", transitive_headers=True)
         if self.options.build_python:
-            self.requires("cpython/[<3.13]")
             self.requires("pybind11/[*]")
-            self.requires("symengine/0.7.0-symforce.20250325")
+            self.requires("symengine/0.10.1-symforce.20260517")
 
     def build_requirements(self):
         self.tool_requires("cmake/[>=3.19 <5]")
-        if self.options.build_python:
-            self.tool_requires("cpython/<host_version>")
 
     def layout(self):
         cmake_layout(self, src_folder="src")
@@ -70,8 +67,7 @@ class SymforceConan(ConanFile):
         get(self, **self.conan_data["sources"][self.version], strip_root=True,
             excludes=["*/third_party/symengine/*"])
         apply_conandata_patches(self)
-        if self.version != "0.10.1":
-            replace_in_file(self, "CMakeLists.txt", "set(CMAKE_CXX_STANDARD 17)", "")
+        replace_in_file(self, "CMakeLists.txt", "set(CMAKE_CXX_STANDARD 17)", "")
         replace_in_file(self, "symforce/opt/CMakeLists.txt",
                         "add_metis()",
                         "find_package(metis REQUIRED)")
@@ -80,13 +76,12 @@ class SymforceConan(ConanFile):
     def generate(self):
         os.environ["SETUPTOOLS_SCM_PRETEND_VERSION_FOR_SKYMARSHAL"] = "0.0.1"
         os.environ["SETUPTOOLS_SCM_PRETEND_VERSION_FOR_SYMFORCE_SYM"] = "0.0.1"
-        python_version = "3.12"
+        python_version = "3.14"
         if "cpython" in self.dependencies:
             python_version = str(self.dependencies["cpython"].ref.version)
         pyenv = PyEnv(self, py_version=python_version)
         with chdir(self, self.source_folder):
-            reqs = "requirements_build.txt" if self.version == "0.10.1" else "requirements/build_py312.txt"
-            pyenv.install(["-r", reqs, "cython<3"])
+            pyenv.install(["-r", "requirements/build_py314.txt", "cython>=3"])
         pyenv.generate()
         if self.options.build_python and can_run(self):
             venv = VirtualRunEnv(self)
@@ -184,5 +179,5 @@ class SymforceConan(ConanFile):
             self.cpp_info.components["slam"].requires = ["gen", "opt"]
 
         if self.options.build_python:
-            self.cpp_info.components["_python"].requires = ["opt", "slam", "cpython::cpython", "pybind11::pybind11", "symengine::symengine"]
+            self.cpp_info.components["_python"].requires = ["opt", "slam", "pybind11::pybind11", "symengine::symengine"]
             self.runenv_info.prepend_path("PYTHONPATH", self._python_package_dir)

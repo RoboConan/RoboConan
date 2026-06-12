@@ -1,0 +1,42 @@
+--- a/third_party/symenginepy/symengine/lib/symengine_wrapper.in.pyx
++++ b/third_party/symenginepy/symengine/lib/symengine_wrapper.in.pyx
+@@ -752,7 +752,7 @@ cdef class _DictBasic(object):
+             D = d
+             self.c.insert(D.c.begin(), D.c.end())
+         else:
+-            for key, value in d.iteritems():
++            for key, value in d.items():
+                 self.add(key, value)
+ 
+     def add(self, key, value):
+@@ -1250,7 +1250,7 @@ cdef class Basic(object):
+         return int(float(self))
+ 
+     def __long__(self):
+-        return long(float(self))
++        return int(float(self))
+ 
+     def __complex__(self):
+         f = self.n(real=False)
+@@ -1666,7 +1666,9 @@ class Equality(Relational):
+     def is_Equality(self):
+         return True
+ 
+-    func = __class__
++    @property
++    def func(self):
++        return self.__class__
+ 
+ 
+ Eq = Equality
+@@ -1687,7 +1689,9 @@ class Unequality(Relational):
+         s = self.args_as_sage()
+         return sage.ne(*s)
+ 
+-    func = __class__
++    @property
++    def func(self):
++        return self.__class__
+ 
+ 
+ Ne = Unequality

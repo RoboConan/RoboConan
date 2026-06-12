@@ -1,3 +1,46 @@
+diff --git a/symforce/opt/fmt_compat.h b/symforce/opt/fmt_compat.h
+new file mode 100644
+--- /dev/null
++++ b/symforce/opt/fmt_compat.h
+@@ -0,0 +1,38 @@
++/*
++ * fmt >= 11 no longer auto-discovers operator<< for formatting.
++ * This header restores it: any class with operator<< is formatted via
++ * fmt::ostream_formatter, and Eigen matrices keep their operator<< layout
++ * instead of fmt/ranges.h's flat element list.
++ */
++
++#pragma once
++
++#include <ostream>
++#include <type_traits>
++#include <utility>
++
++#include <fmt/ostream.h>
++#include <fmt/ranges.h>
++
++namespace sym::fmt_compat {
++template <typename T, typename = void>
++struct is_ostreamable : std::false_type {};
++template <typename T>
++struct is_ostreamable<
++    T, std::void_t<decltype(std::declval<std::ostream&>() << std::declval<const T&>())>>
++    : std::true_type {};
++}  // namespace sym::fmt_compat
++
++// Eigen 3.4+ exposes begin()/end(); disable fmt's range formatter for Eigen
++// expressions (detected via .derived()) so operator<< is used instead.
++template <typename T>
++struct fmt::range_format_kind<T, char, std::void_t<decltype(std::declval<const T&>().derived())>>
++    : std::integral_constant<fmt::range_format, fmt::range_format::disabled> {};
++
++// Catch-all ostream formatter for class types with operator<<, excluding
++// strings (formatted natively by fmt).
++template <typename T>
++struct fmt::formatter<
++    T, char,
++    std::enable_if_t<std::is_class_v<T> && !std::is_convertible_v<const T&, fmt::string_view> &&
++                     sym::fmt_compat::is_ostreamable<T>::value>> : fmt::ostream_formatter {};
 diff --git a/symforce/opt/assert.h b/symforce/opt/assert.h
 --- a/symforce/opt/assert.h
 +++ b/symforce/opt/assert.h
@@ -10,30 +53,17 @@ diff --git a/symforce/opt/assert.h b/symforce/opt/assert.h
  namespace sym {
  
  /**
-diff --git a/symforce/opt/values.tcc b/symforce/opt/values.tcc
---- a/symforce/opt/values.tcc
-+++ b/symforce/opt/values.tcc
-@@ -10,6 +10,8 @@
- #include <fmt/format.h>
- #include <fmt/ostream.h>
+diff --git a/symforce/opt/dense_linearizer.cc b/symforce/opt/dense_linearizer.cc
+--- a/symforce/opt/dense_linearizer.cc
++++ b/symforce/opt/dense_linearizer.cc
+@@ -7,6 +7,7 @@
+ 
+ #include <tuple>
  
 +#include "./fmt_compat.h"
-+
- #include "./assert.h"
- #include "./values.h"
+ #include "./internal/linearizer_utils.h"
  
-diff --git a/symforce/opt/levenberg_marquardt_solver.tcc b/symforce/opt/levenberg_marquardt_solver.tcc
---- a/symforce/opt/levenberg_marquardt_solver.tcc
-+++ b/symforce/opt/levenberg_marquardt_solver.tcc
-@@ -8,6 +8,8 @@
- #include <fmt/ranges.h>
- #include <spdlog/spdlog.h>
- 
-+#include "./fmt_compat.h"
-+
- #include "./assert.h"
- #include "./levenberg_marquardt_solver.h"
- #include "./tic_toc.h"
+ namespace sym {
 diff --git a/symforce/opt/dump_graph.h b/symforce/opt/dump_graph.h
 --- a/symforce/opt/dump_graph.h
 +++ b/symforce/opt/dump_graph.h
@@ -45,91 +75,6 @@ diff --git a/symforce/opt/dump_graph.h b/symforce/opt/dump_graph.h
  #include "./key.h"
  
  namespace sym {
-diff --git a/symforce/opt/fmt_compat.h b/symforce/opt/fmt_compat.h
-new file mode 100644
---- /dev/null
-+++ b/symforce/opt/fmt_compat.h
-@@ -0,0 +1,57 @@
-+/* ----------------------------------------------------------------------------
-+ * fmt 11.x compatibility header for symforce
-+ *
-+ * fmt >= 11 no longer auto-discovers operator<< for formatting.  This header
-+ * restores that behaviour for every class type that provides operator<< but
-+ * is not already handled by fmt (strings, arithmetic, …).
-+ *
-+ * Two C++20 concepts do all the work:
-+ *
-+ *  1. EigenDerived  – disables fmt/ranges.h's range formatter for Eigen
-+ *     expression types (Eigen 3.4+ exposes begin()/end()).
-+ *
-+ *  2. The formatter partial specialization – a single, universal catch-all
-+ *     that delegates to fmt::ostream_formatter for any remaining class type
-+ *     with operator<<.
-+ * ---------------------------------------------------------------------------- */
-+
-+#pragma once
-+
-+#include <concepts>
-+#include <ostream>
-+#include <type_traits>
-+
-+#include <Eigen/Core>
-+#include <Eigen/SparseCore>
-+#include <fmt/ostream.h>
-+#include <fmt/ranges.h>
-+
-+// ---------------------------------------------------------------------------
-+// 1.  Disable fmt's range formatter for Eigen types.
-+//
-+//     Eigen 3.4+ types expose begin()/end() which makes fmt/ranges.h treat
-+//     them as iterable ranges.  We want the human-readable matrix output from
-+//     operator<< instead, so we mark them as range_format::disabled.
-+// ---------------------------------------------------------------------------
-+template <typename T>
-+concept EigenDerived = requires(const T& t) { t.derived(); };
-+
-+template <EigenDerived T>
-+struct fmt::range_format_kind<T, char>
-+    : std::integral_constant<fmt::range_format, fmt::range_format::disabled> {};
-+
-+// ---------------------------------------------------------------------------
-+// 2.  Universal ostream-based formatter for class types with operator<<.
-+//
-+//     Guards:
-+//       • std::is_class_v           – excludes arithmetic, pointers, enums
-+//                                     that fmt already handles natively.
-+//       • !convertible to string_view – excludes std::string / string_view
-+//                                     which have their own fmt formatter.
-+//       • requires { os << t; }     – the type must actually support operator<<.
-+// ---------------------------------------------------------------------------
-+template <typename T>
-+  requires std::is_class_v<T>
-+        && (!std::is_convertible_v<const T&, fmt::string_view>)
-+        && requires(std::ostream& os, const T& t) { os << t; }
-+struct fmt::formatter<T, char> : fmt::ostream_formatter {};
-diff --git a/symforce/opt/linearizer.cc b/symforce/opt/linearizer.cc
---- a/symforce/opt/linearizer.cc
-+++ b/symforce/opt/linearizer.cc
-@@ -8,6 +8,7 @@
- #include <optional>
- 
- #include "./assert.h"
-+#include "./fmt_compat.h"
- #include "./internal/linearizer_utils.h"
- #include "./tic_toc.h"
- #include "symforce/opt/factor.h"
-diff --git a/symforce/opt/internal/derivative_checker.h b/symforce/opt/internal/derivative_checker.h
---- a/symforce/opt/internal/derivative_checker.h
-+++ b/symforce/opt/internal/derivative_checker.h
-@@ -7,6 +7,8 @@
- 
- #include <spdlog/spdlog.h>
- 
-+#include "../fmt_compat.h"
-+
- #include "../util.h"
- #include "../values.h"
- 
 diff --git a/symforce/opt/factor.cc b/symforce/opt/factor.cc
 --- a/symforce/opt/factor.cc
 +++ b/symforce/opt/factor.cc
@@ -141,15 +86,26 @@ diff --git a/symforce/opt/factor.cc b/symforce/opt/factor.cc
  #include "./internal/factor_utils.h"
  
  namespace sym {
-diff --git a/symforce/opt/dense_linearizer.cc b/symforce/opt/dense_linearizer.cc
---- a/symforce/opt/dense_linearizer.cc
-+++ b/symforce/opt/dense_linearizer.cc
+diff --git a/symforce/opt/internal/derivative_checker.h b/symforce/opt/internal/derivative_checker.h
+--- a/symforce/opt/internal/derivative_checker.h
++++ b/symforce/opt/internal/derivative_checker.h
 @@ -7,6 +7,7 @@
  
- #include <tuple>
+ #include <spdlog/spdlog.h>
  
-+#include "./fmt_compat.h"
- #include "./internal/linearizer_utils.h"
++#include "../fmt_compat.h"
+ #include "../util.h"
+ #include "../values.h"
+ 
+diff --git a/symforce/opt/internal/linearizer_utils.h b/symforce/opt/internal/linearizer_utils.h
+--- a/symforce/opt/internal/linearizer_utils.h
++++ b/symforce/opt/internal/linearizer_utils.h
+@@ -17,6 +17,7 @@
+ #include <lcmtypes/sym/linearization_sparse_factor_helper_t.hpp>
+ 
+ #include "../factor.h"
++#include "../fmt_compat.h"
+ #include "./hash_combine.h"
  
  namespace sym {
 diff --git a/symforce/opt/internal/optimizer_utils.h b/symforce/opt/internal/optimizer_utils.h
@@ -166,7 +122,7 @@ diff --git a/symforce/opt/internal/optimizer_utils.h b/symforce/opt/internal/opt
 diff --git a/symforce/opt/internal/tic_toc.cc b/symforce/opt/internal/tic_toc.cc
 --- a/symforce/opt/internal/tic_toc.cc
 +++ b/symforce/opt/internal/tic_toc.cc
-@@ -148,11 +148,11 @@
+@@ -148,11 +148,11 @@ void TicTocManager::PrintTimingResults(std::ostream& out) const {
                    "Max Time (s)", "Min Time (s)");
  
    fmt::print(out, "\nSymForce TicToc Results:\n");
@@ -181,34 +137,32 @@ diff --git a/symforce/opt/internal/tic_toc.cc b/symforce/opt/internal/tic_toc.cc
                 float(block.AverageTime()), float(block.MaxTime()), float(block.MinTime()));
    }
  }
-diff --git a/symforce/opt/values.cc b/symforce/opt/values.cc
---- a/symforce/opt/values.cc
-+++ b/symforce/opt/values.cc
-@@ -8,6 +8,8 @@
- #include <fmt/format.h>
- #include <fmt/ostream.h>
- 
-+#include "./fmt_compat.h"
-+
- #include "./assert.h"
- 
- namespace sym {
-diff --git a/symforce/opt/internal/linearizer_utils.h b/symforce/opt/internal/linearizer_utils.h
---- a/symforce/opt/internal/linearizer_utils.h
-+++ b/symforce/opt/internal/linearizer_utils.h
-@@ -13,6 +13,8 @@
- #include <fmt/ranges.h>
+diff --git a/symforce/opt/levenberg_marquardt_solver.tcc b/symforce/opt/levenberg_marquardt_solver.tcc
+--- a/symforce/opt/levenberg_marquardt_solver.tcc
++++ b/symforce/opt/levenberg_marquardt_solver.tcc
+@@ -9,6 +9,7 @@
  #include <spdlog/spdlog.h>
  
-+#include "../fmt_compat.h"
-+
- #include <lcmtypes/sym/linearization_dense_factor_helper_t.hpp>
- #include <lcmtypes/sym/linearization_sparse_factor_helper_t.hpp>
+ #include "./assert.h"
++#include "./fmt_compat.h"
+ #include "./levenberg_marquardt_solver.h"
+ #include "./tic_toc.h"
+ #include "./util.h"
+diff --git a/symforce/opt/linearizer.cc b/symforce/opt/linearizer.cc
+--- a/symforce/opt/linearizer.cc
++++ b/symforce/opt/linearizer.cc
+@@ -8,6 +8,7 @@
+ #include <optional>
  
+ #include "./assert.h"
++#include "./fmt_compat.h"
+ #include "./internal/linearizer_utils.h"
+ #include "./tic_toc.h"
+ #include "symforce/opt/factor.h"
 diff --git a/symforce/opt/util.h b/symforce/opt/util.h
 --- a/symforce/opt/util.h
 +++ b/symforce/opt/util.h
-@@ -100,7 +100,7 @@
+@@ -100,7 +100,7 @@ auto NumericalDerivative(const F f, const X& x,
                               kDefaultEpsilon<typename StorageOps<X>::Scalar>,
                           const typename sym::StorageOps<X>::Scalar delta = 1e-2f) {
    using Scalar = typename sym::StorageOps<X>::Scalar;
@@ -217,16 +171,39 @@ diff --git a/symforce/opt/util.h b/symforce/opt/util.h
    using JacobianMat =
        Eigen::Matrix<Scalar, sym::LieGroupOps<Y>::TangentDim(), sym::LieGroupOps<X>::TangentDim()>;
    static_assert(std::is_same<typename sym::StorageOps<Y>::Scalar, Scalar>::value,
+diff --git a/symforce/opt/values.cc b/symforce/opt/values.cc
+--- a/symforce/opt/values.cc
++++ b/symforce/opt/values.cc
+@@ -9,6 +9,7 @@
+ #include <fmt/ostream.h>
+ 
+ #include "./assert.h"
++#include "./fmt_compat.h"
+ 
+ namespace sym {
+ 
+diff --git a/symforce/opt/values.tcc b/symforce/opt/values.tcc
+--- a/symforce/opt/values.tcc
++++ b/symforce/opt/values.tcc
+@@ -11,6 +11,7 @@
+ #include <fmt/ostream.h>
+ 
+ #include "./assert.h"
++#include "./fmt_compat.h"
+ #include "./values.h"
+ 
+ /**
 diff --git a/symforce/pybind/cc_factor.cc b/symforce/pybind/cc_factor.cc
 --- a/symforce/pybind/cc_factor.cc
 +++ b/symforce/pybind/cc_factor.cc
-@@ -50,7 +50,8 @@
+@@ -49,8 +49,8 @@ void ThrowIfSparsityMismatch(const py::object& matrix) {
+ template <>
  void ThrowIfSparsityMismatch<Eigen::SparseMatrix<double>>(const py::object& matrix) {
    if (!py::isinstance(matrix, py::module_::import("scipy.sparse").attr("csc_matrix"))) {
-     throw py::value_error(
+-    throw py::value_error(
 -        fmt::format("scipy.sparse.csc_matrix expected, found {} instead.", py::type::of(matrix)));
-+        fmt::format("scipy.sparse.csc_matrix expected, found {} instead.",
-+          std::string(py::str(py::type::of(matrix)))));
++    throw py::value_error(fmt::format("scipy.sparse.csc_matrix expected, found {} instead.",
++                                      std::string(py::str(py::type::of(matrix)))));
    }
  }
  

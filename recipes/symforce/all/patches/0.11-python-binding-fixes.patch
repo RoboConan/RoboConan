@@ -1,7 +1,4 @@
-Compatibility fixes to support Python 3.14 and newer Cython, external SymEngine and pybind11.
-
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index d1573f8c..e4fe9fa4 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -349,23 +349,8 @@ endif()
@@ -75,7 +72,6 @@ index d1573f8c..e4fe9fa4 100644
 -
  endif(SYMFORCE_BUILD_SYMENGINE)
 diff --git a/symforce/pybind/CMakeLists.txt b/symforce/pybind/CMakeLists.txt
-index d3461e7f..9d455854 100644
 --- a/symforce/pybind/CMakeLists.txt
 +++ b/symforce/pybind/CMakeLists.txt
 @@ -12,7 +12,7 @@ include(FetchContent)
@@ -88,10 +84,18 @@ index d3461e7f..9d455854 100644
    message(STATUS "pybind11 not found, adding with FetchContent")
    # NOTE(brad): Set PYTHON_EXECUTABLE to ensure pybind11 uses the same
 diff --git a/symforce/pybind/cc_factor.cc b/symforce/pybind/cc_factor.cc
-index 912bd795..733fa030 100644
 --- a/symforce/pybind/cc_factor.cc
 +++ b/symforce/pybind/cc_factor.cc
-@@ -195,7 +195,7 @@ void AddFactorWrapper(pybind11::module_ module) {
+@@ -127,7 +127,7 @@ sym::Factord MakeJacobianFactor(PyJacobianFunc jacobian_func, const std::vector<
+ //================================================================================================//
+ 
+ void AddFactorWrapper(pybind11::module_ module) {
+-  py::class_<sym::Factord>(module, "Factor", R"(
++  py::class_<sym::Factord>(module, "Factor", py::module_local(false), R"(
+       A residual term for optimization.
+ 
+       Created from a function and a set of Keys that act as inputs. Given a Values as an evaluation
+@@ -194,7 +194,7 @@ void AddFactorWrapper(pybind11::module_ module) {
             )")
        .def(
            "linearize",
@@ -100,11 +104,70 @@ index 912bd795..733fa030 100644
              if (factor.IsSparse()) {
                Eigen::VectorXd residual;
                Eigen::SparseMatrix<double> jacobian;
+diff --git a/symforce/pybind/cc_key.cc b/symforce/pybind/cc_key.cc
+--- a/symforce/pybind/cc_key.cc
++++ b/symforce/pybind/cc_key.cc
+@@ -19,7 +19,7 @@ namespace sym {
+ 
+ void AddKeyWrapper(py::module_ module) {
+   py::class_<sym::Key>(
+-      module, "Key",
++      module, "Key", py::module_local(false),
+       "Key type for Values. Contains a letter plus an integral subscript and superscript. Can "
+       "construct with a letter, a letter + sub, or a letter + sub + super, but not a letter + "
+       "super.")
+diff --git a/symforce/pybind/cc_linearization.cc b/symforce/pybind/cc_linearization.cc
+--- a/symforce/pybind/cc_linearization.cc
++++ b/symforce/pybind/cc_linearization.cc
+@@ -17,7 +17,7 @@ namespace sym {
+ 
+ void AddLinearizationWrapper(pybind11::module_ module) {
+   py::class_<sym::SparseLinearizationd>(
+-      module, "Linearization",
++      module, "Linearization", py::module_local(false),
+       "Class for storing a problem linearization evaluated at a Values "
+       "(i.e. a residual, jacobian, hessian, and rhs).")
+       .def(py::init<>())
+diff --git a/symforce/pybind/cc_optimization_stats.cc b/symforce/pybind/cc_optimization_stats.cc
+--- a/symforce/pybind/cc_optimization_stats.cc
++++ b/symforce/pybind/cc_optimization_stats.cc
+@@ -18,7 +18,7 @@
+ namespace sym {
+ 
+ void AddOptimizationStatsWrapper(pybind11::module_ module) {
+-  py::class_<sym::OptimizationStatsd>(module, "OptimizationStats",
++  py::class_<sym::OptimizationStatsd>(module, "OptimizationStats", py::module_local(false),
+                                       "Debug stats for a full optimization run.")
+       .def(py::init<>())
+       .def_readwrite("iterations", &sym::OptimizationStatsd::iterations)
+diff --git a/symforce/pybind/cc_optimizer.cc b/symforce/pybind/cc_optimizer.cc
+--- a/symforce/pybind/cc_optimizer.cc
++++ b/symforce/pybind/cc_optimizer.cc
+@@ -26,7 +26,7 @@
+ namespace sym {
+ 
+ void AddOptimizerWrapper(pybind11::module_ module) {
+-  py::class_<Optimizerd>(module, "Optimizer",
++  py::class_<Optimizerd>(module, "Optimizer", py::module_local(false),
+                          "Class for optimizing a nonlinear least-squares problem specified as a "
+                          "list of Factors. For efficient use, create once and call Optimize() "
+                          "multiple times with different initial guesses, as long as the factors "
+diff --git a/symforce/pybind/cc_values.cc b/symforce/pybind/cc_values.cc
+--- a/symforce/pybind/cc_values.cc
++++ b/symforce/pybind/cc_values.cc
+@@ -175,7 +175,7 @@ constexpr void RegisterMatrices(py::class_<sym::Valuesd>& cls) {
+ //================================================================================================//
+ 
+ void AddValuesWrapper(pybind11::module_ module) {
+-  auto values_class = py::class_<sym::Valuesd>(module, "Values", R"(
++  auto values_class = py::class_<sym::Valuesd>(module, "Values", py::module_local(false), R"(
+     Efficient polymorphic data structure to store named types with a dict-like interface and
+     support efficient repeated operations using a key index. Supports on-manifold optimization.
+ 
 diff --git a/third_party/symenginepy/CMakeLists.txt b/third_party/symenginepy/CMakeLists.txt
-index c4b13eb7..9435713e 100644
 --- a/third_party/symenginepy/CMakeLists.txt
 +++ b/third_party/symenginepy/CMakeLists.txt
-@@ -13,9 +13,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SYMENGINE_CXX_FLAGS}")
+@@ -24,9 +24,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SYMENGINE_CXX_FLAGS}")
  include_directories(${SYMENGINE_INCLUDE_DIRS})
  
  set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
@@ -116,13 +179,12 @@ index c4b13eb7..9435713e 100644
  if (MINGW AND ("${CMAKE_SIZEOF_VOID_P}" STREQUAL "8"))
      set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DMS_WIN64")
 diff --git a/third_party/symenginepy/symengine/lib/CMakeLists.txt b/third_party/symenginepy/symengine/lib/CMakeLists.txt
-index 33f813ff..81245d26 100644
 --- a/third_party/symenginepy/symengine/lib/CMakeLists.txt
 +++ b/third_party/symenginepy/symengine/lib/CMakeLists.txt
-@@ -8,8 +8,9 @@ configure_file(config.pxi.in config.pxi)
- include_directories(BEFORE ${python_wrapper_BINARY_DIR}/symengine/lib)
- 
- cython_add_module_pyx(symengine_wrapper symengine.pxd)
+@@ -42,8 +42,9 @@ cython_add_module_pyx(symengine_wrapper.cpp
+     ${CMAKE_CURRENT_BINARY_DIR}/symengine_wrapper.pyx
+     ${CMAKE_CURRENT_BINARY_DIR}/symengine_wrapper.pxd
+     ${CMAKE_CURRENT_SOURCE_DIR}/symengine.pxd)
 -add_python_library(symengine_wrapper ${SRC})
 -target_link_libraries(symengine_wrapper ${SYMENGINE_LIBRARIES})
 +find_package(Python REQUIRED)
