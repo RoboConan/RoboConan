@@ -1,0 +1,60 @@
+Guard compiled-mode RPATH and POST_BUILD copy blocks that read legacy FindModule
+*_LIBRARY variables, which are undefined under Conan CMakeDeps (imported targets only).
+
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index c2ce37b..ed7839a 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -342,7 +342,7 @@ endif()
+ # Copy the dlls in the same directory as Souffle so that they will
+ # be immediately found by the operating system.
+ 
+-if (SOUFFLE_USE_SQLITE)
++if (SOUFFLE_USE_SQLITE AND SQLite3_LIBRARY)
+   add_custom_command(TARGET souffle POST_BUILD
+     COMMAND ${CMAKE_COMMAND} -E copy_if_different
+     ${SQLite3_LIBRARY}
+@@ -356,14 +356,14 @@ if (SOUFFLE_USE_SQLITE)
+   endif ()
+ endif ()
+ 
+-if (SOUFFLE_USE_ZLIB)
++if (SOUFFLE_USE_ZLIB AND ZLIB_LIBRARY_RELEASE)
+ add_custom_command(TARGET souffle POST_BUILD
+   COMMAND ${CMAKE_COMMAND} -E copy_if_different
+   ${ZLIB_LIBRARY_RELEASE}
+   $<TARGET_FILE_DIR:souffle>)
+ endif ()
+ 
+-if (SOUFFLE_USE_CURSES)
++if (SOUFFLE_USE_CURSES AND CURSES_NCURSES_LIBRARY)
+ add_custom_command(TARGET souffle POST_BUILD
+   COMMAND ${CMAKE_COMMAND} -E copy_if_different
+   ${CURSES_NCURSES_LIBRARY}
+@@ -473,7 +473,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+   endif ()
+ endif()
+ 
+-if (SOUFFLE_USE_SQLITE)
++if (SOUFFLE_USE_SQLITE AND SQLite3_LIBRARY)
+   list(APPEND SOUFFLE_COMPILED_LIBS ${SQLite3_LIBRARY})
+   if (COMMAND cmake_path)
+     cmake_path(GET SQLite3_LIBRARY PARENT_PATH SQLite3_RPATH)
+@@ -483,7 +483,7 @@ if (SOUFFLE_USE_SQLITE)
+   list(APPEND SOUFFLE_COMPILED_RPATHS ${SQLite3_RPATH})
+ endif()
+ 
+-if (SOUFFLE_USE_ZLIB)
++if (SOUFFLE_USE_ZLIB AND ZLIB_LIBRARY_RELEASE)
+   list(APPEND SOUFFLE_COMPILED_LIBS ${ZLIB_LIBRARY_RELEASE})
+   if (COMMAND cmake_path)
+     cmake_path(GET ZLIB_LIBRARY_RELEASE PARENT_PATH ZLIB_RPATH)
+@@ -493,7 +493,7 @@ if (SOUFFLE_USE_ZLIB)
+   list(APPEND SOUFFLE_COMPILED_RPATHS ${ZLIB_RPATH})
+ endif()
+ 
+-if (SOUFFLE_USE_CURSES)
++if (SOUFFLE_USE_CURSES AND CURSES_NCURSES_LIBRARY)
+   list(APPEND SOUFFLE_COMPILED_LIBS ${CURSES_NCURSES_LIBRARY})
+   if (COMMAND cmake_path)
+     cmake_path(GET CURSES_NCURSES_LIBRARY PARENT_PATH NCURSES_RPATH)

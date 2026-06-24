@@ -1,0 +1,3 @@
+.decl hello(x: symbol)
+hello("world").
+.output hello

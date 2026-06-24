@@ -1,0 +1,7 @@
+sources:
+  "2.5":
+    url: "https://github.com/souffle-lang/souffle/archive/refs/tags/2.5.tar.gz"
+    sha256: "5d009ad6c74ccec10207d865c059716afac625759bff7c8070e529bd80385067"
+patches:
+  "2.5":
+    - patch_file: "patches/cmake-fixes.patch"
