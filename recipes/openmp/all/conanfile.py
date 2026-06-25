@@ -1,7 +1,10 @@
+import os
+import textwrap
 from functools import cached_property
 
 from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
+from conan.tools.files import *
 from conan.tools.layout import basic_layout
 from conan.tools.scm import Version
 
@@ -128,6 +131,45 @@ class PackageConan(ConanFile):
 
         return None
 
+    @property
+    def _openmp_native_library(self):
+        if self.settings.compiler == "msvc":
+            return "vcompd" if self.settings.build_type == "Debug" else "vcomp"
+        elif str(self.settings.compiler) in ["intel-cc", "intel-llvm"]:
+            return "iomp5"
+        return "omp"
+
+    def _openmp_target_link_property(self):
+        # The flags-only branches carry the OpenMP flag as a link option; msvc/intel link a runtime.
+        lib = self._openmp_native_library
+        if lib == "omp":
+            flags = ";".join(self._openmp_flags)
+            return f'INTERFACE_LINK_OPTIONS "$<$<LINK_LANGUAGE:C>:{flags}>" "$<$<LINK_LANGUAGE:CXX>:{flags}>"'
+        else:
+            return f'INTERFACE_LINK_LIBRARIES "{lib}"'
+
+    @property
+    def _build_module_rel_path(self):
+        return "shared/conan/openmp/conan-openmp-target.cmake"
+
+    def package(self):
+        # The native provider ships no artifacts, only compiler/linker flags. Under the
+        # CMakeConfigDeps generator a flags-only cpp_info produces no IMPORTED target, so the
+        # openmp::openmp target that transitive consumers link against would never be created.
+        # A build module defines it explicitly, carrying the flags via INTERFACE properties.
+        if self.options.provider != "native":
+            return
+        flags = ";".join(self._openmp_flags)
+        module = textwrap.dedent(f"""\
+            if(NOT TARGET openmp::openmp)
+                add_library(openmp::openmp INTERFACE IMPORTED)
+                set_property(TARGET openmp::openmp APPEND PROPERTY INTERFACE_COMPILE_OPTIONS
+                             "$<$<COMPILE_LANGUAGE:C>:{flags}>" "$<$<COMPILE_LANGUAGE:CXX>:{flags}>")
+                set_property(TARGET openmp::openmp APPEND PROPERTY {self._openmp_target_link_property()})
+            endif()
+            """)
+        save(self, os.path.join(self.package_folder, self._build_module_rel_path), module)
+
     def package_info(self):
         self.cpp_info.set_property("cmake_file_name", "_openmp_")
 
@@ -147,3 +189,8 @@ class PackageConan(ConanFile):
             else:
                 self.cpp_info.sharedlinkflags = self._openmp_flags
                 self.cpp_info.exelinkflags = self._openmp_flags
+
+            # CMakeConfigDeps emits no IMPORTED target for a flags-only cpp_info, so the build
+            # module defines openmp::openmp explicitly for transitive consumers that link it.
+            self.cpp_info.builddirs.append(os.path.dirname(self._build_module_rel_path))
+            self.cpp_info.set_property("cmake_build_modules", [self._build_module_rel_path])

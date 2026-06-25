@@ -8,7 +8,7 @@ from conan.tools.env import Environment
 
 class TestPackageConan(ConanFile):
     settings = "os", "arch", "compiler", "build_type"
-    generators = "CMakeDeps", "CMakeToolchain", "PkgConfigDeps"
+    generators = "CMakeConfigDeps", "CMakeToolchain", "PkgConfigDeps"
 
     def requirements(self):
         self.requires(self.tested_reference_str)
