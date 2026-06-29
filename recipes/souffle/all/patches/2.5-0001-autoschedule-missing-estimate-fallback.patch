@@ -1,0 +1,26 @@
+Fall back to relation cardinality when the auto-scheduler profile lacks one
+candidate join estimate; this keeps valid but sparse profiles usable.
+
+diff --git a/src/ast2ram/utility/SipsMetric.cpp b/src/ast2ram/utility/SipsMetric.cpp
+index fb94638..491af83 100644
+--- a/src/ast2ram/utility/SipsMetric.cpp
++++ b/src/ast2ram/utility/SipsMetric.cpp
+@@ -37,6 +37,7 @@
+ #include <cmath>
+ #include <limits>
+ #include <numeric>
++#include <stdexcept>
+ #include <unordered_set>
+ #include <vector>
+ 
+@@ -163,8 +164,8 @@
+             } else {
+                 return prof->getNonRecursiveJoinSize(rel, attributes, constants);
+             }
+-        } catch (...) {
+-            fatal("Error: profile used for auto-scheduling doesn't match the provided program.");
++        } catch (const std::out_of_range&) {
++            return static_cast<double>(prof->getRelationSize(QualifiedName::fromString(rel)));
+         }
+     };
+ 

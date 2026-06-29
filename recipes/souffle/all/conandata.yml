@@ -5,3 +5,4 @@ sources:
 patches:
   "2.5":
     - patch_file: "patches/cmake-fixes.patch"
+    - patch_file: "patches/2.5-0001-autoschedule-missing-estimate-fallback.patch"
