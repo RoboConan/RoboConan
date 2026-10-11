@@ -1,12 +1,11 @@
 import os
-from pathlib import Path
 
 from conan import ConanFile
+from conan.tools.build import check_min_cppstd
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
-from conan.tools.scm import Version
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.28"
 
 
 class ImGuizmoConan(ConanFile):
@@ -35,24 +34,21 @@ class ImGuizmoConan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("imgui/[^1]", transitive_headers=True)
+        self.requires("imgui/[^1.90]", transitive_headers=True, transitive_libs=True)
+
+    def validate(self):
+        check_min_cppstd(self, 17)
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
 
     def generate(self):
         tc = CMakeToolchain(self)
-        tc.preprocessor_definitions["IMGUI_DEFINE_MATH_OPERATORS"] = None
         tc.generate()
         tc = CMakeDeps(self)
         tc.generate()
 
     def build(self):
-        if self.version == "1.83" and Version(self.dependencies["imgui"].ref.version) >= "1.89.4":
-            # Related to a breaking change: https://github.com/ocornut/imgui/blob/master/docs/CHANGELOG.txt#L912
-            # Redirection: ImDrawList::AddBezierCurve() -> use ImDrawList::AddBezierCubic()
-            replace_in_file(self, os.path.join(self.source_folder, "GraphEditor.cpp"),
-                            "AddBezierCurve", "AddBezierCubic")
         cmake = CMake(self)
         cmake.configure(build_script_folder="..")
         cmake.build()
@@ -66,3 +62,6 @@ class ImGuizmoConan(ConanFile):
 
     def package_info(self):
         self.cpp_info.libs = ["imguizmo"]
+        # Required by public, header-only APIs such as ImLightRig.h and ImZoomSlider.h.
+        self.cpp_info.defines = ["IMGUI_DEFINE_MATH_OPERATORS"]
+        self.cpp_info.requires = ["imgui::core"]

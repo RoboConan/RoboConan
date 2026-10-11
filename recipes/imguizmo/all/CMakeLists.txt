@@ -1,18 +1,20 @@
 cmake_minimum_required(VERSION 3.15)
 project(imguizmo CXX)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
-set(SOURCE_DIR src)
-file(GLOB SOURCE_FILES ${SOURCE_DIR}/*.cpp)
-file(GLOB HEADER_FILES ${SOURCE_DIR}/*.h)
+set(SOURCE_DIR src/src)
+file(GLOB SOURCE_FILES CONFIGURE_DEPENDS ${SOURCE_DIR}/*.cpp)
+file(GLOB HEADER_FILES CONFIGURE_DEPENDS ${SOURCE_DIR}/*.h)
 
 find_package(imgui CONFIG REQUIRED)
 
 add_library(${PROJECT_NAME} ${SOURCE_FILES})
-target_include_directories(${PROJECT_NAME} PRIVATE ${SOURCE_DIR})
+target_include_directories(${PROJECT_NAME}
+    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/${SOURCE_DIR}>
+           $<INSTALL_INTERFACE:include>)
 target_link_libraries(${PROJECT_NAME} PUBLIC imgui::imgui)
 
 include(GNUInstallDirs)
