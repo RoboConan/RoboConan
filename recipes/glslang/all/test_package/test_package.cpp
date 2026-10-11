@@ -1,8 +1,6 @@
 #include <glslang/Public/ShaderLang.h>
 
 int main() {
-  glslang::InitializeProcess();
-  glslang::FinalizeProcess();
-
-  return 0;
+  auto* volatile initialize = &glslang::InitializeProcess;
+  (void)initialize;
 }

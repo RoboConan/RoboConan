@@ -3,6 +3,7 @@ import os
 import shutil
 
 from conan import ConanFile
+from conan.errors import ConanInvalidConfiguration
 from conan.tools.apple import fix_apple_shared_install_name
 from conan.tools.build import check_min_cppstd
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
@@ -23,32 +24,42 @@ class VulkanValidationLayersConan(ConanFile):
     settings = "os", "arch", "compiler", "build_type"
     options = {
         "fPIC": [True, False],
-        "with_wsi_xcb": [True, False],
-        "with_wsi_xlib": [True, False],
-        "with_wsi_wayland": [True, False],
+        "with_xcb": [True, False],
+        "with_xlib": [True, False],
+        "with_xrandr": [True, False],
+        "with_wayland": [True, False],
+        "with_mimalloc": [True, False],
     }
     default_options = {
         "fPIC": True,
-        "with_wsi_xcb": True,
-        "with_wsi_xlib": True,
-        "with_wsi_wayland": True,
+        "with_xcb": True,
+        "with_xlib": True,
+        "with_xrandr": True,
+        "with_wayland": True,
+        "with_mimalloc": False,
     }
 
     @property
     def _needs_pkg_config(self):
-        return self.options.get_safe("with_wsi_xcb") or \
-               self.options.get_safe("with_wsi_xlib")
+        return self.options.get_safe("with_xcb") or \
+               self.options.get_safe("with_xlib") or \
+               self.options.get_safe("with_wayland")
 
     def export_sources(self):
         export_conandata_patches(self)
 
     def config_options(self):
+        if Version(self.version) < "1.4.363":
+            self.options.rm_safe("with_xrandr")
         if self.settings.os not in ["Linux", "FreeBSD"]:
-            del self.options.with_wsi_xcb
-            del self.options.with_wsi_xlib
-            del self.options.with_wsi_wayland
+            self.options.rm_safe("with_xcb")
+            self.options.rm_safe("with_xlib")
+            self.options.rm_safe("with_xrandr")
+            self.options.rm_safe("with_wayland")
         if self.settings.os == "Windows":
             del self.options.fPIC
+        else:
+            del self.options.with_mimalloc
 
     def layout(self):
         cmake_layout(self, src_folder="src")
@@ -68,20 +79,23 @@ class VulkanValidationLayersConan(ConanFile):
             self.requires("parallel-hashmap/[^2.0.0]")
         else:
             self.requires("robin-hood-hashing/3.11.5")
-        if self.options.get_safe("with_wsi_xcb") or self.options.get_safe("with_wsi_xlib"):
+        if self.options.get_safe("with_xcb") or self.options.get_safe("with_xlib"):
             self.requires("xorg/system", libs=False)
-        if self.options.get_safe("with_wsi_wayland"):
+        if self.options.get_safe("with_wayland"):
             self.requires("wayland/[^1.22.0]", libs=False)
 
-        # TODO: add support for mimalloc
+        if self.options.get_safe("with_mimalloc"):
+            self.requires("mimalloc/[>=2.2.4 <4]", options={"shared": False})
 
     def validate(self):
         check_min_cppstd(self, 17)
+        if self.options.get_safe("with_xrandr") and not self.options.get_safe("with_xlib"):
+            raise ConanInvalidConfiguration("Xrandr WSI support requires Xlib WSI support")
 
     def build_requirements(self):
         if self._needs_pkg_config and not self.conf.get("tools.gnu:pkg_config", check_type=str):
             self.tool_requires("pkgconf/[>=2.2 <3]")
-        self.tool_requires("cmake/[>=3.17.2 <5]")
+        self.tool_requires("cmake/[>=3.22.1 <5]")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
@@ -92,9 +106,10 @@ class VulkanValidationLayersConan(ConanFile):
         tc.cache_variables["VVL_CLANG_TIDY"] = False
         tc.variables["USE_CCACHE"] = False
         if self.settings.os in ["Linux", "FreeBSD"]:
-            tc.variables["BUILD_WSI_XCB_SUPPORT"] = self.options.get_safe("with_wsi_xcb")
-            tc.variables["BUILD_WSI_XLIB_SUPPORT"] = self.options.get_safe("with_wsi_xlib")
-            tc.variables["BUILD_WSI_WAYLAND_SUPPORT"] = self.options.get_safe("with_wsi_wayland")
+            tc.variables["BUILD_WSI_XCB_SUPPORT"] = self.options.get_safe("with_xcb")
+            tc.variables["BUILD_WSI_XLIB_SUPPORT"] = self.options.get_safe("with_xlib")
+            tc.variables["BUILD_WSI_XLIB_XRANDR_SUPPORT"] = self.options.get_safe("with_xrandr")
+            tc.variables["BUILD_WSI_WAYLAND_SUPPORT"] = self.options.get_safe("with_wayland")
         elif self.settings.os == "Android":
             tc.variables["BUILD_WSI_XCB_SUPPORT"] = False
             tc.variables["BUILD_WSI_XLIB_SUPPORT"] = False
@@ -104,6 +119,10 @@ class VulkanValidationLayersConan(ConanFile):
         tc.variables["INSTALL_TESTS"] = False
         tc.variables["BUILD_LAYERS"] = True
         tc.variables["BUILD_LAYER_SUPPORT_FILES"] = True
+        tc.variables["VVL_CODEGEN"] = False
+        tc.variables["UPDATE_DEPS"] = False
+        if self.options.get_safe("with_mimalloc") is not None:
+            tc.variables["USE_MIMALLOC"] = self.options.with_mimalloc
         if Version(self.version) >= "1.4.313":
             tc.variables["USE_CUSTOM_HASH_MAP"] = True
         else:
@@ -144,6 +163,8 @@ class VulkanValidationLayersConan(ConanFile):
 
     def package(self):
         copy(self, "LICENSE.txt", src=self.source_folder, dst=os.path.join(self.package_folder, "licenses"))
+        copy(self, "*", src=os.path.join(self.source_folder, "LICENSES"),
+             dst=os.path.join(self.package_folder, "licenses"))
         cmake = CMake(self)
         cmake.install()
         rm(self, "*.pdb", os.path.join(self.package_folder, "bin"))
@@ -165,6 +186,7 @@ class VulkanValidationLayersConan(ConanFile):
 
         self.cpp_info.includedirs = []
         self.cpp_info.libdirs = []
+        self.cpp_info.resdirs = ["share"]
         if self.settings.os != "Windows":
             self.cpp_info.bindirs = ["lib"]
 

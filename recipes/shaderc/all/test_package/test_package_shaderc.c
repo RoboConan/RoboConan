@@ -1,8 +1,6 @@
 #include <shaderc/shaderc.h>
 
 int main() {
-  shaderc_compiler_t shaderc_compiler = shaderc_compiler_initialize();
-  shaderc_compiler_release(shaderc_compiler);
-
-  return 0;
+  shaderc_compiler_t (*volatile initialize)(void) = shaderc_compiler_initialize;
+  (void)initialize;
 }

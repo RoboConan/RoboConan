@@ -1,4 +1,7 @@
 sources:
+  "1.4.363.0":
+    url: "https://github.com/KhronosGroup/Vulkan-Utility-Libraries/archive/refs/tags/vulkan-sdk-1.4.363.0.tar.gz"
+    sha256: "a5308b62e3bac84cf45c4d7dd5b830aabace4847fdb71f4fd7db3be034c2bebf"
   "1.4.321.0":
     url: "https://github.com/KhronosGroup/Vulkan-Utility-Libraries/archive/refs/tags/vulkan-sdk-1.4.321.0.tar.gz"
     sha256: "0cb3c19bc1ce3877a69fe00955597684fa7bde569eea633ac735e36dd959768e"

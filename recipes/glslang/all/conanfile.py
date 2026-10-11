@@ -45,6 +45,10 @@ class GlslangConan(ConanFile):
     def export_sources(self):
         copy(self, "CMakeLists.txt", self.recipe_folder, self.export_sources_folder)
 
+    def config_options(self):
+        if Version(self.version) >= "1.4.328.1":
+            self.options.rm_safe("spv_remapper")
+
     def layout(self):
         cmake_layout(self, src_folder="src")
 
@@ -60,6 +64,9 @@ class GlslangConan(ConanFile):
             if self.settings.os == "Windows":
                 raise ConanInvalidConfiguration(f"{self.ref} shared library build is broken on {self.settings.os}")
 
+    def validate_build(self):
+        check_min_cppstd(self, 17 if Version(self.version) >= "1.4" else 11)
+
     def build_requirements(self):
         if Version(self.version) >= "1.4":
             self.tool_requires("cmake/[>=3.22.1 <5]")
@@ -74,7 +81,7 @@ class GlslangConan(ConanFile):
         tc.variables["GLSLANG_ENABLE_INSTALL"] = True
         tc.variables["BUILD_EXTERNAL"] = False
         tc.variables["SKIP_GLSLANG_INSTALL"] = False
-        tc.variables["ENABLE_SPVREMAPPER"] = self.options.spv_remapper
+        tc.variables["ENABLE_SPVREMAPPER"] = self.options.get_safe("spv_remapper", False)
         tc.variables["ENABLE_GLSLANG_BINARIES"] = self.options.build_executables
         tc.variables["ENABLE_GLSLANG_JS"] = False
         tc.variables["ENABLE_GLSLANG_WEBMIN"] = False
@@ -128,6 +135,8 @@ class GlslangConan(ConanFile):
 
     def package(self):
         copy(self, "LICENSE.txt", self.source_folder, os.path.join(self.package_folder, "licenses"))
+        copy(self, "*", os.path.join(self.source_folder, "LICENSES"),
+             os.path.join(self.package_folder, "licenses", "LICENSES"))
         cmake = CMake(self)
         cmake.install()
         if self.options.install_internal_headers:
@@ -145,6 +154,7 @@ class GlslangConan(ConanFile):
 
         lib_suffix = "d" if self.settings.os == "Windows" and self.settings.build_type == "Debug" else ""
 
+        monolithic = Version(self.version) >= "1.3.296.0"
         has_machineindependent = not self.options.shared
         has_genericcodegen = not self.options.shared
         has_osdependent = not self.options.shared
@@ -159,12 +169,16 @@ class GlslangConan(ConanFile):
             self.cpp_info.components["glslang-core"].defines.append("GLSLANG_IS_SHARED_LIBRARY")
         if self.settings.os in ["Linux", "FreeBSD"]:
             self.cpp_info.components["glslang-core"].system_libs.extend(["m", "pthread"])
-        if has_machineindependent:
-            self.cpp_info.components["glslang-core"].requires.append("machineindependent")
-        if has_genericcodegen:
-            self.cpp_info.components["glslang-core"].requires.append("genericcodegen")
-        if has_osdependent:
-            self.cpp_info.components["glslang-core"].requires.append("osdependent")
+        if monolithic:
+            if self.options.enable_optimizer:
+                self.cpp_info.components["glslang-core"].requires.append("spirv-tools::spirv-tools-opt")
+        else:
+            if has_machineindependent:
+                self.cpp_info.components["glslang-core"].requires.append("machineindependent")
+            if has_genericcodegen:
+                self.cpp_info.components["glslang-core"].requires.append("genericcodegen")
+            if has_osdependent:
+                self.cpp_info.components["glslang-core"].requires.append("osdependent")
         if has_oglcompiler:
             self.cpp_info.components["glslang-core"].requires.append("oglcompiler")
         if has_hlsl:
@@ -175,12 +189,15 @@ class GlslangConan(ConanFile):
             self.cpp_info.components["machineindependent"].set_property("cmake_target_name", "glslang::MachineIndependent")
             self.cpp_info.components["machineindependent"].set_property("cmake_target_aliases", ["MachineIndependent"])
             self.cpp_info.components["machineindependent"].libs = [f"MachineIndependent{lib_suffix}"]
-            if has_genericcodegen:
-                self.cpp_info.components["machineindependent"].requires.append("genericcodegen")
-            if has_osdependent:
-                self.cpp_info.components["machineindependent"].requires.append("osdependent")
-            if has_oglcompiler:
-                self.cpp_info.components["machineindependent"].requires.append("oglcompiler")
+            if monolithic:
+                self.cpp_info.components["machineindependent"].requires.append("glslang-core")
+            else:
+                if has_genericcodegen:
+                    self.cpp_info.components["machineindependent"].requires.append("genericcodegen")
+                if has_osdependent:
+                    self.cpp_info.components["machineindependent"].requires.append("osdependent")
+                if has_oglcompiler:
+                    self.cpp_info.components["machineindependent"].requires.append("oglcompiler")
 
         if has_genericcodegen:
             # GenericCodeGen
@@ -193,7 +210,7 @@ class GlslangConan(ConanFile):
             self.cpp_info.components["osdependent"].set_property("cmake_target_name", "glslang::OSDependent")
             self.cpp_info.components["osdependent"].set_property("cmake_target_aliases", ["OSDependent"])
             self.cpp_info.components["osdependent"].libs = [f"OSDependent{lib_suffix}"]
-            if self.settings.os in ["Linux", "FreeBSD"]:
+            if not monolithic and self.settings.os in ["Linux", "FreeBSD"]:
                 self.cpp_info.components["osdependent"].system_libs.append("pthread")
 
         if has_oglcompiler:
@@ -219,7 +236,7 @@ class GlslangConan(ConanFile):
             self.cpp_info.components["glslang-core"].requires.append("hlsl")
 
         # SPVRemapper
-        if self.options.spv_remapper:
+        if self.options.get_safe("spv_remapper"):
             self.cpp_info.components["spvremapper"].set_property("cmake_target_name", "glslang::SPVRemapper")
             self.cpp_info.components["spvremapper"].set_property("cmake_target_aliases", ["SPVRemapper"])
             self.cpp_info.components["spvremapper"].libs = [f"SPVRemapper{lib_suffix}"]

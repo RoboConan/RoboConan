@@ -1,6 +1,8 @@
 import os
+import re
 
 from conan import ConanFile
+from conan.errors import ConanInvalidConfiguration
 from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
 from conan.tools.files import *
 from conan.tools.scm import Version
@@ -16,12 +18,18 @@ class SpirvheadersConan(ConanFile):
     topics = ("spirv", "spirv-v", "vulkan", "opengl", "opencl", "khronos")
     package_type = "header-library"
     settings = "os", "arch", "compiler", "build_type"
+    options = {"namespace": ["ANY"]}
+    default_options = {"namespace": "spv"}
 
     def layout(self):
         cmake_layout(self, src_folder="src")
 
     def package_id(self):
-        self.info.clear()
+        self.info.settings.clear()
+
+    def validate(self):
+        if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", str(self.options.namespace)):
+            raise ConanInvalidConfiguration("namespace must be a C++ identifier")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
@@ -54,5 +62,7 @@ class SpirvheadersConan(ConanFile):
         self.cpp_info.set_property("pkg_config_name", "SPIRV-Headers")
         # .pc and CMake version has been fixed at 1.5.5 since 1.2.198.0
         self.cpp_info.set_property("system_package_version", "1.5.5")
+        if self.options.namespace != "spv":
+            self.cpp_info.defines = [f"spv={self.options.namespace}"]
         self.cpp_info.bindirs = []
         self.cpp_info.libdirs = []

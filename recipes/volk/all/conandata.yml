@@ -1,4 +1,7 @@
 sources:
+  "1.4.363.0":
+    url: "https://github.com/zeux/volk/archive/refs/tags/vulkan-sdk-1.4.363.0.tar.gz"
+    sha256: "1547d8d74395d4048fb3f4a6313da56db626e89b55db238d0d7e8944c8a645f3"
   "1.4.321.0":
     url: "https://github.com/zeux/volk/archive/refs/tags/vulkan-sdk-1.4.321.0.tar.gz"
     sha256: "021ed905eea6f3e2cc8a60a21459ee7b43f98f32052ca30f27a3be390b7a4862"

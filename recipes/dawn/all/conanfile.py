@@ -73,7 +73,7 @@ class DawnConan(ConanFile):
         deps.set_property("vulkan-headers", "cmake_file_name", "Vulkan-Headers")
         deps.set_property("vulkan-headers", "cmake_target_name", "Vulkan-Headers")
         deps.set_property("vulkan-utility-libraries", "cmake_file_name", "VulkanUtilityHeaders")
-        deps.set_property("vulkan-utility-libraries::UtilityHeaders", "cmake_target_name", "VulkanUtilityHeaders")
+        deps.set_property("vulkan-utility-libraries::utilityheaders", "cmake_target_name", "VulkanUtilityHeaders")
         deps.generate()
         # Avoid conflicts with SPIRV-Tools target names
         save(self, "SPIRV-ToolsConfig.cmake", "set(SPIRV-Tools_FOUND TRUE)")

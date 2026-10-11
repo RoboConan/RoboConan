@@ -24,5 +24,6 @@ class TestPackageConan(ConanFile):
         if can_run(self):
             bin_path = os.path.join(self.cpp.build.bindir, "test_package")
             self.run(bin_path, env="conanrun")
-            shader_name = os.path.join(self.source_folder, "test_package.vert")
-            self.run(f"glslangValidator \"{shader_name}\"", env="conanrun")
+            if self.dependencies["glslang"].options.build_executables:
+                shader_name = os.path.join(self.source_folder, "test_package.vert")
+                self.run(f"glslangValidator \"{shader_name}\"", env="conanrun")

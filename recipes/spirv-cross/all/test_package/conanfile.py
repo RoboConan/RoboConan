@@ -13,7 +13,7 @@ class TestPackageConan(ConanFile):
         cmake_layout(self)
 
     def requirements(self):
-        self.requires(self.tested_reference_str)
+        self.requires(self.tested_reference_str, run=can_run(self))
 
     def build(self):
         cmake = CMake(self)
@@ -29,3 +29,5 @@ class TestPackageConan(ConanFile):
             if opts.c_api:
                 bin_path = os.path.join(self.cpp.build.bindir, "test_package_c")
                 self.run(bin_path, env="conanrun")
+            if opts.build_executable:
+                self.run("spirv-cross --help", env="conanrun")

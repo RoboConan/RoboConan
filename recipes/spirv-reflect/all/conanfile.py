@@ -15,8 +15,25 @@ class SpirvReflectConan(ConanFile):
     license = "Apache-2.0"
     topics = ("spirv", "spirv-v", "vulkan", "opengl", "opencl", "khronos")
     homepage = "https://github.com/KhronosGroup/SPIRV-Reflect"
-    package_type = "static-library"
+    package_type = "library"
     settings = "os", "arch", "compiler", "build_type"
+    options = {
+        "shared": [True, False],
+        "fPIC": [True, False],
+        "build_executables": [True, False],
+    }
+    default_options = {
+        "shared": False,
+        "fPIC": True,
+        "build_executables": True,
+    }
+    implements = ["auto_shared_fpic"]
+
+    def configure(self):
+        if Version(self.version) < "1.4.363.0":
+            self.options.rm_safe("shared")
+            self.options.rm_safe("fPIC")
+            self.package_type = "static-library"
 
     def layout(self):
         cmake_layout(self, src_folder="src")
@@ -33,7 +50,9 @@ class SpirvReflectConan(ConanFile):
 
     def generate(self):
         tc = CMakeToolchain(self)
-        tc.cache_variables["SPIRV_REFLECT_STATIC_LIB"] = True
+        tc.cache_variables["SPIRV_REFLECT_STATIC_LIB"] = not self.options.get_safe("shared", False)
+        tc.cache_variables["SPIRV_REFLECT_SHARED_LIB"] = self.options.get_safe("shared", False)
+        tc.cache_variables["SPIRV_REFLECT_EXECUTABLE"] = self.options.build_executables
         tc.cache_variables["SPIRV_REFLECT_EXAMPLES"] = False
         tc.cache_variables["SPIRV_REFLECT_BUILD_TESTS"] = False
         if Version(self.version) < "1.3.296.0":
@@ -55,6 +74,12 @@ class SpirvReflectConan(ConanFile):
     def package_info(self):
         # No official CMake config is exported - using a naming scheme similar to other SPIRV packages instead.
         self.cpp_info.set_property("cmake_file_name", "SPIRV-Reflect")
-        self.cpp_info.set_property("cmake_target_name", "spirv-reflect-static")
-        self.cpp_info.libs = ["spirv-reflect-static"]
+        if self.options.get_safe("shared"):
+            self.cpp_info.set_property("cmake_target_name", "spirv-reflect-shared")
+            self.cpp_info.set_property("cmake_target_aliases", ["spirv-reflect-static"])
+            self.cpp_info.libs = ["spirv-reflect"]
+        else:
+            self.cpp_info.set_property("cmake_target_name", "spirv-reflect-static")
+            self.cpp_info.set_property("cmake_target_aliases", ["spirv-reflect-shared"])
+            self.cpp_info.libs = ["spirv-reflect-static"]
         self.cpp_info.defines.append("SPIRV_REFLECT_USE_SYSTEM_SPIRV_H")

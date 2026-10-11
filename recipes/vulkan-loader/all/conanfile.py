@@ -14,21 +14,24 @@ class VulkanLoaderConan(ConanFile):
     description = "Khronos official Vulkan ICD desktop loader for Windows, Linux, and MacOS."
     topics = ("vulkan", "loader", "desktop", "gpu")
     homepage = "https://github.com/KhronosGroup/Vulkan-Loader"
-    license = "Apache-2.0"
+    license = "Apache-2.0 AND MIT AND HPND-Kevlin-Henney"
     package_type = "shared-library"
     settings = "os", "arch", "compiler", "build_type"
     options = {
-        "with_wsi_xcb": [True, False],
-        "with_wsi_xlib": [True, False],
-        "with_wsi_wayland": [True, False],
-        "with_wsi_directfb": [True, False],
+        "with_xcb": [True, False],
+        "with_xlib": [True, False],
+        "with_xrandr": [True, False],
+        "with_wayland": [True, False],
+        "with_directfb": [True, False],
     }
     default_options = {
-        "with_wsi_xcb": True,
-        "with_wsi_xlib": True,
-        "with_wsi_wayland": True,
-        "with_wsi_directfb": False,
+        "with_xcb": True,
+        "with_xlib": True,
+        "with_xrandr": True,
+        "with_wayland": True,
+        "with_directfb": False,
     }
+    languages = ["C"]
 
     @property
     def _is_mingw(self):
@@ -36,38 +39,35 @@ class VulkanLoaderConan(ConanFile):
 
     @property
     def _is_pkgconf_needed(self):
-        return self.options.get_safe("with_wsi_xcb") or self.options.get_safe("with_wsi_xlib") or \
-               self.options.get_safe("with_wsi_wayland") or self.options.get_safe("with_wsi_directfb")
+        return self.options.get_safe("with_xcb") or self.options.get_safe("with_xlib") or \
+               self.options.get_safe("with_wayland") or self.options.get_safe("with_directfb")
 
     def export_sources(self):
         export_conandata_patches(self)
 
     def config_options(self):
-        if self.settings.os != "Linux":
-            del self.options.with_wsi_xcb
-            del self.options.with_wsi_xlib
-            del self.options.with_wsi_wayland
-            del self.options.with_wsi_directfb
+        if self.settings.os not in ["Linux", "FreeBSD"]:
+            del self.options.with_xcb
+            del self.options.with_xlib
+            del self.options.with_xrandr
+            del self.options.with_wayland
+            del self.options.with_directfb
 
     def configure(self):
-        self.settings.rm_safe("compiler.cppstd")
-        self.settings.rm_safe("compiler.libcxx")
+        if not self.options.get_safe("with_xlib"):
+            self.options.rm_safe("with_xrandr")
 
     def layout(self):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires(f"vulkan-headers/{self.version}", transitive_headers=True)
-        if self.options.get_safe("with_wsi_xcb") or self.options.get_safe("with_wsi_xlib"):
-            self.requires("xorg/system")
-        if self.options.get_safe("with_wsi_wayland"):
-            self.requires("wayland/[^1.22.0]")
-        if self.options.get_safe("with_wsi_directfb"):
-            self.requires("directfb/1.7.7")
-
-    def validate(self):
-        if self.dependencies["vulkan-headers"].ref.version != self.version:
-            self.output.warning("vulkan-loader should be built & consumed with the same version than vulkan-headers.")
+        self.requires(f"vulkan-headers/[^{self.version}]", transitive_headers=True)
+        if self.options.get_safe("with_xcb") or self.options.get_safe("with_xlib"):
+            self.requires("xorg/system", visible=False)
+        if self.options.get_safe("with_wayland"):
+            self.requires("wayland/[^1.22.0]", visible=False)
+        if self.options.get_safe("with_directfb"):
+            self.requires("directfb/[^1.7.7]", visible=False)
 
     def build_requirements(self):
         self.tool_requires("cmake/[>=3.17.2 <5]")
@@ -97,11 +97,12 @@ class VulkanLoaderConan(ConanFile):
         tc.variables["VULKAN_HEADERS_INSTALL_DIR"] = self.dependencies["vulkan-headers"].package_folder.replace("\\", "/")
         tc.variables["BUILD_TESTS"] = False
         tc.variables["USE_CCACHE"] = False
-        if self.settings.os == "Linux":
-            tc.variables["BUILD_WSI_XCB_SUPPORT"] = self.options.with_wsi_xcb
-            tc.variables["BUILD_WSI_XLIB_SUPPORT"] = self.options.with_wsi_xlib
-            tc.variables["BUILD_WSI_WAYLAND_SUPPORT"] = self.options.with_wsi_wayland
-            tc.variables["BUILD_WSI_DIRECTFB_SUPPORT"] = self.options.with_wsi_directfb
+        if self.settings.os in ["Linux", "FreeBSD"]:
+            tc.variables["BUILD_WSI_XCB_SUPPORT"] = self.options.with_xcb
+            tc.variables["BUILD_WSI_XLIB_SUPPORT"] = self.options.with_xlib
+            tc.variables["BUILD_WSI_XLIB_XRANDR_SUPPORT"] = self.options.get_safe("with_xrandr", False)
+            tc.variables["BUILD_WSI_WAYLAND_SUPPORT"] = self.options.with_wayland
+            tc.variables["BUILD_WSI_DIRECTFB_SUPPORT"] = self.options.with_directfb
         if self.settings.os == "Windows":
             tc.variables["ENABLE_WIN10_ONECORE"] = False
         tc.variables["BUILD_LOADER"] = True
@@ -124,6 +125,7 @@ class VulkanLoaderConan(ConanFile):
         cmake = CMake(self)
         cmake.install()
         copy(self, "LICENSE.txt", src=self.source_folder, dst=os.path.join(self.package_folder, "licenses"))
+        copy(self, "*.txt", src=os.path.join(self.source_folder, "LICENSES"), dst=os.path.join(self.package_folder, "licenses"))
         rmdir(self, os.path.join(self.package_folder, "lib", "cmake"))
         rmdir(self, os.path.join(self.package_folder, "lib", "pkgconfig"))
         rmdir(self, os.path.join(self.package_folder, "loader"))
@@ -149,18 +151,4 @@ class VulkanLoaderConan(ConanFile):
         # allow to properly set Vulkan_INCLUDE_DIRS in FindVulkan.cmake
         self.cpp_info.includedirs = self.dependencies["vulkan-headers"].cpp_info.aggregated_components().includedirs
 
-        if self.settings.os in ["Linux", "FreeBSD"]:
-            self.cpp_info.system_libs = ["dl", "pthread", "m"]
-        elif self.settings.os == "Macos":
-            self.cpp_info.frameworks = ["CoreFoundation"]
-
         self.cpp_info.requires.append("vulkan-headers::vulkan-headers")
-        if self.options.get_safe("with_wsi_xlib"):
-            self.cpp_info.requires.append("xorg::x11")
-            self.cpp_info.requires.append("xorg::xrandr")
-        if self.options.get_safe("with_wsi_xcb"):
-            self.cpp_info.requires.append("xorg::xcb")
-        if self.options.get_safe("with_wsi_wayland"):
-            self.cpp_info.requires.append("wayland::wayland")
-        if self.options.get_safe("with_wsi_directfb"):
-            self.cpp_info.requires.append("directfb::directfb_")

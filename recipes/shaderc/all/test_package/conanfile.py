@@ -30,4 +30,4 @@ class TestPackageConan(ConanFile):
             self.run(bin_path_shaderc_cpp, env="conanrun")
 
             # Test glslc executable
-            self.run(f"glslc -h", env="conanrun")
+            self.run("glslc -h", env="conanrun")

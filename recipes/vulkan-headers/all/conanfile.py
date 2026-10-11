@@ -1,4 +1,5 @@
 import os
+import textwrap
 
 from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
@@ -14,7 +15,7 @@ required_conan_version = ">=2.1"
 class VulkanHeadersConan(ConanFile):
     name = "vulkan-headers"
     description = "Vulkan Header files."
-    license = "Apache-2.0"
+    license = "Apache-2.0 OR MIT"
     topics = ("vulkan-headers", "vulkan")
     homepage = "https://github.com/KhronosGroup/Vulkan-Headers"
     package_type = "header-library"
@@ -30,14 +31,17 @@ class VulkanHeadersConan(ConanFile):
         "module_std": False,
     }
     options_description = {
-        "module": "Enables building of the Vulkan C++20 module",
-        "module_std": "Enables building of the Vulkan C++20 module with import std",
+        "module": "Enables building of the Vulkan-Hpp C++ named module",
+        "module_std": "Enables import std in the Vulkan-Hpp C++ named module",
     }
+
+    # CMake 4.4's opt-in token from Help/dev/experimental.rst.
+    _cmake_import_std_uuid = "f35a9ac6-8463-4d38-8eec-5d6008153e7d"
 
     def config_options(self):
         if Version(self.version) < "1.3.289":
             del self.options.module
-        if Version(self.version) < "1.4.311":
+        if Version(self.version) < "1.4.311" or Version(self.version) >= "1.4.363":
             del self.options.module_std
 
     def configure(self):
@@ -48,28 +52,38 @@ class VulkanHeadersConan(ConanFile):
         basic_layout(self, src_folder="src")
 
     def package_id(self):
-        self.info.clear()
+        self.info.settings.clear()
 
     def validate(self):
         if self.options.get_safe("module"):
-            check_min_cppstd(self, 20)
+            check_min_cppstd(self, 23 if Version(self.version) >= "1.4.363" else 20)
         if self.options.get_safe("module_std"):
             check_min_cppstd(self, 23)
 
     def validate_build(self):
         if self.options.get_safe("module"):
             compiler_version = Version(self.settings.compiler.version)
-            if self.settings.compiler == "msvc" and compiler_version < "194":
-                raise ConanInvalidConfiguration("Module support requires MSVC 19.41 or higher")
-            if self.settings.compiler == "clang" and compiler_version < "16":
-                raise ConanInvalidConfiguration("Module support requires Clang 16.0 or higher")
-            if self.settings.compiler == "gcc" and compiler_version < "14":
-                raise ConanInvalidConfiguration("Module support requires GCC 14.0 or higher")
+            if Version(self.version) >= "1.4.363":
+                if self.settings.compiler == "msvc" and compiler_version < "193":
+                    raise ConanInvalidConfiguration("Module support requires MSVC 19.36 or higher")
+                if self.settings.compiler == "clang" and compiler_version < "18.1.2":
+                    raise ConanInvalidConfiguration("Module support requires Clang 18.1.2 or higher")
+                if self.settings.compiler == "gcc" and compiler_version < "15":
+                    raise ConanInvalidConfiguration("Module support requires GCC 15 or higher")
+                if self.settings.compiler not in ["msvc", "clang", "gcc"]:
+                    raise ConanInvalidConfiguration("The compiler does not support C++23 import std modules")
+            else:
+                if self.settings.compiler == "msvc" and compiler_version < "194":
+                    raise ConanInvalidConfiguration("Module support requires MSVC 19.41 or higher")
+                if self.settings.compiler == "clang" and compiler_version < "16":
+                    raise ConanInvalidConfiguration("Module support requires Clang 16.0 or higher")
+                if self.settings.compiler == "gcc" and compiler_version < "14":
+                    raise ConanInvalidConfiguration("Module support requires GCC 14.0 or higher")
 
     def build_requirements(self):
         if self.options.get_safe("module"):
-            self.tool_requires("cmake/[>=3.30 <5]")
-            self.tool_requires("ninja/[^1.10]")
+            self.tool_requires("cmake/[~4.4.0]")
+            self.tool_requires("ninja/[^1.11]")
         elif Version(self.version) >= "1.4.309.0":
             self.tool_requires("cmake/[>=3.22.1 <5]")
 
@@ -80,7 +94,10 @@ class VulkanHeadersConan(ConanFile):
         tc = CMakeToolchain(self, generator="Ninja" if self.options.get_safe("module") else None)
         tc.cache_variables["VULKAN_HEADERS_ENABLE_TESTS"] = False
         tc.cache_variables["VULKAN_HEADERS_ENABLE_MODULE"] = self.options.get_safe("module", False)
-        tc.cache_variables["VULKAN_HEADERS_ENABLE_MODULE_STD"] = self.options.get_safe("module_std", False)
+        if self.options.get_safe("module_std") is not None:
+            tc.cache_variables["VULKAN_HEADERS_ENABLE_MODULE_STD"] = self.options.module_std
+        if self.options.get_safe("module") and Version(self.version) >= "1.4.363":
+            tc.cache_variables["CMAKE_EXPERIMENTAL_CXX_IMPORT_STD"] = self._cmake_import_std_uuid
         tc.generate()
 
     def build(self):
@@ -88,10 +105,30 @@ class VulkanHeadersConan(ConanFile):
         cmake.configure()
         cmake.build()
 
+    @property
+    def _module_build_file(self):
+        return "lib/cmake/conan-official-vulkan-headers-module.cmake"
+
     def package(self):
-        copy(self, "LICENSE*", self.source_folder, os.path.join(self.package_folder, "licenses"))
+        copy(self, "LICENSE.md", self.source_folder, os.path.join(self.package_folder, "licenses"))
+        copy(self, "*.txt", src=os.path.join(self.source_folder, "LICENSES"),
+             dst=os.path.join(self.package_folder, "licenses"))
         cmake = CMake(self)
         cmake.install()
+        if self.options.get_safe("module") and Version(self.version) >= "1.4.363":
+            save(self, os.path.join(self.package_folder, self._module_build_file), textwrap.dedent("""\
+                set(_conan_vulkan_headers_include_dir "${CMAKE_CURRENT_LIST_DIR}/../../include")
+                target_sources(Vulkan::HppModule INTERFACE
+                    FILE_SET CXX_MODULES
+                    BASE_DIRS "${_conan_vulkan_headers_include_dir}"
+                    FILES
+                        "${_conan_vulkan_headers_include_dir}/vulkan/vulkan.cppm"
+                        "${_conan_vulkan_headers_include_dir}/vulkan/vulkan_video.cppm"
+                )
+                target_compile_features(Vulkan::HppModule INTERFACE cxx_std_23)
+                set_property(TARGET Vulkan::HppModule PROPERTY CXX_MODULE_STD ON)
+                unset(_conan_vulkan_headers_include_dir)
+                """))
         # rmdir(self, os.path.join(self.package_folder, "share", "cmake"))
 
     def package_info(self):
@@ -123,5 +160,7 @@ class VulkanHeadersConan(ConanFile):
             #       BASE_DIRS "<package_folder>"
             #       FILES "<package_folder>/include/vulkan/vulkan.cppm"
             #   )
-            self.cpp_info.components["module"].set_property("cmake_target_name", "Vulkan::HppModule")
-            self.cpp_info.requres = ["vulkanheaders"]
+            self.cpp_info.components["hppmodule"].set_property("cmake_target_name", "Vulkan::HppModule")
+            self.cpp_info.components["hppmodule"].requires = ["vulkanheaders"]
+            if Version(self.version) >= "1.4.363":
+                self.cpp_info.set_property("cmake_build_modules", [self._module_build_file])

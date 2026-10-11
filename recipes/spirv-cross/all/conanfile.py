@@ -4,7 +4,7 @@ import re
 from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
 from conan.tools.build import stdcpp_library
-from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
+from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
 from conan.tools.scm import Version
 
@@ -71,6 +71,14 @@ class SpirvCrossConan(ConanFile):
     def layout(self):
         cmake_layout(self, src_folder="src")
 
+    def requirements(self):
+        if Version(self.version) >= "1.4.363.0":
+            self.requires(f"spirv-headers/{self.version}", transitive_headers=True)
+
+    def package_id(self):
+        if Version(self.version) >= "1.4.363.0":
+            self.info.requires["spirv-headers"].full_package_mode()
+
     def validate(self):
         if not self.options.glsl and \
            (self.options.hlsl or self.options.msl or self.options.cpp or self.options.reflect):
@@ -84,6 +92,21 @@ class SpirvCrossConan(ConanFile):
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
         apply_conandata_patches(self)
+        if Version(self.version) >= "1.4.363.0":
+            replace_in_file(self, os.path.join(self.source_folder, "spirv_common.hpp"),
+                            '#include "spirv.hpp"', '#include <spirv/unified1/spirv.hpp>')
+            replace_in_file(self, os.path.join(self.source_folder, "spirv_cross.hpp"),
+                            '#include "spirv.hpp"', '#include <spirv/unified1/spirv.hpp>')
+            cmake_file = os.path.join(self.source_folder, "CMakeLists.txt")
+            replace_in_file(self, cmake_file, "include(GNUInstallDirs)",
+                            "include(GNUInstallDirs)\nfind_package(SPIRV-Headers REQUIRED CONFIG)")
+            replace_in_file(self, cmake_file,
+                            "\tadd_library(${name} ${library_type} ${ARGN})\n\textract_headers",
+                            "\tadd_library(${name} ${library_type} ${ARGN})\n"
+                            "\ttarget_link_libraries(${name} PUBLIC SPIRV-Headers::SPIRV-Headers)\n"
+                            "\textract_headers")
+            replace_in_file(self, cmake_file,
+                            "\t\t${CMAKE_CURRENT_SOURCE_DIR}/spirv.hpp\n", "")
 
     def generate(self):
         tc = CMakeToolchain(self)
@@ -105,6 +128,7 @@ class SpirvCrossConan(ConanFile):
         if Version(self.version) < "1.3.280":
             tc.cache_variables["CMAKE_POLICY_VERSION_MINIMUM"] = "3.5" # CMake 4 support
         tc.generate()
+        CMakeDeps(self).generate()
 
     def build(self):
         cmake = CMake(self)
@@ -129,6 +153,8 @@ class SpirvCrossConan(ConanFile):
         save(self, self._version_file, self._extract_version())
         rm(self, "*.ilk", os.path.join(self.package_folder, "bin"))
         rm(self, "*.pdb", os.path.join(self.package_folder, "bin"))
+        if Version(self.version) >= "1.4.363.0":
+            rm(self, "spirv.hpp", os.path.join(self.package_folder, "include", "spirv_cross"))
         if self.options.get_safe("shared") and self.options.build_executable:
             for static_lib in [
                 "spirv-cross-core", "spirv-cross-glsl", "spirv-cross-hlsl", "spirv-cross-msl",
@@ -160,11 +186,13 @@ class SpirvCrossConan(ConanFile):
                     self.cpp_info.components["spirv-cross-c"].requires.append(target_lib)
 
         if self.options.get_safe("shared"):
-            _add_component("spirv-cross-c-shared")
+            shared_requires = ["spirv-headers::spirv-headers"] if Version(self.version) >= "1.4.363.0" else []
+            _add_component("spirv-cross-c-shared", requires=shared_requires)
         else:
-            _add_component("spirv-cross-core")
+            core_requires = ["spirv-headers::spirv-headers"] if Version(self.version) >= "1.4.363.0" else []
+            _add_component("spirv-cross-core", requires=core_requires)
             if self.options.c_api:
-                _add_component("spirv-cross-c")
+                _add_component("spirv-cross-c", requires=["spirv-cross-core"])
             if self.options.glsl:
                 _add_component("spirv-cross-glsl", requires=["spirv-cross-core"], c_api_requires=True)
                 if self.options.hlsl:
@@ -174,6 +202,6 @@ class SpirvCrossConan(ConanFile):
                 if self.options.cpp:
                     _add_component("spirv-cross-cpp", requires=["spirv-cross-glsl"], c_api_requires=True)
                 if self.options.reflect:
-                    _add_component("spirv-cross-reflect", c_api_requires=True)
+                    _add_component("spirv-cross-reflect", requires=["spirv-cross-glsl"], c_api_requires=True)
             if self.options.util:
                 _add_component("spirv-cross-util", requires=["spirv-cross-core"])

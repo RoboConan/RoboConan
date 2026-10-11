@@ -4,17 +4,6 @@
 
 int main()
 {
-  // Load function pointers...
-  // vmaVmaVulkanFunctions vulkanFunctions{};
-  // vulkavulkanFunctions.vkAllocateMemory = ... ;
-  // ...
-
-  VmaAllocatorCreateInfo allocatorInfo{}; (void)allocatorInfo;
-  // allocatorInfo.instance         = instance;
-  // allocatorInfo.physicalDevice   = physicalDevice;
-  // allocatorInfo.device           = device;
-  // allocatorInfo.pVulkanFunctions = &vulkanFunctions;
-
-  VmaAllocator allocator; (void)allocator;
-  // vmaCreateAllocator(&allocatorInfo, &allocator);
+  VmaAllocatorCreateInfo allocator_info{};
+  (void)allocator_info;
 }

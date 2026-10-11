@@ -14,7 +14,7 @@ class TestPackageConan(ConanFile):
         cmake_layout(self)
 
     def requirements(self):
-        self.requires(self.tested_reference_str)
+        self.requires(self.tested_reference_str, run=can_run(self))
 
     def build(self):
         cmake = CMake(self)
@@ -25,3 +25,5 @@ class TestPackageConan(ConanFile):
         if can_run(self):
             bin_path = os.path.join(self.cpp.build.bindir, "test_package")
             self.run(bin_path, env="conanrun")
+            if self.dependencies["spirv-reflect"].options.build_executables:
+                self.run("spirv-reflect --help", env="conanrun")

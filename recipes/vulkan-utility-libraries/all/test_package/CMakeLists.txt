@@ -4,5 +4,9 @@ project(test_package LANGUAGES CXX)
 find_package(VulkanUtilityLibraries REQUIRED CONFIG)
 
 add_executable(${PROJECT_NAME} test_package.cpp)
-target_link_libraries(${PROJECT_NAME} PRIVATE Vulkan::LayerSettings)
-
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    Vulkan::CompilerConfiguration
+    Vulkan::LayerSettings
+    Vulkan::SafeStruct
+    Vulkan::UtilityHeaders
+)

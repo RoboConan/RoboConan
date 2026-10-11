@@ -1,0 +1,129 @@
+diff --git a/external/CMakeLists.txt b/external/CMakeLists.txt
+index 2bb85f82..5d9fd3e9 100644
+--- a/external/CMakeLists.txt
++++ b/external/CMakeLists.txt
+@@ -56,19 +56,7 @@ cmake_dependent_option(SPIRV_TOOLS_USE_MIMALLOC_IN_STATIC_BUILD
+   ${SPIRV_TOOLS_USE_MIMALLOC_IN_STATIC_BUILD_DEFAULT_VALUE} SPIRV_TOOLS_USE_MIMALLOC OFF)
+ 
+ if (SPIRV_TOOLS_USE_MIMALLOC)
+-  if (NOT WIN32)
+-    push_variable(MI_OVERRIDE 0)
+-  endif()
+-  push_variable(MI_BUILD_TESTS 0)
+-
+-  add_subdirectory(${MIMALLOC_DIR} ${CMAKE_BINARY_DIR}/external/mimalloc EXCLUDE_FROM_ALL)
+-  if (${CMAKE_CXX_COMPILER_ID} MATCHES Clang)
+-    target_compile_options(mimalloc-static PRIVATE -Wno-int-conversion)
+-  endif()
+-
+-  if (NOT WIN32)
+-    pop_variable(MI_OVERRIDE)
+-  endif()
+-  pop_variable(MI_BUILD_TESTS)
++  find_package(mimalloc REQUIRED CONFIG)
++  set_property(TARGET mimalloc::mimalloc PROPERTY IMPORTED_GLOBAL TRUE)
+ endif()
+ 
+ if (DEFINED SPIRV-Headers_SOURCE_DIR)
+diff --git a/source/CMakeLists.txt b/source/CMakeLists.txt
+index c3dc7755..51e35e53 100644
+--- a/source/CMakeLists.txt
++++ b/source/CMakeLists.txt
+@@ -351,7 +351,7 @@ endfunction()
+ # unlike the other SPIRV_TOOLS target, defaults to hidden symbol visibility.
+ add_library(${SPIRV_TOOLS}-shared SHARED ${SPIRV_SOURCES})
+ if (SPIRV_TOOLS_USE_MIMALLOC)
+-  target_link_libraries(${SPIRV_TOOLS}-shared PRIVATE mimalloc-static)
++  target_link_libraries(${SPIRV_TOOLS}-shared PRIVATE mimalloc::mimalloc)
+ endif()
+ spirv_tools_default_target_options(${SPIRV_TOOLS}-shared)
+ set_target_properties(${SPIRV_TOOLS}-shared PROPERTIES CXX_VISIBILITY_PRESET hidden)
+@@ -364,6 +364,6 @@ if(SPIRV_TOOLS_BUILD_STATIC)
+   add_library(${SPIRV_TOOLS}-static STATIC ${SPIRV_SOURCES})
+   if (SPIRV_TOOLS_USE_MIMALLOC AND SPIRV_TOOLS_USE_MIMALLOC_IN_STATIC_BUILD)
+-    target_link_libraries(${SPIRV_TOOLS}-shared PRIVATE mimalloc-static)
++    target_link_libraries(${SPIRV_TOOLS}-static PRIVATE mimalloc::mimalloc)
+   endif()
+   spirv_tools_default_target_options(${SPIRV_TOOLS}-static)
+   # The static target does not have the '-static' suffix.
+@@ -381,7 +381,7 @@ if(SPIRV_TOOLS_BUILD_STATIC)
+ else()
+   add_library(${SPIRV_TOOLS} ${SPIRV_TOOLS_LIBRARY_TYPE} ${SPIRV_SOURCES})
+   if (SPIRV_TOOLS_USE_MIMALLOC)
+-    target_link_libraries(${SPIRV_TOOLS} PRIVATE mimalloc-static)
++    target_link_libraries(${SPIRV_TOOLS} PRIVATE mimalloc::mimalloc)
+   endif()
+   spirv_tools_default_target_options(${SPIRV_TOOLS})
+   set(SPIRV_TOOLS_TARGETS ${SPIRV_TOOLS} ${SPIRV_TOOLS}-shared)
+@@ -397,9 +397,6 @@ if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+ endif()
+ 
+ if(ENABLE_SPIRV_TOOLS_INSTALL)
+-  if (SPIRV_TOOLS_USE_MIMALLOC AND (NOT SPIRV_TOOLS_BUILD_STATIC OR SPIRV_TOOLS_USE_MIMALLOC_IN_STATIC_BUILD))
+-    list(APPEND SPIRV_TOOLS_TARGETS mimalloc-static)
+-  endif()
+   install(TARGETS ${SPIRV_TOOLS_TARGETS} EXPORT ${SPIRV_TOOLS}Targets)
+   export(EXPORT ${SPIRV_TOOLS}Targets FILE ${SPIRV_TOOLS}Target.cmake)
+ 
+diff --git a/source/opt/CMakeLists.txt b/source/opt/CMakeLists.txt
+index 853fafda..4c40aef1 100644
+--- a/source/opt/CMakeLists.txt
++++ b/source/opt/CMakeLists.txt
+@@ -272,3 +272,3 @@ add_library(SPIRV-Tools-opt ${SPIRV_TOOLS_LIBRARY_TYPE} ${SPIRV_TOOLS_OPT_SOURCES
+ if (SPIRV_TOOLS_USE_MIMALLOC AND (NOT SPIRV_TOOLS_BUILD_STATIC OR SPIRV_TOOLS_USE_MIMALLOC_IN_STATIC_BUILD))
+-  target_link_libraries(SPIRV-Tools-opt PRIVATE mimalloc-static)
++  target_link_libraries(SPIRV-Tools-opt PRIVATE mimalloc::mimalloc)
+ endif()
+@@ -292,8 +292,3 @@ if(ENABLE_SPIRV_TOOLS_INSTALL)
+   set(SPIRV-Tools-opt-InstallTargets SPIRV-Tools-opt)
+-
+-  if (SPIRV_TOOLS_USE_MIMALLOC AND (NOT SPIRV_TOOLS_BUILD_STATIC OR SPIRV_TOOLS_USE_MIMALLOC_IN_STATIC_BUILD))
+-    list(APPEND SPIRV-Tools-opt-InstallTargets mimalloc-static)
+-  endif()
+-
+   install(TARGETS ${SPIRV-Tools-opt-InstallTargets} EXPORT SPIRV-Tools-optTargets)
+   export(EXPORT SPIRV-Tools-optTargets FILE SPIRV-Tools-optTargets.cmake)
+diff --git a/source/diff/CMakeLists.txt b/source/diff/CMakeLists.txt
+index b198e355..9dc57e37 100644
+--- a/source/diff/CMakeLists.txt
++++ b/source/diff/CMakeLists.txt
+@@ -27,3 +27,3 @@ add_library(SPIRV-Tools-diff ${SPIRV_TOOLS_LIBRARY_TYPE} ${SPIRV_TOOLS_DIFF_SOURC
+ if (SPIRV_TOOLS_USE_MIMALLOC AND (NOT SPIRV_TOOLS_BUILD_STATIC OR SPIRV_TOOLS_USE_MIMALLOC_IN_STATIC_BUILD))
+-  target_link_libraries(SPIRV-Tools-diff PRIVATE mimalloc-static)
++  target_link_libraries(SPIRV-Tools-diff PRIVATE mimalloc::mimalloc)
+ endif()
+@@ -50,8 +50,3 @@ if(ENABLE_SPIRV_TOOLS_INSTALL)
+   set(SPIRV-Tools-diff-InstallTargets SPIRV-Tools-diff)
+-
+-  if (SPIRV_TOOLS_USE_MIMALLOC AND (NOT SPIRV_TOOLS_BUILD_STATIC OR SPIRV_TOOLS_USE_MIMALLOC_IN_STATIC_BUILD))
+-    list(APPEND SPIRV-Tools-diff-InstallTargets mimalloc-static)
+-  endif()
+-
+   install(TARGETS ${SPIRV-Tools-diff-InstallTargets} EXPORT SPIRV-Tools-diffTargets)
+   export(EXPORT SPIRV-Tools-diffTargets FILE SPIRV-Tools-diffTargets.cmake)
+diff --git a/source/fuzz/CMakeLists.txt b/source/fuzz/CMakeLists.txt
+--- a/source/fuzz/CMakeLists.txt
++++ b/source/fuzz/CMakeLists.txt
+@@ -442,3 +442,3 @@ if(SPIRV_BUILD_FUZZER)
+   if (SPIRV_TOOLS_USE_MIMALLOC AND (NOT SPIRV_TOOLS_BUILD_STATIC OR SPIRV_TOOLS_USE_MIMALLOC_IN_STATIC_BUILD))
+-    target_link_libraries(SPIRV-Tools-fuzz PRIVATE mimalloc-static)
++    target_link_libraries(SPIRV-Tools-fuzz PRIVATE mimalloc::mimalloc)
+   endif()
+@@ -475,9 +475,4 @@ if(SPIRV_BUILD_FUZZER)
+   if(ENABLE_SPIRV_TOOLS_INSTALL)
+       set(SPIRV-Tools-fuzz-InstallTargets SPIRV-Tools-fuzz)
+-
+-      if (SPIRV_TOOLS_USE_MIMALLOC AND (NOT SPIRV_TOOLS_BUILD_STATIC OR SPIRV_TOOLS_USE_MIMALLOC_IN_STATIC_BUILD))
+-        list(APPEND SPIRV-Tools-fuzz-InstallTargets mimalloc-static)
+-      endif()
+-
+       install(TARGETS ${SPIRV-Tools-fuzz-InstallTargets} EXPORT SPIRV-Tools-fuzzTargets)
+       export(EXPORT SPIRV-Tools-fuzzTargets FILE SPIRV-Tools-fuzzTarget.cmake)
+diff --git a/tools/CMakeLists.txt b/tools/CMakeLists.txt
+--- a/tools/CMakeLists.txt
++++ b/tools/CMakeLists.txt
+@@ -38,3 +38,3 @@ function(add_spvtools_tool)
+   if (SPIRV_TOOLS_USE_MIMALLOC)
+-    target_link_libraries(${ARG_TARGET} PRIVATE mimalloc-static)
++    target_link_libraries(${ARG_TARGET} PRIVATE mimalloc::mimalloc)
+   endif()

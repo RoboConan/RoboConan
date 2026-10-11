@@ -49,6 +49,12 @@ class ShadercConan(ConanFile):
     def validate(self):
         check_min_cppstd(self, 11)
 
+    def validate_build(self):
+        check_min_cppstd(self, 17)
+
+    def package_id(self):
+        self.info.requires["glslang"].full_package_mode()
+
     def build_requirements(self):
         self.tool_requires("cmake/[>=3.17.2 <5]")
 
@@ -66,6 +72,7 @@ class ShadercConan(ConanFile):
         tc.cache_variables["SHADERC_SKIP_TESTS"] = True
         tc.cache_variables["ENABLE_CODE_COVERAGE"] = False
         tc.cache_variables["SHADERC_ENABLE_WERROR_COMPILE"] = False
+        tc.cache_variables["SHADERC_ENABLE_HLSL"] = self.dependencies["glslang"].options.hlsl
         if is_msvc(self):
             tc.cache_variables["SHADERC_ENABLE_SHARED_CRT"] = not is_msvc_static_runtime(self)
         tc.generate()
@@ -93,6 +100,14 @@ class ShadercConan(ConanFile):
         cmake.install()
         fix_apple_shared_install_name(self)
         rmdir(self, os.path.join(self.package_folder, "lib", "pkgconfig"))
+        if self.options.shared:
+            for library in ["shaderc", "shaderc_util", "shaderc_combined"]:
+                rm(self, f"*{library}.a", os.path.join(self.package_folder, "lib"))
+                rm(self, f"*{library}.lib", os.path.join(self.package_folder, "lib"))
+        else:
+            rm(self, "*shaderc_shared*", os.path.join(self.package_folder, "lib"))
+            rm(self, "*shaderc_shared*", os.path.join(self.package_folder, "bin"))
+            rm(self, "*shaderc_combined*", os.path.join(self.package_folder, "lib"))
 
     def package_info(self):
         if self.options.shared:
@@ -109,8 +124,7 @@ class ShadercConan(ConanFile):
             self.cpp_info.system_libs.append("pthread")
 
         self.cpp_info.requires = [
-            "glslang::glslang",
+            "glslang::spirv",
             "spirv-tools::spirv-tools-core",
-            "spirv-tools::spirv-tools-opt",
-            "spirv-headers::spirv-headers"
+            "spirv-headers::spirv-headers",
         ]

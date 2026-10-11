@@ -55,5 +55,4 @@ class VulkanMemoryAllocatorConan(ConanFile):
         self.cpp_info.bindirs = []
         self.cpp_info.libdirs = []
 
-        three_part_version = self.version.rsplit(".", 1)[0]
-        self.cpp_info.set_property("system_package_version", three_part_version)
+        self.cpp_info.set_property("system_package_version", self.version)

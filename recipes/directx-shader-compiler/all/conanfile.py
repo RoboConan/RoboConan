@@ -36,9 +36,11 @@ class DirectXShaderCompilerConan(ConanFile):
 
     def requirements(self):
         self.requires("miniz/[>=2.1.0 <4]")
-        self.requires("zlib-ng/[^2.0]")
-        self.requires("spirv-headers/[^1.3.239.0]")
-        self.requires("spirv-tools/[^1.3.239.0]")
+        self.requires("zlib-ng/[^2.0]", visible=False)
+        if Version(self.version) >= "1.9":
+            self.requires("spirv-tools/[^1.4.363.0]")
+        else:
+            self.requires("spirv-tools/[^1.3.239.0]")
 
     def validate(self):
         if not self.settings.os in ["Linux", "Windows"]:
@@ -50,6 +52,10 @@ class DirectXShaderCompilerConan(ConanFile):
         self.tool_requires("cmake/[>=3.17.2 <4]")
         # DXC's WinAdapter conflicts with newer DirectX-Headers WSL stubs.
         self.tool_requires("directx-headers/[<1.603]")
+        if Version(self.version) >= "1.9":
+            self.tool_requires("spirv-headers/[^1.4.363.0]")
+        else:
+            self.tool_requires("spirv-headers/[^1.3.239.0]")
         # TODO: clang-format
 
     def source(self):
@@ -72,6 +78,9 @@ class DirectXShaderCompilerConan(ConanFile):
 
         path = Path("tools/clang/lib/SPIRV/CMakeLists.txt")
         path.write_text("find_package(SPIRV-Tools REQUIRED)\n\n" + path.read_text())
+        replace_in_file(self, path,
+                        "target_include_directories(clangSPIRV PRIVATE ${SPIRV_TOOLS_INCLUDE_DIR})",
+                        "target_include_directories(clangSPIRV PUBLIC ${SPIRV_TOOLS_INCLUDE_DIR})")
 
         rm(self, "miniz.*", "lib/DxilCompression")
         rmdir(self, "include/miniz")
@@ -118,7 +127,7 @@ class DirectXShaderCompilerConan(ConanFile):
         tc.cache_variables["HAVE_LIBZ"] = True
         tc.cache_variables["HAVE_ZLIB_H"] = True
 
-        tc.cache_variables["SPIRV-Headers_SOURCE_DIR"] = self.dependencies["spirv-headers"].package_folder.replace("\\", "/")
+        tc.cache_variables["SPIRV-Headers_SOURCE_DIR"] = self.dependencies.build["spirv-headers"].package_folder.replace("\\", "/")
         tc.cache_variables["DXC_SPIRV_TOOLS_DIR"] = ""
         tc.cache_variables["SPIRV_TOOLS_INCLUDE_DIR"] = self.dependencies["spirv-tools"].cpp_info.includedir.replace("\\", "/")
         tc.cache_variables["DIRECTX_HEADER_INCLUDE_DIR"] = os.path.join(self.dependencies.build["directx-headers"].package_folder, "include").replace("\\", "/")
@@ -161,7 +170,11 @@ class DirectXShaderCompilerConan(ConanFile):
         self.cpp_info.components["dxcompiler"].set_property("cmake_target_name", "dxcompiler")
         self.cpp_info.components["dxcompiler"].set_property("cmake_target_aliases", ["Microsoft::DirectXShaderCompiler"])
         self.cpp_info.components["dxcompiler"].libs = ["dxcompiler"]
-        self.cpp_info.components["dxcompiler"].requires = ["dxil"]
+        self.cpp_info.components["dxcompiler"].requires = [
+            "dxil",
+            "miniz::miniz",
+            "spirv-tools::spirv-tools-opt",
+        ]
 
         self.cpp_info.components["dxil"].set_property("cmake_target_name", "dxil")
         self.cpp_info.components["dxil"].set_property("cmake_target_aliases", ["Microsoft::DXIL"])
