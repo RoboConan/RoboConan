@@ -7,6 +7,7 @@ from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout, CMakeDeps
 from conan.tools.files import *
 from conan.tools.gnu import PkgConfigDeps
 from conan.tools.microsoft import is_msvc
+from conan.tools.scm import Version
 
 required_conan_version = ">=2"
 
@@ -22,6 +23,7 @@ _subsystems = [
     ("power", []),
     ("sensor", []),
     ("dialog", []),
+    ("tray", []),
 ]
 
 class SDLConan(ConanFile):
@@ -54,6 +56,7 @@ class SDLConan(ConanFile):
             "xscrnsaver": [True, False],
             "xshape": [True, False],
             "xsync": [True, False],
+            "xtest": [True, False],
             "wayland": [True, False],
             "vulkan": [True, False],
             "metal": [True, False],
@@ -62,6 +65,7 @@ class SDLConan(ConanFile):
             "dbus": [True, False],
             "libusb": [True, False],
             "libiconv": [True, False],
+            "fribidi": [True, False],
         }
     }
 
@@ -89,6 +93,7 @@ class SDLConan(ConanFile):
             "xscrnsaver": True,
             "xshape": True,
             "xsync": True,
+            "xtest": True,
             "wayland": True,
             "vulkan": True,
             "metal": True,
@@ -99,6 +104,7 @@ class SDLConan(ConanFile):
             "libudev": True,
             "dbus": True,
             "libiconv": True,
+            "fribidi": True,
         }
     }
 
@@ -121,13 +127,20 @@ class SDLConan(ConanFile):
             del self.options.xscrnsaver
             del self.options.xshape
             del self.options.xsync
+            del self.options.xtest
             del self.options.wayland
+            del self.options.fribidi
 
         if not is_apple_os(self):
             del self.options.metal
 
         if self.settings.os != "Windows":
             del self.options.directx
+
+        if Version(self.version) < "3.4":
+            del self.options.tray
+            self.options.rm_safe("xtest")
+            self.options.rm_safe("fribidi")
 
     def configure(self):
         if self.options.shared:
@@ -159,6 +172,8 @@ class SDLConan(ConanFile):
             self.options.rm_safe("xscrnsaver")
             self.options.rm_safe("xshape")
             self.options.rm_safe("xsync")
+            self.options.rm_safe("xtest")
+            self.options.rm_safe("fribidi")
 
         if not self.options.get_safe("hidapi") or self.settings.os in ["Android", "iOS", "tvOS", "visionOS", "watchOS"]:
             # libusb is only an option if hidapi is enabled: https://github.com/libsdl-org/SDL/blob/db3a35e9bc3aa245dfbe67585b3f67d7b4b62845/cmake/sdlchecks.cmake#L1111
@@ -193,8 +208,25 @@ class SDLConan(ConanFile):
         replace_in_file(self, "CMakeLists.txt",
                         "if(SDL_SYSTEM_ICONV)",
                         "if(SDL_SYSTEM_ICONV)\n"
-                        "find_package(Iconv REQUIRED)\n"
-                        "link_libraries(Iconv::Iconv)")
+                        "find_package(Iconv REQUIRED)")
+        replace_in_file(self, "CMakeLists.txt",
+                        "list(APPEND CMAKE_REQUIRED_LIBRARIES iconv)",
+                        "list(APPEND CMAKE_REQUIRED_LIBRARIES Iconv::Iconv)")
+        replace_in_file(self, "CMakeLists.txt",
+                        "sdl_link_dependency(iconv LIBS iconv)",
+                        "sdl_link_dependency(iconv LIBS Iconv::Iconv)")
+        replace_in_file(self, "cmake/sdlchecks.cmake",
+                        "if(SDL_LIBUDEV)\n"
+                        "    check_include_file(\"libudev.h\" HAVE_LIBUDEV_HEADER)",
+                        "if(SDL_LIBUDEV)\n"
+                        "    pkg_check_modules(PC_LIBUDEV REQUIRED IMPORTED_TARGET libudev)\n"
+                        "    sdl_include_directories(PRIVATE SYSTEM "
+                        "$<TARGET_PROPERTY:PkgConfig::PC_LIBUDEV,INTERFACE_INCLUDE_DIRECTORIES>)\n"
+                        "    list(APPEND CMAKE_REQUIRED_INCLUDES ${PC_LIBUDEV_INCLUDE_DIRS})\n"
+                        "    check_include_file(\"libudev.h\" HAVE_LIBUDEV_HEADER)")
+        replace_in_file(self, "cmake/sdlchecks.cmake",
+                        "FindLibraryAndSONAME(udev)",
+                        "FindLibraryAndSONAME(udev LIBDIRS ${PC_LIBUDEV_LIBRARY_DIRS})")
 
     @property
     def _is_unix_sys(self):
@@ -237,6 +269,8 @@ class SDLConan(ConanFile):
             self.requires("egl/system")
         if self.options.get_safe("x11"):
             self.requires("xorg/system")
+        if self.options.get_safe("fribidi"):
+            self.requires("fribidi/[^1.0]")
 
     def build_requirements(self):
         self.tool_requires("cmake/[>=3.24 <5]")
@@ -252,15 +286,16 @@ class SDLConan(ConanFile):
         tc.cache_variables["SDL_TEST_LIBRARY"] = False
         tc.cache_variables["SDL_TESTS"] = False
         tc.cache_variables["SDL_EXAMPLES"] = False
-        tc.cache_variables["SDL_INSTALL_EXAMPLES"] = False
         tc.cache_variables["CMAKE_TRY_COMPILE_CONFIGURATION"] = str(self.settings.build_type)
         tc.cache_variables["SDL_SYSTEM_ICONV_DEFAULT"] = True
         tc.cache_variables["SDL_LIBICONV"] = self.options.libiconv
 
         tc.cache_variables["SDL_JACK"] = False # Jack is not available in CCI
 
-        for subsystem in _subsystems:
-            tc.cache_variables[f"SDL_{subsystem[0].upper()}"] = self.options.get_safe(subsystem[0])
+        for subsystem, _ in _subsystems:
+            value = self.options.get_safe(subsystem)
+            if value is not None:
+                tc.cache_variables[f"SDL_{subsystem.upper()}"] = value
 
         if self._supports_opengl:
             tc.cache_variables["SDL_OPENGL"] = True
@@ -277,6 +312,13 @@ class SDLConan(ConanFile):
         tc.variables["SDL_VULKAN"] = self.options.get_safe("vulkan")
         tc.variables["SDL_METAL"] = self.options.get_safe("metal")
         tc.variables["SDL_DIRECTX"] = self.options.get_safe("directx")
+
+        if Version(self.version) >= "3.4":
+            tc.cache_variables["SDL_FRIBIDI"] = self.options.get_safe("fribidi", False)
+            tc.cache_variables["SDL_LIBTHAI"] = False
+            tc.cache_variables["SDL_X11_XTEST"] = self.options.get_safe("xtest", False)
+            if self.options.get_safe("fribidi"):
+                tc.cache_variables["SDL_FRIBIDI_SHARED"] = self.dependencies["fribidi"].options.shared
 
         if self.options.get_safe("pulseaudio"):
             tc.cache_variables["SDL_PULSEAUDIO"] = True
@@ -391,6 +433,11 @@ class SDLConan(ConanFile):
                 self.cpp_info.components["sdl3"].requires.append("xorg::xrandr")
             if self.options.xscrnsaver:
                 self.cpp_info.components["sdl3"].requires.append("xorg::xscrnsaver")
+            if self.options.get_safe("xtest"):
+                self.cpp_info.components["sdl3"].requires.append("xorg::xtst")
+
+        if self.options.get_safe("fribidi"):
+            self.cpp_info.components["sdl3"].requires.append("fribidi::fribidi")
 
         if self.options.get_safe("audio"):
             if self.options.get_safe("alsa"):
