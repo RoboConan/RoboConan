@@ -1,5 +1,10 @@
 #include <cblas.h>
+#ifdef OPENBLAS_TEST_FORTRAN
 #include <f77blas.h>
+#endif
+#if defined(OPENBLAS_TEST_LAPACKE) && !defined(OPENBLAS_TEST_FORTRAN)
+#include <lapacke.h>
+#endif
 #include <stdio.h>
 
 void test_cblas() {
@@ -13,6 +18,7 @@ void test_cblas() {
   printf("\n");
 }
 
+#ifdef OPENBLAS_TEST_FORTRAN
 void test_f77blas() {
   double A[6] = {1.0,2.0,1.0,-3.0,4.0,-1.0};
   double B[6] = {1.0,2.0,1.0,-3.0,4.0,-1.0};
@@ -33,9 +39,24 @@ void test_f77blas() {
     printf("%lf ", C[i]);
   printf("\n");
 }
+#endif
+
+#if defined(OPENBLAS_TEST_LAPACKE) && !defined(OPENBLAS_TEST_FORTRAN)
+void test_lapacke() {
+  double A[4] = {1.0, 2.0, 3.0, 4.0};
+  double B[2] = {5.0, 6.0};
+  lapack_int ipiv[2];
+  LAPACKE_dgesv(LAPACK_COL_MAJOR, 2, 1, A, 2, ipiv, B, 2);
+}
+#endif
 
 int main()
 {
   test_cblas();
+#ifdef OPENBLAS_TEST_FORTRAN
   test_f77blas();
+#endif
+#if defined(OPENBLAS_TEST_LAPACKE) && !defined(OPENBLAS_TEST_FORTRAN)
+  test_lapacke();
+#endif
 }

@@ -15,7 +15,7 @@ conan_arch_to_openblas_target = {
     "x86": "SANDYBRIDGE",  # Sandy bridge was discontinued in September of 2013,
     "x86_64": "SANDYBRIDGE",  # supporting older CPUs is a performance trade-off
     "ppc32be": None,  # TODO: OpenBLAS has POWER4, POWER5, POWER6, POWER7,
-    "ppc32": None,  #         POWER8, POWER9, POWER10, PPCG4, PPC970, PPC970MP,
+    "ppc32": None,  #         POWER8, POWER9, POWER10, POWER11, PPCG4, PPC970, PPC970MP,
     "ppc64le": None,  #       PPC440, PPC440FP2, CELL
     "ppc64": None,
     "armv4": None,  # Not supported by OpenBLAS
@@ -37,9 +37,9 @@ conan_arch_to_openblas_target = {
     "mips64": "MIPS64_GENERIC",
     "avr": None,  # Not supported by OpenBLAS
     "s390": None,  # Not supported by OpenBLAS
-    "s390x": None,  # Not supported by OpenBLAS
-    "asm.js": "GENERIC",  # TODO: ?
-    "wasm": "GENERIC",  # TODO: ?
+    "s390x": "ZARCH_GENERIC",
+    "asm.js": "WASM128_GENERIC",
+    "wasm": "WASM128_GENERIC",
     "sh4le": None,  # Not supported by OpenBLAS
     "e2k-v2": "E2K",
     "e2k-v3": "E2K",
@@ -52,10 +52,11 @@ conan_arch_to_openblas_target = {
     "xtensalx6": None,  # Not supported by OpenBLAS
     "xtensalx106": None,  # Not supported by OpenBLAS
     "xtensalx7": None,  # Not supported by OpenBLAS
+    "loongarch64": "LA64_GENERIC",
 }
 
 # Taken from OpenBLAS TargetList.txt
-available_openblas_targets = ["P2", "KATMAI", "COPPERMINE", "NORTHWOOD", "PRESCOTT", "BANIAS", "YONAH", "CORE2", "PENRYN", "DUNNINGTON", "NEHALEM", "SANDYBRIDGE", "HASWELL", "SKYLAKEX", "ATOM", "COOPERLAKE", "SAPPHIRERAPIDS", "ATHLON", "OPTERON", "OPTERON_SSE3", "BARCELONA", "SHANGHAI", "ISTANBUL", "BOBCAT", "BULLDOZER", "PILEDRIVER", "STEAMROLLER", "EXCAVATOR", "ZEN", "SSE_GENERIC", "VIAC3", "NANO", "POWER4", "POWER5", "POWER6", "POWER7", "POWER8", "POWER9", "POWER10", "PPCG4", "PPC970", "PPC970MP", "PPC440", "PPC440FP2", "CELL", "P5600", "MIPS1004K", "MIPS24K", "MIPS64_GENERIC", "SICORTEX", "LOONGSON3A", "LOONGSON3B", "I6400", "P6600", "I6500", "ITANIUM2", "SPARC", "SPARCV7", "CORTEXA15", "CORTEXA9", "ARMV7", "ARMV6", "ARMV5", "ARMV8", "CORTEXA53", "CORTEXA57", "CORTEXA72", "CORTEXA73", "CORTEXA76", "CORTEXA510", "CORTEXA710", "CORTEXX1", "CORTEXX2", "NEOVERSEN1", "NEOVERSEV1", "NEOVERSEN2", "CORTEXA55", "EMAG8180", "FALKOR", "THUNDERX", "THUNDERX2T99", "TSV110", "THUNDERX3T110", "VORTEX", "A64FX", "ARMV8SVE", "FT2000", "ZARCH_GENERIC", "Z13", "Z14", "RISCV64_GENERIC", "RISCV64_ZVL128B", "C910V", "x280", "RISCV64_ZVL256B", "LOONGSONGENERIC", "LOONGSON3R5", "LOONGSON2K1000", "E2K", "EV4", "EV5", "EV6", "CSKY", "CK860FV"]
+available_openblas_targets = ["P2", "KATMAI", "COPPERMINE", "NORTHWOOD", "PRESCOTT", "BANIAS", "YONAH", "CORE2", "PENRYN", "DUNNINGTON", "NEHALEM", "SANDYBRIDGE", "HASWELL", "SKYLAKEX", "ATOM", "COOPERLAKE", "SAPPHIRERAPIDS", "ATHLON", "OPTERON", "OPTERON_SSE3", "BARCELONA", "SHANGHAI", "ISTANBUL", "BOBCAT", "BULLDOZER", "PILEDRIVER", "STEAMROLLER", "EXCAVATOR", "ZEN", "SSE_GENERIC", "VIAC3", "NANO", "POWER4", "POWER5", "POWER6", "POWER7", "POWER8", "POWER9", "POWER10", "POWER11", "PPCG4", "PPC970", "PPC970MP", "PPC440", "PPC440FP2", "CELL", "P5600", "MIPS1004K", "MIPS24K", "MIPS64_GENERIC", "SICORTEX", "LOONGSON3A", "LOONGSON3B", "I6400", "P6600", "I6500", "ITANIUM2", "SPARC", "SPARCV7", "CORTEXA15", "CORTEXA9", "ARMV7", "ARMV6", "ARMV5", "ARMV8", "CORTEXA53", "CORTEXA57", "CORTEXA72", "CORTEXA73", "CORTEXA76", "CORTEXA510", "CORTEXA710", "CORTEXX1", "CORTEXX2", "NEOVERSEN1", "NEOVERSEV1", "NEOVERSEN2", "NEOVERSEV2", "CORTEXA55", "EMAG8180", "FALKOR", "THUNDERX", "THUNDERX2T99", "TSV110", "THUNDERX3T110", "VORTEX", "VORTEXM4", "A64FX", "ARMV8SVE", "ARMV9SME", "FT2000", "ZARCH_GENERIC", "Z13", "Z14", "RISCV64_GENERIC", "RISCV64_ZVL128B", "C910V", "x280", "RISCV64_ZVL256B", "U74", "LOONGSONGENERIC", "LOONGSON3R5", "LOONGSON2K1000", "LA64_GENERIC", "LA264", "LA464", "E2K", "EV4", "EV5", "EV6", "CSKY", "CK860FV", "WASM128_GENERIC"]
 
 
 class OpenblasConan(ConanFile):
@@ -103,7 +104,7 @@ class OpenblasConan(ConanFile):
         "build_relapack": "Build with ReLAPACK (recursive implementation of several LAPACK functions on top of standard LAPACK)",
         "build_bfloat16": "Build with bfloat16 support",
         "use_locking": "Use locks even in single-threaded builds to make them callable from multiple threads",
-        "dynamic_arch": "Include support for multiple CPU targets, with automatic selection at runtime (x86/x86_64, aarch64 or ppc only)",
+        "dynamic_arch": "Include support for multiple CPU targets, with automatic selection at runtime (x86/x86_64, AArch64, Power, or RISC-V RVV 1.0 only)",
         "target": "OpenBLAS TARGET variable (see TargetList.txt)",
         "max_threads": "The maximum number of parallel threads you expect to need (defaults to the number of cores in the build cpu)",
         "max_omp_parallel": "Number of OpenMP instances that your code may use for parallel calls into OpenBLAS",
@@ -194,7 +195,7 @@ class OpenblasConan(ConanFile):
         tc.variables["BUILD_TESTING"] = False
         tc.variables["BUILD_WITHOUT_LAPACK"] = not self.options.build_lapack
         tc.variables["BUILD_RELAPACK"] = self.options.get_safe("build_relapack", False)
-        tc.variables["NOFORTRAN"] = self.options.get_safe("use_fortran", False)
+        tc.variables["NOFORTRAN"] = not self.options.get_safe("use_fortran", False)
         tc.variables["C_LAPACK"] = not self.options.get_safe("use_fortran", False)
         tc.variables["INTERFACE64"] = self.options.interface == "ilp64"
         tc.variables["USE_THREAD"] = self.options.threading != "serial"
@@ -244,10 +245,11 @@ class OpenblasConan(ConanFile):
 
     def package_info(self):
         self.cpp_info.set_property("cmake_file_name", f"OpenBLAS{self._64bit}")
-        self.cpp_info.set_property("cmake_target_name", "OpenBLAS::OpenBLAS")
+        cmake_namespace = f"OpenBLAS{self._64bit}"
+        self.cpp_info.set_property("cmake_target_name", f"{cmake_namespace}::OpenBLAS")
         aliases = [f"OpenBLAS::{self.options.threading}"]
         if self.options.interface == "ilp64":
-            aliases.append("OpenBLAS::OpenBLAS64")
+            aliases.extend(["OpenBLAS::OpenBLAS", "OpenBLAS::OpenBLAS64"])
         self.cpp_info.set_property("cmake_target_aliases", aliases)
         self.cpp_info.set_property("pkg_config_name", f"openblas{self._64bit}")
 
