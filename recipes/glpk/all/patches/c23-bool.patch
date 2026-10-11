@@ -1,0 +1,12 @@
+--- a/src/minisat/minisat.h
++++ b/src/minisat/minisat.h
+@@ -34,7 +34,9 @@
+ /*====================================================================*/
+ /* Simple types: */
+ 
++#if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 202311L
+ typedef int bool;
++#endif
+ 
+ #define true  1
+ #define false 0
