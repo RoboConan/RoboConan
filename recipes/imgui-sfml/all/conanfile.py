@@ -1,6 +1,7 @@
 import os
 
 from conan import ConanFile
+from conan.errors import ConanInvalidConfiguration
 from conan.tools.build import check_min_cppstd
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
@@ -19,10 +20,12 @@ class ImGuiSFMLConan(ConanFile):
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
+        "disable_obsolete_functions": [True, False],
     }
     default_options = {
         "shared": False,
         "fPIC": True,
+        "disable_obsolete_functions": False,
     }
     implements = ["auto_shared_fpic"]
 
@@ -33,12 +36,17 @@ class ImGuiSFMLConan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("sfml/[^2.6.2]", transitive_headers=True)
-        self.requires("imgui/[^1.91.8 <1.92]", transitive_headers=True, transitive_libs=True)
+        self.requires("sfml/[^3.0]", transitive_headers=True)
+        self.requires("imgui/[^1.91.1]", transitive_headers=True)
         self.requires("opengl/system")
 
+    def build_requirements(self):
+        self.tool_requires("cmake/[>=3.22 <5]")
+
     def validate(self):
-        check_min_cppstd(self, 11)
+        check_min_cppstd(self, 17)
+        if not self.dependencies["sfml"].options.graphics:
+            raise ConanInvalidConfiguration('imgui-sfml requires -o="sfml/*:graphics=True"')
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
@@ -48,8 +56,7 @@ class ImGuiSFMLConan(ConanFile):
         tc = CMakeToolchain(self)
         tc.cache_variables["IMGUI_SFML_FIND_SFML"] = True
         tc.cache_variables["IMGUI_DIR"] = "UNUSED"
-        tc.cache_variables["IMGUI_SFML_IMGUI_DEMO"] = False
-
+        tc.cache_variables["IMGUI_SFML_DISABLE_OBSOLETE_FUNCTIONS"] = self.options.disable_obsolete_functions
         tc.cache_variables["IMGUI_SFML_BUILD_TESTING"] = False
         tc.cache_variables["IMGUI_SFML_BUILD_EXAMPLES"] = False
         tc.generate()
@@ -68,22 +75,19 @@ class ImGuiSFMLConan(ConanFile):
         copy(self, "LICENSE", self.source_folder, os.path.join(self.package_folder, "licenses"))
         cmake = CMake(self)
         cmake.install()
-
-        rmdir(self, os.path.join(self.package_folder, "lib", "pkgconfig"))
         rmdir(self, os.path.join(self.package_folder, "lib", "cmake"))
-        rmdir(self, os.path.join(self.package_folder, "share"))
-        rm(self, "*.la", os.path.join(self.package_folder, "lib"))
         rm(self, "*.pdb", os.path.join(self.package_folder, "lib"))
         rm(self, "*.pdb", os.path.join(self.package_folder, "bin"))
 
     def package_info(self):
+        self.cpp_info.set_property("cmake_file_name", "ImGui-SFML")
+        self.cpp_info.set_property("cmake_target_name", "ImGui-SFML::ImGui-SFML")
+
         postfix = ""
         if self.options.shared and self.settings.build_type == "Debug":
             postfix = "_d"
         self.cpp_info.libs = ["ImGui-SFML" + postfix]
+        self.cpp_info.requires = ["sfml::graphics", "imgui::core", "opengl::opengl"]
 
-        if self.settings.os == "Windows":
-            self.cpp_info.system_libs = ["imm32"]
-
-        self.cpp_info.set_property("cmake_file_name", "ImGui-SFML")
-        self.cpp_info.set_property("cmake_target_name", "ImGui-SFML::ImGui-SFML")
+        if self.options.disable_obsolete_functions:
+            self.cpp_info.defines = ["IMGUI_DISABLE_OBSOLETE_FUNCTIONS"]

@@ -1,9 +1,19 @@
 sources:
-  "2.6.1":
-    url: "https://github.com/SFML/imgui-sfml/archive/refs/tags/v2.6.1.tar.gz"
-    sha256: "b250df2ee308b614f0bb061a49a61c3796d0f7224a9539099e6b479fed2d451b"
+  "3.0.0":
+    url: "https://github.com/SFML/imgui-sfml/archive/refs/tags/v3.0.tar.gz"
+    sha256: "561a04407dcc913b8f1c25a164ad4907852b51fb4f11907d1ab9db6351af911b"
 patches:
-  "2.6.1":
-    - patch_file: "patches/0001-2.6-fix-imgui-linking.patch"
+  "3.0.0":
+    - patch_file: "patches/0001-3.0-fix-imgui-linking.patch"
       patch_description: "Link to imgui, avoid compiling it directly"
+      patch_type: "conan"
+    - patch_file: "patches/0002-3.0-support-imgui-1.92.patch"
+      patch_description: "Backport upstream ImGui 1.92 renderer texture support"
+      patch_type: "backport"
+      patch_source: "https://github.com/SFML/imgui-sfml/pull/341"
+    - patch_file: "patches/0003-3.0-fix-pre-1.92-compatibility.patch"
+      patch_description: "Fix compatibility across the supported ImGui range"
+      patch_type: "conan"
+    - patch_file: "patches/0004-3.0-support-current-imgui-api.patch"
+      patch_description: "Use current non-obsolete ImGui drawing APIs when available"
       patch_type: "conan"

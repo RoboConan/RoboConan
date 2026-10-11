@@ -1,0 +1,39 @@
+diff --git a/imgui-SFML.cpp b/imgui-SFML.cpp
+index a64cfdc..ce09ab1 100644
+--- a/imgui-SFML.cpp
++++ b/imgui-SFML.cpp
+@@ -647,7 +647,9 @@ void Shutdown(const sf::Window& window)
+             ImGui::SetCurrentContext(nullptr);
+         }
+     }
++#if IMGUI_VERSION_NUM >= 19200
+     s_textureMap.clear();
++#endif
+ }
+
+ void Shutdown()
+@@ -656,7 +658,9 @@ void Shutdown()
+     ImGui::SetCurrentContext(nullptr);
+ 
+     s_windowContexts.clear();
++#if IMGUI_VERSION_NUM >= 19200
+     s_textureMap.clear();
++#endif
+ }
+ 
+ #if IMGUI_VERSION_NUM >= 19200
+@@ -1134,1 +1138,1 @@ void RenderDrawLists(ImDrawData* draw_data)
+-                    const GLuint textureHandle = convertImTextureIDToGLTextureHandle(pcmd->TextureId);
++                    const GLuint textureHandle = convertImTextureIDToGLTextureHandle(pcmd->GetTexID());
+diff --git a/imgui-SFML.h b/imgui-SFML.h
+index f9eb39c..e55ab5c 100644
+--- a/imgui-SFML.h
++++ b/imgui-SFML.h
+@@ -8,6 +8,7 @@
+ #include <SFML/Window/Joystick.hpp>
+ 
+ #include <imgui.h>
++#include <optional>
+ 
+ #include "imgui-SFML_export.h"
+ 

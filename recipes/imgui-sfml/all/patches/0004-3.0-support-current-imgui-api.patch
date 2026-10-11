@@ -1,0 +1,128 @@
+diff --git a/imgui-SFML.cpp b/imgui-SFML.cpp
+index 3bff116..6cf45b6 100644
+--- a/imgui-SFML.cpp
++++ b/imgui-SFML.cpp
+@@ -849,6 +849,28 @@ void SetRTriggerAxis(sf::Joystick::Axis rTriggerAxis)
+ 
+ } // end of namespace SFML
+ 
++namespace
++{
++void imageWithBorder(ImTextureID textureID,
++                     const ImVec2& size,
++                     const ImVec2& uv0,
++                     const ImVec2& uv1,
++                     const ImVec4& tintColor,
++                     const ImVec4& borderColor)
++{
++#if IMGUI_VERSION_NUM >= 19190
++    ImGui::PushStyleVar(ImGuiStyleVar_ImageBorderSize,
++                        borderColor.w > 0.0f ? std::max(1.0f, ImGui::GetStyle().ImageBorderSize) : 0.0f);
++    ImGui::PushStyleColor(ImGuiCol_Border, borderColor);
++    ImGui::ImageWithBg(textureID, size, uv0, uv1, ImVec4(0, 0, 0, 0), tintColor);
++    ImGui::PopStyleColor();
++    ImGui::PopStyleVar();
++#else
++    ImGui::Image(textureID, size, uv0, uv1, tintColor, borderColor);
++#endif
++}
++} // namespace
++
+ /////////////// Image Overloads for sf::Texture
+ 
+ void Image(const sf::Texture& texture, const sf::Color& tintColor, const sf::Color& borderColor)
+@@ -860,7 +882,7 @@ void Image(const sf::Texture& texture, const sf::Vector2f& size, const sf::Color
+ {
+     ImTextureID textureID = convertGLTextureHandleToImTextureID(texture.getNativeHandle());
+ 
+-    ImGui::Image(textureID, toImVec2(size), ImVec2(0, 0), ImVec2(1, 1), toImColor(tintColor), toImColor(borderColor));
++    imageWithBorder(textureID, toImVec2(size), ImVec2(0, 0), ImVec2(1, 1), toImColor(tintColor), toImColor(borderColor));
+ }
+ 
+ /////////////// Image Overloads for sf::RenderTexture
+@@ -873,15 +895,15 @@ void Image(const sf::RenderTexture& texture, const sf::Vector2f& size, const sf:
+ {
+     ImTextureID textureID = convertGLTextureHandleToImTextureID(texture.getTexture().getNativeHandle());
+ 
+-    ImGui::Image(textureID,
+-                 toImVec2(size),
+-                 ImVec2(0, 1),
+-                 ImVec2(1, 0), // flipped vertically,
+-                               // because textures in
+-                               // sf::RenderTexture are
+-                               // stored this way
+-                 toImColor(tintColor),
+-                 toImColor(borderColor));
++    imageWithBorder(textureID,
++                    toImVec2(size),
++                    ImVec2(0, 1),
++                    ImVec2(1, 0), // flipped vertically,
++                                  // because textures in
++                                  // sf::RenderTexture are
++                                  // stored this way
++                    toImColor(tintColor),
++                    toImColor(borderColor));
+ }
+ 
+ /////////////// Image Overloads for sf::Sprite
+@@ -894,7 +916,7 @@ void Image(const sf::Sprite& sprite, const sf::Color& tintColor, const sf::Color
+ void Image(const sf::Sprite& sprite, const sf::Vector2f& size, const sf::Color& tintColor, const sf::Color& borderColor)
+ {
+     auto [uv0, uv1, textureID] = getSpriteTextureData(sprite);
+-    ImGui::Image(textureID, toImVec2(size), uv0, uv1, toImColor(tintColor), toImColor(borderColor));
++    imageWithBorder(textureID, toImVec2(size), uv0, uv1, toImColor(tintColor), toImColor(borderColor));
+ }
+ 
+ /////////////// Image Button Overloads for sf::Texture
+@@ -953,12 +975,21 @@ void DrawLine(const sf::Vector2f& a, const sf::Vector2f& b, const sf::Color& col
+ void DrawRect(const sf::FloatRect& rect, const sf::Color& color, float rounding, int rounding_corners, float thickness)
+ {
+     ImDrawList* draw_list = ImGui::GetWindowDrawList();
++#if IMGUI_VERSION_NUM >= 19280
++    draw_list->AddRect(getTopLeftAbsolute(rect),
++                       getDownRightAbsolute(rect),
++                       ColorConvertFloat4ToU32(toImColor(color)),
++                       rounding,
++                       thickness,
++                       static_cast<ImDrawFlags>(rounding_corners));
++#else
+     draw_list->AddRect(getTopLeftAbsolute(rect),
+                        getDownRightAbsolute(rect),
+                        ColorConvertFloat4ToU32(toImColor(color)),
+                        rounding,
+                        rounding_corners,
+                        thickness);
++#endif
+ }
+ 
+ void DrawRectFilled(const sf::FloatRect& rect, const sf::Color& color, float rounding, int rounding_corners)
+@@ -1031,7 +1062,7 @@ void SetupRenderState(ImDrawData* draw_data, int fb_width, int fb_height)
+ void RenderDrawLists(ImDrawData* draw_data)
+ {
+     ImGui::GetDrawData();
+-    if (draw_data->CmdListsCount == 0)
++    if (draw_data->CmdLists.Size == 0)
+     {
+         return;
+     }
+@@ -1091,7 +1122,7 @@ void RenderDrawLists(ImDrawData* draw_data)
+                                                            // which are often (2,2)
+ 
+     // Render command lists
+-    for (int n = 0; n < draw_data->CmdListsCount; n++)
++    for (int n = 0; n < draw_data->CmdLists.Size; n++)
+     {
+         const ImDrawList* cmd_list   = draw_data->CmdLists[n];
+         const ImDrawVert* vtx_buffer = cmd_list->VtxBuffer.Data;
+@@ -1111,7 +1142,11 @@ void RenderDrawLists(ImDrawData* draw_data)
+                 // User callback, registered via ImDrawList::AddCallback()
+                 // (ImDrawCallback_ResetRenderState is a special callback value used by the user to
+                 // request the renderer to reset render state.)
++#if IMGUI_VERSION_NUM >= 19280
++                if (pcmd->UserCallback == ImGui::GetPlatformIO().DrawCallback_ResetRenderState)
++#else
+                 if (pcmd->UserCallback == ImDrawCallback_ResetRenderState)
++#endif
+                     SetupRenderState(draw_data, fb_width, fb_height);
+                 else
+                     pcmd->UserCallback(cmd_list, pcmd);
