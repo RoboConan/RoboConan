@@ -1,0 +1,60 @@
+diff --git a/include/polyscope/transformation_gizmo.h b/include/polyscope/transformation_gizmo.h
+index 38dc432..f436c47 100644
+--- a/include/polyscope/transformation_gizmo.h
++++ b/include/polyscope/transformation_gizmo.h
+@@ -7,8 +7,6 @@
+ #include "polyscope/utilities.h"
+ #include "polyscope/widget.h"
+ 
+-#include "ImGuizmo.h"
+-
+ namespace polyscope {
+ 
+ // A visual widget with handles for translations/rotations
+diff --git a/src/render/mock_opengl/mock_gl_engine.cpp b/src/render/mock_opengl/mock_gl_engine.cpp
+index eab9202..64e17e9 100644
+--- a/src/render/mock_opengl/mock_gl_engine.cpp
++++ b/src/render/mock_opengl/mock_gl_engine.cpp
+@@ -11,6 +11,7 @@
+ 
+ #include "polyscope/render/shader_builder.h"
+ 
++#include "ImGuizmo.h"
+ #include "backends/imgui_impl_null.h"
+ 
+ // all the shaders
+diff --git a/src/render/opengl/gl_engine_egl.cpp b/src/render/opengl/gl_engine_egl.cpp
+index 9fa9a60..d93c870 100644
+--- a/src/render/opengl/gl_engine_egl.cpp
++++ b/src/render/opengl/gl_engine_egl.cpp
+@@ -9,6 +9,7 @@
+ #include "polyscope/imgui_config.h"
+ #include "polyscope/render/engine.h"
+ 
++#include "ImGuizmo.h"
+ #include "backends/imgui_impl_null.h"
+ #include "backends/imgui_impl_opengl3.h"
+ 
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index 408826d..bc179ef 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -169,7 +169,10 @@ SET(SRCS
+   messages.cpp
+   pick.cpp
+   widget.cpp
+ 
++  # Polyscope relies on APIs provided only by its ImGuizmo fork.
++  ../deps/imgui/ImGuizmo/ImGuizmo.cpp
++
+   # Rendering stuff
+   render/engine.cpp
+   render/color_maps.cpp
+@@ -387,6 +390,7 @@
+ 
+ # Include settings
+ target_include_directories(polyscope PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/../include")
++target_include_directories(polyscope PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../deps/imgui/ImGuizmo")
+ 
+ # Link settings
+ target_link_libraries(polyscope PUBLIC imgui glm::glm)

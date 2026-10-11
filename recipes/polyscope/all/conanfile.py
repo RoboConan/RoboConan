@@ -6,7 +6,7 @@ from conan.tools.build import check_min_cppstd
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.31"
 
 
 class PolyscopeConan(ConanFile):
@@ -16,6 +16,7 @@ class PolyscopeConan(ConanFile):
     homepage = "https://polyscope.run"
     topics = ("3d", "visualization", "meshes", "point-clouds")
     package_type = "library"
+    provides = ["imguizmo"]
     settings = "os", "arch", "compiler", "build_type"
     options = {
         "shared": [True, False],
@@ -56,13 +57,12 @@ class PolyscopeConan(ConanFile):
         if self.options.backend_glfw:
             self.requires("glfw/[^3.4]", transitive_headers=True, transitive_libs=True)
         if self.options.get_safe("backend_egl"):
-            self.requires("egl/system", transitive_headers=True, transitive_libs=True)
+            self.requires("egl/system", transitive_headers=True)
         if self.options.backend_glfw or self.options.get_safe("backend_egl"):
-            self.requires("glad/0.1.36")
-        self.requires("glm/1.0.1", transitive_headers=True, transitive_libs=True)
-        # 1.92 removes ImGui_ImplOpenGL3_DestroyFontsTexture()
-        self.requires("imgui/[^1 <1.92]", transitive_headers=True, transitive_libs=True)
-        self.requires("implot/[<1]", transitive_headers=True, transitive_libs=True)
+            self.requires("glad/0.1.36", transitive_headers=True, transitive_libs=True)
+        self.requires("glm/[^1.0.1]", transitive_headers=True)
+        self.requires("imgui/[^1.92.5]", transitive_headers=True, transitive_libs=True)
+        self.requires("implot/[<2]", transitive_headers=True, transitive_libs=True)
         self.requires("nlohmann_json/[^3]")
         # Using a newer unvendored stb causes "undefined symbol" errors on Windows
         # self.requires("stb/[*]")
@@ -72,6 +72,9 @@ class PolyscopeConan(ConanFile):
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
+        get(self, **self.conan_data["imguizmo_sources"][self.version],
+            destination=os.path.join(self.source_folder, "deps", "imgui", "ImGuizmo"),
+            strip_root=True)
         apply_conandata_patches(self)
 
     def generate(self):
@@ -110,12 +113,28 @@ class PolyscopeConan(ConanFile):
 
     def package(self):
         copy(self, "LICENSE", self.source_folder, os.path.join(self.package_folder, "licenses"))
+        copy(self, "LICENSE",
+             os.path.join(self.source_folder, "deps", "imgui", "ImGuizmo"),
+             os.path.join(self.package_folder, "licenses", "imguizmo"))
         cmake = CMake(self)
         cmake.install()
+        # Installed Polyscope backend headers include these as "backends/imgui_impl_*.h".
+        copy(self, "*.h",
+             os.path.join(self.source_folder, "include", "backends"),
+             os.path.join(self.package_folder, "include", "backends"))
 
     def package_info(self):
         # The project does not define any CMake targets
         self.cpp_info.libs = ["polyscope"]
+        self.cpp_info.requires = ["glm::glm", "imgui::core", "implot::implot"]
+        if self.options.backend_glfw:
+            self.cpp_info.requires.append("glfw::glfw")
+        if self.options.backend_glfw or self.options.get_safe("backend_egl"):
+            self.cpp_info.requires.append("glad::glad")
+        if self.options.get_safe("backend_egl"):
+            self.cpp_info.requires.append("egl::egl")
+        # nlohmann_json is used only while compiling the library; no public header exposes it.
+        self.cpp_info.ignored_requires = ["nlohmann_json"]
         self.cpp_info.defines.append("GLM_ENABLE_EXPERIMENTAL")
         if self.settings.os in ["Linux", "FreeBSD"]:
             self.cpp_info.system_libs = ["m"]

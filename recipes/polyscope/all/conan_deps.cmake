@@ -8,6 +8,10 @@ if(POLYSCOPE_BACKEND_OPENGL3_GLFW OR POLYSCOPE_BACKEND_OPENGL3_EGL)
     list(APPEND BACKEND_SRCS "${CMAKE_CURRENT_LIST_DIR}/include/backends/imgui_impl_opengl3.cpp")
 endif()
 
+if(POLYSCOPE_BACKEND_OPENGL_MOCK)
+    list(APPEND BACKEND_SRCS "${CMAKE_CURRENT_LIST_DIR}/include/backends/imgui_impl_null.cpp")
+endif()
+
 find_package(glm REQUIRED CONFIG)
 find_package(imgui REQUIRED CONFIG)
 find_package(implot REQUIRED CONFIG)

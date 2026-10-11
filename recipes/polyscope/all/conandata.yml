@@ -1,9 +1,19 @@
 sources:
-  "2.5.0":
-    url: "https://github.com/nmwsharp/polyscope/archive/refs/tags/v2.5.0.tar.gz"
-    sha256: "419a1eaa204dedc29ef67bff05c0a387c9c859ec4fe55fdba63390dac353fd4f"
+  "2.6.1":
+    url: "https://github.com/nmwsharp/polyscope/archive/refs/tags/v2.6.1.tar.gz"
+    sha256: "c8e7b0f0791348fa54201f146c8b689eaf2ac05b9d419a36bc5577a7c21e24e1"
+imguizmo_sources:
+  "2.6.1":
+    url: "https://github.com/nmwsharp/ImGuizmo/archive/fb5dec9a5f5c9bb45d908ac3e92c8d26ca105fdc.zip"
+    sha256: "530782bea9256cb064f16ccc3ca783346251531ab52a0b3fc9ad18087624f3e0"
 patches:
-  "2.5.0":
+  "2.6.1":
     - patch_file: "patches/0001-link-stb-as-object-lib.patch"
       patch_description: "Link the stb mini-library as an object library to embed it in the main lib"
       patch_type: "conan"
+    - patch_file: "patches/0002-build-vendored-imguizmo.patch"
+      patch_description: "Build Polyscope's ImGuizmo fork as a private implementation detail"
+      patch_type: "conan"
+    - patch_file: "patches/0003-imgui-1.92.8-compatibility.patch"
+      patch_description: "Adapt draw-list calls to the ImGui 1.92.8 parameter order"
+      patch_type: "portability"
