@@ -6,6 +6,7 @@ from conan.errors import ConanInvalidConfiguration
 from conan.tools.build import check_min_cppstd
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
+from conan.tools.scm import Version
 
 required_conan_version = ">=2.1"
 
@@ -38,8 +39,6 @@ class DirectXShaderCompilerConan(ConanFile):
         self.requires("zlib-ng/[^2.0]")
         self.requires("spirv-headers/[^1.3.239.0]")
         self.requires("spirv-tools/[^1.3.239.0]")
-        # Newer versions have a conflict in wsl/stubs/basetsd.h
-        self.requires("directx-headers/[<1.603]", libs=False)
 
     def validate(self):
         if not self.settings.os in ["Linux", "Windows"]:
@@ -49,6 +48,8 @@ class DirectXShaderCompilerConan(ConanFile):
     def build_requirements(self):
         # <4 is required to support CMP0051=OLD
         self.tool_requires("cmake/[>=3.17.2 <4]")
+        # DXC's WinAdapter conflicts with newer DirectX-Headers WSL stubs.
+        self.tool_requires("directx-headers/[<1.603]")
         # TODO: clang-format
 
     def source(self):
@@ -93,10 +94,14 @@ class DirectXShaderCompilerConan(ConanFile):
         tc.cache_variables["LLVM_TARGETS_TO_BUILD"] = "None"
         tc.cache_variables["LIBCLANG_BUILD_STATIC"] = True
         tc.cache_variables["CLANG_BUILD_EXAMPLES"] = False
-        tc.cache_variables["CLANG_CL"] = False
+        if Version(self.version) < "1.9":
+            tc.cache_variables["CLANG_CL"] = False
         tc.cache_variables["CLANG_ENABLE_ARCMT"] = False
         tc.cache_variables["CLANG_ENABLE_STATIC_ANALYZER"] = False
         tc.cache_variables["ENABLE_SPIRV_CODEGEN"] = True
+        if Version(self.version) >= "1.9":
+            # Metal IR Converter is a separately distributed proprietary SDK.
+            tc.cache_variables["CMAKE_DISABLE_FIND_PACKAGE_MetalIRConverter"] = True
         tc.cache_variables["LLVM_ENABLE_TERMINFO"] = False
 
         tc.cache_variables["HLSL_INCLUDE_TESTS"] = False
@@ -116,7 +121,7 @@ class DirectXShaderCompilerConan(ConanFile):
         tc.cache_variables["SPIRV-Headers_SOURCE_DIR"] = self.dependencies["spirv-headers"].package_folder.replace("\\", "/")
         tc.cache_variables["DXC_SPIRV_TOOLS_DIR"] = ""
         tc.cache_variables["SPIRV_TOOLS_INCLUDE_DIR"] = self.dependencies["spirv-tools"].cpp_info.includedir.replace("\\", "/")
-        tc.cache_variables["DIRECTX_HEADER_INCLUDE_DIR"] = os.path.join(self.dependencies["directx-headers"].package_folder, "include").replace("\\", "/")
+        tc.cache_variables["DIRECTX_HEADER_INCLUDE_DIR"] = os.path.join(self.dependencies.build["directx-headers"].package_folder, "include").replace("\\", "/")
         tc.generate()
 
         deps = CMakeDeps(self)
@@ -129,8 +134,14 @@ class DirectXShaderCompilerConan(ConanFile):
 
     def package(self):
         copy(self, "LICENSE.TXT", self.source_folder, os.path.join(self.package_folder, "licenses"))
+        copy(self, "ThirdPartyNotices.txt", self.source_folder, os.path.join(self.package_folder, "licenses"))
         cmake = CMake(self)
         cmake.install()
+        copy(self, "dxcpix.h", os.path.join(self.source_folder, "include", "dxc"), os.path.join(self.package_folder, "include", "dxc"))
+        for pattern in ["LICENSE.txt", "README.txt", "enable_if", "type_traits", "vector_utils", "*.h", "*.impl"]:
+            copy(self, pattern,
+                 os.path.join(self.source_folder, "tools", "clang", "lib", "Headers", "hlsl"),
+                 os.path.join(self.package_folder, "include", "hlsl"))
         if self.options.install_internal_libs:
             copy(self, "*.h", os.path.join(self.source_folder, "include", "dxc"), os.path.join(self.package_folder, "include", "dxc"))
         else:
@@ -150,23 +161,11 @@ class DirectXShaderCompilerConan(ConanFile):
         self.cpp_info.components["dxcompiler"].set_property("cmake_target_name", "dxcompiler")
         self.cpp_info.components["dxcompiler"].set_property("cmake_target_aliases", ["Microsoft::DirectXShaderCompiler"])
         self.cpp_info.components["dxcompiler"].libs = ["dxcompiler"]
-        self.cpp_info.components["dxcompiler"].requires = [
-            "dxil",
-            "zlib-ng::zlib-ng",
-            "spirv-headers::spirv-headers",
-            "spirv-tools::spirv-tools-core",
-            "spirv-tools::spirv-tools-opt",
-            "directx-headers::directx-headers",
-        ]
+        self.cpp_info.components["dxcompiler"].requires = ["dxil"]
 
         self.cpp_info.components["dxil"].set_property("cmake_target_name", "dxil")
         self.cpp_info.components["dxil"].set_property("cmake_target_aliases", ["Microsoft::DXIL"])
         self.cpp_info.components["dxil"].libs = ["dxil"]
-        self.cpp_info.components["dxil"].requires = [
-            "zlib-ng::zlib-ng",
-            "miniz::miniz",
-            "directx-headers::directx-headers",
-        ]
 
         if self.options.install_internal_libs:
             other_libs = collect_libs(self)

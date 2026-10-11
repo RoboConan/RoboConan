@@ -1,7 +1,12 @@
 sources:
+  "1.9.2609":
+    url: "https://github.com/microsoft/DirectXShaderCompiler/archive/refs/tags/v1.9.2609.tar.gz"
+    sha256: "05b8e9622f9b147156998e6aab38d71997ec8391038e7302c703e9ca2448dfed"
   "1.8.2502":
     url: "https://github.com/microsoft/DirectXShaderCompiler/archive/refs/tags/v1.8.2502.tar.gz"
     sha256: "1318cbe4860d5ee82b447b12391ee7a8d881fbb286914075a099415b741e0c13"
 patches:
+  "1.9.2609":
+    - patch_file: "patches/unvendor-miniz-1.9.patch"
   "1.8.2502":
     - patch_file: "patches/unvendor-miniz.patch"
