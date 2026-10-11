@@ -1,5 +1,7 @@
 versions:
-  "0.17+git.20250319":
+  "1.0":
+    folder: "all"
+  "0.17":
     folder: "all"
   "0.16":
     folder: "all"

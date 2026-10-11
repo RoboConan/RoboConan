@@ -9,6 +9,7 @@ from conan.tools.scm import Version
 
 required_conan_version = ">=2.1"
 
+
 class ImplotConan(ConanFile):
     name = "implot"
     description = "Advanced 2D Plotting for Dear ImGui"
@@ -46,7 +47,7 @@ class ImplotConan(ConanFile):
         return "^1 <1.87"
 
     def requirements(self):
-        self.requires(f"imgui/[{self._version_range}]", transitive_headers=True)
+        self.requires(f"imgui/[{self._version_range}]", transitive_headers=True, transitive_libs=True)
 
     def layout(self):
         cmake_layout(self, src_folder="src")
@@ -83,11 +84,12 @@ class ImplotConan(ConanFile):
         cmake.build()
 
     def package(self):
-        copy(self, pattern="LICENSE", dst=os.path.join(self.package_folder, "licenses"), src=self.source_folder)
-        copy(self, pattern="implot*.cpp", dst=os.path.join(self.package_folder, "share", "implot", "src"), src=self.source_folder)
+        copy(self, "LICENSE", self.source_folder, os.path.join(self.package_folder, "licenses"))
+        copy(self, "implot*.cpp", self.source_folder, os.path.join(self.package_folder, "share", "implot", "src"))
         cmake = CMake(self)
         cmake.install()
 
     def package_info(self):
         self.cpp_info.libs = ["implot"]
+        self.cpp_info.requires = ["imgui::core"]
         self.cpp_info.srcdirs = ["share/implot/src"]
