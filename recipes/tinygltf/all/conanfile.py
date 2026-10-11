@@ -46,9 +46,9 @@ class TinygltfConan(ConanFile):
         if self.options.json == "nlohmann":
             self.requires("nlohmann_json/[^3]", transitive_headers=True)
         elif self.options.json == "rapidjson":
-            self.requires("rapidjson/[*]", transitive_headers=True, transitive_libs=True)
+            self.requires("rapidjson/[*]", transitive_headers=True)
         if self.options.draco:
-            self.requires("draco/[^1.5.6]", transitive_headers=True, transitive_libs=True)
+            self.requires("draco/[^1.5.6]", transitive_headers=True)
         if self.options.stb_image or self.options.stb_image_write:
             self.requires("stb/[*]", transitive_headers=True)
 
@@ -61,6 +61,8 @@ class TinygltfConan(ConanFile):
         replace_in_file(self, "tiny_gltf.h", '#include "json.hpp"', "#include <nlohmann/json.hpp>")
         for include in ["document.h", "prettywriter.h", "rapidjson.h", "stringbuffer.h", "writer.h"]:
             replace_in_file(self, "tiny_gltf.h", f'#include "{include}"', f'#include <rapidjson/{include}>')
+        for include in ["stb_image.h", "stb_image_write.h"]:
+            replace_in_file(self, "tiny_gltf.h", f'#include "{include}"', f'#include <{include}>')
 
     def generate(self):
         tc = CMakeToolchain(self)
