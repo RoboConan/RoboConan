@@ -1,0 +1,96 @@
+diff --git a/src/guik/viewer/plot_data.cpp b/src/guik/viewer/plot_data.cpp
+index 0133ef0..d050f98 100644
+--- a/src/guik/viewer/plot_data.cpp
++++ b/src/guik/viewer/plot_data.cpp
+@@ -4,32 +4,91 @@
+
+ namespace guik {
+
++#if defined(IMPLOT_VERSION_NUM) && IMPLOT_VERSION_NUM >= 10000
++namespace {
++
++thread_local ImPlotSpec next_plot_spec;
++thread_local bool has_next_plot_spec = false;
++
++ImPlotSpec consume_plot_spec(int flags) {
++  ImPlotSpec spec = has_next_plot_spec ? next_plot_spec : ImPlotSpec();
++  spec.Flags = static_cast<ImPlotItemFlags>(flags);
++  has_next_plot_spec = false;
++  return spec;
++}
++
++}  // namespace
++#endif
++
+ void LinePlotData::plot() const {
++#if defined(IMPLOT_VERSION_NUM) && IMPLOT_VERSION_NUM >= 10000
++  ImPlot::PlotLine(label.c_str(), xs.data(), ys.data(), xs.size(), consume_plot_spec(line_flags));
++#else
+   ImPlot::PlotLine(label.c_str(), xs.data(), ys.data(), xs.size(), line_flags);
++#endif
+ }
+
+ void ScatterPlotData::plot() const {
++#if defined(IMPLOT_VERSION_NUM) && IMPLOT_VERSION_NUM >= 10000
++  ImPlot::PlotScatter(label.c_str(), xs.data(), ys.data(), xs.size(), consume_plot_spec(scatter_flags));
++#else
+   ImPlot::PlotScatter(label.c_str(), xs.data(), ys.data(), xs.size(), scatter_flags);
++#endif
+ }
+
+ void StairsPlotData::plot() const {
++#if defined(IMPLOT_VERSION_NUM) && IMPLOT_VERSION_NUM >= 10000
++  ImPlot::PlotStairs(label.c_str(), xs.data(), ys.data(), xs.size(), consume_plot_spec(stairs_flags));
++#else
+   ImPlot::PlotStairs(label.c_str(), xs.data(), ys.data(), xs.size(), stairs_flags);
++#endif
+ }
+
+ void HistogramPlotData::plot() const {
++#if defined(IMPLOT_VERSION_NUM) && IMPLOT_VERSION_NUM >= 10000
++  if (ys.empty()) {
++    ImPlot::PlotHistogram(label.c_str(), xs.data(), xs.size(), x_bins, 1.0, ImPlotRange(x_range_min, x_range_max), consume_plot_spec(histogram_flags));
++  } else {
++    ImPlot::PlotHistogram2D(label.c_str(), xs.data(), ys.data(), xs.size(), x_bins, y_bins, ImPlotRect(x_range_min, x_range_max, y_range_min, y_range_max), consume_plot_spec(histogram_flags));
++  }
++#else
+   if (ys.empty()) {
+     ImPlot::PlotHistogram(label.c_str(), xs.data(), xs.size(), x_bins, 1.0, ImPlotRange(x_range_min, x_range_max), histogram_flags);
+   } else {
+     ImPlot::PlotHistogram2D(label.c_str(), xs.data(), ys.data(), xs.size(), x_bins, y_bins, ImPlotRect(x_range_min, x_range_max, y_range_min, y_range_max), histogram_flags);
+   }
++#endif
+ }
+
+ void LinePlotStyle::apply() const {
++#if defined(IMPLOT_VERSION_NUM) && IMPLOT_VERSION_NUM >= 10000
++  next_plot_spec = ImPlotSpec();
++  next_plot_spec.LineColor = ImVec4(col[0], col[1], col[2], col[3]);
++  if (weight != IMPLOT_AUTO) {
++    next_plot_spec.LineWeight = weight;
++  }
++  has_next_plot_spec = true;
++#else
+   ImPlot::SetNextLineStyle(ImVec4(col[0], col[1], col[2], col[3]), weight);
++#endif
+ }
+
+ void ScatterPlotStyle::apply() const {
++#if defined(IMPLOT_VERSION_NUM) && IMPLOT_VERSION_NUM >= 10000
++  next_plot_spec = ImPlotSpec();
++  next_plot_spec.Marker = static_cast<ImPlotMarker>(marker);
++  if (size != IMPLOT_AUTO) {
++    next_plot_spec.MarkerSize = size;
++  }
++  next_plot_spec.MarkerFillColor = ImVec4(fill[0], fill[1], fill[2], fill[3]);
++  if (weight != IMPLOT_AUTO) {
++    next_plot_spec.LineWeight = weight;
++  }
++  next_plot_spec.MarkerLineColor = ImVec4(outline[0], outline[1], outline[2], outline[3]);
++  has_next_plot_spec = true;
++#else
+   ImPlot::SetNextMarkerStyle(marker, size, ImVec4(fill[0], fill[1], fill[2], fill[3]), weight, ImVec4(outline[0], outline[1], outline[2], outline[3]));
++#endif
+ }
+
+ }  // namespace guik

@@ -1,29 +1,53 @@
-#include <glk/primitives/primitives.hpp>
-#include <guik/viewer/light_viewer.hpp>
+#include <filesystem>
+#include <type_traits>
+#include <vector>
 
-void test() {
-  auto viewer = guik::LightViewer::instance();
+#include <imgui.h>
+#include <ImGuizmo.h>
+#include <implot.h>
+#include <portable-file-dialogs.h>
 
-  float angle = 0.0f;
+#include <glk/cuda_magic_headers.hpp>
+#include <glk/html_colors.hpp>
+#include <glk/io/jpeg_io.hpp>
+#include <glk/io/mesh_io.hpp>
+#include <glk/io/png_io.hpp>
+#include <glk/path.hpp>
+#include <guik/viewer/plot_data.hpp>
 
-  viewer->register_ui_callback("ui", [&]() {
-    ImGui::DragFloat("Angle", &angle, 0.01f);
+int main() {
+  static_assert(std::is_pointer_v<decltype(&pfd::settings::available)>);
 
-    if (ImGui::Button("Close")) {
-      viewer->close();
-    }
-  });
+  ImGui::CreateContext();
+  ImPlot::CreateContext();
+  (void)ImGuizmo::IsUsing();
 
-  while (viewer->spin_once()) {
-    Eigen::AngleAxisf transform(angle, Eigen::Vector3f::UnitZ());
-    viewer->update_drawable("sphere", glk::Primitives::sphere(), guik::Rainbow(transform));
-    viewer->update_drawable("wire_sphere", glk::Primitives::wire_sphere(), guik::FlatColor({0.1f, 0.7f, 1.0f, 1.0f}, transform));
+  guik::LinePlotStyle line_style;
+  line_style.apply();
+  guik::ScatterPlotStyle scatter_style;
+  scatter_style.apply();
+
+  const auto color = glk::html_color(glk::COLORNAME::AliceBlue);
+  if (color.size() != 4) {
+    return 1;
   }
-}
 
-int main(int argc, char* argv[]) {
-  if(argc > 1) {
-    test();
+  glk::set_data_path(IRIDESCENCE_TEST_DATA_DIR);
+  const auto data_path = std::filesystem::path(glk::get_data_path());
+  if (!std::filesystem::exists(data_path / "shader" / "rainbow.vert")) {
+    return 2;
   }
+
+  int width = 0;
+  int height = 0;
+  std::vector<unsigned char> bytes;
+  if (glk::load_png("does-not-exist.png", width, height, bytes) ||
+      glk::load_jpeg("does-not-exist.jpg", width, height, bytes) ||
+      glk::load_mesh_model("does-not-exist.obj")) {
+    return 3;
+  }
+
+  ImPlot::DestroyContext();
+  ImGui::DestroyContext();
   return 0;
 }

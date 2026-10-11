@@ -1,16 +1,28 @@
 sources:
-  "0.1.6":
-    url: "https://github.com/koide3/iridescence/archive/refs/tags/v0.1.6.tar.gz"
-    sha256: "39ef9e4f231bd8459677836006f2a149cd086e19986597d224491218b55e865b"
+  "1.0.3":
+    url: "https://github.com/koide3/iridescence/archive/refs/tags/v1.0.3.tar.gz"
+    sha256: "d674650b79ffae21a58080f32499d476d1d98e17db2596156e22f0ded43d6ee3"
+  "0.1.9":
+    url: "https://github.com/koide3/iridescence/archive/refs/tags/v0.1.9.tar.gz"
+    sha256: "53c79b847a3856691a04b28f961b848de36aa85906e85872298c231a2a379984"
 patches:
-  "0.1.6":
+  "1.0.3":
     - patch_file: "patches/001-unvendor-deps.patch"
       patch_description: "Use dependencies from Conan"
       patch_type: "conan"
-    - patch_file: "patches/002-fix-guik-includes.patch"
-      patch_description: "Fix a missing include in guik/screen_capture.cpp"
-      patch_type: "bugfix"
-    - patch_file: "patches/add-missing-include.patch"
-      patch_description: "Add a missing <cassert>"
-      patch_source: "https://github.com/koide3/iridescence/commit/666d10bbfdf6fed667f88ac21558cbbb1beee209"
-      patch_type: "bugfix"
+    - patch_file: "patches/002-imgui-1.92-compatibility.patch"
+      patch_description: "Use the named-key and content-region APIs supported by ImGui 1.92"
+      patch_type: "portability"
+    - patch_file: "patches/003-implot-1.0-compatibility.patch"
+      patch_description: "Support both pre-1.0 styling calls and the ImPlot 1.0 specification API"
+      patch_type: "portability"
+  "0.1.9":
+    - patch_file: "patches/001-unvendor-deps-0.x.patch"
+      patch_description: "Use dependencies from Conan"
+      patch_type: "conan"
+    - patch_file: "patches/002-imgui-1.92-compatibility-0.x.patch"
+      patch_description: "Use the named-key and content-region APIs supported by ImGui 1.92"
+      patch_type: "portability"
+    - patch_file: "patches/003-implot-1.0-compatibility.patch"
+      patch_description: "Support both pre-1.0 styling calls and the ImPlot 1.0 specification API"
+      patch_type: "portability"

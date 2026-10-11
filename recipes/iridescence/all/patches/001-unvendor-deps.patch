@@ -1,6 +1,8 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index b3bb84c..d816ca6 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -26,13 +26,18 @@
+@@ -26,12 +26,18 @@ endif()
  
  find_package(OpenGL REQUIRED)
  
@@ -10,23 +12,22 @@
 -find_package(PNG)
 -find_package(JPEG)
 -find_package(assimp QUIET)
--
 +find_package(glm REQUIRED)
 +find_package(glfw3 REQUIRED)
 +find_package(Eigen3 REQUIRED)
 +find_package(PNG REQUIRED)
 +find_package(JPEG REQUIRED)
 +find_package(assimp REQUIRED)
-+
 +find_package(imgui REQUIRED CONFIG)
 +find_package(imguizmo REQUIRED CONFIG)
 +find_package(implot REQUIRED CONFIG)
 +find_package(portable-file-dialogs REQUIRED CONFIG)
 +find_package(khrplatform REQUIRED CONFIG)
++find_package(rapidhash REQUIRED CONFIG)
+ 
  
  if(NOT glm_FOUND)
-   message(STATUS "System GLM not found. Download GLM 1.0.1.")
-@@ -82,7 +87,6 @@
+@@ -82,7 +88,6 @@ set(INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_INCLUDEDIR}/iridescence CACHE PATH "Loca
  
  # imgui
  add_definitions(-DIMGUI_IMPL_OPENGL_LOADER_GL3W)
@@ -34,7 +35,7 @@
  add_definitions(-DDATA_PATH_GUESS="${CMAKE_SOURCE_DIR}/data")
  
  if(MSVC)
-@@ -96,7 +100,7 @@
+@@ -98,7 +103,7 @@ else()
  endif()
  
  if(${assimp_FOUND})
@@ -43,7 +44,7 @@
    list(APPEND EXTRA_SOURCE src/glk/io/mesh_io.cpp)
  endif()
  
-@@ -117,20 +121,8 @@
+@@ -119,20 +124,8 @@ endif()
  add_library(iridescence
    # GL and IMGUI
    thirdparty/gl3w/gl3w.cpp
@@ -65,16 +66,8 @@
 +  ${IMGUI_BACKENDS}/imgui_impl_opengl3.cpp
    # glk
    src/glk/path_std.cpp
-   src/glk/mesh.cpp
-@@ -148,7 +140,6 @@
-   src/glk/indexed_pointcloud_buffer.cpp
-   src/glk/splatting.cpp
-   src/glk/colormap.cpp
--  src/glk/html_colors.cpp
-   src/glk/texture.cpp
-   src/glk/glsl_shader.cpp
-   src/glk/frame_buffer.cpp
-@@ -198,19 +189,19 @@
+   src/glk/hash.cpp
+@@ -206,24 +199,26 @@ add_library(iridescence
  )
  target_include_directories(iridescence PUBLIC
    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -85,40 +78,31 @@
 -  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/implot>
 -  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/portable-file-dialogs>
    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/gl3w>
+-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/rapidhash>
    $<INSTALL_INTERFACE:include/iridescence>
-+  ${IMGUI_BACKENDS}
  )
++target_include_directories(iridescence PRIVATE
++  ${IMGUI_BACKENDS}
++)
  target_link_libraries(iridescence PUBLIC
    Eigen3::Eigen
    OpenGL::GL
    glfw
+-  ${EXTRA_LIBRARIES}
 +  imgui::imgui
 +  imguizmo::imguizmo
 +  implot::implot
 +  portable-file-dialogs::portable-file-dialogs
 +  khrplatform::khrplatform
-   ${EXTRA_LIBRARIES}
  )
  target_link_libraries(iridescence PRIVATE
-@@ -245,17 +236,9 @@
-     get_filename_component(example_name ${example_src} NAME_WE)
+   glm::glm
++  rapidhash::rapidhash
++  ${EXTRA_LIBRARIES}
+ )
  
-     if(${example_name} STREQUAL "ext_light_viewer_pointcloud" OR ${example_name} STREQUAL "ext_light_viewer_kitti")
--      find_package(PCL CONFIG)
-       if(NOT PCL_FOUND)
-         continue()
-       endif()
--      target_link_libraries(iridescence PUBLIC
--        ${PCL_LIBRARIES}
--      )
--      target_include_directories(iridescence PUBLIC
--        ${PCL_INCLUDE_DIRS}
--      )
--
-     endif()
- 
-     add_executable(${example_name}
-@@ -298,10 +281,6 @@
+ target_compile_definitions(iridescence PRIVATE
+@@ -311,10 +306,6 @@ endif()
  
  install(DIRECTORY include/ DESTINATION ${INCLUDE_INSTALL_DIR})
  install(DIRECTORY thirdparty/gl3w/GL/ DESTINATION ${INCLUDE_INSTALL_DIR}/GL)
