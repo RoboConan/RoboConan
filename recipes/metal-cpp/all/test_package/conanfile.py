@@ -1,8 +1,6 @@
 import os
 
 from conan import ConanFile
-from conan.errors import ConanInvalidConfiguration
-from conan.tools.apple import is_apple_os
 from conan.tools.build import can_run
 from conan.tools.cmake import CMake, cmake_layout
 
@@ -10,10 +8,6 @@ from conan.tools.cmake import CMake, cmake_layout
 class TestPackageConan(ConanFile):
     settings = "os", "arch", "compiler", "build_type"
     generators = "CMakeToolchain", "CMakeDeps"
-
-    def validate(self):
-        if not is_apple_os(self):
-            raise ConanInvalidConfiguration("Metal can only be used on an Apple OS.")
 
     def layout(self):
         cmake_layout(self)

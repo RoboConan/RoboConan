@@ -1,5 +1,4 @@
 import os
-import platform
 
 from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
@@ -12,7 +11,7 @@ from conan.tools.scm import Version
 required_conan_version = ">=2.1"
 
 
-class MetalcppConan(ConanFile):
+class MetalCppConan(ConanFile):
     name = "metal-cpp"
     description = (
         "Library for the usage of Apple Metal GPU programming in C++ applications - "
@@ -38,50 +37,37 @@ class MetalcppConan(ConanFile):
 
     def validate(self):
         os_name = str(self.settings.os)
-        if not os_name in ["Macos", "iOS", "tvOS"]:
-            raise ConanInvalidConfiguration("Metal can only be used on an Macos, iOS or tvOS platform.")
+        if os_name not in ["Macos", "iOS", "tvOS"]:
+            raise ConanInvalidConfiguration("Metal-cpp only supports macOS, iOS and tvOS.")
 
         check_min_cppstd(self, 17)
 
-        minimum_os_version = self.conan_data["minimum_os_version"][self.version][os_name]
-
-        xcrun = XCRun(self)
-        os_version = self.settings.get_safe("os.version")
+        minimum_sdk_version = self.conan_data["minimum_sdk_version"][self.version][os_name]
         sdk_version = self.settings.get_safe("os.sdk_version")
-        visible_sdk_version = xcrun.sdk_version if platform.system() == "Darwin" else None
-
-        sdk_version = sdk_version or os_version or visible_sdk_version
-
         if sdk_version is None:
-            # Will raise when `os.version` or `os.sdk_version` are not defined
-            # and we are *NOT* running this on macOS
-            raise ConanInvalidConfiguration(f"metal-cpp {self.version} requires the os.version or sdk.version settings, but the are not defined")
-
-        if sdk_version < Version(minimum_os_version):
-            raise ConanInvalidConfiguration(f"metal-cpp {self.version} requires {os_name} SDK version {minimum_os_version} but {sdk_version} is the target.")
+            sdk_version = XCRun(self).sdk_version
+        if sdk_version is None:
+            raise ConanInvalidConfiguration(
+                f"metal-cpp {self.version} requires the os.sdk_version setting when the SDK cannot be detected"
+            )
+        if Version(sdk_version) < minimum_sdk_version:
+            raise ConanInvalidConfiguration(
+                f"metal-cpp {self.version} requires {os_name} SDK {minimum_sdk_version} or newer, but SDK {sdk_version} is configured"
+            )
 
     def package(self):
-        copy(
-            self,
-            pattern="LICENSE.txt",
-            dst=os.path.join(self.package_folder, "licenses"),
-            src=os.path.join(self.source_folder)
-        )
-        copy(
-            self,
-            pattern="**.hpp",
-            dst=os.path.join(self.package_folder, "include"),
-            src=os.path.join(self.source_folder),
-            keep_path=True
-        )
+        copy(self, "LICENSE.txt",
+             os.path.join(self.source_folder),
+             os.path.join(self.package_folder, "licenses"))
+        copy(self, "**.hpp",
+             os.path.join(self.source_folder),
+             os.path.join(self.package_folder, "include"),
+             keep_path=True)
 
     def package_info(self):
-        self.cpp_info.set_property("cmake_file_name", "metal-cpp")
-        self.cpp_info.set_property("cmake_target_name", "metal-cpp::metal-cpp")
-        self.cpp_info.set_property("pkg_config_name", "metal-cpp")
         self.cpp_info.bindirs = []
         self.cpp_info.libdirs = []
 
-        self.cpp_info.frameworks = ["Foundation", "Metal", "MetalKit", "QuartzCore"]
-        if self.version >= Version('14'):
+        self.cpp_info.frameworks = ["Foundation", "Metal", "QuartzCore"]
+        if Version(self.version) >= "14":
             self.cpp_info.frameworks.append("MetalFX")
