@@ -8,6 +8,9 @@
 
 #include <DiligentFX/Components/interface/ShadowMapManager.hpp>
 
+#include <imgui.h>
+#include <ImGuizmo.h>
+
 #include <iostream>
 
 
@@ -49,4 +52,7 @@ int main()
   Diligent::GLTF::Material material;
 
   Diligent::ShadowMapManager manager;
+
+  // DiligentTools publicly exposes its external ImGuizmo replacement.
+  ImGuizmo::SetRect(0.f, 0.f, 1.f, 1.f);
 }

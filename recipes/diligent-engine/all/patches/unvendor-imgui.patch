@@ -1,96 +1,90 @@
-diff --git a/DiligentTools/Imgui/src/ImGuiImplLinuxX11.cpp b/DiligentTools/Imgui/src/ImGuiImplLinuxX11.cpp
---- a/DiligentTools/Imgui/src/ImGuiImplLinuxX11.cpp	(revision 66b9a6ed76bc4577e43feb58a08a1c17689b6ce2)
-+++ b/DiligentTools/Imgui/src/ImGuiImplLinuxX11.cpp	(date 1745054232659)
-@@ -86,7 +86,7 @@
-     io.KeyMap[ImGuiKey_Space]      = 268;
-     io.KeyMap[ImGuiKey_Enter]      = 269;
-     //io.KeyMap[ImGuiKey_Escape]      = 270;
--    io.KeyMap[ImGuiKey_KeyPadEnter] = 271;
-+    io.KeyMap[ImGuiKey_KeypadEnter] = 271;
-     io.KeyMap[ImGuiKey_A]           = 'A';
-     io.KeyMap[ImGuiKey_C]           = 'C';
-     io.KeyMap[ImGuiKey_V]           = 'V';
-@@ -186,7 +186,7 @@
-                 //case XK_space:     k = io.KeyMap[ImGuiKey_Space];      break;
-                 case XK_Return:    k = io.KeyMap[ImGuiKey_Enter];      break;
-                 case XK_Escape:    k = io.KeyMap[ImGuiKey_Escape];     break;
--                case XK_KP_Enter:  k = io.KeyMap[ImGuiKey_KeyPadEnter];break;
-+                case XK_KP_Enter:  k = io.KeyMap[ImGuiKey_KeypadEnter];break;
-                     // clang-format on
-             }
- 
-diff --git a/DiligentTools/Imgui/src/ImGuiImplLinuxXCB.cpp b/DiligentTools/Imgui/src/ImGuiImplLinuxXCB.cpp
---- a/DiligentTools/Imgui/src/ImGuiImplLinuxXCB.cpp	(revision 66b9a6ed76bc4577e43feb58a08a1c17689b6ce2)
-+++ b/DiligentTools/Imgui/src/ImGuiImplLinuxXCB.cpp	(date 1745054232627)
-@@ -74,7 +74,7 @@
-     //io.KeyMap[ImGuiKey_Space] = 0;//VK_SPACE;
-     io.KeyMap[ImGuiKey_Enter]       = 0x24;
-     io.KeyMap[ImGuiKey_Escape]      = 0x09;
--    io.KeyMap[ImGuiKey_KeyPadEnter] = 0x68;
-+    io.KeyMap[ImGuiKey_KeypadEnter] = 0x68;
-     io.KeyMap[ImGuiKey_A]           = 'A';
-     io.KeyMap[ImGuiKey_C]           = 'C';
-     io.KeyMap[ImGuiKey_V]           = 'V';
-@@ -139,7 +139,7 @@
-         case 0x6E:  k = io.KeyMap[ImGuiKey_Home];       break;
-         case 0x17:  k = io.KeyMap[ImGuiKey_Tab];        break;
-         case 0x73:  k = io.KeyMap[ImGuiKey_End];        break;
--        case 0x68:  k = io.KeyMap[ImGuiKey_KeyPadEnter];break;
-+        case 0x68:  k = io.KeyMap[ImGuiKey_KeypadEnter];break;
-         case 0x70:  k = io.KeyMap[ImGuiKey_PageUp];     break;
-         case 0x75:  k = io.KeyMap[ImGuiKey_PageDown];   break;
-             // clang-format on
-diff --git a/DiligentTools/Imgui/src/ImGuiImplUWP.cpp b/DiligentTools/Imgui/src/ImGuiImplUWP.cpp
---- a/DiligentTools/Imgui/src/ImGuiImplUWP.cpp	(revision 66b9a6ed76bc4577e43feb58a08a1c17689b6ce2)
-+++ b/DiligentTools/Imgui/src/ImGuiImplUWP.cpp	(date 1745054232698)
-@@ -68,7 +68,7 @@
-     io.KeyMap[ImGuiKey_Space]       = VK_SPACE;
-     io.KeyMap[ImGuiKey_Enter]       = VK_RETURN;
-     io.KeyMap[ImGuiKey_Escape]      = VK_ESCAPE;
--    io.KeyMap[ImGuiKey_KeyPadEnter] = VK_RETURN;
-+    io.KeyMap[ImGuiKey_KeypadEnter] = VK_RETURN;
-     io.KeyMap[ImGuiKey_A]           = 'A';
-     io.KeyMap[ImGuiKey_C]           = 'C';
-     io.KeyMap[ImGuiKey_V]           = 'V';
-diff --git a/DiligentTools/Imgui/src/ImGuiImplSDL.cpp b/DiligentTools/Imgui/src/ImGuiImplSDL.cpp
---- a/DiligentTools/Imgui/src/ImGuiImplSDL.cpp	(revision 66b9a6ed76bc4577e43feb58a08a1c17689b6ce2)
-+++ b/DiligentTools/Imgui/src/ImGuiImplSDL.cpp	(date 1745054232686)
-@@ -28,7 +28,7 @@
- 
- #include "Errors.hpp"
- #include "RenderDevice.h"
--#include "backends/imgui_impl_sdl.h"
-+#include "backends/imgui_impl_sdl2.h"
- 
- namespace Diligent
- {
 diff --git a/DiligentTools/Imgui/CMakeLists.txt b/DiligentTools/Imgui/CMakeLists.txt
---- a/DiligentTools/Imgui/CMakeLists.txt	(revision 66b9a6ed76bc4577e43feb58a08a1c17689b6ce2)
-+++ b/DiligentTools/Imgui/CMakeLists.txt	(date 1745054232705)
-@@ -51,11 +51,13 @@
+index 65ac1eb..01b8253 100644
+--- a/DiligentTools/Imgui/CMakeLists.txt
++++ b/DiligentTools/Imgui/CMakeLists.txt
+@@ -8,18 +8,13 @@ set(SOURCE
+     src/ImGuiUtils.cpp
+ )
+
+-set(IMGUIZMO_QUAT_SOURCE
+-    ${IMGUIZMO_QUAT_PATH}/imGuIZMO.cpp
+-    ${IMGUIZMO_QUAT_PATH}/imGuIZMO.h
+-)
+-
+ set(INTERFACE
+     interface/ImGuiDiligentRenderer.hpp
+     interface/ImGuiImplDiligent.hpp
+     interface/ImGuiUtils.hpp
+ )
+
+-if(EXISTS "${DILIGENT_DEAR_IMGUI_PATH}/backends")
++if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/backends")
+     list(APPEND SOURCE src/ImGuiImplSDL.cpp)
+     list(APPEND INTERFACE interface/ImGuiImplSDL.hpp)
+     if(PLATFORM_WIN32)
+@@ -53,55 +48,11 @@ add_library(Diligent-Imgui STATIC
      ${SOURCE}
      ${INCLUDE}
      ${INTERFACE}
 -    ${IMGUIZMO_QUAT_SOURCE}
  )
- 
+
 -if(TARGET imgui)
 -    target_link_libraries(Diligent-Imgui PRIVATE imgui)
+-else()
+-    set(DEAR_IMGUI_INTERFACE
+-        ${DILIGENT_DEAR_IMGUI_PATH}/imgui.h
+-    )
+-
+-    set(DEAR_IMGUI_INCLUDE
+-        ${DILIGENT_DEAR_IMGUI_PATH}/imconfig.h
+-        ${DILIGENT_DEAR_IMGUI_PATH}/imgui_internal.h
+-        ${DILIGENT_DEAR_IMGUI_PATH}/imstb_rectpack.h
+-        ${DILIGENT_DEAR_IMGUI_PATH}/imstb_textedit.h
+-        ${DILIGENT_DEAR_IMGUI_PATH}/imstb_truetype.h
+-        ${DILIGENT_DEAR_IMGUI_PATH}/misc/cpp/imgui_stdlib.h
+-    )
+-
+-    set(DEAR_IMGUI_SOURCE
+-        ${DILIGENT_DEAR_IMGUI_PATH}/imgui.cpp
+-        ${DILIGENT_DEAR_IMGUI_PATH}/imgui_draw.cpp
+-        ${DILIGENT_DEAR_IMGUI_PATH}/imgui_tables.cpp
+-        ${DILIGENT_DEAR_IMGUI_PATH}/imgui_widgets.cpp
+-        ${DILIGENT_DEAR_IMGUI_PATH}/misc/cpp/imgui_stdlib.cpp
+-    )
+-
+-    if(PLATFORM_WIN32)
+-        list(APPEND DEAR_IMGUI_SOURCE ${DILIGENT_DEAR_IMGUI_PATH}/backends/imgui_impl_win32.cpp)
+-        list(APPEND DEAR_IMGUI_INCLUDE ${DILIGENT_DEAR_IMGUI_PATH}/backends/imgui_impl_win32.h)
+-    elseif(PLATFORM_MACOS)
+-        set(DEAR_IMGUI_V185_SOURCE
+-            ../ThirdParty/imgui_v1.85/imgui_impl_osx_v1.85.mm
+-            ../ThirdParty/imgui_v1.85/imgui_impl_osx_v1.85.h
+-        )
+-        target_sources(Diligent-Imgui PRIVATE ${DEAR_IMGUI_V185_SOURCE})
+-        source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/../ThirdParty/imgui_v1.85 PREFIX "dear_imgui_v1.85" FILES ${DEAR_IMGUI_V185_SOURCE})
+-    endif()
+-
+-    target_sources(Diligent-Imgui PRIVATE
+-        ${DEAR_IMGUI_SOURCE}
+-        ${DEAR_IMGUI_INCLUDE}
+-        ${DEAR_IMGUI_INTERFACE}
+-    )
+-
+-    target_include_directories(Diligent-Imgui PUBLIC ${DILIGENT_DEAR_IMGUI_PATH})
+-
+-    source_group(TREE ${DILIGENT_DEAR_IMGUI_PATH} PREFIX "dear_imgui" FILES ${DEAR_IMGUI_SOURCE} ${DEAR_IMGUI_INCLUDE} ${DEAR_IMGUI_INTERFACE})
+-endif()
 +find_package(imgui REQUIRED CONFIG)
 +find_package(imguizmo REQUIRED CONFIG)
-+
-+if(TRUE)
-+    target_link_libraries(Diligent-Imgui PUBLIC imgui::imgui imguizmo::imguizmo)
- else()
-     set(DEAR_IMGUI_INTERFACE
-         ${DILIGENT_DEAR_IMGUI_PATH}/imgui.h
-@@ -129,11 +131,6 @@
-     target_link_libraries(Diligent-Imgui PRIVATE dwmapi.lib)
- endif()
- 
--source_group("src" FILES ${SOURCE})
--source_group("include" FILES ${INCLUDE})
--source_group("interface" FILES ${INTERFACE})
++target_link_libraries(Diligent-Imgui PUBLIC imgui::imgui imguizmo::imguizmo)
+
+ set_common_target_properties(Diligent-Imgui)
+
+@@ -136,8 +87,6 @@ endif()
+ source_group("src" FILES ${SOURCE})
+ source_group("include" FILES ${INCLUDE})
+ source_group("interface" FILES ${INTERFACE})
 -source_group("imGuIZMO.quat" FILES ${IMGUIZMO_QUAT_SOURCE})
 -
  target_link_libraries(Diligent-Imgui

@@ -1,0 +1,41 @@
+diff --git a/DiligentTools/Imgui/src/ImGuiImplEmscripten.cpp b/DiligentTools/Imgui/src/ImGuiImplEmscripten.cpp
+index 379e63a..efb766b 100644
+--- a/DiligentTools/Imgui/src/ImGuiImplEmscripten.cpp
++++ b/DiligentTools/Imgui/src/ImGuiImplEmscripten.cpp
+@@ -216,6 +216,6 @@ bool ImGuiImplEmscripten::OnKeyEvent(int32_t EventType, const EmscriptenKeyboard
+ {
+     auto& io = ImGui::GetIO();
+-    io.AddKeyEvent(ImGuiKey_ModCtrl, Event->ctrlKey);
+-    io.AddKeyEvent(ImGuiKey_ModShift, Event->shiftKey);
+-    io.AddKeyEvent(ImGuiKey_ModAlt, Event->altKey);
+-    io.AddKeyEvent(ImGuiKey_ModSuper, Event->metaKey);
++    io.AddKeyEvent(ImGuiMod_Ctrl, Event->ctrlKey);
++    io.AddKeyEvent(ImGuiMod_Shift, Event->shiftKey);
++    io.AddKeyEvent(ImGuiMod_Alt, Event->altKey);
++    io.AddKeyEvent(ImGuiMod_Super, Event->metaKey);
+diff --git a/DiligentTools/Imgui/src/ImGuiImplLinuxX11.cpp b/DiligentTools/Imgui/src/ImGuiImplLinuxX11.cpp
+index 93b1eb1..f447170 100644
+--- a/DiligentTools/Imgui/src/ImGuiImplLinuxX11.cpp
++++ b/DiligentTools/Imgui/src/ImGuiImplLinuxX11.cpp
+@@ -137,4 +137,4 @@ bool ImGuiImplLinuxX11::HandleXEvent(XEvent* event)
+             bool IsPressed = event->type == KeyPress;
+-            io.AddKeyEvent(ImGuiKey_ModCtrl, (event->xkey.state & ControlMask) != 0);
+-            io.AddKeyEvent(ImGuiKey_ModShift, (event->xkey.state & ShiftMask) != 0);
+-            io.AddKeyEvent(ImGuiKey_ModAlt, (event->xkey.state & Mod1Mask) != 0);
++            io.AddKeyEvent(ImGuiMod_Ctrl, (event->xkey.state & ControlMask) != 0);
++            io.AddKeyEvent(ImGuiMod_Shift, (event->xkey.state & ShiftMask) != 0);
++            io.AddKeyEvent(ImGuiMod_Alt, (event->xkey.state & Mod1Mask) != 0);
+diff --git a/DiligentTools/Imgui/src/ImGuiImplLinuxXCB.cpp b/DiligentTools/Imgui/src/ImGuiImplLinuxXCB.cpp
+index fca0d58..3ba4a54 100644
+--- a/DiligentTools/Imgui/src/ImGuiImplLinuxXCB.cpp
++++ b/DiligentTools/Imgui/src/ImGuiImplLinuxXCB.cpp
+@@ -99,6 +99,6 @@ void ImGuiImplLinuxXCB::HandleKeyEvent(xcb_key_release_event_t* event)
+     bool IsCtrlPressed  = (event->state & XCB_MOD_MASK_CONTROL) != 0;
+     bool IsShiftPressed = (event->state & XCB_MOD_MASK_SHIFT) != 0;
+     bool IsAltPressed   = (event->state & XCB_MOD_MASK_1) != 0;
+-    io.AddKeyEvent(ImGuiKey_ModCtrl, IsCtrlPressed);
+-    io.AddKeyEvent(ImGuiKey_ModShift, IsShiftPressed);
+-    io.AddKeyEvent(ImGuiKey_ModAlt, IsAltPressed);
++    io.AddKeyEvent(ImGuiMod_Ctrl, IsCtrlPressed);
++    io.AddKeyEvent(ImGuiMod_Shift, IsShiftPressed);
++    io.AddKeyEvent(ImGuiMod_Alt, IsAltPressed);

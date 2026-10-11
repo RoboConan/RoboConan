@@ -1,0 +1,10 @@
+diff --git a/DiligentCore/Graphics/GraphicsEngineVulkan/CMakeLists.txt b/DiligentCore/Graphics/GraphicsEngineVulkan/CMakeLists.txt
+index fab7cd35..b5ccf11f 100644
+--- a/DiligentCore/Graphics/GraphicsEngineVulkan/CMakeLists.txt
++++ b/DiligentCore/Graphics/GraphicsEngineVulkan/CMakeLists.txt
+@@ -178,4 +178,5 @@ set(PRIVATE_DEPENDENCIES
+     Diligent-GraphicsEngineNextGenBase
+     Diligent-ShaderTools
+     Vulkan::Headers
++    Vulkan::Loader
+ )

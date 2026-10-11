@@ -1,18 +1,20 @@
 sources:
-  "2.5.6.8":
+  "2.5.6.10":
     engine:
-      url: "https://github.com/DiligentGraphics/DiligentEngine/archive/refs/tags/API256008.zip"
-      sha256: "df7d2c7c1e91714fbe01085219ba86c7be42bf9545d8ab9ecee7518bba101ccd"
+      url: "https://github.com/DiligentGraphics/DiligentEngine/archive/refs/tags/API256010.zip"
+      sha256: "fede3536f6c19e1a36889511b694a3f9e8908d4a02c23ec90de1a335a49f55c4"
     core:
-      url: "https://github.com/DiligentGraphics/DiligentCore/archive/refs/tags/API256008.zip"
-      sha256: "e7686427eb441f032af23bed467b1ffded4499543eb6edae4242314d6cf97d51"
+      url: "https://github.com/DiligentGraphics/DiligentCore/archive/refs/tags/API256010.zip"
+      sha256: "d40dc830a80a7dd80d186584694d1bb70661b97968bc457427cd1ca95bc6fa51"
     tools:
-      url: "https://github.com/DiligentGraphics/DiligentTools/archive/refs/tags/API256008.zip"
-      sha256: "ea1ab6e3250802f6c7da9ca2ad65a4127e28becd26886934eedc7310ef5502a0"
+      url: "https://github.com/DiligentGraphics/DiligentTools/archive/refs/tags/API256010.zip"
+      sha256: "723e748b67a771e4103b1676998ec99458bb1b25290e106b3657b1620ac23526"
     fx:
-      url: "https://github.com/DiligentGraphics/DiligentFx/archive/refs/tags/API256008.zip"
-      sha256: "b46c83a4a074bb60530f53b260b4ab98e6546d1a9adf13d0d24f54452d5ae4e1"
+      url: "https://github.com/DiligentGraphics/DiligentFX/archive/refs/tags/API256010.zip"
+      sha256: "71044d8fb89689ad8ef1316aba9fb36f768df78ae0ca97077ef00f0c0a66a83c"
 patches:
-  "2.5.6.8":
+  "2.5.6.10":
       - patch_file: "patches/unvendor-imgui.patch"
       - patch_file: "patches/unvendor-deps.patch"
+      - patch_file: "patches/vulkan-loader-2.5.6.10.patch"
+      - patch_file: "patches/imgui-1.92.9-compatibility.patch"

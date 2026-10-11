@@ -8,6 +8,7 @@ from conan.tools.build import check_min_cppstd
 from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout, CMakeDeps
 from conan.tools.files import *
 from conan.tools.microsoft import is_msvc_static_runtime, is_msvc
+from conan.tools.scm import Version
 
 required_conan_version = ">=2.1"
 
@@ -55,6 +56,7 @@ class DiligentEngineConan(ConanFile):
         if self.options.with_glslang:
             self.requires("glslang/[^1.3.239.0]")
         self.requires("vulkan-headers/[^1.3.239.0]")
+        self.requires("vulkan-loader/[^1.3.239.0]", transitive_libs=True)
         self.requires("vulkan-validationlayers/[^1.3.239.0]")
         self.requires("volk/[^1.3.239.0]")
         self.requires("xxhash/[>=0.8.1 <0.9]")
@@ -64,14 +66,15 @@ class DiligentEngineConan(ConanFile):
         # TODO: unvendor DXBCChecksum from FidelityFX-SDK?
 
         # DiligentTools
-        self.requires("imgui/[^1]", transitive_headers=True, transitive_libs=True)
-        self.requires("imguizmo/1.83+git.20231114")
+        imgui_requirement = "^1.92.5" if Version(self.version) >= "2.5.6.10" else "^1 <1.92"
+        self.requires(f"imgui/[{imgui_requirement}]", transitive_headers=True, transitive_libs=True)
+        self.requires("imguizmo/[^1.9]", transitive_headers=True, transitive_libs=True)
         self.requires("libpng/[~1.6]")
         self.requires("libtiff/[>=4.5 <5]")
         self.requires("nlohmann_json/[^3.11]")
         self.requires("stb/[*]")
         self.requires("taywee-args/6.4.6")
-        self.requires("tinygltf/2.9.0")
+        self.requires("tinygltf/[^2.9]")
         self.requires("zlib-ng/[^2.0]")
         self.requires("libjpeg-meta/latest")
 
@@ -111,10 +114,6 @@ class DiligentEngineConan(ConanFile):
         with chdir(self, "DiligentTools"):
             rmdir(self, "ThirdParty")
             save(self, os.path.join("ThirdParty", "CMakeLists.txt"), "")
-            # Handle vendored imguizmo correctly
-            replace_in_file(self, os.path.join("Imgui", "CMakeLists.txt"),
-                            "source_group(",
-                            "# source_group(")
             # Use a more robust target from FindX11.cmake for xcb
             replace_in_file(self, os.path.join("NativeApp", "CMakeLists.txt"),
                             "find_library(XCB_LIBRARY xcb)",
@@ -155,7 +154,7 @@ class DiligentEngineConan(ConanFile):
         tc.cache_variables["DILIGENT_BUILD_TOOLS_TESTS"] = False
         tc.cache_variables["DILIGENT_BUILD_TOOLS_INCLUDE_TEST"] = False
         tc.cache_variables["DILIGENT_NO_RENDER_STATE_PACKAGER"] = not self.options.enable_render_state_packager
-        tc.cache_variables["ARCHIVER_SUPPORTED"] = not self.options.enable_archiver
+        tc.cache_variables["ARCHIVER_SUPPORTED"] = self.options.enable_archiver
         tc.cache_variables["GL_SUPPORTED"] = True
         tc.cache_variables["GLES_SUPPORTED"] = True
         tc.cache_variables["VULKAN_SUPPORTED"] = True
@@ -168,7 +167,7 @@ class DiligentEngineConan(ConanFile):
 
     def build(self):
         copy(self, "*",
-             os.path.join(self.dependencies["imgui"].package_folder, "share", "imgui"),
+             os.path.join(self.dependencies["imgui"].package_folder, "share", "imgui", "bindings"),
              os.path.join(self.source_folder, "DiligentTools", "Imgui", "src", "backends"))
         cmake = CMake(self)
         cmake.configure()
@@ -210,11 +209,11 @@ class DiligentEngineConan(ConanFile):
             core.system_libs = ["OpenGLES"]
         core.requires = [
             "opengl::opengl",
-            "glew::glew",
             "spirv-headers::spirv-headers",
             "spirv-cross::spirv-cross",
             "spirv-tools::spirv-tools",
             "vulkan-headers::vulkan-headers",
+            "vulkan-loader::vulkan-loader",
             "vulkan-validationlayers::vulkan-validationlayers",
             "volk::volk",
             "xxhash::xxhash",
@@ -235,7 +234,7 @@ class DiligentEngineConan(ConanFile):
             tools.frameworks = ["CoreFoundation", "Cocoa"]
         tools.requires = [
             "DiligentCore",
-            "imgui::imgui",
+            "imgui::core",
             "imguizmo::imguizmo",
             "libpng::libpng",
             "libtiff::libtiff",
