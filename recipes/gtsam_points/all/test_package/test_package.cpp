@@ -1,4 +1,6 @@
 #include <gtsam_points/factors/linear_damping_factor.hpp>
+#include <gtsam_points/util/indexed_sliding_window.hpp>
+#include <gtsam_points/util/runnning_statistics.hpp>
 
 #include <iostream>
 #include <memory>

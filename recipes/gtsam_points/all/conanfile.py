@@ -6,7 +6,7 @@ from conan.tools.build import check_min_cppstd
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.21"
 
 
 class GtsamPointsPackage(ConanFile):
@@ -113,6 +113,11 @@ class GtsamPointsPackage(ConanFile):
 
     def package_info(self):
         self.cpp_info.set_property("cmake_file_name", "gtsam_points")
+        self.cpp_info.set_property("cmake_extra_variables", {
+            "GTSAM_POINTS_USE_TBB": "ON" if self.options.tbb else "OFF",
+            "GTSAM_POINTS_USE_OPENMP": "ON" if self.options.openmp else "OFF",
+            "GTSAM_POINTS_USE_CUDA": "ON" if self.options.cuda else "OFF",
+        })
 
         gtsam_points = self.cpp_info.components["libgtsam_points"]
         gtsam_points.set_property("cmake_target_name", "gtsam_points::gtsam_points")

@@ -1,16 +1,16 @@
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -31,8 +31,8 @@
+@@ -31,8 +31,8 @@ endif()
  
  find_package(Boost REQUIRED COMPONENTS graph filesystem)
- find_package(GTSAM REQUIRED)
--find_package(GTSAM_UNSTABLE REQUIRED)
+ find_package(GTSAM 4.2 REQUIRED)
+-find_package(GTSAM_UNSTABLE 4.2 REQUIRED)
  find_package(Eigen3 REQUIRED)
 +find_package(nanoflann REQUIRED)
  
- if(BUILD_WITH_TBB)
-   find_package(TBB REQUIRED)
-@@ -202,7 +202,6 @@
+ # Set optimizer source paths based on GTSAM version
+ if(GTSAM_VERSION VERSION_LESS "4.3")
+@@ -213,7 +213,6 @@ add_library(gtsam_points SHARED
  )
  target_include_directories(gtsam_points PUBLIC
    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -18,23 +18,23 @@
    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
    $<INSTALL_INTERFACE:include>
  )
-@@ -215,6 +214,7 @@
+@@ -226,6 +225,7 @@ target_link_libraries(gtsam_points
    gtsam_unstable
    $<TARGET_NAME_IF_EXISTS:TBB::tbb>
    $<TARGET_NAME_IF_EXISTS:OpenMP::OpenMP_CXX>
 +  nanoflann::nanoflann
  )
- 
- # GPU-related
-@@ -262,6 +262,7 @@
+ set_target_properties(gtsam_points PROPERTIES
+   VERSION   ${PROJECT_VERSION}
+@@ -277,6 +277,7 @@ if(BUILD_WITH_CUDA)
      gtsam_unstable
      $<TARGET_NAME_IF_EXISTS:TBB::tbb>
      $<TARGET_NAME_IF_EXISTS:OpenMP::OpenMP_CXX>
 +    nanoflann::nanoflann
    )
- 
-   target_link_libraries(gtsam_points
-@@ -355,7 +356,7 @@
+   set_target_properties(gtsam_points_cuda PROPERTIES
+     VERSION   ${PROJECT_VERSION}
+@@ -374,7 +375,7 @@ endif()
  
  include(GNUInstallDirs)
  install(
