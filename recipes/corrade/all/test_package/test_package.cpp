@@ -1,8 +1,5 @@
-#include <Corrade/Corrade.h> // Here it is 'nothing'
-
-#ifndef VERSION_2019_10
-  #include <Corrade/version.h>
-#endif
+#include <Corrade/Corrade.h>
+#include <Corrade/version.h>
 
 #ifdef WITH_UTILITY
   #include <Corrade/Utility/Debug.h>
@@ -13,9 +10,7 @@
 int main() {
   std::cout << "Test package for Corrade\n";
 
-  #ifndef VERSION_2019_10
-    std::cout << "Corrade " << CORRADE_VERSION_YEAR << "." << CORRADE_VERSION_MONTH << std::endl;
-  #endif
+  std::cout << "Corrade " << CORRADE_VERSION_YEAR << "." << CORRADE_VERSION_MONTH << std::endl;
 
   #ifdef WITH_UTILITY
     Corrade::Utility::Debug{} << "Success";

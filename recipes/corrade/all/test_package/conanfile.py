@@ -20,9 +20,8 @@ class TestPackageConan(ConanFile):
 
     def generate(self):
         tc = CMakeToolchain(self)
+        tc.variables["WITH_MAIN"] = self.dependencies["corrade"].options.with_main
         tc.variables["WITH_UTILITY"] = self.dependencies["corrade"].options.with_utility
-        if self.dependencies["corrade"].ref.version == "2019.10":
-            tc.variables["VERSION_2019_10"] = True
         tc.generate()
 
     def build(self):
