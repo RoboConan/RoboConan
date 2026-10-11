@@ -16,6 +16,7 @@ PACKAGES = {
         # SYCL-specific
         "mkl-dpcpp",
         "mkl-devel-dpcpp",
+        "onemkl-license",
         "onemkl-sycl-include",
         "onemkl-sycl-blas",
         "onemkl-sycl-lapack",

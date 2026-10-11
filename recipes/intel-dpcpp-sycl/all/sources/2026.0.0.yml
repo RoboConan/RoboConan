@@ -1,0 +1,14 @@
+Linux:
+  intel-sycl-rt:
+    url: https://files.pythonhosted.org/packages/3a/7b/b70751dd0105741fdd23d064243291badf91cad9fd7375d1640893672524/intel_sycl_rt-2026.0.0-py2.py3-none-manylinux_2_28_x86_64.whl
+    sha256: 5ae2bf7ec928fe127ad693dd84d8fed27209be0790e36eabffb93a371ba174aa
+  intel-cmplr-lib-rt:
+    url: https://files.pythonhosted.org/packages/e1/61/50d3fb0deb97f5d57803c6bd9dcd1b6ac638e761ae16bea9d71c5187c3a3/intel_cmplr_lib_rt-2026.0.0-py2.py3-none-manylinux_2_28_x86_64.whl
+    sha256: a8ff1f8ec28a50dddd02e47c6d47eb6b758842103571956f419a53ebb6513d2d
+Windows:
+  intel-sycl-rt:
+    url: https://files.pythonhosted.org/packages/42/3b/514e3e5ca5272349951c85cb3f651be662d578af211631ac48a9645fc136/intel_sycl_rt-2026.0.0-py2.py3-none-win_amd64.whl
+    sha256: c3543518d71958d7ca6f8c3af62a2083d0ab4e0447f748f985eae6e64a3779f5
+  intel-cmplr-lib-rt:
+    url: https://files.pythonhosted.org/packages/a8/06/7460efcbe6a660b50a5a73b75d93ec3b2338676dff54baa6cc8824437c86/intel_cmplr_lib_rt-2026.0.0-py2.py3-none-win_amd64.whl
+    sha256: 1c04ca93e3d32bb08b01961abfaef9efd47fd7a2a5b4bce2e1654d79b612e61c

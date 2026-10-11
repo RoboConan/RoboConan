@@ -17,6 +17,9 @@ Linux:
   mkl-devel-dpcpp:
     url: https://files.pythonhosted.org/packages/b6/45/6623d2ccb1368baa59828144a70b1c3426dfb13e904b675d2060cb4dd3e3/mkl_devel_dpcpp-2025.3.1-py2.py3-none-manylinux_2_28_x86_64.whl
     sha256: d24dc86268447e08b9661388ba35023d927ef7ab3b196eaf7439400a5fdaa8cb
+  onemkl-license:
+    url: https://files.pythonhosted.org/packages/3e/1d/7acbedb07bf4c71cc499527c25a3ef60bf83ed41b8918e986ed7a4573bd4/onemkl_license-2025.3.1-py2.py3-none-manylinux_2_28_x86_64.whl
+    sha256: b6263a01bf29c04ea683eab1712eb6b74c2b8b722722f46fd90784ed8778c093
   onemkl-sycl-include:
     url: https://files.pythonhosted.org/packages/79/70/d64211c4cf78490b273d449a7a4bd62e11a2a61c0b6b8dbef6b7c179c244/onemkl_sycl_include-2025.3.1-py2.py3-none-manylinux_2_28_x86_64.whl
     sha256: 8cf08d257ecf004f71f6c70b49da9793332daef7e556ab062f342071900fe435
@@ -69,6 +72,9 @@ Windows:
   mkl-devel-dpcpp:
     url: https://files.pythonhosted.org/packages/42/7e/b4c9f6c461c54a01669c99966f51f40d252ecd8529ea14309f2eac2e3d3c/mkl_devel_dpcpp-2025.3.1-py2.py3-none-win_amd64.whl
     sha256: c1a23d569cdba247ed61c35da98697ffac97e191834902a61645120144b21fc0
+  onemkl-license:
+    url: https://files.pythonhosted.org/packages/1b/7f/732bd62f4ce4ddcbf97003efa856fcafc99c29e6b05deb0c1bb9cb85bdc4/onemkl_license-2025.3.1-py2.py3-none-win_amd64.whl
+    sha256: 9fa45b274f05a61797f9ec3166b136124250ec7c9c91dedb87f3a926bfed9a54
   onemkl-sycl-include:
     url: https://files.pythonhosted.org/packages/29/a2/94fc17f70e7934b34517fe9b7a8fd6939ae50b819f9fbe688296e9fcc792/onemkl_sycl_include-2025.3.1-py2.py3-none-win_amd64.whl
     sha256: fcd46d1a0dd12a34fe7e5080b2bc4a983f6643c57baae1474e4bcc4b475ded20
