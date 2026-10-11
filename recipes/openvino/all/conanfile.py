@@ -113,7 +113,7 @@ class OpenvinoConan(ConanFile):
         if self._target_x86_64:
             self.requires("xbyak/6.73")
         if self.options.get_safe("enable_gpu"):
-            self.requires("opencl-icd-loader/2023.04.17")
+            self.requires("opencl-icd-loader/[*]")
             self.requires("rapidjson/[>=0.0+git.20250205]")
         if self._protobuf_required:
             self.requires("protobuf/[>=3.21.12]")

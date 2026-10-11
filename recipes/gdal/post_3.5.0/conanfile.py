@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 
 from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
@@ -191,7 +190,7 @@ class GdalConan(ConanFile):
         if self.options.with_armadillo:
             self.requires("armadillo/[*]")
         if self.options.with_arrow:
-            self.requires("arrow/18.1.0")
+            self.requires("arrow/[>=18.1.0]")
         if self.options.with_basisu:
             self.requires("libbasisu/[^1.15.0]")
         if self.options.with_blosc:
@@ -261,7 +260,7 @@ class GdalConan(ConanFile):
         if self.options.with_odbc:
             self.requires("odbc/[^2.3.11]")
         if self.options.with_opencl:
-            self.requires("opencl-icd-loader/2023.12.14")
+            self.requires("opencl-icd-loader/[*]")
         if self.options.with_openjpeg:
             self.requires("openjpeg/[^2.5.0]")
         if self.options.with_openssl:
