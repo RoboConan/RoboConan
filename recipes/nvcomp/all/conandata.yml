@@ -1,4 +1,13 @@
 sources:
+  "5.3.0.16":  # CUDA 12, 13
+    url: "https://developer.download.nvidia.com/compute/nvcomp/redist/redistrib_5.3.0.json"
+    sha256: "6865ef6d4f14988f524aeecfd49924a764d753d9e8c3db9a3bf3bb4a7642ce29"
+  "5.2.0.10":  # CUDA 12, 13
+    url: "https://developer.download.nvidia.com/compute/nvcomp/redist/redistrib_5.2.0.json"
+    sha256: "ab7b4af736bb3c56cba263a8a1f53f77d30bc37dc9073d72b9463f3e48db0731"
+  "5.1.0.21":  # CUDA 12, 13
+    url: "https://developer.download.nvidia.com/compute/nvcomp/redist/redistrib_5.1.0.json"
+    sha256: "1810537b0f401f47c12651c0a45112dc10137daae05ee1765128699cf538c305"
   "5.0.0.6":  # CUDA 11, 12, 13
     url: "https://developer.download.nvidia.com/compute/nvcomp/redist/redistrib_5.0.0.6.json"
     sha256: "e2cb604df0971bd5a0cce108bef2dbc317edd87d96e712983c0d515af5c03501"

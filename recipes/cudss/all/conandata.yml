@@ -1,7 +1,10 @@
 sources:
-  "0.7.0.20":  # CUDA 12, 13
-    url: "https://developer.download.nvidia.com/compute/cudss/redist/redistrib_0.7.0.json"
-    sha256: "7204064d97a617bfbdea5a37008d9e9520ed84f5a23764b1eb008f8da7b4607e"
+  "0.8.0.10":  # CUDA 12, 13
+    url: "https://developer.download.nvidia.com/compute/cudss/redist/redistrib_0.8.0.json"
+    sha256: "77ce67314c6b0107bd2112e6ad6de65a955a246190492234f9470fc2a702fa0b"
+  "0.7.1.4":  # CUDA 12, 13
+    url: "https://developer.download.nvidia.com/compute/cudss/redist/redistrib_0.7.1.json"
+    sha256: "a12c4b2ac6fba07bb1a1ac9fc69c994c34cd9bff34fb61d389d2cfd98d1b3381"
   "0.6.0.5":  # CUDA 12
     url: "https://developer.download.nvidia.com/compute/cudss/redist/redistrib_0.6.0.json"
     sha256: "47e089e7b309eca7f78f7a8430cb08532800d0b575a726b9c8383221e189b3d2"

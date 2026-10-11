@@ -1,7 +1,22 @@
 sources:
-  "25.09.0.7":  # CUDA 12, 13
-    url: "https://developer.download.nvidia.com/compute/cuquantum/redist/redistrib_25.09.0.json"
-    sha256: "e500783ff87410d55122c90b3383b51d9811a4830483c9c66a37defa3a3c655f"
+  "26.09.0.8":  # CUDA 12, 13
+    url: "https://developer.download.nvidia.com/compute/cuquantum/redist/redistrib_26.09.0.json"
+    sha256: "f9898d81e03a72880524e20eaaaefe690087fb2ce50216dab1ccd3b688ba7948"
+  "26.06.0.17":  # CUDA 12, 13
+    url: "https://developer.download.nvidia.com/compute/cuquantum/redist/redistrib_26.06.0.json"
+    sha256: "d8713efcc6f8e7e0c33f44a91623ba7e6b08a0d3593e07ad9400ca543ab1a815"
+  "26.03.2.11":  # CUDA 12, 13
+    url: "https://developer.download.nvidia.com/compute/cuquantum/redist/redistrib_26.03.2.json"
+    sha256: "ae04c12df0fb71ff60f8514e0bba3fc9af6edeb72d61fa4e4a2ee9ca513d6229"
+  "26.01.0.4":  # CUDA 12, 13
+    url: "https://developer.download.nvidia.com/compute/cuquantum/redist/redistrib_26.01.0.json"
+    sha256: "ace9311d6fba53b9ec7f2b7b7caa0ff436d5e7521b01e2cdf63c92b2fc96618b"
+  "25.11.1.11":  # CUDA 12, 13
+    url: "https://developer.download.nvidia.com/compute/cuquantum/redist/redistrib_25.11.1.json"
+    sha256: "e7fe116688112f848b2d07d182e7d96240f25ea6b197419bde57670e3096c9b7"
+  "25.09.1.12":  # CUDA 12, 13
+    url: "https://developer.download.nvidia.com/compute/cuquantum/redist/redistrib_25.09.1.json"
+    sha256: "71be6d88e0e0a3e5bca7b2e28dbb2869220d49757ac2b30970e96241c2899a4e"
   "25.06.0.10":  # CUDA 11, 12
     url: "https://developer.download.nvidia.com/compute/cuquantum/redist/redistrib_25.06.0.json"
     sha256: "7a824087a8cc279aa660895213eb8045c80d62c80827cc4e0273ac6a4c595e43"

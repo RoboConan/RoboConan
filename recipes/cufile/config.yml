@@ -1,4 +1,12 @@
 versions:
+  "1.19.1.55":
+    folder: all
+  "1.18.1.6":
+    folder: all
+  "1.17.1.22":
+    folder: all
+  "1.16.1.26":
+    folder: all
   "1.15.1.6":
     folder: all
   "1.14.1.1":

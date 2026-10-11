@@ -1,4 +1,10 @@
 sources:
+  "0.10.0.12":  # CUDA 13
+    url: "https://developer.download.nvidia.com/compute/cusparselt/redist/redistrib_0.10.0.json"
+    sha256: "5bb7cb740033e5fe18825b96c7b3fc503bc325ab2b3900759b895dfceb04881b"
+  "0.9.1.1":  # CUDA 13
+    url: "https://developer.download.nvidia.com/compute/cusparselt/redist/redistrib_0.9.1.json"
+    sha256: "beb23c66efdced33b66fd076730a34f5158892b8617f277a6e2db7e8ce47b662"
   "0.8.1.1":  # CUDA 12, 13
     url: "https://developer.download.nvidia.com/compute/cusparselt/redist/redistrib_0.8.1.json"
     sha256: "d8ce601cd345630af9bb95bf2a40cca317c5f8256ebc4c5bd87af72e5f90d945"

@@ -114,7 +114,7 @@ def _fetch_and_process_redist_file(url, relevant_nv_packages, hashes, url_dates)
         version = package_info["version"]
         cuda_versions = package_info.get("cuda_variant")
         if cuda_versions:
-            cuda_versions = [int(v) for v in cuda_versions]
+            cuda_versions = [Version(v) for v in cuda_versions]
         if nv_pkg_name in relevant_nv_packages:
             results[nv_pkg_name] = (version, cuda_versions, url)
     return results

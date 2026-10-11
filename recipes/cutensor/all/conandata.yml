@@ -1,4 +1,19 @@
 sources:
+  "2.8.1.0":  # CUDA 12, 13
+    url: "https://developer.download.nvidia.com/compute/cutensor/redist/redistrib_2.8.1.json"
+    sha256: "f3fcd2a7d72ca21e334c50156c2dea7dd625516db8f39c6ddcac848f06e6930f"
+  "2.7.0.5":  # CUDA 12, 13
+    url: "https://developer.download.nvidia.com/compute/cutensor/redist/redistrib_2.7.0.json"
+    sha256: "981f6c1304c8c8af67cda6f89efcc8c5977271cb7d08302420e2480ed620f3ae"
+  "2.6.0.4":  # CUDA 12, 13
+    url: "https://developer.download.nvidia.com/compute/cutensor/redist/redistrib_2.6.0.json"
+    sha256: "986290ccdad37df455b68b12be9441412bcc793516d64bd89c318b99cdda82b6"
+  "2.5.0.2":  # CUDA 12, 13
+    url: "https://developer.download.nvidia.com/compute/cutensor/redist/redistrib_2.5.0.json"
+    sha256: "53866c3612cc16864686477dd999f88b1148e842770b7dd63a891a39202d5be9"
+  "2.4.1.4":  # CUDA 12, 13
+    url: "https://developer.download.nvidia.com/compute/cutensor/redist/redistrib_2.4.1.json"
+    sha256: "41bd730e7ccf94369272ff6725d5222e2b36f748ebde7905e3b67e4cf6df32c3"
   "2.3.1.0":  # CUDA 12, 13
     url: "https://developer.download.nvidia.com/compute/cutensor/redist/redistrib_2.3.1.json"
     sha256: "e61583437a042156786abf782dcadd86856330b4db37b946c532228f021bec14"

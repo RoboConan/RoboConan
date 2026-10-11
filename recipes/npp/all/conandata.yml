@@ -1,13 +1,19 @@
 sources:
-  "13.0.1.2":
-    url: "https://developer.download.nvidia.com/compute/cuda/redist/redistrib_13.0.1.json"
-    sha256: "9c494bc13b34e8fbcad083a6486d185b0906068b821722502edf9d0e3bd14096"
+  "13.2.0.58":
+    url: "https://developer.download.nvidia.com/compute/cuda/redist/redistrib_13.4.2.json"
+    sha256: "a6a1dbdfbecb190a55712da723c2a69b4fb55a37cc2da2a5dd65f614c6384a51"
+  "13.1.2.81":
+    url: "https://developer.download.nvidia.com/compute/cuda/redist/redistrib_13.3.1.json"
+    sha256: "a93703b6d7b8e4847c6640918904c5e7b96726d3eab8fbf8c9a9fce527a65bd0"
+  "13.0.3.3":
+    url: "https://developer.download.nvidia.com/compute/cuda/redist/redistrib_13.1.2.json"
+    sha256: "33001778b29e0ad294d97eed123f2aec99a15403e8505eef43a86cdcdd6ef583"
   "12.4.1.87":
-    url: "https://developer.download.nvidia.com/compute/cuda/redist/redistrib_12.9.1.json"
-    sha256: "8335301010b0023ee1ff61eb11e2600ca62002d76780de4089011ad77e0c7630"
+    url: "https://developer.download.nvidia.com/compute/cuda/redist/redistrib_12.9.2.json"
+    sha256: "236b051e6c7915a31ed9da369ea74ddb5b0fbf77eb1dffc10640e7ce6ed10257"
   "12.3.3.100":
-    url: "https://developer.download.nvidia.com/compute/cuda/redist/redistrib_12.8.1.json"
-    sha256: "249e28a83008d711d5f72880541c8be6253f6d61608461de4fcb715554a6cf17"
+    url: "https://developer.download.nvidia.com/compute/cuda/redist/redistrib_12.8.2.json"
+    sha256: "bbf0798e9aabdd6887b429f0d1ff27412bca2ead081f898a18f0381cd8cb7359"
   "12.2.5.30":
     url: "https://developer.download.nvidia.com/compute/cuda/redist/redistrib_12.4.1.json"
     sha256: "9cd815f3b71c2e3686ef2219b7794b81044f9dcefaa8e21dacfcb5bc4d931892"

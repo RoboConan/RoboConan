@@ -1,4 +1,4 @@
 sources:
-  "13.0.85":
-    url: "https://developer.download.nvidia.com/compute/cuda/redist/redistrib_13.0.1.json"
-    sha256: "9c494bc13b34e8fbcad083a6486d185b0906068b821722502edf9d0e3bd14096"
+  "13.4.92":
+    url: "https://developer.download.nvidia.com/compute/cuda/redist/redistrib_13.4.2.json"
+    sha256: "a6a1dbdfbecb190a55712da723c2a69b4fb55a37cc2da2a5dd65f614c6384a51"
