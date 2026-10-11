@@ -115,7 +115,7 @@ class OpenVDBConan(ConanFile):
     def requirements(self):
         # https://github.com/AcademySoftwareFoundation/openvdb/blob/v10.0.1/doc/dependencies.txt#L36-L84
         self.requires("boost/[^1.71.0]", transitive_headers=True, libs=False)
-        self.requires("onetbb/[>=2021 <2023]", transitive_headers=True, transitive_libs=True)
+        self.requires("onetbb/[>=2021]", transitive_headers=True, transitive_libs=True)
         if self.options.use_imath_half:
             self.requires("imath/[^3.1.9]", transitive_headers=True, transitive_libs=True)
         if self.options.with_zlib:

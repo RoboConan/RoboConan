@@ -95,7 +95,7 @@ class OneDNNConan(ConanFile):
         if self.options.cpu_runtime == "omp":
             self.requires("openmp/system")
         elif self.options.cpu_runtime == "tbb":
-            self.requires("onetbb/[>=2021.5 <2023]")
+            self.requires("onetbb/[>=2021]")
         if self.options.gpu_runtime == "ocl":
             self.requires("opencl-icd-loader/[*]")
             self.requires("opencl-headers/[*]", transitive_headers=True)

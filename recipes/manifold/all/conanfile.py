@@ -42,7 +42,7 @@ class ManifoldConan(ConanFile):
             # For CrossSection for 2D support
             self.requires("clipper2/1.4.0")
         if self.options.with_tbb:
-            self.requires("onetbb/[>=2021 <2023]")
+            self.requires("onetbb/[>=2021]")
 
     def validate(self):
         check_min_cppstd(self, 17)

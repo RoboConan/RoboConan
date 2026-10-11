@@ -115,8 +115,8 @@ class GtsamConan(ConanFile):
         self.requires("eigen/[>=3.3 <6]", transitive_headers=True)
         self.requires("spectra/[^1.1.0]")
         if self.options.with_TBB:
-            self.requires("onetbb/[>=2021 <2023]", transitive_headers=True, transitive_libs=True)
-        if self.options.default_allocator == "tcmalloc":
+            self.requires("onetbb/[>=2021]", transitive_headers=True, transitive_libs=True)
+        if self.options.default_allocator == "tcmalloc" or self.options.get_safe("with_gperftools"):
             self.requires("gperftools/[^2.16]")
         if self.options.support_nested_dissection:
             # Used in a public header here:

@@ -594,7 +594,7 @@ class OpenCVConan(ConanFile):
         if self.options.parallel == "openmp":
             self.requires("openmp/system")
         elif self.options.parallel == "tbb":
-            self.requires("onetbb/[>=2021 <2023]")
+            self.requires("onetbb/[>=2021]")
         if self.options.with_ipp == "intel-ipp":
             self.requires("intel-ipp/[*]")
         if self.options.get_safe("with_opencl") and not is_apple_os(self):

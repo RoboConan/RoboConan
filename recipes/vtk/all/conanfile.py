@@ -379,7 +379,7 @@ class VtkConan(ConanFile):
             self.requires("openmp/system", transitive_headers=True, transitive_libs=True)
         if self.options.smp_enable_tbb:
             # Used in public SMP/TBB/vtkSMPToolsImpl.txx
-            self.requires("onetbb/[>=2021 <2023]", transitive_headers=True, transitive_libs=True)
+            self.requires("onetbb/[>=2021]", transitive_headers=True, transitive_libs=True)
 
         # Not available on CCI
         # vtk-m

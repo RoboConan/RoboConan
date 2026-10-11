@@ -42,7 +42,7 @@ class XtensorConan(ConanFile):
             else:
                 self.requires("xsimd/[^7.5.0]")
         if self.options.tbb:
-            self.requires("onetbb/[>=2021 <2023]")
+            self.requires("onetbb/[>=2021]")
         if self.options.openmp:
             self.requires("openmp/system")
 

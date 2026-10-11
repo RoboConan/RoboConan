@@ -114,7 +114,7 @@ class OpenCascadeConan(ConanFile):
         if self.options.get_safe("with_draco"):
             self.requires("draco/1.5.6")
         if self.options.with_tbb:
-            self.requires("onetbb/[>=2021 <2023]")
+            self.requires("onetbb/[>=2021]")
 
     def validate(self):
         check_min_cppstd(self, self._min_cppstd)

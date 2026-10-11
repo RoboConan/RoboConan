@@ -78,7 +78,7 @@ class OsrmConan(ConanFile):
         self.requires("expat/[>=2.6.2 <3]")
         self.requires("libosmium/[^2.20.0]")
         self.requires("lua/[^5.4.6]")
-        self.requires("onetbb/[>=2021 <2023]")
+        self.requires("onetbb/[>=2021]")
         self.requires("zlib-ng/[^2.0]")
         # unvendored deps
         self.requires("flatbuffers/1.12.0", transitive_headers=True, transitive_libs=True) # newer versions are not compatible

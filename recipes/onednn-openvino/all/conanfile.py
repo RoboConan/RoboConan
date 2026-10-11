@@ -46,7 +46,7 @@ class OneDNNOpenVINOConan(ConanFile):
         if self.options.cpu_runtime == "omp":
             self.requires("openmp/system")
         elif self.options.cpu_runtime == "tbb":
-            self.requires("onetbb/[>=2021.5 <2023]")
+            self.requires("onetbb/[>=2021]")
         # Unvendored third-party dependencies
         self.requires("spdlog/[^1.11.0]")
         if self.settings.arch in ["x86", "x86_64", "armv8"]:

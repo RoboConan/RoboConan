@@ -52,7 +52,7 @@ class GtsamPointsPackage(ConanFile):
         if self.options.openmp:
             self.requires("openmp/system", transitive_headers=True, transitive_libs=True)
         if self.options.tbb:
-            self.requires("onetbb/[>=2021 <2023]")
+            self.requires("onetbb/[>=2021]")
         if self.options.cuda:
             self.cuda.requires("cudart", transitive_headers=True, transitive_libs=True)
 

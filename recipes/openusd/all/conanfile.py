@@ -103,7 +103,7 @@ class OpenUSDConan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("onetbb/[>=2021 <2023]", transitive_headers=True)
+        self.requires("onetbb/[>=2021]", transitive_headers=True)
         if self.options.build_imaging:
             self.requires("opengl/system")
             self.requires("opensubdiv/3.6.0")

@@ -106,7 +106,7 @@ class OpenvinoConan(ConanFile):
         return f"{dependency}/{self._dependency_versions[dependency]}"
 
     def requirements(self):
-        self.requires("onetbb/[>=2021 <2023]")
+        self.requires("onetbb/[>=2021]")
         self.requires("pugixml/[^1.14]")
         if Version(self.version) >= "2025.1.0":
                 self.requires("nlohmann_json/3.11.3")

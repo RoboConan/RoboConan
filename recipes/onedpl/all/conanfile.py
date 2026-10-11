@@ -52,7 +52,7 @@ class OneDplConan(ConanFile):
 
     def requirements(self):
         if self.options.backend == "tbb":
-            self.requires("onetbb/[>=2021 <2023]")
+            self.requires("onetbb/[>=2021]")
 
     def package_id(self):
         self.info.clear()

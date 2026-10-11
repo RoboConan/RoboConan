@@ -105,7 +105,7 @@ class OpenImageIOConan(ConanFile):
             # INFO: https://github.com/AcademySoftwareFoundation/OpenImageIO/blob/v2.5.4.0/src/libOpenImageIO/CMakeLists.txt#L131
             self.requires("opencv/[^4.5]", transitive_headers=True)
         if self.options.with_tbb:
-            self.requires("onetbb/[>=2021 <2023]")
+            self.requires("onetbb/[>=2021]")
         if self.options.with_dicom:
             self.requires("dcmtk/[^3.6.7]")
         if self.options.with_ffmpeg:

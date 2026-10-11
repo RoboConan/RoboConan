@@ -41,7 +41,7 @@ class IridescenceConan(ConanFile):
             # Note: native MSVC OpenMP is not compatible
             self.requires("openmp/system", transitive_headers=True, transitive_libs=True)
         if self.options.with_tbb:
-            self.requires("onetbb/[>=2021 <2023]", transitive_headers=True, transitive_libs=True)
+            self.requires("onetbb/[>=2021]", transitive_headers=True, transitive_libs=True)
 
     def validate(self):
         check_min_cppstd(self, 17)
