@@ -20,10 +20,12 @@ class MeshOptimizerConan(ConanFile):
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
+        "build_gltfpack": [True, False],
     }
     default_options = {
         "shared": False,
         "fPIC": True,
+        "build_gltfpack": False,
     }
     implements = ["auto_shared_fpic"]
 
@@ -35,7 +37,10 @@ class MeshOptimizerConan(ConanFile):
 
     def generate(self):
         tc = CMakeToolchain(self)
+        tc.variables["MESHOPT_BUILD_DEMO"] = False
+        tc.variables["MESHOPT_BUILD_GLTFPACK"] = self.options.build_gltfpack
         tc.variables["MESHOPT_BUILD_SHARED_LIBS"] = self.options.shared
+        tc.variables["MESHOPT_INSTALL"] = True
         tc.generate()
 
     def build(self):
@@ -62,3 +67,5 @@ class MeshOptimizerConan(ConanFile):
             self.cpp_info.defines = ["MESHOPTIMIZER_ALLOC_EXPORT"]
             if self.settings.os == "Windows":
                 self.cpp_info.defines.append("MESHOPTIMIZER_API=__declspec(dllimport)")
+            else:
+                self.cpp_info.defines.append('MESHOPTIMIZER_API=__attribute__((visibility("default")))')
