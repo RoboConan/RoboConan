@@ -1,7 +1,9 @@
 versions:
-  "4.3.2":
+  "4.4.4":
     folder: "binary"
-  "4.2.5":
+  "4.3.5":
+    folder: "binary"
+  "4.2.8":
     folder: "binary"
   "4.1.6":
     folder: "binary"
