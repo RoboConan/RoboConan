@@ -1,4 +1,11 @@
 sources:
+  "3.21+jun2026":
+    sources:
+      url: "https://github.com/microsoft/DirectXMath/archive/refs/tags/jun2026.tar.gz"
+      sha256: "cb46002679b16a25fd11d0a2a13f6a7c7bf9c51bf04258fb5485e5b839da8474"
+    sal.h:
+      url: "https://raw.githubusercontent.com/dotnet/runtime/refs/tags/v9.0.9/src/coreclr/pal/inc/rt/sal.h"
+      sha256: "e26ee611231a859b5a800eb2e1606e7ca03b8e3981d7c98cf1ca20c89b658b68"
   "3.20":
     sources:
       url: "https://github.com/microsoft/DirectXMath/archive/refs/tags/apr2025.tar.gz"
