@@ -33,7 +33,7 @@ class SuiteSparseAmdConan(ConanFile):
 
     def requirements(self):
         # BLAS and OpenMP are provided via suitesparse-config
-        self.requires("suitesparse-config/[^7.8.3]", transitive_headers=True, transitive_libs=True)
+        self.requires("suitesparse-config/[^7.11.0]", transitive_headers=True, transitive_libs=True)
 
     def build_requirements(self):
         self.tool_requires("cmake/[>=3.22 <5]")

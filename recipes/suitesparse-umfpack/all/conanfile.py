@@ -5,6 +5,7 @@ from conan import ConanFile
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
 from conan.tools.microsoft import is_msvc
+from conan.tools.scm import Version
 
 required_conan_version = ">=2.4"
 
@@ -36,10 +37,15 @@ class SuiteSparseUmfpackConan(ConanFile):
 
     def requirements(self):
         # BLAS and OpenMP are provided via suitesparse-config
-        self.requires("suitesparse-config/[^7.8.3]", transitive_headers=True, transitive_libs=True)
-        self.requires("suitesparse-amd/[^3.3.3]", transitive_headers=True, transitive_libs=True)
+        if Version(self.version) >= "6.3.8":
+            self.requires("suitesparse-config/[^7.12.3]", transitive_headers=True, transitive_libs=True)
+            self.requires("suitesparse-amd/[^3.3.4]", transitive_headers=True, transitive_libs=True)
+        else:
+            self.requires("suitesparse-config/[^7.8.3]", transitive_headers=True, transitive_libs=True)
+            self.requires("suitesparse-amd/[^3.3.3]", transitive_headers=True, transitive_libs=True)
         if self.options.with_cholmod:
-            self.requires("suitesparse-cholmod/[^5.3.0]")
+            cholmod_version = "5.3.5" if Version(self.version) >= "6.3.8" else "5.3.0"
+            self.requires(f"suitesparse-cholmod/[^{cholmod_version}]")
 
     def build_requirements(self):
         self.tool_requires("cmake/[>=3.22 <5]")

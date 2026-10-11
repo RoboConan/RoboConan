@@ -4,6 +4,7 @@ from conan import ConanFile
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
 from conan.tools.microsoft import is_msvc
+from conan.tools.scm import Version
 
 required_conan_version = ">=2.4"
 
@@ -58,11 +59,18 @@ class SuiteSparseCholmodConan(ConanFile):
 
     def requirements(self):
         # BLAS and OpenMP are provided via suitesparse-config
-        self.requires("suitesparse-config/[^7.8.3]", transitive_headers=True, transitive_libs=True)
-        self.requires("suitesparse-amd/[^3.3.3]")
-        self.requires("suitesparse-camd/[^3.3.3]")
-        self.requires("suitesparse-colamd/[^3.3.4]")
-        self.requires("suitesparse-ccolamd/[^3.3.4]")
+        if Version(self.version) >= "5.3.5":
+            self.requires("suitesparse-config/[^7.12.3]", transitive_headers=True, transitive_libs=True)
+            self.requires("suitesparse-amd/[^3.3.4]")
+            self.requires("suitesparse-camd/[^3.3.5]")
+            self.requires("suitesparse-colamd/[^3.3.5]")
+            self.requires("suitesparse-ccolamd/[^3.3.5]")
+        else:
+            self.requires("suitesparse-config/[^7.8.3]", transitive_headers=True, transitive_libs=True)
+            self.requires("suitesparse-amd/[^3.3.3]")
+            self.requires("suitesparse-camd/[^3.3.3]")
+            self.requires("suitesparse-colamd/[^3.3.4]")
+            self.requires("suitesparse-ccolamd/[^3.3.4]")
 
         # A modified vendored version of METIS v5.1.0 is included,
         # but it has been modified to not conflict with the general version

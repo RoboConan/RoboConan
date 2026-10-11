@@ -36,11 +36,24 @@ def sha256(data):
     return sha.hexdigest()
 
 
-def extract_version(content):
-    major = re.search(r"^set *\( *(\w+)_VERSION_MAJOR +(\d+) ", content, re.M).group(2)
-    minor = re.search(r"^set *\( *(\w+)_VERSION_MINOR +(\d+) ", content, re.M).group(2)
-    sub = re.search(r"^set *\( *(\w+)_VERSION_(?:SUB|PATCH|UPDATE) +(\d+) ", content, re.M).group(2)
-    return f"{major}.{minor}.{sub}"
+def extract_version(content, variable=None):
+    if variable is None:
+        match = re.search(r"^set *\( *(\w+)_VERSION_MAJOR +\d+ ", content, re.M)
+        if match is None:
+            raise ValueError("Failed to find the version variable")
+        variable = f"{match.group(1)}_VERSION"
+
+    components = []
+    for suffix in ["MAJOR", "MINOR", "(?:SUB|PATCH|UPDATE)"]:
+        match = re.search(
+            rf"^set *\( *{re.escape(variable)}_{suffix} +(\d+)(?: +|\))",
+            content,
+            re.M,
+        )
+        if match is None:
+            raise ValueError(f"Failed to find {variable}_{suffix}")
+        components.append(match.group(1))
+    return ".".join(components)
 
 
 def load_versions(tar_gz_bytes):
@@ -59,14 +72,19 @@ def load_versions(tar_gz_bytes):
                 versions[pkg_name] = extract_version(content)
             elif member.name.endswith("GraphBLAS_version.cmake"):
                 content = tar.extractfile(member).read().decode("utf8")
-                versions["suitesparse-graphblas"] = extract_version(content)
+                versions["suitesparse-graphblas"] = extract_version(content, "GraphBLAS_VER")
     return versions
+
+
+def current_version(pkg_name):
+    config_yml_path = recipes_root / pkg_name / "config.yml"
+    info = yaml.safe_load(config_yml_path.read_text("utf8"))
+    return str(max(Version(v) for v in info["versions"]))
 
 
 def update_config_yml(pkg_name, new_version):
     config_yml_path = recipes_root / pkg_name / "config.yml"
-    info = yaml.safe_load(config_yml_path.read_text("utf8"))
-    latest = str(max(Version(v) for v in info["versions"]))
+    latest = current_version(pkg_name)
     if latest == new_version:
         print(f"{pkg_name}: already up-to-date ({latest})")
         return False
@@ -127,12 +145,21 @@ def main(suitesparse_version):
     suitesparse_hash = sha256(tar_gz_bytes)
     print("Reading versions from CMakeLists.txt files...")
     versions = load_versions(tar_gz_bytes)
+
+    graphblas_version = versions["suitesparse-graphblas"]
+    graphblas_source = None
+    if current_version("suitesparse-graphblas") != graphblas_version:
+        graphblas_url = (
+            "https://github.com/DrTimothyAldenDavis/GraphBLAS/"
+            f"archive/refs/tags/v{graphblas_version}.tar.gz"
+        )
+        graphblas_source = (graphblas_url, sha256(download(graphblas_url)))
+
     for pkg_name, new_version in versions.items():
         needs_updating = update_config_yml(pkg_name, new_version)
         if needs_updating:
             if pkg_name == "suitesparse-graphblas":
-                graphblas_url = f"https://github.com/DrTimothyAldenDavis/GraphBLAS/archive/refs/tags/v{new_version}.tar.gz"
-                graphblas_hash = sha256(download(graphblas_url))
+                graphblas_url, graphblas_hash = graphblas_source
                 update_conandata_yml(pkg_name, new_version, graphblas_url, graphblas_hash)
             else:
                 update_conandata_yml(pkg_name, new_version, suitesparse_url, suitesparse_hash)
