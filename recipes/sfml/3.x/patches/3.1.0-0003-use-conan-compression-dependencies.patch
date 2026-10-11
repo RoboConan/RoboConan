@@ -1,0 +1,16 @@
+--- a/src/SFML/Graphics/CMakeLists.txt
++++ b/src/SFML/Graphics/CMakeLists.txt
+@@ -101,13 +101,6 @@ target_include_directories(sfml-graphics SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/
+ # qoi sources
+ target_include_directories(sfml-graphics SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/extlibs/headers/qoi")
+ 
+-# find external libraries
+-if(SFML_OS_ANDROID)
+-    target_link_libraries(sfml-graphics PRIVATE z)
+-elseif(SFML_OS_IOS)
+-    target_link_libraries(sfml-graphics PRIVATE z bz2)
+-endif()
+-
+ if(SFML_USE_SYSTEM_DEPS)
+     find_package(Freetype REQUIRED)
+     find_package(HarfBuzz REQUIRED)

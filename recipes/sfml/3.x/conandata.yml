@@ -1,0 +1,15 @@
+sources:
+  "3.1.0":
+    url: "https://www.sfml-dev.org/files/SFML-3.1.0-sources.zip"
+    sha256: "4a76170c75daabf9a05807ea838e63f93fbb34efa7b5f60bfc2b508f8cb06b6e"
+patches:
+  "3.1.0":
+    - patch_file: "patches/3.1.0-0001-use-system-sheenbidi.patch"
+      patch_description: "Use the Conan-provided SheenBidi library"
+      patch_type: "conan"
+    - patch_file: "patches/3.1.0-0002-preserve-conan-install-layout.patch"
+      patch_description: "Preserve Conan's install prefix and library layout on Android"
+      patch_type: "conan"
+    - patch_file: "patches/3.1.0-0003-use-conan-compression-dependencies.patch"
+      patch_description: "Use compression libraries from Conan dependency metadata"
+      patch_type: "conan"
