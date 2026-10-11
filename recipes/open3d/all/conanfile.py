@@ -28,6 +28,7 @@ class Open3dConan(ConanFile):
         "build_gui": [True, False],
         "with_cuda": [True, False],
         "with_openmp": [True, False],
+        "with_ipp": [True, False],
     }
     default_options = {
         "shared": False,
@@ -35,6 +36,7 @@ class Open3dConan(ConanFile):
         "build_gui": False,
         "with_cuda": False,
         "with_openmp": True,
+        "with_ipp": False,
     }
     implements = ["auto_shared_fpic"]
 
@@ -96,9 +98,9 @@ class Open3dConan(ConanFile):
             self.cuda.requires("cusolver", transitive_libs=True)
             self.requires("cutlass/[>=3 <5]", transitive_libs=True)
             self.requires("stdgpu/1.3.0-nvblox.20240211", transitive_headers=True, transitive_libs=True)
+        if self.options.with_ipp:
+            self.requires("intel-ipp/[*]", transitive_headers=True, transitive_libs=True)
 
-        # if self.options.with_ipp:
-        #     self.requires("intel-ipp/[^2021.9]", transitive_headers=True, transitive_libs=True)
         # if self.options.with_librealsense:
         #     self.requires("librealsense2/[^2.54]", transitive_headers=True, transitive_libs=True)
 
@@ -150,7 +152,7 @@ class Open3dConan(ConanFile):
         tc.cache_variables["BUILD_SYCL_MODULE"] = False
         tc.cache_variables["BUILD_TENSORFLOW_OPS"] = False
         tc.cache_variables["BUILD_WEBRTC"] = self.options.get_safe("with_webrtc", False)
-        tc.cache_variables["WITH_IPP"] = self.options.get_safe("with_ipp", False)
+        tc.cache_variables["WITH_IPP"] = self.options.with_ipp
         tc.cache_variables["WITH_OPENMP"] = self.options.with_openmp
         tc.cache_variables["BUNDLE_OPEN3D_ML"] = False
         tc.cache_variables["FILAMENT_MATC"] = "matc"
@@ -284,5 +286,5 @@ class Open3dConan(ConanFile):
             self.cpp_info.defines.append("BUILD_SYCL_MODULE")
         if self.dependencies["blas"].options.provider != "mkl":
             self.cpp_info.defines.append("USE_BLAS")
-        if self.options.get_safe("with_ipp"):
+        if self.options.with_ipp:
             self.cpp_info.defines.append("WITH_IPP")
