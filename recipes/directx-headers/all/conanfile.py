@@ -5,6 +5,7 @@ from conan.errors import ConanInvalidConfiguration
 from conan.tools.build import check_min_cppstd
 from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
 from conan.tools.files import *
+from conan.tools.scm import Version
 
 required_conan_version = ">=2.1"
 
@@ -54,8 +55,10 @@ class DirectXHeadersConan(ConanFile):
         self.cpp_info.set_property("pkg_config_name", "DirectX-Headers")
 
         self.cpp_info.components["headers"].set_property("cmake_target_name", "Microsoft::DirectX-Headers")
+        if Version(self.version) >= "1.610.2":
+            self.cpp_info.components["headers"].libs = ["DirectX-Headers"]
         if self.settings.os == "Linux" or self.settings.get_safe("os.subsystem") == "wsl":
-            self.cpp_info.components["headers"].includedirs.append(os.path.join("include", "wsl", "stubs"))
+            self.cpp_info.components["headers"].includedirs.append("include/wsl/stubs")
         if self.settings.os == "Windows":
             self.cpp_info.components["headers"].system_libs.append("d3d12")
             if self.settings.compiler == "msvc":

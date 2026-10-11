@@ -1,4 +1,7 @@
 sources:
+  "1.619.5":
+    url: "https://github.com/microsoft/DirectX-Headers/archive/refs/tags/v1.619.5.tar.gz"
+    sha256: "24a0b7d8079a2dbbc90753c0d8bc812040d052acce2302e69a97c5d873b313b8"
   "1.618.1":
     url: "https://github.com/microsoft/DirectX-Headers/archive/refs/tags/v1.618.1.tar.gz"
     sha256: "92b8b06e3dce4e689eb2e1c8545c919d385b141314d30ef5adbad4bfdddf5eb3"
