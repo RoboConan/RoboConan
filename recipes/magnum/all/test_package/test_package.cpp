@@ -1,5 +1,6 @@
 #include "Magnum/Math/Vector.h"
 #include "Magnum/Math/StrictWeakOrdering.h"
+#include "Magnum/version.h"
 #include <Corrade/PluginManager/Manager.h>
 #include <Magnum/Trade/AbstractImporter.h>
 
@@ -15,6 +16,8 @@
 */
 
 int main() {
+    std::cout << "Magnum " << MAGNUM_VERSION_YEAR << "." << MAGNUM_VERSION_MONTH << "\n";
+
     // Test some basic Magnum
     const Magnum::Math::Vector<2, Magnum::Float> v2a{1.0f, 2.0f};
     const Magnum::Math::Vector<2, Magnum::Float> v2b{2.0f, 3.0f};
