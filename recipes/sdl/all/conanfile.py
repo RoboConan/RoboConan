@@ -81,6 +81,9 @@ class SDLConan(ConanFile):
     }
     generators = "CMakeDeps", "PkgConfigDeps"
 
+    def export_sources(self):
+        export_conandata_patches(self)
+
     @property
     def _is_clang_cl(self):
         return self.settings.os == "Windows" and self.settings.compiler == "clang" and \
@@ -145,7 +148,7 @@ class SDLConan(ConanFile):
             self.requires("libiconv/[^1.17]")
         if self.settings.os == "Linux":
             if self.options.alsa:
-                self.requires("libalsa/[^1.2.10]")
+                self.requires("libalsa/[^1.0.11]")
             if self.options.pulse:
                 self.requires("pulseaudio/[^17.0]")
             if self.options.opengl:
@@ -183,6 +186,7 @@ class SDLConan(ConanFile):
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
+        apply_conandata_patches(self)
 
     def _patch_sources(self):
         if Version(self.version) < "2.30.0":

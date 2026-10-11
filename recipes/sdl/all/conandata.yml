@@ -8,3 +8,9 @@ sources:
   "2.28.5":
     url: "https://www.libsdl.org/release/SDL2-2.28.5.tar.gz"
     sha256: "332cb37d0be20cb9541739c61f79bae5a477427d79ae85e352089afdaf6666e4"
+patches:
+  "2.32.10":
+    - patch_file: "patches/2.32.10-alsa-info-free-signature.patch"
+      patch_description: "Fix the snd_pcm_info_free function pointer signature"
+      patch_type: "backport"
+      patch_source: "https://github.com/libsdl-org/SDL/commit/f0e7000f9229a058610446edc9e5e7ba0380ae85"
