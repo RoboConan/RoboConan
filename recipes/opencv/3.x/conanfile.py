@@ -1,5 +1,4 @@
 import os
-import textwrap
 
 from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
@@ -8,7 +7,7 @@ from conan.tools.files import *
 from conan.tools.microsoft import is_msvc, is_msvc_static_runtime
 from conan.tools.scm import Version
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.21"
 
 
 class OpenCVConan(ConanFile):
@@ -266,34 +265,6 @@ class OpenCVConan(ConanFile):
         if os.path.isfile(os.path.join(self.package_folder, "setup_vars_opencv3.cmd")):
             rename(self, os.path.join(self.package_folder, "setup_vars_opencv3.cmd"),
                          os.path.join(self.package_folder, "share", "setup_vars_opencv3.cmd"))
-        self._create_cmake_module_variables(os.path.join(self.package_folder, self._module_vars_rel_path))
-
-    def _create_cmake_module_variables(self, module_file):
-        """
-        Define several CMake variables from upstream CMake config file not defined by default by CMakeDeps.
-        See https://github.com/opencv/opencv/blob/3.4.20/cmake/templates/OpenCVConfig.cmake.in
-        """
-        v = Version(self.version)
-        content = textwrap.dedent(f"""\
-            if(NOT DEFINED OpenCV_LIBS)
-                set(OpenCV_LIBS opencv::opencv)
-            endif()
-            if(NOT DEFINED OpenCV_VERSION_MAJOR)
-                set(OpenCV_VERSION_MAJOR {v.major})
-            endif()
-            if(NOT DEFINED OpenCV_VERSION_MINOR)
-                set(OpenCV_VERSION_MINOR {v.minor})
-            endif()
-            if(NOT DEFINED OpenCV_VERSION_PATCH)
-                set(OpenCV_VERSION_PATCH {v.patch})
-            endif()
-        """)
-        save(self, module_file, content)
-
-    @property
-    def _module_vars_rel_path(self):
-        return os.path.join("lib", "cmake", f"conan-official-{self.name}-variables.cmake")
-
     @property
     def _opencv_components(self):
         def imageformats_deps():
@@ -387,7 +358,13 @@ class OpenCVConan(ConanFile):
 
     def package_info(self):
         self.cpp_info.set_property("cmake_file_name", "OpenCV")
-        self.cpp_info.set_property("cmake_build_modules", [self._module_vars_rel_path])
+        v = Version(self.version)
+        self.cpp_info.set_property("cmake_extra_variables", {
+            "OpenCV_LIBS": "opencv::opencv",
+            "OpenCV_VERSION_MAJOR": int(v.major),
+            "OpenCV_VERSION_MINOR": int(v.minor),
+            "OpenCV_VERSION_PATCH": int(v.patch),
+        })
 
         version = self.version.split(".")
         version = "".join(version) if self.settings.os == "Windows" else ""

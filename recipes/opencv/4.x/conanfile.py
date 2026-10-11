@@ -4,7 +4,7 @@ import textwrap
 from pathlib import Path
 
 from conan import ConanFile
-from conan.errors import ConanException, ConanInvalidConfiguration
+from conan.errors import ConanInvalidConfiguration
 from conan.tools.apple import is_apple_os
 from conan.tools.build import check_min_cppstd
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
@@ -13,7 +13,7 @@ from conan.tools.gnu import PkgConfigDeps
 from conan.tools.microsoft import is_msvc, msvc_runtime_flag
 from conan.tools.scm import Version
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.21"
 
 
 OPENCV_MAIN_MODULES_OPTIONS = (
@@ -475,714 +475,18 @@ class OpenCVConan(ConanFile):
             self.options.cpu_baseline = "NEON"
             self.options.cpu_dispatch = ""
 
-    @property
-    def _opencv_modules(self):
-        def imageformats_deps():
-            components = []
-            if self.options.get_safe("with_avif"):
-                components.append("libavif::libavif")
-            if self.options.get_safe("with_jpeg"):
-                components.append("libjpeg-meta::jpeg")
-            if self.options.get_safe("with_jpegxl"):
-                components.append("libjxl::libjxl")
-            if self.options.get_safe("with_jpeg2000"):
-                components.append("{0}::{0}".format(self.options.with_jpeg2000))
-            if self.options.get_safe("with_png"):
-                components.append("libpng::libpng")
-            if self.options.get_safe("with_tiff"):
-                components.append("libtiff::tiff")
-            if self.options.get_safe("with_openexr"):
-                components.append("openexr::openexr")
-            if self.options.get_safe("with_webp"):
-                components.append("libwebp::libwebp")
-            if self.options.get_safe("with_gdal"):
-                components.append("gdal::gdal")
-            if self.options.get_safe("with_gdcm"):
-                components.append("gdcm::gdcm")
-            return components
-
-        def itt():
-            return ["ittapi::ittapi"] if self.options.with_itt else []
-
-        def dc1394():
-            return ["libdc1394::libdc1394"] if self.options.get_safe("with_1394") else []
-
-        def aravis():
-            return ["aravis::aravis"] if self.options.get_safe("with_aravis") else []
-
-        def eigen():
-            return ["eigen::eigen"] if self.options.with_eigen else []
-
-        def lapack():
-            return ["lapack::lapack"] if self.options.get_safe("with_lapack") else []
-
-        def _clp():
-            if not self.options.get_safe("with_clp"):
-                return []
-            if Version(self.version) >= "4.14.0":
-                return ["coin-clp::clp"]
-            return ["coin-clp::coin-clp"]
-
-        def ffmpeg():
-            components = []
-            if self.options.get_safe("with_ffmpeg"):
-                components = ["ffmpeg::avcodec", "ffmpeg::avformat", "ffmpeg::avutil", "ffmpeg::swscale"]
-            return components
-
-        def gphoto2():
-            return ["libgphoto2::libgphoto2"] if self.options.get_safe("with_gphoto2") else []
-
-        def gstreamer():
-            if self.options.get_safe("with_gstreamer"):
-                return [
-                    "gstreamer::gstreamer-base-1.0",
-                    "gst-plugins-base::gstreamer-app-1.0",
-                    "gst-plugins-base::gstreamer-riff-1.0",
-                    "gst-plugins-base::gstreamer-pbutils-1.0",
-                    "gst-plugins-base::gstreamer-video-1.0",
-                    "gst-plugins-base::gstreamer-audio-1.0",
-                ]
-            return []
-
-        def openni2():
-            return ["openni2::openni2"] if self.options.get_safe("with_openni2") else []
-
-        def va():
-            return ["libva::libva"] if self.options.get_safe("with_va") else []
-
-        def gtk():
-            return ["gtk::gtk"] if self.options.get_safe("with_gtk") else []
-
-        def ipp():
-            if self.options.with_ipp == "intel-ipp":
-                return ["intel-ipp::intel-ipp"]
-            elif self.options.with_ipp == "opencv-icv" and not self.options.shared:
-                return ["ippiw"]
-            return []
-
-        def _armpl():
-            return ["armpl::armpl"] if self.options.get_safe("with_armpl") else []
-
-        def opencl():
-            if self.options.get_safe("with_opencl") and not is_apple_os(self):
-                return ["opencl-icd-loader::opencl-icd-loader"]
-            return []
-
-        def librealsense():
-            return ["librealsense::librealsense"] if self.options.get_safe("with_librealsense") else []
-
-        def parallel():
-            if self.options.parallel == "openmp":
-                return ["openmp::openmp"]
-            if self.options.parallel == "tbb":
-                return ["onetbb::libtbb"]
-            return []
-
-        def cudart():
-            return ["cudart::cudart"] if self.options.with_cuda else []
-
-        def cublas():
-            return ["cublas::cublas_"] if self.options.get_safe("with_cublas") else []
-
-        def cufft():
-            return ["cufft::cufft"] if self.options.get_safe("with_cufft") else []
-
-        def cudnn():
-            return ["cudnn::cudnn"] if self.options.get_safe("dnn_cuda") else []
-
-        def nvcodec():
-            return []  # TODO
-
-        def protobuf():
-            return ["protobuf::protobuf"] if self.options.get_safe("with_protobuf") else []
-
-        def qt():
-            return ["qt::qt"] if self.options.get_safe("with_qt") else []
-
-        def quirc():
-            return ["quirc::quirc"] if self.options.get_safe("with_quirc") else []
-
-        def tesseract():
-            return ["tesseract::tesseract"] if self.options.get_safe("with_tesseract") else []
-
-        def vulkan():
-            return ["vulkan-headers::vulkan-headers"] if self.options.get_safe("with_vulkan") else []
-
-        def wayland():
-            return ["wayland::wayland-client", "wayland::wayland-cursor"] if self.options.get_safe("with_wayland") else []
-
-        def xkbcommon():
-            return ["xkbcommon::libxkbcommon"] if self.options.get_safe("with_wayland") else []
-
-        def xvfb():
-            return ["xorg-proto::xorg-proto"] if self.options.get_safe("with_framebuffer") else []
-
-        def openvino():
-            return ["openvino::Runtime"] if self.options.get_safe("with_openvino") else []
-
-        def opencv_calib3d():
-            return ["opencv_calib3d"] if self.options.calib3d else []
-
-        def opencv_cudaarithm():
-            return ["opencv_cudaarithm"] if self.options.cudaarithm else []
-
-        def opencv_cudacodec():
-            return ["opencv_cudacodec"] if self.options.cudacodec else []
-
-        def opencv_cudafeatures2d():
-            return ["opencv_cudafeatures2d"] if self.options.cudafeatures2d else []
-
-        def opencv_cudafilters():
-            return ["opencv_cudafilters"] if self.options.cudafilters else []
-
-        def opencv_cudaimgproc():
-            return ["opencv_cudaimgproc"] if self.options.cudaimgproc else []
-
-        def opencv_cudalegacy():
-            return ["opencv_cudalegacy"] if self.options.cudalegacy else []
-
-        def opencv_cudaoptflow():
-            return ["opencv_cudaoptflow"] if self.options.cudaoptflow else []
-
-        def opencv_cudawarping():
-            return ["opencv_cudawarping"] if self.options.cudawarping else []
-
-        def opencv_dnn():
-            return ["opencv_dnn"] if self.options.dnn else []
-
-        def opencv_flann():
-            return ["opencv_flann"] if self.options.flann else []
-
-        def opencv_imgcodecs():
-            return ["opencv_imgcodecs"] if self.options.imgcodecs else []
-
-        def opencv_imgproc():
-            return ["opencv_imgproc"] if self.options.imgproc else []
-
-        def opencv_objdetect():
-            return ["opencv_objdetect"] if self.options.objdetect else []
-
-        def opencv_video():
-            return ["opencv_video"] if self.options.video else []
-
-        def opencv_videoio():
-            return ["opencv_videoio"] if self.options.videoio else []
-
-        def opencv_xfeatures2d():
-            return ["opencv_xfeatures2d"] if self.options.xfeatures2d else []
-
-        opencv_modules = {
-            # Main modules
-            "calib3d": {
-                "is_built": self.options.calib3d,
-                "mandatory_options": ["features2d", "flann", "imgproc"],
-                "requires": ["opencv_core", "opencv_features2d", "opencv_flann", "opencv_imgproc"] +
-                            eigen() + lapack() + ipp(),
-            },
-            "core": {
-                "is_built": True,
-                "no_option": True,
-                "requires": ["zlib-ng::zlib-ng"] + parallel() + eigen() + ipp() + _armpl() + opencl() + va() + itt() + cudart(),
-                "system_libs": [
-                    (self.settings.os == "Android", ["dl", "m", "log"]),
-                    (self.settings.os == "FreeBSD", ["m", "pthread"]),
-                    (self.settings.os == "Linux", ["dl", "m", "pthread", "rt"]),
-                ],
-                "frameworks": [
-                    (self.settings.os == "Macos" and self.options.get_safe("with_opencl"), ["OpenCL"]),
-                ],
-            },
-            "dnn": {
-                "is_built": self.options.dnn,
-                "mandatory_options": ["imgproc"],
-                "requires": ["opencv_core", "opencv_imgproc"] +
-                            cudnn() + cublas() + protobuf() + vulkan() + ipp() + openvino() + lapack(),
-            },
-            "features2d": {
-                "is_built": self.options.features2d,
-                "mandatory_options": ["imgproc"],
-                "requires": ["opencv_imgproc"] + opencv_flann() + eigen() + ipp(),
-            },
-            "flann": {
-                "is_built": self.options.flann,
-                "requires": ["opencv_core"] + ipp(),
-            },
-            "gapi": {
-                "is_built": self.options.gapi,
-                "mandatory_options": ["imgproc"],
-                "requires": ["opencv_imgproc", "ade::ade"] + openvino() + gstreamer() + va() + itt(),
-                "system_libs": [
-                    (self.settings.os == "Windows", ["ws2_32", "wsock32"]),
-                ],
-            },
-            "highgui": {
-                "is_built": self.options.highgui,
-                "mandatory_options": ["imgproc"],
-                "requires": ["opencv_core", "opencv_imgproc"] + opencv_imgcodecs() +
-                            opencv_videoio() + xvfb() + gtk() + qt() + xkbcommon() + wayland() + ipp(),
-                "system_libs": [
-                    (self.settings.os == "Windows", ["comctl32", "gdi32", "ole32", "setupapi", "ws2_32", "vfw32"]),
-                ],
-                "frameworks": [
-                    (self.settings.os == "Macos", ["Cocoa"]),
-                ],
-            },
-            "imgcodecs": {
-                "is_built": self.options.imgcodecs,
-                "mandatory_options": ["imgproc"],
-                "requires": ["opencv_imgproc", "zlib-ng::zlib-ng"] + imageformats_deps() + ipp(),
-                "frameworks": [
-                    (is_apple_os(self), ["CoreFoundation", "CoreGraphics"]),
-                    (self.settings.os == "iOS", ["UIKit"]),
-                    (self.settings.os == "Macos", ["AppKit"]),
-                ],
-            },
-            "imgproc": {
-                "is_built": self.options.imgproc,
-                "requires": ["opencv_core"] + ipp(),
-            },
-            "ml": {
-                "is_built": self.options.ml,
-                "requires": ["opencv_core"] + ipp(),
-            },
-            "objdetect": {
-                "is_built": self.options.objdetect,
-                "mandatory_options": ["calib3d", "imgproc"],
-                "requires": ["opencv_core", "opencv_calib3d", "opencv_imgproc"] + quirc() + ipp(),
-            },
-            "photo": {
-                "is_built": self.options.photo,
-                "mandatory_options": ["imgproc"],
-                "requires": ["opencv_imgproc"] + opencv_cudaarithm() + opencv_cudaimgproc() + ipp(),
-            },
-            "stitching": {
-                "is_built": self.options.stitching,
-                "mandatory_options": ["calib3d", "features2d", "flann", "imgproc"],
-                "requires": ["opencv_calib3d", "opencv_features2d", "opencv_flann", "opencv_imgproc"] +
-                            opencv_xfeatures2d() + opencv_cudaarithm() + opencv_cudawarping() +
-                            opencv_cudafeatures2d() + opencv_cudalegacy() + opencv_cudaimgproc() + eigen() + ipp(),
-            },
-            "video": {
-                "is_built": self.options.video,
-                "mandatory_options": ["imgproc"],
-                "requires": ["opencv_imgproc"] + opencv_calib3d() + ipp(),
-            },
-            "videoio": {
-                "is_built": self.options.videoio,
-                "mandatory_options": ["imgcodecs", "imgproc"],
-                "requires": ["opencv_imgcodecs", "opencv_imgproc"] +
-                            dc1394() + aravis() + ffmpeg() + gphoto2() + gstreamer() + librealsense() + openni2() + ipp(),
-                "system_libs": [
-                    (self.settings.os == "Android" and int(str(self.settings.os.api_level)) > 20, ["mediandk"]),
-                ],
-                "frameworks": [
-                    (is_apple_os(self), ["Accelerate", "AVFoundation", "CoreGraphics", "CoreMedia", "CoreVideo", "QuartzCore"]),
-                    (self.settings.os == "iOS", ["CoreImage", "UIKit"]),
-                    (self.settings.os == "Macos", ["Cocoa"]),
-                ],
-            },
-            # Extra modules
-            "alphamat": {
-                "is_built": self.options.get_safe("alphamat"),
-                "mandatory_options": ["with_eigen", "imgproc"],
-                "requires": ["opencv_core", "opencv_imgproc"] + ipp(),
-            },
-            "aruco": {
-                "is_built": self.options.aruco,
-                "mandatory_options": ["calib3d", "imgproc"],
-                "requires": ["opencv_core", "opencv_calib3d", "opencv_imgproc"] + ipp(),
-            },
-            "barcode": {
-                "is_built": self.options.get_safe("barcode"),
-                "mandatory_options": ["dnn", "imgproc"],
-                "requires": ["opencv_core", "opencv_dnn", "opencv_imgproc"] + ipp(),
-            },
-            "bgsegm": {
-                "is_built": self.options.bgsegm,
-                "mandatory_options": ["calib3d", "imgproc", "video"],
-                "requires": ["opencv_core", "opencv_calib3d", "opencv_imgproc", "opencv_video"] + ipp(),
-            },
-            "bioinspired": {
-                "is_built": self.options.bioinspired,
-                "requires": ["opencv_core"] + ipp(),
-            },
-            "ccalib": {
-                "is_built": self.options.ccalib,
-                "mandatory_options": ["calib3d", "features2d", "highgui", "imgproc"],
-                "requires": ["opencv_core", "opencv_calib3d", "opencv_features2d", "opencv_highgui", "opencv_imgproc"] + ipp(),
-            },
-            "cudaarithm": {
-                "is_built": self.options.cudaarithm,
-                "mandatory_options": ["with_cuda"],
-                "requires": ["opencv_core", "opencv_cudev", "npp::nppi"] + ipp() + cublas() + cufft(),
-            },
-            "cudabgsegm": {
-                "is_built": self.options.cudabgsegm,
-                "mandatory_options": ["with_cuda", "video"],
-                "requires": ["opencv_video"] + ipp(),
-            },
-            "cudacodec": {
-                "is_built": self.options.cudacodec,
-                "mandatory_options": ["with_cuda", "videoio"],
-                "requires": ["opencv_core", "opencv_videoio"] + ipp() + nvcodec(),
-            },
-            "cudafeatures2d": {
-                "is_built": self.options.cudafeatures2d,
-                "mandatory_options": ["with_cuda", "features2d", "cudafilters", "cudawarping"],
-                "requires": ["opencv_features2d", "opencv_cudafilters", "opencv_cudawarping"] + ipp(),
-            },
-            "cudafilters": {
-                "is_built": self.options.cudafilters,
-                "mandatory_options": ["with_cuda", "imgproc", "cudaarithm"],
-                "requires": ["opencv_imgproc", "opencv_cudaarithm", "npp::nppi"] + ipp(),
-            },
-            "cudaimgproc": {
-                "is_built": self.options.cudaimgproc,
-                "mandatory_options": ["with_cuda", "imgproc"],
-                "requires": ["opencv_imgproc", "opencv_cudev", "npp::nppi"] + opencv_cudaarithm() + opencv_cudafilters() + ipp(),
-            },
-            "cudalegacy": {
-                "is_built": self.options.cudalegacy,
-                "mandatory_options": ["with_cuda", "video"],
-                "requires": ["opencv_core", "opencv_video"] + opencv_calib3d() + opencv_imgproc() + opencv_objdetect() +
-                            opencv_cudaarithm() + opencv_cudafilters() + opencv_cudaimgproc() + ipp(),
-            },
-            "cudaobjdetect": {
-                "is_built": self.options.cudaobjdetect,
-                "mandatory_options": ["with_cuda", "objdetect", "cudaarithm", "cudawarping"],
-                "requires": ["opencv_objdetect", "opencv_cudaarithm", "opencv_cudawarping"] + opencv_cudalegacy() + ipp(),
-            },
-            "cudaoptflow": {
-                "is_built": self.options.cudaoptflow,
-                "mandatory_options": ["with_cuda", "video", "cudaarithm", "cudaimgproc", "cudawarping", "optflow"],
-                "requires": ["opencv_video", "opencv_cudaarithm", "opencv_cudaimgproc", "opencv_cudawarping",
-                             "opencv_optflow"] + opencv_cudalegacy() + ipp(),
-            },
-            "cudastereo": {
-                "is_built": self.options.cudastereo,
-                "mandatory_options": ["with_cuda", "calib3d"],
-                "requires": ["opencv_calib3d", "opencv_cudev"] + ipp(),
-            },
-            "cudawarping": {
-                "is_built": self.options.cudawarping,
-                "mandatory_options": ["with_cuda", "imgproc"],
-                "requires": ["opencv_core", "opencv_imgproc", "opencv_cudev", "npp::nppi"] + ipp(),
-            },
-            "cudev": {
-                "is_built": self.options.with_cuda,
-                "no_option": True,
-                "requires": ipp(),
-            },
-            "cvv": {
-                "is_built": self.options.cvv,
-                "mandatory_options": ["with_qt", "features2d", "imgproc"],
-                "requires": ["opencv_core", "opencv_features2d", "opencv_imgproc", "qt::qt"] + ipp(),
-            },
-            "datasets": {
-                "is_built": self.options.datasets,
-                "mandatory_options": ["flann", "imgcodecs", "ml"],
-                "requires": ["opencv_core", "opencv_flann", "opencv_imgcodecs", "opencv_ml"] + ipp(),
-            },
-            "dnn_objdetect": {
-                "is_built": self.options.dnn_objdetect,
-                "mandatory_options": ["dnn", "imgproc"],
-                "requires": ["opencv_core", "opencv_dnn", "opencv_imgproc"] + ipp(),
-            },
-            "dnn_superres": {
-                "is_built": self.options.dnn_superres,
-                "mandatory_options": ["dnn", "imgproc"],
-                "requires": ["opencv_core", "opencv_dnn", "opencv_imgproc"] + ipp(),
-            },
-            "dpm": {
-                "is_built": self.options.dpm,
-                "mandatory_options": ["imgproc", "objdetect"],
-                "requires": ["opencv_core", "opencv_imgproc", "opencv_objdetect"] + ipp(),
-            },
-            "face": {
-                "is_built": self.options.face,
-                "mandatory_options": ["calib3d", "imgproc", "objdetect", "photo"],
-                "requires": ["opencv_core", "opencv_calib3d", "opencv_imgproc", "opencv_objdetect", "opencv_photo"] + ipp(),
-            },
-            "freetype": {
-                "is_built": self.options.freetype,
-                "mandatory_options": ["imgproc"],
-                "requires": ["opencv_core", "opencv_imgproc", "freetype::freetype", "harfbuzz::harfbuzz"] + ipp(),
-            },
-            "fuzzy": {
-                "is_built": self.options.fuzzy,
-                "mandatory_options": ["imgproc"],
-                "requires": ["opencv_core", "opencv_imgproc"] + ipp(),
-            },
-            "hdf": {
-                "is_built": self.options.hdf,
-                "requires": ["opencv_core", "hdf5::hdf5"] + ipp(),
-            },
-            "hfs": {
-                "is_built": self.options.hfs,
-                "mandatory_options": ["imgproc"],
-                "requires": ["opencv_core", "opencv_imgproc"] + ipp(),
-            },
-            "img_hash": {
-                "is_built": self.options.img_hash,
-                "is_part_of_world": False,
-                "mandatory_options": ["imgproc"],
-                "requires": ["opencv_core", "opencv_imgproc"] + ipp(),
-            },
-            "intensity_transform": {
-                "is_built": self.options.get_safe("intensity_transform"),
-                "requires": ["opencv_core"] + ipp(),
-            },
-            "line_descriptor": {
-                "is_built": self.options.line_descriptor,
-                "mandatory_options": ["imgproc"],
-                "requires": ["opencv_imgproc"] + ipp(),
-            },
-            "mcc": {
-                "is_built": self.options.get_safe("mcc"),
-                "mandatory_options": ["calib3d", "dnn", "imgproc"],
-                "requires": ["opencv_core", "opencv_calib3d", "opencv_dnn", "opencv_imgproc"] + ipp(),
-            },
-            "optflow": {
-                "is_built": self.options.optflow,
-                "mandatory_options": ["calib3d", "flann", "imgcodecs", "imgproc", "video", "ximgproc"],
-                "requires": ["opencv_core", "opencv_calib3d", "opencv_flann", "opencv_imgcodecs", "opencv_imgproc",
-                             "opencv_video", "opencv_ximgproc"] + ipp(),
-            },
-            "ovis": {
-                "is_built": self.options.ovis,
-                "mandatory_options": ["calib3d", "imgproc"],
-                "requires": ["opencv_core", "opencv_calib3d", "opencv_imgproc", "ogre::ogre"] + ipp(),
-            },
-            "phase_unwrapping": {
-                "is_built": self.options.phase_unwrapping,
-                "mandatory_options": ["imgproc"],
-                "requires": ["opencv_core", "opencv_imgproc"] + ipp(),
-            },
-            "plot": {
-                "is_built": self.options.plot,
-                "mandatory_options": ["imgproc"],
-                "requires": ["opencv_core", "opencv_imgproc"] + ipp(),
-            },
-            "quality": {
-                "is_built": self.options.quality,
-                "mandatory_options": ["imgproc", "ml"],
-                "requires": ["opencv_core", "opencv_imgproc", "opencv_ml"] + ipp(),
-            },
-            "rapid": {
-                "is_built": self.options.get_safe("rapid"),
-                "mandatory_options": ["calib3d", "imgproc"],
-                "requires": ["opencv_core", "opencv_calib3d", "opencv_imgproc"] + ipp(),
-            },
-            "reg": {
-                "is_built": self.options.reg,
-                "mandatory_options": ["imgproc"],
-                "requires": ["opencv_core", "opencv_imgproc"] + ipp(),
-            },
-            "rgbd": {
-                "is_built": self.options.rgbd,
-                "mandatory_options": ["calib3d", "imgproc"],
-                "requires": ["opencv_core", "opencv_calib3d", "opencv_imgproc"] + eigen() + ipp(),
-            },
-            "saliency": {
-                "is_built": self.options.saliency,
-                "mandatory_options": ["features2d", "imgproc"],
-                "requires": ["opencv_features2d", "opencv_imgproc"] + ipp(),
-            },
-            "sfm": {
-                "is_built": self.options.sfm,
-                "is_part_of_world": False,
-                "mandatory_options": ["with_eigen", "calib3d", "features2d", "imgcodecs", "xfeatures2d"],
-                "requires": ["opencv_core", "opencv_calib3d", "opencv_features2d", "opencv_imgcodecs", "opencv_xfeatures2d",
-                             "correspondence", "multiview", "numeric", "glog::glog", "gflags::gflags"] + eigen() + ipp(),
-            },
-            "shape": {
-                "is_built": self.options.shape,
-                "mandatory_options": ["calib3d", "imgproc"],
-                "requires": ["opencv_core", "opencv_calib3d", "opencv_imgproc"] + ipp(),
-            },
-            "stereo": {
-                "is_built": self.options.stereo,
-                "mandatory_options": ["features2d", "imgproc", "tracking"],
-                "requires": ["opencv_core", "opencv_features2d", "opencv_imgproc", "opencv_tracking"] + ipp(),
-            },
-            "structured_light": {
-                "is_built": self.options.structured_light,
-                "mandatory_options": ["calib3d", "imgproc", "phase_unwrapping"],
-                "requires": ["opencv_core", "opencv_calib3d", "opencv_imgproc", "opencv_phase_unwrapping"] + ipp(),
-            },
-            "superres": {
-                "is_built": self.options.get_safe("superres"),
-                "mandatory_options": ["imgproc", "video", "optflow"],
-                "requires": ["opencv_imgproc", "opencv_video", "opencv_optflow"] + opencv_videoio() + ipp() +
-                            opencv_cudaarithm() + opencv_cudafilters() + opencv_cudawarping() + opencv_cudaimgproc() +
-                            opencv_cudaoptflow() + opencv_cudacodec(),
-            },
-            "surface_matching": {
-                "is_built": self.options.surface_matching,
-                "mandatory_options": ["flann"],
-                "requires": ["opencv_core", "opencv_flann"] + ipp(),
-            },
-            "text": {
-                "is_built": self.options.text,
-                "mandatory_options": ["dnn", "features2d", "imgproc", "ml"],
-                "requires": ["opencv_core", "opencv_dnn", "opencv_features2d", "opencv_imgproc", "opencv_ml"] +
-                            tesseract() + ipp(),
-            },
-            "tracking": {
-                "is_built": self.options.tracking,
-                "mandatory_options": ["imgproc", "video"],
-                "requires": ["opencv_core", "opencv_imgproc", "opencv_video"] + opencv_dnn() + ipp(),
-            },
-            "videostab": {
-                "is_built": self.options.videostab,
-                "mandatory_options": ["calib3d", "features2d", "imgproc", "photo", "video"],
-                "requires": ["opencv_calib3d", "opencv_features2d", "opencv_imgproc", "opencv_photo", "opencv_video"] +
-                            opencv_videoio() + _clp() + ipp() + opencv_cudawarping() + opencv_cudaoptflow(),
-            },
-            "viz": {
-                "is_built": self.options.viz,
-                "requires": ["opencv_core", "vtk::vtk"] + ipp(),
-            },
-            "wechat_qrcode": {
-                "is_built": self.options.get_safe("wechat_qrcode"),
-                "mandatory_options": ["dnn", "imgproc"],
-                "requires": ["opencv_core", "opencv_dnn", "opencv_imgproc"] + ipp(),
-            },
-            "xfeatures2d": {
-                "is_built": self.options.xfeatures2d,
-                "mandatory_options": ["calib3d", "features2d", "imgproc"],
-                "requires": ["opencv_core", "opencv_calib3d", "opencv_features2d", "opencv_imgproc"] + ipp() + opencv_cudaarithm(),
-            },
-            "ximgproc": {
-                "is_built": self.options.ximgproc,
-                "mandatory_options": ["calib3d", "imgcodecs", "imgproc", "video"],
-                "requires": ["opencv_core", "opencv_calib3d", "opencv_imgcodecs", "opencv_imgproc", "opencv_video"] +
-                            eigen() + ipp(),
-            },
-            "xobjdetect": {
-                "is_built": self.options.xobjdetect,
-                "mandatory_options": ["imgcodecs", "imgproc", "objdetect"],
-                "requires": ["opencv_core", "opencv_imgcodecs", "opencv_imgproc", "opencv_objdetect"] + ipp(),
-            },
-            "xphoto": {
-                "is_built": self.options.xphoto,
-                "mandatory_options": ["imgproc", "photo"],
-                "requires": ["opencv_core", "opencv_imgproc", "opencv_photo"] + ipp(),
-            },
-            # Extra targets (without prefix in their target & lib name)
-            "ippiw": {
-                "is_built": self.options.with_ipp == "opencv-icv" and not self.options.shared,
-                "is_part_of_world": False,
-                "no_option": True,
-            },
-            "numeric": {
-                "is_built": self.options.sfm,
-                "is_part_of_world": False,
-                "no_option": True,
-                "requires": eigen() + ipp(),
-            },
-            "correspondence": {
-                "is_built": self.options.sfm,
-                "is_part_of_world": False,
-                "no_option": True,
-                "requires": ["opencv_imgcodecs", "multiview", "glog::glog"] + eigen() + ipp(),
-            },
-            "multiview": {
-                "is_built": self.options.sfm,
-                "is_part_of_world": False,
-                "no_option": True,
-                "requires": ["numeric", "glog::glog"] + eigen() + ipp(),
-            },
-        }
-
-        if Version(self.version) >= "4.3.0":
-            opencv_modules["gapi"].setdefault("requires", []).extend(opencv_video())
-        if Version(self.version) >= "4.5.2":
-            opencv_modules["gapi"].setdefault("requires", []).extend(opencv_calib3d())
-        if Version(self.version) >= "4.5.4":
-            opencv_modules["objdetect"].setdefault("requires", []).extend(opencv_dnn())
-        if Version(self.version) >= "4.5.1":
-            opencv_modules["video"].setdefault("requires", []).extend(opencv_dnn())
-        if Version(self.version) >= "4.4.0":
-            opencv_modules["intensity_transform"].setdefault("mandatory_options", []).append("imgproc")
-            opencv_modules["intensity_transform"].setdefault("requires", []).append("opencv_imgproc")
-        if Version(self.version) < "4.3.0":
-            opencv_modules["stereo"].setdefault("mandatory_options", []).extend(["calib3d", "video"])
-            opencv_modules["stereo"].setdefault("requires", []).extend(["opencv_calib3d", "opencv_video"])
-        if Version(self.version) >= "4.7.0":
-            opencv_modules["aruco"].setdefault("mandatory_options", []).append("objdetect")
-            opencv_modules["aruco"].setdefault("requires", []).append("opencv_objdetect")
-            opencv_modules["cudacodec"].setdefault("mandatory_options", []).extend(["cudaarithm", "cudawarping"])
-            opencv_modules["cudacodec"].setdefault("requires", []).extend(["opencv_cudaarithm", "opencv_cudawarping"])
-            opencv_modules["wechat_qrcode"].setdefault("mandatory_options", []).append("objdetect")
-            opencv_modules["wechat_qrcode"].setdefault("requires", []).append("opencv_objdetect")
-        else:
-            opencv_modules["cudacodec"].setdefault("requires", []).append("opencv_cudev")
-        if Version(self.version) >= "4.14.0":
-            opencv_modules["cudacodec"].setdefault("requires", []).extend(cudart())
-        if Version(self.version) < "4.8.0":
-            opencv_modules["dnn"].setdefault("mandatory_options", []).append("with_protobuf")
-
-        return opencv_modules
-
-    def _get_mandatory_disabled_options(self, opencv_modules):
-        direct_options_to_enable = {}
-        transitive_options_to_enable = {}
-
-        # Check which direct options have to be enabled
-        base_options = [option for option, values in opencv_modules.items()
-                        if not values.get("no_option") and self.options.get_safe(option)]
-        for base_option in base_options:
-            for mandatory_option in opencv_modules.get(base_option, {}).get("mandatory_options", []):
-                if not self.options.get_safe(mandatory_option):
-                    direct_options_to_enable.setdefault(mandatory_option, set()).add(base_option)
-
-        # Now traverse the graph to check which transitive options have to be enabled
-        def collect_transitive_options(base_option, option):
-            for mandatory_option in opencv_modules.get(option, {}).get("mandatory_options", []):
-                if not self.options.get_safe(mandatory_option):
-                    if mandatory_option not in transitive_options_to_enable:
-                        transitive_options_to_enable[mandatory_option] = set()
-                        collect_transitive_options(base_option, mandatory_option)
-                    if base_option not in direct_options_to_enable.get(mandatory_option, set()):
-                        transitive_options_to_enable[mandatory_option].add(base_option)
-
-        for base_option in base_options:
-            collect_transitive_options(base_option, base_option)
-
-        return {
-            "direct": direct_options_to_enable,
-            "transitive": transitive_options_to_enable,
-        }
-
     def _solve_internal_dependency_graph(self, opencv_modules):
-        disabled_options = self._get_mandatory_disabled_options(opencv_modules)
-        direct_options_to_enable = disabled_options["direct"]
-        transitive_options_to_enable = disabled_options["transitive"]
-
-        # Enable mandatory options
-        all_options_to_enable = set(direct_options_to_enable.keys())
-        all_options_to_enable.update(transitive_options_to_enable.keys())
-        if all_options_to_enable:
-            message = ("Several opencv options which were disabled will be enabled because "
-                       "they are required by modules you have explicitly requested:\n")
-
-            for option_to_enable in all_options_to_enable:
-                try:
-                    setattr(self.options, option_to_enable, True)
-                except ConanException:
-                    # It may not work in conan v2 and raise ConanException "Incorrect attempt to modify option"
-                    continue
-
-                direct_and_transitive = []
-                direct = ", ".join(direct_options_to_enable.get(option_to_enable, []))
-                if direct:
-                    direct_and_transitive.append(f"direct dependency of {direct}")
-                transitive = ", ".join(transitive_options_to_enable.get(option_to_enable, []))
-                if transitive:
-                    direct_and_transitive.append(f"transitive dependency of {transitive}")
-                message += f"  - {option_to_enable}: {' / '.join(direct_and_transitive)}\n"
-
+        disabled_options = _mandatory_disabled_options(self.options, opencv_modules)
+        enabled_options = {}
+        for option, required_by in disabled_options.items():
+            value = self.options.get_safe(option)
+            if value is not None:
+                value.value = True
+                enabled_options[option] = required_by
+        if enabled_options:
+            message = "Enabling OpenCV options required by other enabled modules:\n"
+            for option, required_by in sorted(enabled_options.items()):
+                message += f"  - {option}: required by {', '.join(sorted(required_by))}\n"
             self.output.warning(message)
 
     def configure(self):
@@ -1190,7 +494,7 @@ class OpenCVConan(ConanFile):
             self.options.rm_safe("fPIC")
 
         # Call this first before any further manipulation of options based on other options
-        self._solve_internal_dependency_graph(self._opencv_modules)
+        self._solve_internal_dependency_graph(_opencv_modules(self.options, self.settings, self.version))
 
         if not (self._has_openvino_option and (self.options.gapi or self.options.dnn)):
             self.options.rm_safe("with_openvino")
@@ -1387,31 +691,15 @@ class OpenCVConan(ConanFile):
             self.requires("tesseract/[^5.3.3]")
 
     def _check_mandatory_options(self, opencv_modules):
-        disabled_options = self._get_mandatory_disabled_options(opencv_modules)
-        direct_disabled_mandatory_options = disabled_options["direct"]
-        transitive_disabled_mandatory_options = disabled_options["transitive"]
-
-        # check mandatory options
-        all_disabled_mandatory_options = set(direct_disabled_mandatory_options.keys())
-        all_disabled_mandatory_options.update(transitive_disabled_mandatory_options.keys())
-        if all_disabled_mandatory_options:
-            message = ("Several opencv options are disabled but are required by modules "
-                       "you have explicitly requested:\n")
-
-            for disabled_option in all_disabled_mandatory_options:
-                direct_and_transitive = []
-                direct = ", ".join(direct_disabled_mandatory_options.get(disabled_option, []))
-                if direct:
-                    direct_and_transitive.append(f"direct dependency of {direct}")
-                transitive = ", ".join(transitive_disabled_mandatory_options.get(disabled_option, []))
-                if transitive:
-                    direct_and_transitive.append(f"transitive dependency of {transitive}")
-                message += f"  - {disabled_option}: {' / '.join(direct_and_transitive)}\n"
-
+        disabled_options = _mandatory_disabled_options(self.options, opencv_modules)
+        if disabled_options:
+            message = "OpenCV options required by enabled modules are unavailable:\n"
+            for option, required_by in sorted(disabled_options.items()):
+                message += f"  - {option}: required by {', '.join(sorted(required_by))}\n"
             raise ConanInvalidConfiguration(message)
 
     def validate(self):
-        self._check_mandatory_options(self._opencv_modules)
+        self._check_mandatory_options(_opencv_modules(self.options, self.settings, self.version))
         check_min_cppstd(self, 11)
         if self.options.shared and self._is_cl_like and self._is_cl_like_static_runtime:
             raise ConanInvalidConfiguration("MSVC or clang-cl with static runtime are not supported for shared library.")
@@ -1894,34 +1182,6 @@ class OpenCVConan(ConanFile):
             mkdir(self, os.path.join(self.package_folder, "share"))
             rename(self, os.path.join(self.package_folder, "setup_vars_opencv4.cmd"),
                          os.path.join(self.package_folder, "share", "setup_vars_opencv4.cmd"))
-        self._create_cmake_module_variables(os.path.join(self.package_folder, self._module_vars_rel_path))
-
-    def _create_cmake_module_variables(self, module_file):
-        """
-        Define several CMake variables from upstream CMake config file not defined by default by CMakeDeps.
-        See https://github.com/opencv/opencv/blob/4.8.1/cmake/templates/OpenCVConfig.cmake.in
-        """
-        v = Version(self.version)
-        content = textwrap.dedent(f"""\
-            if(NOT DEFINED OpenCV_LIBS)
-                set(OpenCV_LIBS opencv::opencv)
-            endif()
-            if(NOT DEFINED OpenCV_VERSION_MAJOR)
-                set(OpenCV_VERSION_MAJOR {v.major})
-            endif()
-            if(NOT DEFINED OpenCV_VERSION_MINOR)
-                set(OpenCV_VERSION_MINOR {v.minor})
-            endif()
-            if(NOT DEFINED OpenCV_VERSION_PATCH)
-                set(OpenCV_VERSION_PATCH {v.patch})
-            endif()
-        """)
-        save(self, module_file, content)
-
-    @property
-    def _module_vars_rel_path(self):
-        return os.path.join("lib", "cmake", f"conan-official-{self.name}-variables.cmake")
-
     # returns true if GTK2 is selected. To do this, the version option
     # of the gtk/system package is checked or the conan package version
     # of an gtk conan package is checked.
@@ -1943,7 +1203,13 @@ class OpenCVConan(ConanFile):
 
     def package_info(self):
         self.cpp_info.set_property("cmake_file_name", "OpenCV")
-        self.cpp_info.set_property("cmake_build_modules", [self._module_vars_rel_path])
+        v = Version(self.version)
+        self.cpp_info.set_property("cmake_extra_variables", {
+            "OpenCV_LIBS": "opencv::opencv",
+            "OpenCV_VERSION_MAJOR": int(v.major),
+            "OpenCV_VERSION_MINOR": int(v.minor),
+            "OpenCV_VERSION_PATCH": int(v.patch),
+        })
 
         version = self.version.split(".")
         version = "".join(version) if self.settings.os == "Windows" else ""
@@ -2015,4 +1281,680 @@ class OpenCVConan(ConanFile):
                 self.cpp_info.components["opencv_world"].system_libs = list(world_system_libs)
                 self.cpp_info.components["opencv_world"].frameworks = list(world_frameworks)
 
-        add_components(self._opencv_modules)
+        add_components(_opencv_modules(self.options, self.settings, self.version))
+
+
+def _mandatory_disabled_options(opts, opencv_modules):
+    required_by = {}
+    pending = [
+        (option, option)
+        for option, values in opencv_modules.items()
+        if not values.get("no_option") and opts.get_safe(option)
+    ]
+    visited = set()
+
+    while pending:
+        base_option, option = pending.pop()
+        for mandatory_option in opencv_modules.get(option, {}).get("mandatory_options", []):
+            edge = base_option, mandatory_option
+            if edge in visited:
+                continue
+            visited.add(edge)
+            required_by.setdefault(mandatory_option, set()).add(base_option)
+            pending.append(edge)
+
+    return {
+        option: base_options
+        for option, base_options in required_by.items()
+        if not opts.get_safe(option)
+    }
+
+
+def _opencv_modules(opts, settings, version):
+    def imageformats_deps():
+        components = []
+        if opts.get_safe("with_avif"):
+            components.append("libavif::libavif")
+        if opts.get_safe("with_jpeg"):
+            components.append("libjpeg-meta::jpeg")
+        if opts.get_safe("with_jpegxl"):
+            components.append("libjxl::libjxl")
+        if opts.get_safe("with_jpeg2000"):
+            components.append("{0}::{0}".format(opts.with_jpeg2000))
+        if opts.get_safe("with_png"):
+            components.append("libpng::libpng")
+        if opts.get_safe("with_tiff"):
+            components.append("libtiff::tiff")
+        if opts.get_safe("with_openexr"):
+            components.append("openexr::openexr")
+        if opts.get_safe("with_webp"):
+            components.append("libwebp::libwebp")
+        if opts.get_safe("with_gdal"):
+            components.append("gdal::gdal")
+        if opts.get_safe("with_gdcm"):
+            components.append("gdcm::gdcm")
+        return components
+
+    def itt():
+        return ["ittapi::ittapi"] if opts.with_itt else []
+
+    def dc1394():
+        return ["libdc1394::libdc1394"] if opts.get_safe("with_1394") else []
+
+    def aravis():
+        return ["aravis::aravis"] if opts.get_safe("with_aravis") else []
+
+    def eigen():
+        return ["eigen::eigen"] if opts.with_eigen else []
+
+    def lapack():
+        return ["lapack::lapack"] if opts.get_safe("with_lapack") else []
+
+    def clp():
+        if not opts.get_safe("with_clp"):
+            return []
+        if Version(version) >= "4.14.0":
+            return ["coin-clp::clp"]
+        return ["coin-clp::coin-clp"]
+
+    def ffmpeg():
+        components = []
+        if opts.get_safe("with_ffmpeg"):
+            components = ["ffmpeg::avcodec", "ffmpeg::avformat", "ffmpeg::avutil", "ffmpeg::swscale"]
+        return components
+
+    def gphoto2():
+        return ["libgphoto2::libgphoto2"] if opts.get_safe("with_gphoto2") else []
+
+    def gstreamer():
+        if opts.get_safe("with_gstreamer"):
+            return [
+                "gstreamer::gstreamer-base-1.0",
+                "gst-plugins-base::gstreamer-app-1.0",
+                "gst-plugins-base::gstreamer-riff-1.0",
+                "gst-plugins-base::gstreamer-pbutils-1.0",
+                "gst-plugins-base::gstreamer-video-1.0",
+                "gst-plugins-base::gstreamer-audio-1.0",
+            ]
+        return []
+
+    def openni2():
+        return ["openni2::openni2"] if opts.get_safe("with_openni2") else []
+
+    def va():
+        return ["libva::libva"] if opts.get_safe("with_va") else []
+
+    def gtk():
+        return ["gtk::gtk"] if opts.get_safe("with_gtk") else []
+
+    def ipp():
+        if opts.with_ipp == "intel-ipp":
+            return ["intel-ipp::intel-ipp"]
+        elif opts.with_ipp == "opencv-icv" and not opts.shared:
+            return ["ippiw"]
+        return []
+
+    def armpl():
+        return ["armpl::armpl"] if opts.get_safe("with_armpl") else []
+
+    def opencl():
+        if opts.get_safe("with_opencl") and not str(settings.get_safe("os")) in ("Macos", "iOS", "watchOS", "tvOS", "visionOS"):
+            return ["opencl-icd-loader::opencl-icd-loader"]
+        return []
+
+    def librealsense():
+        return ["librealsense::librealsense"] if opts.get_safe("with_librealsense") else []
+
+    def parallel():
+        if opts.parallel == "openmp":
+            return ["openmp::openmp"]
+        if opts.parallel == "tbb":
+            return ["onetbb::libtbb"]
+        return []
+
+    def cudart():
+        return ["cudart::cudart"] if opts.with_cuda else []
+
+    def cublas():
+        return ["cublas::cublas_"] if opts.get_safe("with_cublas") else []
+
+    def cufft():
+        return ["cufft::cufft"] if opts.get_safe("with_cufft") else []
+
+    def cudnn():
+        return ["cudnn::cudnn"] if opts.get_safe("dnn_cuda") else []
+
+    def nvcodec():
+        return []  # TODO
+
+    def protobuf():
+        return ["protobuf::protobuf"] if opts.get_safe("with_protobuf") else []
+
+    def qt():
+        return ["qt::qt"] if opts.get_safe("with_qt") else []
+
+    def quirc():
+        return ["quirc::quirc"] if opts.get_safe("with_quirc") else []
+
+    def tesseract():
+        return ["tesseract::tesseract"] if opts.get_safe("with_tesseract") else []
+
+    def vulkan():
+        return ["vulkan-headers::vulkan-headers"] if opts.get_safe("with_vulkan") else []
+
+    def wayland():
+        return ["wayland::wayland-client", "wayland::wayland-cursor"] if opts.get_safe("with_wayland") else []
+
+    def xkbcommon():
+        return ["xkbcommon::libxkbcommon"] if opts.get_safe("with_wayland") else []
+
+    def xvfb():
+        return ["xorg-proto::xorg-proto"] if opts.get_safe("with_framebuffer") else []
+
+    def openvino():
+        return ["openvino::Runtime"] if opts.get_safe("with_openvino") else []
+
+    def opencv_calib3d():
+        return ["opencv_calib3d"] if opts.calib3d else []
+
+    def opencv_cudaarithm():
+        return ["opencv_cudaarithm"] if opts.cudaarithm else []
+
+    def opencv_cudacodec():
+        return ["opencv_cudacodec"] if opts.cudacodec else []
+
+    def opencv_cudafeatures2d():
+        return ["opencv_cudafeatures2d"] if opts.cudafeatures2d else []
+
+    def opencv_cudafilters():
+        return ["opencv_cudafilters"] if opts.cudafilters else []
+
+    def opencv_cudaimgproc():
+        return ["opencv_cudaimgproc"] if opts.cudaimgproc else []
+
+    def opencv_cudalegacy():
+        return ["opencv_cudalegacy"] if opts.cudalegacy else []
+
+    def opencv_cudaoptflow():
+        return ["opencv_cudaoptflow"] if opts.cudaoptflow else []
+
+    def opencv_cudawarping():
+        return ["opencv_cudawarping"] if opts.cudawarping else []
+
+    def opencv_dnn():
+        return ["opencv_dnn"] if opts.dnn else []
+
+    def opencv_flann():
+        return ["opencv_flann"] if opts.flann else []
+
+    def opencv_imgcodecs():
+        return ["opencv_imgcodecs"] if opts.imgcodecs else []
+
+    def opencv_imgproc():
+        return ["opencv_imgproc"] if opts.imgproc else []
+
+    def opencv_objdetect():
+        return ["opencv_objdetect"] if opts.objdetect else []
+
+    def opencv_video():
+        return ["opencv_video"] if opts.video else []
+
+    def opencv_videoio():
+        return ["opencv_videoio"] if opts.videoio else []
+
+    def opencv_xfeatures2d():
+        return ["opencv_xfeatures2d"] if opts.xfeatures2d else []
+
+    opencv_modules = {
+        # Main modules
+        "calib3d": {
+            "is_built": opts.calib3d,
+            "mandatory_options": ["features2d", "flann", "imgproc"],
+            "requires": ["opencv_core", "opencv_features2d", "opencv_flann", "opencv_imgproc"] +
+                        eigen() + lapack() + ipp(),
+        },
+        "core": {
+            "is_built": True,
+            "no_option": True,
+            "requires": ["zlib-ng::zlib-ng"] + parallel() + eigen() + ipp() + armpl() + opencl() + va() + itt() + cudart(),
+            "system_libs": [
+                (settings.os == "Android", ["dl", "m", "log"]),
+                (settings.os == "FreeBSD", ["m", "pthread"]),
+                (settings.os == "Linux", ["dl", "m", "pthread", "rt"]),
+            ],
+            "frameworks": [
+                (settings.os == "Macos" and opts.get_safe("with_opencl"), ["OpenCL"]),
+            ],
+        },
+        "dnn": {
+            "is_built": opts.dnn,
+            "mandatory_options": ["imgproc"],
+            "requires": ["opencv_core", "opencv_imgproc"] +
+                        cudnn() + cublas() + protobuf() + vulkan() + ipp() + openvino() + lapack(),
+        },
+        "features2d": {
+            "is_built": opts.features2d,
+            "mandatory_options": ["imgproc"],
+            "requires": ["opencv_imgproc"] + opencv_flann() + eigen() + ipp(),
+        },
+        "flann": {
+            "is_built": opts.flann,
+            "requires": ["opencv_core"] + ipp(),
+        },
+        "gapi": {
+            "is_built": opts.gapi,
+            "mandatory_options": ["imgproc"],
+            "requires": ["opencv_imgproc", "ade::ade"] + openvino() + gstreamer() + va() + itt(),
+            "system_libs": [
+                (settings.os == "Windows", ["ws2_32", "wsock32"]),
+            ],
+        },
+        "highgui": {
+            "is_built": opts.highgui,
+            "mandatory_options": ["imgproc"],
+            "requires": ["opencv_core", "opencv_imgproc"] + opencv_imgcodecs() +
+                        opencv_videoio() + xvfb() + gtk() + qt() + xkbcommon() + wayland() + ipp(),
+            "system_libs": [
+                (settings.os == "Windows", ["comctl32", "gdi32", "ole32", "setupapi", "ws2_32", "vfw32"]),
+            ],
+            "frameworks": [
+                (settings.os == "Macos", ["Cocoa"]),
+            ],
+        },
+        "imgcodecs": {
+            "is_built": opts.imgcodecs,
+            "mandatory_options": ["imgproc"],
+            "requires": ["opencv_imgproc", "zlib-ng::zlib-ng"] + imageformats_deps() + ipp(),
+            "frameworks": [
+                (str(settings.get_safe("os")) in ("Macos", "iOS", "watchOS", "tvOS", "visionOS"), ["CoreFoundation", "CoreGraphics"]),
+                (settings.os == "iOS", ["UIKit"]),
+                (settings.os == "Macos", ["AppKit"]),
+            ],
+        },
+        "imgproc": {
+            "is_built": opts.imgproc,
+            "requires": ["opencv_core"] + ipp(),
+        },
+        "ml": {
+            "is_built": opts.ml,
+            "requires": ["opencv_core"] + ipp(),
+        },
+        "objdetect": {
+            "is_built": opts.objdetect,
+            "mandatory_options": ["calib3d", "imgproc"],
+            "requires": ["opencv_core", "opencv_calib3d", "opencv_imgproc"] + quirc() + ipp(),
+        },
+        "photo": {
+            "is_built": opts.photo,
+            "mandatory_options": ["imgproc"],
+            "requires": ["opencv_imgproc"] + opencv_cudaarithm() + opencv_cudaimgproc() + ipp(),
+        },
+        "stitching": {
+            "is_built": opts.stitching,
+            "mandatory_options": ["calib3d", "features2d", "flann", "imgproc"],
+            "requires": ["opencv_calib3d", "opencv_features2d", "opencv_flann", "opencv_imgproc"] +
+                        opencv_xfeatures2d() + opencv_cudaarithm() + opencv_cudawarping() +
+                        opencv_cudafeatures2d() + opencv_cudalegacy() + opencv_cudaimgproc() + eigen() + ipp(),
+        },
+        "video": {
+            "is_built": opts.video,
+            "mandatory_options": ["imgproc"],
+            "requires": ["opencv_imgproc"] + opencv_calib3d() + ipp(),
+        },
+        "videoio": {
+            "is_built": opts.videoio,
+            "mandatory_options": ["imgcodecs", "imgproc"],
+            "requires": ["opencv_imgcodecs", "opencv_imgproc"] +
+                        dc1394() + aravis() + ffmpeg() + gphoto2() + gstreamer() + librealsense() + openni2() + ipp(),
+            "system_libs": [
+                (settings.os == "Android" and int(str(settings.os.api_level)) > 20, ["mediandk"]),
+            ],
+            "frameworks": [
+                (str(settings.get_safe("os")) in ("Macos", "iOS", "watchOS", "tvOS", "visionOS"), ["Accelerate", "AVFoundation", "CoreGraphics", "CoreMedia", "CoreVideo", "QuartzCore"]),
+                (settings.os == "iOS", ["CoreImage", "UIKit"]),
+                (settings.os == "Macos", ["Cocoa"]),
+            ],
+        },
+        # Extra modules
+        "alphamat": {
+            "is_built": opts.get_safe("alphamat"),
+            "mandatory_options": ["with_eigen", "imgproc"],
+            "requires": ["opencv_core", "opencv_imgproc"] + ipp(),
+        },
+        "aruco": {
+            "is_built": opts.aruco,
+            "mandatory_options": ["calib3d", "imgproc"],
+            "requires": ["opencv_core", "opencv_calib3d", "opencv_imgproc"] + ipp(),
+        },
+        "barcode": {
+            "is_built": opts.get_safe("barcode"),
+            "mandatory_options": ["dnn", "imgproc"],
+            "requires": ["opencv_core", "opencv_dnn", "opencv_imgproc"] + ipp(),
+        },
+        "bgsegm": {
+            "is_built": opts.bgsegm,
+            "mandatory_options": ["calib3d", "imgproc", "video"],
+            "requires": ["opencv_core", "opencv_calib3d", "opencv_imgproc", "opencv_video"] + ipp(),
+        },
+        "bioinspired": {
+            "is_built": opts.bioinspired,
+            "requires": ["opencv_core"] + ipp(),
+        },
+        "ccalib": {
+            "is_built": opts.ccalib,
+            "mandatory_options": ["calib3d", "features2d", "highgui", "imgproc"],
+            "requires": ["opencv_core", "opencv_calib3d", "opencv_features2d", "opencv_highgui", "opencv_imgproc"] + ipp(),
+        },
+        "cudaarithm": {
+            "is_built": opts.cudaarithm,
+            "mandatory_options": ["with_cuda"],
+            "requires": ["opencv_core", "opencv_cudev", "npp::nppi"] + ipp() + cublas() + cufft(),
+        },
+        "cudabgsegm": {
+            "is_built": opts.cudabgsegm,
+            "mandatory_options": ["with_cuda", "video"],
+            "requires": ["opencv_video"] + ipp(),
+        },
+        "cudacodec": {
+            "is_built": opts.cudacodec,
+            "mandatory_options": ["with_cuda", "videoio"],
+            "requires": ["opencv_core", "opencv_videoio"] + ipp() + nvcodec(),
+        },
+        "cudafeatures2d": {
+            "is_built": opts.cudafeatures2d,
+            "mandatory_options": ["with_cuda", "features2d", "cudafilters", "cudawarping"],
+            "requires": ["opencv_features2d", "opencv_cudafilters", "opencv_cudawarping"] + ipp(),
+        },
+        "cudafilters": {
+            "is_built": opts.cudafilters,
+            "mandatory_options": ["with_cuda", "imgproc", "cudaarithm"],
+            "requires": ["opencv_imgproc", "opencv_cudaarithm", "npp::nppi"] + ipp(),
+        },
+        "cudaimgproc": {
+            "is_built": opts.cudaimgproc,
+            "mandatory_options": ["with_cuda", "imgproc"],
+            "requires": ["opencv_imgproc", "opencv_cudev", "npp::nppi"] + opencv_cudaarithm() + opencv_cudafilters() + ipp(),
+        },
+        "cudalegacy": {
+            "is_built": opts.cudalegacy,
+            "mandatory_options": ["with_cuda", "video"],
+            "requires": ["opencv_core", "opencv_video"] + opencv_calib3d() + opencv_imgproc() + opencv_objdetect() +
+                        opencv_cudaarithm() + opencv_cudafilters() + opencv_cudaimgproc() + ipp(),
+        },
+        "cudaobjdetect": {
+            "is_built": opts.cudaobjdetect,
+            "mandatory_options": ["with_cuda", "objdetect", "cudaarithm", "cudawarping"],
+            "requires": ["opencv_objdetect", "opencv_cudaarithm", "opencv_cudawarping"] + opencv_cudalegacy() + ipp(),
+        },
+        "cudaoptflow": {
+            "is_built": opts.cudaoptflow,
+            "mandatory_options": ["with_cuda", "video", "cudaarithm", "cudaimgproc", "cudawarping", "optflow"],
+            "requires": ["opencv_video", "opencv_cudaarithm", "opencv_cudaimgproc", "opencv_cudawarping",
+                         "opencv_optflow"] + opencv_cudalegacy() + ipp(),
+        },
+        "cudastereo": {
+            "is_built": opts.cudastereo,
+            "mandatory_options": ["with_cuda", "calib3d"],
+            "requires": ["opencv_calib3d", "opencv_cudev"] + ipp(),
+        },
+        "cudawarping": {
+            "is_built": opts.cudawarping,
+            "mandatory_options": ["with_cuda", "imgproc"],
+            "requires": ["opencv_core", "opencv_imgproc", "opencv_cudev", "npp::nppi"] + ipp(),
+        },
+        "cudev": {
+            "is_built": opts.with_cuda,
+            "no_option": True,
+            "requires": ipp(),
+        },
+        "cvv": {
+            "is_built": opts.cvv,
+            "mandatory_options": ["with_qt", "features2d", "imgproc"],
+            "requires": ["opencv_core", "opencv_features2d", "opencv_imgproc", "qt::qt"] + ipp(),
+        },
+        "datasets": {
+            "is_built": opts.datasets,
+            "mandatory_options": ["flann", "imgcodecs", "ml"],
+            "requires": ["opencv_core", "opencv_flann", "opencv_imgcodecs", "opencv_ml"] + ipp(),
+        },
+        "dnn_objdetect": {
+            "is_built": opts.dnn_objdetect,
+            "mandatory_options": ["dnn", "imgproc"],
+            "requires": ["opencv_core", "opencv_dnn", "opencv_imgproc"] + ipp(),
+        },
+        "dnn_superres": {
+            "is_built": opts.dnn_superres,
+            "mandatory_options": ["dnn", "imgproc"],
+            "requires": ["opencv_core", "opencv_dnn", "opencv_imgproc"] + ipp(),
+        },
+        "dpm": {
+            "is_built": opts.dpm,
+            "mandatory_options": ["imgproc", "objdetect"],
+            "requires": ["opencv_core", "opencv_imgproc", "opencv_objdetect"] + ipp(),
+        },
+        "face": {
+            "is_built": opts.face,
+            "mandatory_options": ["calib3d", "imgproc", "objdetect", "photo"],
+            "requires": ["opencv_core", "opencv_calib3d", "opencv_imgproc", "opencv_objdetect", "opencv_photo"] + ipp(),
+        },
+        "freetype": {
+            "is_built": opts.freetype,
+            "mandatory_options": ["imgproc"],
+            "requires": ["opencv_core", "opencv_imgproc", "freetype::freetype", "harfbuzz::harfbuzz"] + ipp(),
+        },
+        "fuzzy": {
+            "is_built": opts.fuzzy,
+            "mandatory_options": ["imgproc"],
+            "requires": ["opencv_core", "opencv_imgproc"] + ipp(),
+        },
+        "hdf": {
+            "is_built": opts.hdf,
+            "requires": ["opencv_core", "hdf5::hdf5"] + ipp(),
+        },
+        "hfs": {
+            "is_built": opts.hfs,
+            "mandatory_options": ["imgproc"],
+            "requires": ["opencv_core", "opencv_imgproc"] + ipp(),
+        },
+        "img_hash": {
+            "is_built": opts.img_hash,
+            "is_part_of_world": False,
+            "mandatory_options": ["imgproc"],
+            "requires": ["opencv_core", "opencv_imgproc"] + ipp(),
+        },
+        "intensity_transform": {
+            "is_built": opts.get_safe("intensity_transform"),
+            "requires": ["opencv_core"] + ipp(),
+        },
+        "line_descriptor": {
+            "is_built": opts.line_descriptor,
+            "mandatory_options": ["imgproc"],
+            "requires": ["opencv_imgproc"] + ipp(),
+        },
+        "mcc": {
+            "is_built": opts.get_safe("mcc"),
+            "mandatory_options": ["calib3d", "dnn", "imgproc"],
+            "requires": ["opencv_core", "opencv_calib3d", "opencv_dnn", "opencv_imgproc"] + ipp(),
+        },
+        "optflow": {
+            "is_built": opts.optflow,
+            "mandatory_options": ["calib3d", "flann", "imgcodecs", "imgproc", "video", "ximgproc"],
+            "requires": ["opencv_core", "opencv_calib3d", "opencv_flann", "opencv_imgcodecs", "opencv_imgproc",
+                         "opencv_video", "opencv_ximgproc"] + ipp(),
+        },
+        "ovis": {
+            "is_built": opts.ovis,
+            "mandatory_options": ["calib3d", "imgproc"],
+            "requires": ["opencv_core", "opencv_calib3d", "opencv_imgproc", "ogre::ogre"] + ipp(),
+        },
+        "phase_unwrapping": {
+            "is_built": opts.phase_unwrapping,
+            "mandatory_options": ["imgproc"],
+            "requires": ["opencv_core", "opencv_imgproc"] + ipp(),
+        },
+        "plot": {
+            "is_built": opts.plot,
+            "mandatory_options": ["imgproc"],
+            "requires": ["opencv_core", "opencv_imgproc"] + ipp(),
+        },
+        "quality": {
+            "is_built": opts.quality,
+            "mandatory_options": ["imgproc", "ml"],
+            "requires": ["opencv_core", "opencv_imgproc", "opencv_ml"] + ipp(),
+        },
+        "rapid": {
+            "is_built": opts.get_safe("rapid"),
+            "mandatory_options": ["calib3d", "imgproc"],
+            "requires": ["opencv_core", "opencv_calib3d", "opencv_imgproc"] + ipp(),
+        },
+        "reg": {
+            "is_built": opts.reg,
+            "mandatory_options": ["imgproc"],
+            "requires": ["opencv_core", "opencv_imgproc"] + ipp(),
+        },
+        "rgbd": {
+            "is_built": opts.rgbd,
+            "mandatory_options": ["calib3d", "imgproc"],
+            "requires": ["opencv_core", "opencv_calib3d", "opencv_imgproc"] + eigen() + ipp(),
+        },
+        "saliency": {
+            "is_built": opts.saliency,
+            "mandatory_options": ["features2d", "imgproc"],
+            "requires": ["opencv_features2d", "opencv_imgproc"] + ipp(),
+        },
+        "sfm": {
+            "is_built": opts.sfm,
+            "is_part_of_world": False,
+            "mandatory_options": ["with_eigen", "calib3d", "features2d", "imgcodecs", "xfeatures2d"],
+            "requires": ["opencv_core", "opencv_calib3d", "opencv_features2d", "opencv_imgcodecs", "opencv_xfeatures2d",
+                         "correspondence", "multiview", "numeric", "glog::glog", "gflags::gflags"] + eigen() + ipp(),
+        },
+        "shape": {
+            "is_built": opts.shape,
+            "mandatory_options": ["calib3d", "imgproc"],
+            "requires": ["opencv_core", "opencv_calib3d", "opencv_imgproc"] + ipp(),
+        },
+        "stereo": {
+            "is_built": opts.stereo,
+            "mandatory_options": ["features2d", "imgproc", "tracking"],
+            "requires": ["opencv_core", "opencv_features2d", "opencv_imgproc", "opencv_tracking"] + ipp(),
+        },
+        "structured_light": {
+            "is_built": opts.structured_light,
+            "mandatory_options": ["calib3d", "imgproc", "phase_unwrapping"],
+            "requires": ["opencv_core", "opencv_calib3d", "opencv_imgproc", "opencv_phase_unwrapping"] + ipp(),
+        },
+        "superres": {
+            "is_built": opts.get_safe("superres"),
+            "mandatory_options": ["imgproc", "video", "optflow"],
+            "requires": ["opencv_imgproc", "opencv_video", "opencv_optflow"] + opencv_videoio() + ipp() +
+                        opencv_cudaarithm() + opencv_cudafilters() + opencv_cudawarping() + opencv_cudaimgproc() +
+                        opencv_cudaoptflow() + opencv_cudacodec(),
+        },
+        "surface_matching": {
+            "is_built": opts.surface_matching,
+            "mandatory_options": ["flann"],
+            "requires": ["opencv_core", "opencv_flann"] + ipp(),
+        },
+        "text": {
+            "is_built": opts.text,
+            "mandatory_options": ["dnn", "features2d", "imgproc", "ml"],
+            "requires": ["opencv_core", "opencv_dnn", "opencv_features2d", "opencv_imgproc", "opencv_ml"] +
+                        tesseract() + ipp(),
+        },
+        "tracking": {
+            "is_built": opts.tracking,
+            "mandatory_options": ["imgproc", "video"],
+            "requires": ["opencv_core", "opencv_imgproc", "opencv_video"] + opencv_dnn() + ipp(),
+        },
+        "videostab": {
+            "is_built": opts.videostab,
+            "mandatory_options": ["calib3d", "features2d", "imgproc", "photo", "video"],
+            "requires": ["opencv_calib3d", "opencv_features2d", "opencv_imgproc", "opencv_photo", "opencv_video"] +
+                        opencv_videoio() + clp() + ipp() + opencv_cudawarping() + opencv_cudaoptflow(),
+        },
+        "viz": {
+            "is_built": opts.viz,
+            "requires": ["opencv_core", "vtk::vtk"] + ipp(),
+        },
+        "wechat_qrcode": {
+            "is_built": opts.get_safe("wechat_qrcode"),
+            "mandatory_options": ["dnn", "imgproc"],
+            "requires": ["opencv_core", "opencv_dnn", "opencv_imgproc"] + ipp(),
+        },
+        "xfeatures2d": {
+            "is_built": opts.xfeatures2d,
+            "mandatory_options": ["calib3d", "features2d", "imgproc"],
+            "requires": ["opencv_core", "opencv_calib3d", "opencv_features2d", "opencv_imgproc"] + ipp() + opencv_cudaarithm(),
+        },
+        "ximgproc": {
+            "is_built": opts.ximgproc,
+            "mandatory_options": ["calib3d", "imgcodecs", "imgproc", "video"],
+            "requires": ["opencv_core", "opencv_calib3d", "opencv_imgcodecs", "opencv_imgproc", "opencv_video"] +
+                        eigen() + ipp(),
+        },
+        "xobjdetect": {
+            "is_built": opts.xobjdetect,
+            "mandatory_options": ["imgcodecs", "imgproc", "objdetect"],
+            "requires": ["opencv_core", "opencv_imgcodecs", "opencv_imgproc", "opencv_objdetect"] + ipp(),
+        },
+        "xphoto": {
+            "is_built": opts.xphoto,
+            "mandatory_options": ["imgproc", "photo"],
+            "requires": ["opencv_core", "opencv_imgproc", "opencv_photo"] + ipp(),
+        },
+        # Extra targets (without prefix in their target & lib name)
+        "ippiw": {
+            "is_built": opts.with_ipp == "opencv-icv" and not opts.shared,
+            "is_part_of_world": False,
+            "no_option": True,
+        },
+        "numeric": {
+            "is_built": opts.sfm,
+            "is_part_of_world": False,
+            "no_option": True,
+            "requires": eigen() + ipp(),
+        },
+        "correspondence": {
+            "is_built": opts.sfm,
+            "is_part_of_world": False,
+            "no_option": True,
+            "requires": ["opencv_imgcodecs", "multiview", "glog::glog"] + eigen() + ipp(),
+        },
+        "multiview": {
+            "is_built": opts.sfm,
+            "is_part_of_world": False,
+            "no_option": True,
+            "requires": ["numeric", "glog::glog"] + eigen() + ipp(),
+        },
+    }
+
+    if Version(version) >= "4.3.0":
+        opencv_modules["gapi"].setdefault("requires", []).extend(opencv_video())
+    if Version(version) >= "4.5.2":
+        opencv_modules["gapi"].setdefault("requires", []).extend(opencv_calib3d())
+    if Version(version) >= "4.5.4":
+        opencv_modules["objdetect"].setdefault("requires", []).extend(opencv_dnn())
+    if Version(version) >= "4.5.1":
+        opencv_modules["video"].setdefault("requires", []).extend(opencv_dnn())
+    if Version(version) >= "4.4.0":
+        opencv_modules["intensity_transform"].setdefault("mandatory_options", []).append("imgproc")
+        opencv_modules["intensity_transform"].setdefault("requires", []).append("opencv_imgproc")
+    if Version(version) < "4.3.0":
+        opencv_modules["stereo"].setdefault("mandatory_options", []).extend(["calib3d", "video"])
+        opencv_modules["stereo"].setdefault("requires", []).extend(["opencv_calib3d", "opencv_video"])
+    if Version(version) >= "4.7.0":
+        opencv_modules["aruco"].setdefault("mandatory_options", []).append("objdetect")
+        opencv_modules["aruco"].setdefault("requires", []).append("opencv_objdetect")
+        opencv_modules["cudacodec"].setdefault("mandatory_options", []).extend(["cudaarithm", "cudawarping"])
+        opencv_modules["cudacodec"].setdefault("requires", []).extend(["opencv_cudaarithm", "opencv_cudawarping"])
+        opencv_modules["wechat_qrcode"].setdefault("mandatory_options", []).append("objdetect")
+        opencv_modules["wechat_qrcode"].setdefault("requires", []).append("opencv_objdetect")
+    else:
+        opencv_modules["cudacodec"].setdefault("requires", []).append("opencv_cudev")
+    if Version(version) >= "4.14.0":
+        opencv_modules["cudacodec"].setdefault("requires", []).extend(cudart())
+    if Version(version) < "4.8.0":
+        opencv_modules["dnn"].setdefault("mandatory_options", []).append("with_protobuf")
+
+    return opencv_modules
