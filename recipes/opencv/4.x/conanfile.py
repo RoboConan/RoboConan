@@ -107,6 +107,7 @@ class OpenCVConan(ConanFile):
         "parallel": [False, "tbb", "openmp"],
         "neon": [True, False],
         "with_ipp": [False, "intel-ipp", "opencv-icv"],
+        "with_armpl": [True, False],
         "with_eigen": [True, False],
         "with_lapack": [True, False],
         "with_opencl": [True, False],
@@ -178,6 +179,7 @@ class OpenCVConan(ConanFile):
         "parallel": "openmp",
         "neon": True,
         "with_ipp": False,
+        "with_armpl": False,
         "with_eigen": True,
         "with_lapack": False,
         "with_opencl": False,
@@ -381,6 +383,10 @@ class OpenCVConan(ConanFile):
     def _has_with_flatbuffers_option(self):
         return Version(self.version) >= "4.8.0"
 
+    @property
+    def _has_with_armpl_option(self):
+        return Version(self.version) >= "4.14.0" and self.settings.os == "Linux" and self.settings.arch == "armv8"
+
     def export_sources(self):
         export_conandata_patches(self)
 
@@ -447,6 +453,8 @@ class OpenCVConan(ConanFile):
             del self.options.with_avif
         if not self._has_with_flatbuffers_option:
             del self.options.with_flatbuffers
+        if not self._has_with_armpl_option:
+            del self.options.with_armpl
 
         # Conditional default options
         if self._is_mingw:
@@ -508,8 +516,12 @@ class OpenCVConan(ConanFile):
         def lapack():
             return ["lapack::lapack"] if self.options.get_safe("with_lapack") else []
 
-        def clp():
-            return ["coin-clp::coin-clp"] if self.options.get_safe("with_clp") else []
+        def _clp():
+            if not self.options.get_safe("with_clp"):
+                return []
+            if Version(self.version) >= "4.14.0":
+                return ["coin-clp::clp"]
+            return ["coin-clp::coin-clp"]
 
         def ffmpeg():
             components = []
@@ -547,6 +559,9 @@ class OpenCVConan(ConanFile):
             elif self.options.with_ipp == "opencv-icv" and not self.options.shared:
                 return ["ippiw"]
             return []
+
+        def _armpl():
+            return ["armpl::armpl"] if self.options.get_safe("with_armpl") else []
 
         def opencl():
             if self.options.get_safe("with_opencl") and not is_apple_os(self):
@@ -667,7 +682,7 @@ class OpenCVConan(ConanFile):
             "core": {
                 "is_built": True,
                 "no_option": True,
-                "requires": ["zlib-ng::zlib-ng"] + parallel() + eigen() + ipp() + opencl() + va() + itt() + cudart(),
+                "requires": ["zlib-ng::zlib-ng"] + parallel() + eigen() + ipp() + _armpl() + opencl() + va() + itt() + cudart(),
                 "system_libs": [
                     (self.settings.os == "Android", ["dl", "m", "log"]),
                     (self.settings.os == "FreeBSD", ["m", "pthread"]),
@@ -1022,7 +1037,7 @@ class OpenCVConan(ConanFile):
                 "is_built": self.options.videostab,
                 "mandatory_options": ["calib3d", "features2d", "imgproc", "photo", "video"],
                 "requires": ["opencv_calib3d", "opencv_features2d", "opencv_imgproc", "opencv_photo", "opencv_video"] +
-                            opencv_videoio() + clp() + ipp() + opencv_cudawarping() + opencv_cudaoptflow(),
+                            opencv_videoio() + _clp() + ipp() + opencv_cudawarping() + opencv_cudaoptflow(),
             },
             "viz": {
                 "is_built": self.options.viz,
@@ -1103,6 +1118,8 @@ class OpenCVConan(ConanFile):
             opencv_modules["wechat_qrcode"].setdefault("requires", []).append("opencv_objdetect")
         else:
             opencv_modules["cudacodec"].setdefault("requires", []).append("opencv_cudev")
+        if Version(self.version) >= "4.14.0":
+            opencv_modules["cudacodec"].setdefault("requires", []).extend(cudart())
         if Version(self.version) < "4.8.0":
             opencv_modules["dnn"].setdefault("mandatory_options", []).append("with_protobuf")
 
@@ -1255,6 +1272,8 @@ class OpenCVConan(ConanFile):
             self.requires("eigen/[>=3.3 <6]")
         if self.options.get_safe("with_lapack"):
             self.requires("lapack/latest")
+        if self.options.get_safe("with_armpl"):
+            self.requires("armpl/[^25.07.0]")
         if self.options.get_safe("with_clp"):
             self.requires("coin-clp/[^1.17.6]")
         if self.options.with_cuda:
@@ -1282,7 +1301,7 @@ class OpenCVConan(ConanFile):
         if self.options.get_safe("with_protobuf"):
             # Symbols are exposed https://github.com/conan-io/conan-center-index/pull/16678#issuecomment-1507811867
             if Version(self.version) >= "4.11.0":
-                self.requires("protobuf/[>=3.21.12]", transitive_libs=True)
+                self.requires("protobuf/[>=3.21.12 <8]", transitive_libs=True)
             else:
                 self.requires("protobuf/[>=3.21.12 <6]", transitive_libs=True)
         if self.options.get_safe("with_vulkan"):
@@ -1474,12 +1493,22 @@ class OpenCVConan(ConanFile):
              "set(HAVE_OPENNI2 ${OPENNI2_FOUND})\n"
              'ocv_add_external_target(openni2 "${OPENNI2_INCLUDE_DIRS}" "${OPENNI2_LIBRARIES}" "HAVE_OPENNI2")\n')
 
-        # Use pkg-config to find Clp even on Windows
-        replace_in_file(self, "cmake/OpenCVFindLibsPerf.cmake", "if(UNIX)", "if(TRUE)")
-        # Fix a CMake bug
-        replace_in_file(self, "cmake/OpenCVFindLibsPerf.cmake",
-                        'if(NOT ${CLP_INCLUDE_DIRS} STREQUAL "")',
-                        'if(NOT CLP_INCLUDE_DIRS STREQUAL "")')
+        if Version(self.version) < "4.14.0":
+            # Use pkg-config to find Clp even on Windows
+            replace_in_file(self, "cmake/OpenCVFindLibsPerf.cmake", "if(UNIX)", "if(TRUE)")
+            # Fix a CMake bug
+            replace_in_file(self, "cmake/OpenCVFindLibsPerf.cmake",
+                            'if(NOT ${CLP_INCLUDE_DIRS} STREQUAL "")',
+                            'if(NOT CLP_INCLUDE_DIRS STREQUAL "")')
+        if Version(self.version) >= "4.14.0":
+            save(self, "cmake/OpenCVFindARMPL.cmake", textwrap.dedent("""\
+                find_package(ARMPL REQUIRED CONFIG)
+                set(ARMPL_LIBRARIES armpl)
+                set(ARMPL_LIBRARY armpl)
+                set(ARMPL_LIB_NAME armpl)
+                set(ARMPL_VERSION_STR "${ARMPL_VERSION_STRING}")
+                set(HAVE_ARMPL TRUE)
+            """))
 
         # Add support for external ITT
         save(self, "cmake/OpenCVDetectTrace.cmake",
@@ -1493,6 +1522,9 @@ class OpenCVConan(ConanFile):
             save(self, "cmake/OpenCVFindJPEGXL.cmake", "find_package(JPEGXL REQUIRED)\n")
 
         ## Cleanup RPATH
+        if Version(self.version) >= "4.14.0":
+            replace_in_file(self, "cmake/OpenCVInstallLayout.cmake",
+                            'ocv_update(CMAKE_INSTALL_RPATH "@executable_path/Frameworks;@loader_path/Frameworks;@executable_path/../${OPENCV_3P_LIB_INSTALL_PATH}")', "")
         replace_in_file(self, "cmake/OpenCVInstallLayout.cmake", 'ocv_update(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${OPENCV_LIB_INSTALL_PATH}")', "")
         replace_in_file(self, "cmake/OpenCVInstallLayout.cmake", "set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)", "")
 
@@ -1601,6 +1633,7 @@ class OpenCVConan(ConanFile):
         tc.variables["WITH_IMGCODEC_PXM"] = self.options.get_safe("with_imgcodec_pxm", False)
         tc.variables["WITH_IMGCODEC_SUNRASTER"] = self.options.get_safe("with_imgcodec_sunraster", False)
         tc.variables["WITH_IPP"] = bool(self.options.with_ipp)
+        tc.variables["WITH_ARMPL"] = self.options.get_safe("with_armpl", False)
         if self.options.with_ipp == "intel-ipp":
             ipp_root = self.dependencies["intel-ipp"].package_folder.replace("\\", "/")
             tc.variables["IPPROOT"] = ipp_root
@@ -1746,7 +1779,7 @@ class OpenCVConan(ConanFile):
         tc.variables["WITH_CUBLAS"] = self.options.get_safe("with_cublas", False)
         tc.variables["WITH_CUFFT"] = self.options.get_safe("with_cufft", False)
         tc.variables["WITH_CUDNN"] = self.options.get_safe("dnn_cuda", False)
-        tc.variables["ENABLE_CUDA_FIRST_CLASS_LANGUAGE"] = True
+        tc.variables["ENABLE_CUDA_FIRST_CLASS_LANGUAGE"] = self.options.with_cuda
         # This allows compilation on older GCC/NVCC, otherwise build errors.
         tc.variables["CUDA_NVCC_FLAGS"] = "--expt-relaxed-constexpr"
 
@@ -1759,6 +1792,8 @@ class OpenCVConan(ConanFile):
         if self.settings.os == "Android":
             tc.variables["BUILD_ANDROID_EXAMPLES"] = False
 
+        tc.variables["CV_TRACE"] = False
+
         tc.variables["CMAKE_TRY_COMPILE_CONFIGURATION"] = str(self.settings.build_type)
 
         tc.generate()
@@ -1767,6 +1802,13 @@ class OpenCVConan(ConanFile):
         deps.set_property("ittapi", "cmake_file_name", "ITT")
         deps.set_property("libjxl", "cmake_file_name", "JPEGXL")
         deps.set_property("openni2", "cmake_file_name", "OPENNI2")
+        if self.options.get_safe("with_armpl"):
+            deps.set_property("armpl", "cmake_file_name", "ARMPL")
+            deps.set_property("armpl", "cmake_target_name", "armpl")
+        if self.options.get_safe("with_clp") and Version(self.version) >= "4.14.0":
+            deps.set_property("coin-clp", "cmake_file_name", "Clp")
+            deps.set_property("coin-clp::clp", "cmake_target_name", "Coin::Clp")
+            deps.set_property("coin-utils", "cmake_target_name", "Coin::CoinUtils")
         deps.generate()
 
         if self._build_depends_on_pkgconfig:
