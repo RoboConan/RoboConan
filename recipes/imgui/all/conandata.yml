@@ -1,14 +1,14 @@
 sources:
-  "1.92.7":
+  "1.92.9b":
     regular:
-      url: "https://github.com/ocornut/imgui/archive/v1.92.7.tar.gz"
-      sha256: "b21b14ce1ef6dd4d85fa54f68f8449a9be94f3b453aba7fe4ea2a9764e43a5ef"
+      url: "https://github.com/ocornut/imgui/archive/v1.92.9b.tar.gz"
+      sha256: "21d8a0a565e85dce943e375db00812c2f3f0ab21f3f0f7964e364a63422d7f99"
     docking:
-      url: "https://github.com/ocornut/imgui/archive/v1.92.7-docking.tar.gz"
-      sha256: "2c58e28c957497eba0ed01c48a0bc5f118ec5f10a1c3721ba9436253a623bd72"
+      url: "https://github.com/ocornut/imgui/archive/v1.92.9b-docking.tar.gz"
+      sha256: "90ded916bd57db2e0e171b6b098940a47c6f5042725dcdc67fb19940ca8bfdcc"
     test-engine:
-      url: "https://github.com/ocornut/imgui_test_engine/archive/v1.92.7.tar.gz"
-      sha256: "3bb2320044854abb479facdde01c38c8af2e0257a630eb4b582b100a4fa60043"
+      url: "https://github.com/ocornut/imgui_test_engine/archive/v1.92.9b.tar.gz"
+      sha256: "8cbc3060e219908fd87fc44df82163372f31f130b981445eee5bbda1d6f95f98"
   "1.91.9b":
     regular:
       url: "https://github.com/ocornut/imgui/archive/v1.91.9b.tar.gz"
@@ -19,16 +19,6 @@ sources:
     test-engine:
       url: "https://github.com/ocornut/imgui_test_engine/archive/v1.91.9.tar.gz"
       sha256: "da67f93b5c1adc0bff02504e35447961ce405c086b428ee415918d9111660ec3"
-  "1.91.4":  # keep v1.91.4 as 1.91.5 removes many deprecated features: https://github.com/ocornut/imgui/commit/6f287dd16d5d7f393d5b6089585dd87ea5ea0d92
-    regular:
-      url: "https://github.com/ocornut/imgui/archive/v1.91.4.tar.gz"
-      sha256: "a455c28d987c78ddf56aab98ce0ff0fda791a23a2ec88ade46dd106b837f0923"
-    docking:
-      url: "https://github.com/ocornut/imgui/archive/v1.91.4-docking.tar.gz"
-      sha256: "7405bdaf304b77d6d03e6d17d1f31ca3586fa0c65a466fa1dd71b6ca6a222023"
-    test-engine:
-      url: "https://github.com/ocornut/imgui_test_engine/archive/v1.91.4.tar.gz"
-      sha256: "fa0b6b03168e245329c6f7b6487d5e6209bf6469efa3e31c2467eb8f4989ac74"
   "1.90.9":
     regular:
       url: "https://github.com/ocornut/imgui/archive/v1.90.9.tar.gz"

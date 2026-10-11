@@ -89,7 +89,7 @@ endif()
 
 if(IMGUI_IMPL_DX10)
     add_library(imgui-dx10 backends/imgui_impl_dx10.cpp)
-    target_link_libraries(imgui-dx9 PRIVATE d3d10)
+    target_link_libraries(imgui-dx10 PRIVATE d3d10)
     install(FILES backends/imgui_impl_dx10.h DESTINATION include)
     list(APPEND IMGUI_COMPONENTS imgui-dx10)
 endif()
@@ -131,7 +131,10 @@ endif()
 if(IMGUI_IMPL_METAL)
     enable_language(OBJCXX)
     add_library(imgui-metal backends/imgui_impl_metal.mm)
-    set_source_files_properties(backends/imgui_impl_metal.mm PROPERTIES COMPILE_FLAGS -fobjc-weak)
+    target_compile_options(imgui-metal PRIVATE -fobjc-weak)
+    if(NOT IMGUI_IMPL_METAL_CPP)
+        target_compile_options(imgui-metal PRIVATE -fobjc-arc)
+    endif()
     target_link_libraries(imgui-metal PRIVATE
         "-framework Foundation"
         "-framework Metal"
@@ -143,6 +146,26 @@ if(IMGUI_IMPL_METAL)
         target_link_libraries(imgui-metal PRIVATE metal-cpp::metal-cpp)
     endif()
     list(APPEND IMGUI_COMPONENTS imgui-metal)
+endif()
+
+if(IMGUI_IMPL_METAL4)
+    enable_language(OBJCXX)
+    add_library(imgui-metal4 backends/imgui_impl_metal4.mm)
+    target_compile_options(imgui-metal4 PRIVATE -fobjc-weak)
+    if(NOT IMGUI_IMPL_METAL_CPP)
+        target_compile_options(imgui-metal4 PRIVATE -fobjc-arc)
+    endif()
+    target_link_libraries(imgui-metal4 PRIVATE
+        "-framework Foundation"
+        "-framework Metal"
+        "-framework QuartzCore"
+    )
+    install(FILES backends/imgui_impl_metal4.h DESTINATION include)
+    if(IMGUI_IMPL_METAL_CPP)
+        find_package(metal-cpp CONFIG REQUIRED)
+        target_link_libraries(imgui-metal4 PRIVATE metal-cpp::metal-cpp)
+    endif()
+    list(APPEND IMGUI_COMPONENTS imgui-metal4)
 endif()
 
 if(IMGUI_IMPL_OPENGL2)
@@ -240,7 +263,7 @@ foreach(component ${IMGUI_COMPONENTS})
     target_link_libraries(${component} PUBLIC imgui)
 endforeach()
 
-if(IMGUI_IMPL_TOOLS)
+if(IMGUI_BUILD_PROGRAMS)
     add_executable(binary_to_compressed_c misc/fonts/binary_to_compressed_c.cpp)
     install(TARGETS binary_to_compressed_c DESTINATION bin)
 endif()

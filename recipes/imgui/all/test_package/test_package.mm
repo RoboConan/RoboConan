@@ -10,6 +10,9 @@
 #ifdef IMGUI_IMPL_METAL
    #include <imgui_impl_metal.h>
 #endif
+#ifdef IMGUI_IMPL_METAL4
+   #include <imgui_impl_metal4.h>
+#endif
 
 #include <cstdio>
 
@@ -19,6 +22,9 @@ void test_backends() {
 #endif
 #ifdef IMGUI_IMPL_METAL
     ImGui_ImplMetal_Shutdown();
+#endif
+#ifdef IMGUI_IMPL_METAL4
+    ImGui_ImplMetal4_Shutdown();
 #endif
 }
 

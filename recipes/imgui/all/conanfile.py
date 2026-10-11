@@ -5,7 +5,7 @@ from pathlib import Path
 
 from conan import ConanFile
 from conan.errors import ConanException, ConanInvalidConfiguration
-from conan.tools.apple import is_apple_os
+from conan.tools.apple import XCRun, is_apple_os
 from conan.tools.build import check_min_cppstd
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
@@ -40,6 +40,7 @@ class ImguiConan(ConanFile):
         "backend_glfw": [True, False],
         "backend_glut": [True, False],
         "backend_metal": [True, False],
+        "backend_metal4": [True, False],
         "backend_opengl2": [True, False],
         "backend_opengl3": [True, False],
         "backend_osx": [True, False],
@@ -53,12 +54,15 @@ class ImguiConan(ConanFile):
         # "backend_wgpu": [True, False],
         # Other options
         # See https://github.com/ocornut/imgui/blob/master/imconfig.h for details
+        "enable_debug_tools": [True, False],
+        "enable_default_font_bitmap": [True, False],
+        "enable_default_font_vector": [True, False],
+        "enable_demo_windows": [True, False],
         "enable_freetype": [True, False],
         "enable_freetype_lunasvg": [True, False],
         "enable_metal_cpp": [True, False],
         "enable_osx_clipboard": [True, False],
-        "enable_demo_windows": [True, False],
-        "enable_debug_tools": [True, False],
+        "enable_time_functions": [True, False],
         "use_bgra_packed_color": [True, False],
         "use_wchar32": [True, False],
         "build_programs": [True, False],
@@ -78,6 +82,7 @@ class ImguiConan(ConanFile):
         "backend_glfw": True,
         "backend_glut": False,
         "backend_metal": True,
+        "backend_metal4": False,
         "backend_opengl2": True,
         "backend_opengl3": True,
         "backend_osx": True,
@@ -89,12 +94,15 @@ class ImguiConan(ConanFile):
         "backend_vulkan": False,
         "backend_win32": True,
         # Other options
+        "enable_debug_tools": True,
+        "enable_default_font_bitmap": True,
+        "enable_default_font_vector": True,
+        "enable_demo_windows": True,
         "enable_freetype": False,
         "enable_freetype_lunasvg": False,
         "enable_metal_cpp": True,
         "enable_osx_clipboard": True,
-        "enable_demo_windows": True,
-        "enable_debug_tools": True,
+        "enable_time_functions": True,
         "use_bgra_packed_color": False,
         "use_wchar32": False,
         "build_programs": False,
@@ -107,6 +115,16 @@ class ImguiConan(ConanFile):
     @property
     def _using_sdl3(self):
         return any(self.options.get_safe(f"backend_{x}") for x in ["sdl3", "sdlrenderer3", "sdlgpu3"])
+
+    @property
+    def _apple_sdk_major(self):
+        sdk_version = self.settings.get_safe("os.sdk_version")
+        if sdk_version is None:
+            try:
+                sdk_version = XCRun(self).sdk_version
+            except ConanException:
+                return None
+        return Version(sdk_version).major if sdk_version is not None else None
 
     def export_sources(self):
         copy(self, "CMakeLists.txt", self.recipe_folder, os.path.join(self.export_sources_folder, "src"))
@@ -127,9 +145,18 @@ class ImguiConan(ConanFile):
             del self.options.backend_win32
         if not is_apple_os(self):
             del self.options.backend_metal
-            del self.options.backend_osx
+            del self.options.backend_metal4
             del self.options.enable_metal_cpp
+        if self.settings.os != "Macos":
+            del self.options.backend_osx
             del self.options.enable_osx_clipboard
+        if self.settings.os not in ["Macos", "iOS", "tvOS"]:
+            self.options.rm_safe("enable_metal_cpp")
+        if Version(self.version) < "1.92.9":
+            self.options.rm_safe("backend_metal4")
+            del self.options.enable_default_font_bitmap
+            del self.options.enable_default_font_vector
+            del self.options.enable_time_functions
         if Version(self.version) < "1.91.7":
             del self.options.backend_sdlgpu3
         if Version(self.version) < "1.90":
@@ -147,29 +174,14 @@ class ImguiConan(ConanFile):
         if self.options.shared:
             self.options.rm_safe("fPIC")
         if not self.options.build_backends:
-            self.options.rm_safe("backend_allegro5")
-            self.options.rm_safe("backend_android")
-            self.options.rm_safe("backend_dx9")
-            self.options.rm_safe("backend_dx10")
-            self.options.rm_safe("backend_dx11")
-            self.options.rm_safe("backend_dx12")
-            self.options.rm_safe("backend_glfw")
-            self.options.rm_safe("backend_glut")
-            self.options.rm_safe("backend_metal")
-            self.options.rm_safe("backend_opengl2")
-            self.options.rm_safe("backend_opengl3")
-            self.options.rm_safe("backend_osx")
-            self.options.rm_safe("backend_sdl2")
-            self.options.rm_safe("backend_sdlrenderer2")
-            self.options.rm_safe("backend_sdlrenderer3")
-            self.options.rm_safe("backend_vulkan")
-            self.options.rm_safe("backend_win32")
-            self.options.rm_safe("backend_wgpu")
+            for option, _ in list(self.options.items()):
+                if option.startswith("backend_"):
+                    self.options.rm_safe(option)
         if not self.options.enable_freetype:
             self.options.rm_safe("enable_freetype_lunasvg")
         if not self.options.get_safe("backend_osx"):
             self.options.rm_safe("enable_osx_clipboard")
-        if not self.options.get_safe("backend_osx") and not self.options.get_safe("backend_metal"):
+        if not any(self.options.get_safe(f"backend_{name}") for name in ["osx", "metal", "metal4"]):
             self.options.rm_safe("enable_metal_cpp")
 
         if "test-engine" not in self.conan_data["sources"][self.version]:
@@ -191,9 +203,10 @@ class ImguiConan(ConanFile):
         if self.options.get_safe("backend_glut") and self.settings.os != "Emscripten":
             self.requires("freeglut/[^3.4.0]")
         if self._using_sdl3:
-            self.requires("sdl/[^3.1.8]", transitive_headers=self.options.get_safe("backend_sdlgpu3", False))
+            sdl3_backend = bool(self.options.get_safe("backend_sdlgpu3", False))
+            self.requires("sdl/[^3.1.8]", transitive_headers=sdl3_backend)
         elif self._using_sdl2:
-            self.requires("sdl/[^2.0.17")
+            self.requires("sdl/[^2.0.17]")
         if self.options.get_safe("backend_vulkan"):
             self.requires("vulkan-headers/[^1.3.239.0]", transitive_headers=True)
             self.requires("vulkan-loader/[^1.3.239.0]")
@@ -209,7 +222,8 @@ class ImguiConan(ConanFile):
                 else:
                     self.requires("lunasvg/[^2]")
         if self.options.get_safe("enable_metal_cpp"):
-            self.requires("metal-cpp/14.2", transitive_headers=bool(self.options.get_safe("backend_metal")))
+            backend_metal = bool(self.options.backend_metal or self.options.get_safe("backend_metal4"))
+            self.requires(f"metal-cpp/[^{self._apple_sdk_major}]", transitive_headers=backend_metal)
         if self.options.get_safe("enable_test_engine"):
             self.requires("stb/[*]")
 
@@ -219,6 +233,14 @@ class ImguiConan(ConanFile):
             raise ConanException("Docking support requires version 1.89 or newer.")
         if self._using_sdl2 and self._using_sdl3:
             raise ConanInvalidConfiguration("SDL2 and SDL3 backends cannot be enabled simultaneously")
+        if self.options.get_safe("backend_metal") and self.options.get_safe("backend_metal4"):
+            raise ConanInvalidConfiguration("The Metal and Metal 4 backends cannot be enabled simultaneously")
+        if self.options.get_safe("enable_metal_cpp") and self._apple_sdk_major is None:
+            raise ConanInvalidConfiguration("The Apple SDK version must be configured or detectable")
+        if self.options.get_safe("backend_metal4") and (
+            self._apple_sdk_major is None or Version(self._apple_sdk_major) < "26"
+        ):
+            raise ConanInvalidConfiguration("The Metal 4 backend requires macOS SDK 26 or newer")
 
     def source(self):
         # Handled in build() instead to support self.options.docking.
@@ -236,6 +258,7 @@ class ImguiConan(ConanFile):
         tc.cache_variables["IMGUI_IMPL_GLFW"] = self.options.get_safe("backend_glfw", False)
         tc.cache_variables["IMGUI_IMPL_GLUT"] = self.options.get_safe("backend_glut", False)
         tc.cache_variables["IMGUI_IMPL_METAL"] = self.options.get_safe("backend_metal", False)
+        tc.cache_variables["IMGUI_IMPL_METAL4"] = self.options.get_safe("backend_metal4", False)
         tc.cache_variables["IMGUI_IMPL_OPENGL2"] = self.options.get_safe("backend_opengl2", False)
         tc.cache_variables["IMGUI_IMPL_OPENGL3"] = self.options.get_safe("backend_opengl3", False)
         tc.cache_variables["IMGUI_IMPL_OSX"] = self.options.get_safe("backend_osx", False)
@@ -283,6 +306,9 @@ class ImguiConan(ConanFile):
         defines["IMGUI_USE_BGRA_PACKED_COLOR"] = self.options.use_bgra_packed_color
         defines["IMGUI_USE_WCHAR32"] = self.options.use_wchar32
         defines["IMGUI_DISABLE_DEMO_WINDOWS"] = not self.options.enable_demo_windows
+        defines["IMGUI_DISABLE_DEFAULT_FONT_BITMAP"] = not self.options.get_safe("enable_default_font_bitmap", True)
+        defines["IMGUI_DISABLE_DEFAULT_FONT_VECTOR"] = not self.options.get_safe("enable_default_font_vector", True)
+        defines["IMGUI_DISABLE_TIME_FUNCTIONS"] = not self.options.get_safe("enable_time_functions", True)
         if Version(self.version) >= "1.88":
             defines["IMGUI_DISABLE_DEBUG_TOOLS"] = not self.options.enable_debug_tools
         else:
@@ -337,7 +363,7 @@ class ImguiConan(ConanFile):
         elif self.settings.os == "Windows":
             self.cpp_info.components["core"].system_libs.append("imm32")
         elif is_apple_os(self):
-            if self.options.enable_osx_clipboard:
+            if self.options.get_safe("enable_osx_clipboard"):
                 self.cpp_info.components["core"].frameworks.append("ApplicationServices")
         if self.options.enable_freetype:
             self.cpp_info.components["core"].requires.append("freetype::freetype")
@@ -351,8 +377,7 @@ class ImguiConan(ConanFile):
             if self.options.get_safe(f"backend_{name}"):
                 self.cpp_info.components[name].libs = [f"imgui-{name}"]
                 self.cpp_info.components[name].defines = [f"IMGUI_IMPL_{name.upper()}"]  # unofficial
-                self.cpp_info.components[name].requires = ["core"]
-                self.cpp_info.components[name].requires = requires or []
+                self.cpp_info.components[name].requires = ["core"] + (requires or [])
                 self.cpp_info.components[name].system_libs = system_libs or []
                 self.cpp_info.components[name].frameworks = frameworks or []
 
@@ -368,6 +393,7 @@ class ImguiConan(ConanFile):
         _add_binding("glfw", requires=["glfw::glfw"] if self.settings.os != "Emscripten" else [])
         _add_binding("glut", requires=["freeglut::freeglut"] if self.settings.os != "Emscripten" else [])
         _add_binding("metal", frameworks=["Foundation", "Metal", "QuartzCore"], requires=_metal_cpp())
+        _add_binding("metal4", frameworks=["Foundation", "Metal", "QuartzCore"], requires=_metal_cpp())
         _add_binding("opengl2", requires=["opengl::opengl"])
         _add_binding("opengl3", requires=["opengl::opengl"])
         _add_binding("osx", frameworks=["AppKit", "Carbon", "Cocoa", "Foundation", "GameController"], requires=_metal_cpp())

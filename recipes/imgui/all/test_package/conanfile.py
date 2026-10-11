@@ -23,6 +23,12 @@ class TestPackageConan(ConanFile):
             tc.preprocessor_definitions["DOCKING"] = None
         if str(opts.get_safe("enable_test_engine")) == "True":
             tc.preprocessor_definitions["ENABLE_TEST_ENGINE"] = None
+        if str(opts.get_safe("enable_default_font_bitmap")) == "False":
+            tc.preprocessor_definitions["EXPECT_IMGUI_DISABLE_DEFAULT_FONT_BITMAP"] = None
+        if str(opts.get_safe("enable_default_font_vector")) == "False":
+            tc.preprocessor_definitions["EXPECT_IMGUI_DISABLE_DEFAULT_FONT_VECTOR"] = None
+        if str(opts.get_safe("enable_time_functions")) == "False":
+            tc.preprocessor_definitions["EXPECT_IMGUI_DISABLE_TIME_FUNCTIONS"] = None
         tc.generate()
 
     def build(self):
