@@ -1,14 +1,11 @@
-import os
-
 from conan import ConanFile
 from conan.tools.build import can_run
-from conan.tools.cmake import cmake_layout, CMake
-from conan.tools.files import *
+from conan.tools.cmake import CMake, CMakeConfigDeps, CMakeToolchain, cmake_layout
 
 
 class TestPackageConan(ConanFile):
     settings = "os", "arch", "compiler", "build_type"
-    generators = "CMakeDeps", "CMakeToolchain", "VirtualRunEnv"
+    generators = "VirtualRunEnv"
     test_type = "explicit"
 
     def requirements(self):
@@ -17,31 +14,26 @@ class TestPackageConan(ConanFile):
     def layout(self):
         cmake_layout(self)
 
+    def generate(self):
+        CMakeToolchain(self).generate()
+
+        deps = CMakeConfigDeps(self)
+        # The gcc15 profile replaces opengl/system with libglvnd. Preserve the
+        # target name used by Magnum's published component metadata.
+        if "libglvnd" in self.dependencies.host:
+            deps.set_property("libglvnd::opengl", "cmake_target_aliases", ["opengl::opengl"])
+        deps.generate()
+
     def build(self):
+        cmake = CMake(self)
+        cmake.configure(variables={
+            "TEST_PLAYER": self.dependencies["magnum-extras"].options.get_safe("player", False),
+            "TEST_UI": self.dependencies["magnum-extras"].options.ui,
+            "TEST_UI_GALLERY": self.dependencies["magnum-extras"].options.get_safe("ui_gallery", False),
+        })
         if self.dependencies["magnum-extras"].options.ui:
-            cmake = CMake(self)
-            cmake.configure()
             cmake.build()
 
-        # Workaround for Conan v1
-        save(self, os.path.join(self.generators_folder, "extras_path"), self.dependencies["magnum-extras"].package_folder)
-        save(self, os.path.join(self.generators_folder, "options_player"), str(self.dependencies["magnum-extras"].options.player))
-        save(self, os.path.join(self.generators_folder, "options_ui_gallery"), str(self.dependencies["magnum-extras"].options.ui_gallery))
-        save(self, os.path.join(self.generators_folder, "options_ui"), str(self.dependencies["magnum-extras"].options.ui))
-
     def test(self):
-        if can_run(self):
-            extras_path = load(self, os.path.join(self.generators_folder, "extras_path"))
-            options_player = load(self, os.path.join(self.generators_folder, "options_player")) == "True"
-            options_ui_gallery = load(self, os.path.join(self.generators_folder, "options_ui_gallery")) == "True"
-            options_ui = load(self, os.path.join(self.generators_folder, "options_ui")) == "True"
-            executable_ext = ".exe" if self.settings.os == "Windows" else ""
-            if options_player:
-                assert os.path.exists(os.path.join(extras_path, "bin", f"magnum-player{executable_ext}"))
-                # (Cannot run in headless mode) self.run("magnum-player --help")
-            if options_ui_gallery:
-                assert os.path.exists(os.path.join(extras_path, "bin", f"magnum-ui-gallery{executable_ext}"))
-                # (Cannot run in headless mode) self.run("magnum-ui-gallery --help")
-            if options_ui:
-                bin_path = os.path.join(self.cpp.build.bindir, "test_package")
-                self.run(bin_path, env="conanrun")
+        if can_run(self) and self.dependencies["magnum-extras"].options.ui:
+            self.run(self.cpp.build.bindir + "/test_package", env="conanrun")

@@ -22,7 +22,8 @@ class TestPackageConan(ConanFile):
         tc.variables["IMPORTER_PLUGINS_FOLDER"] = os.path.join(plugins_basepath, "importers").replace("\\", "/")
         # STL file taken from https://www.thingiverse.com/thing:2798332
         tc.variables["CONAN_STL_FILE"] = os.path.join(self.source_folder, "conan.stl").replace("\\", "/")
-        tc.variables["SHARED_PLUGINS"] = self.dependencies["magnum-plugins"].options.shared_plugins == "True"
+        tc.variables["SHARED_PLUGINS"] = bool(self.dependencies["magnum-plugins"].options.shared_plugins)
+        tc.variables["WITH_STLIMPORTER"] = self.dependencies["magnum-plugins"].options.stl_importer
         tc.variables["TARGET_EMSCRIPTEN"] = bool(self.settings.os == "Emscripten")
         tc.generate()
 
@@ -32,10 +33,10 @@ class TestPackageConan(ConanFile):
         cmake.build()
 
     def test(self):
-        if can_run(self):
+        if can_run(self) and self.dependencies["magnum-plugins"].options.stl_importer:
             bin_path = os.path.join(self.cpp.build.bindir, "test_package")
             self.run(bin_path, env="conanrun")
 
-        if self.settings.os == "Emscripten":
+        if self.settings.os == "Emscripten" and self.dependencies["magnum-plugins"].options.stl_importer:
             bin_path = os.path.join(self.cpp.build.bindir, "test_package.js")
             self.run(f"node {bin_path}", env="conanrun")

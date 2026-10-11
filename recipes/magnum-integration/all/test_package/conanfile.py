@@ -24,6 +24,7 @@ class TestPackageConan(ConanFile):
         tc.variables["WITH_GLM"] = self.dependencies["magnum-integration"].options.with_glm
         tc.variables["WITH_IMGUI"] = self.dependencies["magnum-integration"].options.with_imgui
         tc.variables["WITH_OVR"] = self.dependencies["magnum-integration"].options.with_ovr
+        tc.variables["WITH_YOGA"] = self.dependencies["magnum-integration"].options.with_yoga
         tc.generate()
 
     def build(self):

@@ -1,18 +1,21 @@
 cmake_minimum_required(VERSION 3.15)
 project(test_package CXX)
 
-if(SHARED_PLUGINS)
-    find_package(MagnumPlugins REQUIRED CONFIG)
-else()
-    find_package(MagnumPlugins REQUIRED CONFIG StlImporter)
+find_package(MagnumPlugins REQUIRED CONFIG)
+
+if(NOT WITH_STLIMPORTER)
+    return()
+endif()
+
+if(NOT TARGET MagnumPlugins::StlImporter)
+    message(FATAL_ERROR "MagnumPlugins::StlImporter target is missing")
 endif()
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure.h.in
                ${CMAKE_CURRENT_BINARY_DIR}/configure.h)
 
 add_executable(${PROJECT_NAME} test_package.cpp)
-# Intentionally linking with the global 'MagnumPlugins::MagnumPlugins' target, I want to check it is a valid target (although it might be empty)
-target_link_libraries(${PROJECT_NAME} PRIVATE Magnum::Trade MagnumPlugins::MagnumPlugins)
+target_link_libraries(${PROJECT_NAME} PRIVATE Magnum::Trade)
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 if(NOT SHARED_PLUGINS)
     target_link_libraries(${PROJECT_NAME} PRIVATE MagnumPlugins::StlImporter)

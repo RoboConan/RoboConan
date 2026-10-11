@@ -1,4 +1,4 @@
 sources:
-  "2020.06":
-    url: "https://github.com/mosra/magnum-integration/archive/refs/tags/v2020.06.tar.gz"
-    sha256: "4eb461e0a38d7be69a52b8faf7664493da4e4cabc2c4fa86bd672d2e8f0a9311"
+  "2020.06+git.20261007":
+    url: "https://github.com/mosra/magnum-integration/archive/e3d2b01b2067b514c04cb5d426da6941d0f09b1e.tar.gz"
+    sha256: "b4c00fa3701db3247c7529d24f6c756a7e5cc7dffa7445aa6544f1dadc33167f"

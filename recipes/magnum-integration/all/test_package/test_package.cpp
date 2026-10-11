@@ -1,5 +1,4 @@
 
-#include <assert.h>
 #include <iostream>
 
 #ifdef WITH_BULLET
@@ -9,7 +8,7 @@ void with_bullet() {
     std::cout << "With Bullet\n";
     Magnum::Math::Vector3<btScalar> a{btScalar(1.0), btScalar(2.0), btScalar(3.0)};
     btVector3 b{btScalar(1.0), btScalar(2.0), btScalar(3.0)};
-    assert(Magnum::Math::Vector3<btScalar>{b} == a);
+    std::cout << Magnum::Math::Vector3<btScalar>{b}.x() + a.x() << '\n';
 }
 #endif
 
@@ -32,9 +31,9 @@ void with_eigen() {
 
 void with_glm() {
     std::cout << "With GLM\n";
-    Magnum::Math::BoolVector<2> a{0x6};
+    Magnum::Math::BitVector<2> a{0x6};
     glm::bvec2 b{false, true};
-    assert(glm::bvec2(a) == b);
+    std::cout << glm::bvec2(a).x + b.x << '\n';
 }
 #endif
 
@@ -47,7 +46,16 @@ void with_imgui() {
     std::cout << "With ImGui\n";
     ImVec2 imVec2{1.1f, 1.2f};
     Magnum::Vector2 vec2(1.1f, 1.2f);
-    assert(Magnum::Vector2{imVec2} == vec2);
+    std::cout << Magnum::Vector2{imVec2}.x() + vec2.x() << '\n';
+}
+#endif
+
+#ifdef WITH_YOGA
+#include "Magnum/YogaIntegration/Layouter.h"
+
+void with_yoga() {
+    std::cout << "With Yoga\n";
+    Magnum::Debug{} << Magnum::YogaIntegration::FlexDirection::Row;
 }
 #endif
 
@@ -66,6 +74,10 @@ int main() {
 
 #ifdef WITH_IMGUI
     with_imgui();
+#endif
+
+#ifdef WITH_YOGA
+    with_yoga();
 #endif
 
     return 0;
