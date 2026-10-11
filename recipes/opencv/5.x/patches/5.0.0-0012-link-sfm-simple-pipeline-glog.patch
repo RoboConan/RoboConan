@@ -1,0 +1,10 @@
+--- a/contrib/modules/sfm/src/libmv_light/libmv/simple_pipeline/CMakeLists.txt
++++ b/contrib/modules/sfm/src/libmv_light/libmv/simple_pipeline/CMakeLists.txt
+@@ -17,6 +17,6 @@ FILE(GLOB SIMPLE_PIPELINE_HDRS *.h)
+ 
+ ADD_LIBRARY(opencv.sfm.simple_pipeline STATIC ${SIMPLE_PIPELINE_SRC} ${SIMPLE_PIPELINE_HDRS})
+ 
+-TARGET_LINK_LIBRARIES(opencv.sfm.simple_pipeline LINK_PRIVATE opencv.sfm.multiview ${CERES_LIBRARIES})
++TARGET_LINK_LIBRARIES(opencv.sfm.simple_pipeline LINK_PRIVATE opencv.sfm.multiview ${CERES_LIBRARIES} ${GLOG_LIBRARIES})
+ 
+ LIBMV_INSTALL_LIB(opencv.sfm.simple_pipeline)

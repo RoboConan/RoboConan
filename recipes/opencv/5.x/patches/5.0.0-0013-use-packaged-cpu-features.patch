@@ -1,0 +1,13 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -760,7 +760,9 @@ endif()
+ # ----------------------------------------------------------------------------
+ 
+ if(ANDROID AND WITH_CPUFEATURES)
+-  add_subdirectory(3rdparty/cpufeatures)
++  find_package(CpuFeatures REQUIRED CONFIG)
++  set(CPUFEATURES_INCLUDE_DIRS "")
++  set(CPUFEATURES_LIBRARIES CpuFeatures::ndk_compat)
+   set(HAVE_CPUFEATURES 1)
+ endif()
+ 

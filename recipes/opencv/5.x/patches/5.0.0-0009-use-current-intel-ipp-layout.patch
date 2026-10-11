@@ -1,0 +1,15 @@
+--- a/cmake/OpenCVFindIPPIW.cmake
++++ b/cmake/OpenCVFindIPPIW.cmake
+@@ -138,7 +138,11 @@ macro(ippiw_setup PATH BUILD)
+             set(IPPIW_LOCATION_PATH "${FILE}" CACHE INTERNAL "" FORCE)
+           endif()
+ 
+-          set(IPP_IW_INCLUDES "${IPP_IW_PATH}/include")
++          if(IPP_NEW_LAYOUT)
++            set(IPP_IW_INCLUDES "${IPP_IW_PATH}/include/ipp")
++          else()
++            set(IPP_IW_INCLUDES "${IPP_IW_PATH}/include")
++          endif()
+           set(IPP_IW_LIBRARIES ipp_iw)
+ 
+           set(HAVE_IPP_IW 1)

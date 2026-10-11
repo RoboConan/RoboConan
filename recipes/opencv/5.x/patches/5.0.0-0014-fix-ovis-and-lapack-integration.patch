@@ -1,0 +1,47 @@
+--- a/cmake/OpenCVFindLAPACK.cmake
++++ b/cmake/OpenCVFindLAPACK.cmake
+@@ -150,7 +150,17 @@ macro(ocv_lapack_check)
+       add_compile_definitions(ACCELERATE_LAPACK_ILP64)
+     endif()
+ 
+-    if(NOT LAPACK_SKIP_BUILD)
++    set(_opencv_lapack_uses_imported_targets FALSE)
++    if(LAPACK_LIBRARIES)
++      set(_opencv_lapack_uses_imported_targets TRUE)
++      foreach(_opencv_lapack_library IN LISTS LAPACK_LIBRARIES)
++        if(NOT TARGET "${_opencv_lapack_library}")
++          set(_opencv_lapack_uses_imported_targets FALSE)
++        endif()
++      endforeach()
++    endif()
++
++    if(NOT LAPACK_SKIP_BUILD AND NOT _opencv_lapack_uses_imported_targets)
+       try_compile(__VALID_LAPACK
+           "${OpenCV_BINARY_DIR}"
+           "${OpenCV_SOURCE_DIR}/cmake/checks/lapack_check.cpp"
+@@ -174,6 +184,10 @@ macro(ocv_lapack_check)
+         ocv_include_directories(${LAPACK_INCLUDE_DIR})
+         set(HAVE_LAPACK 1)
+       endif()
++    elseif(_opencv_lapack_uses_imported_targets)
++      message(STATUS "LAPACK(${LAPACK_IMPL}): Skipping build check for imported targets")
++      ocv_include_directories(${LAPACK_INCLUDE_DIR})
++      set(HAVE_LAPACK 1)
+     else()
+       message(STATUS "Skipped LAPACK build check")
+     endif()
+--- a/contrib/modules/ovis/CMakeLists.txt
++++ b/contrib/modules/ovis/CMakeLists.txt
+@@ -8,12 +8,6 @@
+ elseif(OGRE_VERSION VERSION_LESS 1.11.5)
+   message(STATUS "Module opencv_ovis disabled because of incompatible OGRE3D version (${OGRE_VERSION})")
+   ocv_module_disable(ovis)
+-else() # we need C++11 for OGRE 1.11
+-  if(MSVC)
+-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Qstd=c++11")
+-  else()
+-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+-  endif()
+ endif()
+ 
+ include_directories(${OGRE_INCLUDE_DIRS})

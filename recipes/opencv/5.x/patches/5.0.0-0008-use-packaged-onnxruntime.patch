@@ -1,0 +1,82 @@
+--- a/cmake/FindONNX.cmake
++++ b/cmake/FindONNX.cmake
+@@ -43,16 +43,7 @@
+ 
+ if(__ort_target)
+   get_target_property(ORT_INCLUDE ${__ort_target} INTERFACE_INCLUDE_DIRECTORIES)
+-  if(ORT_INCLUDE AND NOT IS_DIRECTORY "${ORT_INCLUDE}")
+-    list(GET ORT_INCLUDE 0 ORT_INCLUDE)
+-  endif()
+-  get_target_property(ORT_LIB ${__ort_target} IMPORTED_LOCATION)
+-  if(NOT ORT_LIB)
+-    get_target_property(ORT_LIB ${__ort_target} IMPORTED_LOCATION_RELEASE)
+-  endif()
+-  if(NOT ORT_LIB)
+-    get_target_property(ORT_LIB ${__ort_target} LOCATION)
+-  endif()
++  set(ORT_LIB "${__ort_target}")
+ endif()
+ 
+ # Locate headers and libraries via find_* in system paths and/or ONNXRT_ROOT_DIR.
+@@ -142,33 +133,37 @@ if(ORT_LIB AND ORT_INCLUDE)
+   set(ONNX_VERSION "${ONNX_VERSION}" CACHE STRING "ONNX Runtime version")
+ 
+   # Link target with associated interface headers
+-  set(ONNX_LIBRARY "onnxruntime" CACHE STRING "ONNX Link Target")
+-  if(NOT TARGET ${ONNX_LIBRARY})
+-    ocv_add_library(${ONNX_LIBRARY} SHARED IMPORTED)
+-  endif()
+-
+-  if(WIN32)
+-    # ORT_LIB is typically the import library (.lib). Prefer matching runtime DLL if available.
+-    set(__ort_dll "")
+-    if(ONNXRT_ROOT_DIR)
+-      find_file(__ort_dll NAMES onnxruntime.dll HINTS "${ONNXRT_ROOT_DIR}" PATH_SUFFIXES bin)
+-    endif()
+-    if(__ort_dll)
++  if(__ort_target)
++    set(ONNX_LIBRARY "${__ort_target}" CACHE STRING "ONNX Link Target")
++  else()
++    set(ONNX_LIBRARY "onnxruntime" CACHE STRING "ONNX Link Target")
++    if(NOT TARGET ${ONNX_LIBRARY})
++      ocv_add_library(${ONNX_LIBRARY} SHARED IMPORTED)
++    endif()
++
++    if(WIN32)
++      # ORT_LIB is typically the import library (.lib). Prefer matching runtime DLL if available.
++      set(__ort_dll "")
++      if(ONNXRT_ROOT_DIR)
++        find_file(__ort_dll NAMES onnxruntime.dll HINTS "${ONNXRT_ROOT_DIR}" PATH_SUFFIXES bin)
++      endif()
++      if(__ort_dll)
++        set_target_properties(${ONNX_LIBRARY} PROPERTIES
++                              INTERFACE_INCLUDE_DIRECTORIES "${ORT_INCLUDE}"
++                              IMPORTED_LOCATION "${__ort_dll}"
++                              IMPORTED_IMPLIB "${ORT_LIB}")
++      else()
++        set_target_properties(${ONNX_LIBRARY} PROPERTIES
++                              INTERFACE_INCLUDE_DIRECTORIES "${ORT_INCLUDE}"
++                              IMPORTED_LOCATION "${ORT_LIB}"
++                              IMPORTED_IMPLIB "${ORT_LIB}")
++      endif()
++      unset(__ort_dll)
++    else()
+       set_target_properties(${ONNX_LIBRARY} PROPERTIES
+                             INTERFACE_INCLUDE_DIRECTORIES "${ORT_INCLUDE}"
+-                            IMPORTED_LOCATION "${__ort_dll}"
+-                            IMPORTED_IMPLIB "${ORT_LIB}")
+-    else()
+-      set_target_properties(${ONNX_LIBRARY} PROPERTIES
+-                            INTERFACE_INCLUDE_DIRECTORIES "${ORT_INCLUDE}"
+-                            IMPORTED_LOCATION "${ORT_LIB}"
+-                            IMPORTED_IMPLIB "${ORT_LIB}")
++                            IMPORTED_LOCATION "${ORT_LIB}")
+     endif()
+-    unset(__ort_dll)
+-  else()
+-    set_target_properties(${ONNX_LIBRARY} PROPERTIES
+-                          INTERFACE_INCLUDE_DIRECTORIES "${ORT_INCLUDE}"
+-                          IMPORTED_LOCATION "${ORT_LIB}")
+   endif()
+   unset(__ort_root_for_ep)
+ endif()
