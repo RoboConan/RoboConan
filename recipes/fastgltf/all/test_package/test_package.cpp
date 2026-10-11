@@ -3,6 +3,4 @@
 int main() {
     fastgltf::Exporter exporter;
     exporter.setUserPointer(nullptr);
-
-    return 0;
 }
