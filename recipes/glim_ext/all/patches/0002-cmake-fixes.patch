@@ -1,26 +1,6 @@
-From f0a6dfe60aaf949760c476134bd92971bb2d8803 Mon Sep 17 00:00:00 2001
-From: Martin Valgur <martin.valgur@gmail.com>
-Date: Fri, 19 Jul 2024 17:19:55 +0300
-Subject: [PATCH] cmake fixes
-
----
- CMakeLists.txt                                           | 9 +++------
- modules/example/glim_callback_demo/CMakeLists.txt        | 2 --
- .../dbow_loop_detector/thirdparty/DBoW3/CMakeLists.txt   | 4 ----
- .../thirdparty/DBoW3/src/CMakeLists.txt                  | 2 +-
- modules/mapping/flat_earther/CMakeLists.txt              | 2 --
- modules/mapping/gnss_global/CMakeLists.txt               | 6 ++----
- .../mapping/scan_context_loop_detector/CMakeLists.txt    | 2 --
- modules/odometry/imu_validator/CMakeLists.txt            | 5 ++---
- modules/odometry/orb_slam_frontend/CMakeLists.txt        | 3 ---
- modules/odometry/velocity_suppressor/CMakeLists.txt      | 3 ---
- 10 files changed, 8 insertions(+), 30 deletions(-)
-
-diff --git a/CMakeLists.txt b/CMakeLists.txt
-index dff971a..a45c4af 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -26,9 +26,6 @@ target_include_directories(glim_ext PUBLIC
+@@ -41,9 +41,6 @@ target_include_directories(glim_ext PUBLIC
  target_link_libraries(glim_ext
    glim::glim
  )
@@ -30,7 +10,7 @@ index dff971a..a45c4af 100644
  list(APPEND glim_ext_LIBRARIES glim_ext)
  
  # Examples
-@@ -37,7 +34,7 @@ list(APPEND glim_ext_LIBRARIES glim_callback_demo)
+@@ -55,7 +52,7 @@ list(APPEND glim_ext_LIBRARIES logger_hook_demo)
  
  # Odometry estimation modules
  if(ENABLE_ORBSLAM)
@@ -39,30 +19,10 @@ index dff971a..a45c4af 100644
    list(APPEND glim_ext_LIBRARIES orb_slam_odometry)
  endif()
  
-@@ -78,7 +75,7 @@ install(TARGETS ${glim_ext_LIBRARIES})
- ## ROS-related ##
- #################
- if(DEFINED ENV{ROS_VERSION})
--  if($ENV{ROS_VERSION} EQUAL 2)
-+  if(ENV{ROS_VERSION} EQUAL 2)
-     # ROS2
-     install(DIRECTORY config DESTINATION share/glim_ext)
- 
-@@ -86,7 +83,7 @@ if(DEFINED ENV{ROS_VERSION})
-     ament_target_dependencies(glim_ext glim)
-     ament_export_libraries(${glim_ext_LIBRARIES})
-     ament_package()
--  elseif($ENV{ROS_VERSION} EQUAL 1)
-+  elseif(ENV{ROS_VERSION} EQUAL 1)
-     # ROS1
-     find_package(catkin REQUIRED)
-     catkin_package(
-diff --git a/modules/example/glim_callback_demo/CMakeLists.txt b/modules/example/glim_callback_demo/CMakeLists.txt
-index 3ea9fd1..7df019f 100644
 --- a/modules/example/glim_callback_demo/CMakeLists.txt
 +++ b/modules/example/glim_callback_demo/CMakeLists.txt
 @@ -1,8 +1,6 @@
- cmake_minimum_required(VERSION 3.0.2)
+ cmake_minimum_required(VERSION 3.22)
  project(glim_callback_demo)
  
 -add_compile_options(-std=c++17)
@@ -70,47 +30,21 @@ index 3ea9fd1..7df019f 100644
  find_package(glim REQUIRED)
  
  add_library(glim_callback_demo SHARED
-diff --git a/modules/mapping/dbow_loop_detector/thirdparty/DBoW3/CMakeLists.txt b/modules/mapping/dbow_loop_detector/thirdparty/DBoW3/CMakeLists.txt
-index 9541cd7..78de516 100644
---- a/modules/mapping/dbow_loop_detector/thirdparty/DBoW3/CMakeLists.txt
-+++ b/modules/mapping/dbow_loop_detector/thirdparty/DBoW3/CMakeLists.txt
-@@ -3,8 +3,6 @@
- # ----------------------------------------------------------------------------
- CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+--- a/modules/example/logger_hook_demo/CMakeLists.txt
++++ b/modules/example/logger_hook_demo/CMakeLists.txt
+@@ -1,8 +1,6 @@
+ cmake_minimum_required(VERSION 3.22)
+ project(logger_hook_demo)
  
--set(CMAKE_CXX_STANDARD 11)
+-set(CMAKE_CXX_STANDARD 17)
 -
- PROJECT(DBoW3)
- set(PROJECT_VERSION "0.0.1")
- string(REGEX MATCHALL "[0-9]" PROJECT_VERSION_PARTS "${PROJECT_VERSION}")
-@@ -206,8 +204,6 @@ ELSE()  # MSVC
- ENDIF()#END OF COMPILER SPECIFIC OPTIONS
- SET(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} ${EXTRA_C_FLAGS_RELEASE}")
- SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS}  ${EXTRA_C_FLAGS_DEBUG}")
--SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -std=c++11")
--SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -std=c++11")
- set(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELEASE} ${CMAKE_C_FLAGS_DEBUG}")
- set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELEASE} ${CMAKE_CXX_FLAGS_DEBUG}")
- SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${EXTRA_EXE_LINKER_FLAGS}")
-diff --git a/modules/mapping/dbow_loop_detector/thirdparty/DBoW3/src/CMakeLists.txt b/modules/mapping/dbow_loop_detector/thirdparty/DBoW3/src/CMakeLists.txt
-index a9c52b4..e231aa0 100644
---- a/modules/mapping/dbow_loop_detector/thirdparty/DBoW3/src/CMakeLists.txt
-+++ b/modules/mapping/dbow_loop_detector/thirdparty/DBoW3/src/CMakeLists.txt
-@@ -8,7 +8,7 @@ FILE(GLOB srcs  ${srcs_base} )
+ find_package(glim REQUIRED)
  
- 
- ADD_LIBRARY(${PROJECT_NAME} ${srcs} ${hdrs})
--INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} ) 
-+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR} )
- 
- SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES 				# create *nix style library versions + symbolic links
-         DEFINE_SYMBOL DBOW_DSO_EXPORTS
-diff --git a/modules/mapping/flat_earther/CMakeLists.txt b/modules/mapping/flat_earther/CMakeLists.txt
-index e42d8b6..1b92776 100644
+ add_library(logger_hook_demo SHARED
 --- a/modules/mapping/flat_earther/CMakeLists.txt
 +++ b/modules/mapping/flat_earther/CMakeLists.txt
 @@ -1,8 +1,6 @@
- cmake_minimum_required(VERSION 3.5.2)
+ cmake_minimum_required(VERSION 3.22)
  project(flat_earther)
  
 -set(CMAKE_CXX_STANDARD 17)
@@ -118,49 +52,25 @@ index e42d8b6..1b92776 100644
  find_package(glim REQUIRED)
  
  add_library(flat_earther SHARED
-diff --git a/modules/mapping/gnss_global/CMakeLists.txt b/modules/mapping/gnss_global/CMakeLists.txt
-index e8167c6..3404682 100644
---- a/modules/mapping/gnss_global/CMakeLists.txt
-+++ b/modules/mapping/gnss_global/CMakeLists.txt
-@@ -1,13 +1,11 @@
- cmake_minimum_required(VERSION 3.5.2)
- project(gnss_global)
- 
--set(CMAKE_CXX_STANDARD 17)
--
+--- a/modules/odometry/gravity_estimator/CMakeLists.txt
++++ b/modules/odometry/gravity_estimator/CMakeLists.txt
+@@ -4,6 +4,7 @@ project(gravity_estimator)
  find_package(glim REQUIRED)
- find_package(GTSAM REQUIRED)
- find_package(spdlog REQUIRED)
+ find_package(Eigen3 REQUIRED)
+ find_package(Iridescence REQUIRED)
++find_package(implot REQUIRED)
  
--if($ENV{ROS_VERSION} EQUAL 2)
-+if(ENV{ROS_VERSION} EQUAL 2)
-   # ROS2
-   find_package(ament_cmake_auto REQUIRED)
-   ament_auto_find_build_dependencies()
-@@ -15,7 +13,7 @@ if($ENV{ROS_VERSION} EQUAL 2)
-   ament_auto_add_library(gnss_global SHARED
-     src/glim_ext/gnss_global_module_ros2.cpp
-   )
--elseif($ENV{ROS_VERSION} EQUAL 1)
-+elseif(ENV{ROS_VERSION} EQUAL 1)
-   # ROS1
-   find_package(catkin REQUIRED COMPONENTS glim geometry_msgs)
-   catkin_package(
-diff --git a/modules/mapping/scan_context_loop_detector/CMakeLists.txt b/modules/mapping/scan_context_loop_detector/CMakeLists.txt
-index a769741..a7f213b 100644
---- a/modules/mapping/scan_context_loop_detector/CMakeLists.txt
-+++ b/modules/mapping/scan_context_loop_detector/CMakeLists.txt
-@@ -1,8 +1,6 @@
- cmake_minimum_required(VERSION 3.20)
- project(scan_context_loop_detector)
- 
--add_compile_options(-std=c++17)
--
- find_package(glim REQUIRED)
- find_package(PCL REQUIRED)
- find_package(GTSAM REQUIRED)
-diff --git a/modules/odometry/imu_validator/CMakeLists.txt b/modules/odometry/imu_validator/CMakeLists.txt
-index 4cdf73f..a16defa 100644
+ add_library(gravity_estimator SHARED
+   src/glim_ext/gravity_alignment_factor.cpp
+@@ -17,7 +18,5 @@ target_include_directories(gravity_estimator PRIVATE
+ target_link_libraries(gravity_estimator
+   glim::glim
+   Iridescence::Iridescence
+-)
+-target_compile_options(gravity_estimator PRIVATE
+-  -std=c++17
++  implot::implot
+ )
 --- a/modules/odometry/imu_validator/CMakeLists.txt
 +++ b/modules/odometry/imu_validator/CMakeLists.txt
 @@ -5,6 +5,7 @@ find_package(glim REQUIRED)
@@ -180,19 +90,6 @@ index 4cdf73f..a16defa 100644
 -  -std=c++17
 +  implot::implot
  )
-diff --git a/modules/odometry/orb_slam_frontend/CMakeLists.txt b/modules/odometry/orb_slam_frontend/CMakeLists.txt
-index 6483877..faf7074 100644
---- a/modules/odometry/orb_slam_frontend/CMakeLists.txt
-+++ b/modules/odometry/orb_slam_frontend/CMakeLists.txt
-@@ -21,6 +21,3 @@ target_link_libraries(orb_slam_odometry
-   ORB_SLAM3
-   glim_ext
- )
--target_compile_options(orb_slam_odometry PRIVATE
--  -std=c++17
--)
-diff --git a/modules/odometry/velocity_suppressor/CMakeLists.txt b/modules/odometry/velocity_suppressor/CMakeLists.txt
-index 084944a..02bc4a0 100644
 --- a/modules/odometry/velocity_suppressor/CMakeLists.txt
 +++ b/modules/odometry/velocity_suppressor/CMakeLists.txt
 @@ -19,6 +19,3 @@ target_link_libraries(velocity_suppressor
@@ -202,6 +99,3 @@ index 084944a..02bc4a0 100644
 -target_compile_options(velocity_suppressor PRIVATE
 -  -std=c++17
 -)
--- 
-2.25.1
-

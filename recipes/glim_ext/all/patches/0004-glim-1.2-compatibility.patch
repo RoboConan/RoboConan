@@ -1,0 +1,147 @@
+--- a/modules/mapping/dbow_loop_detector/CMakeLists.txt
++++ b/modules/mapping/dbow_loop_detector/CMakeLists.txt
+@@ -12,7 +12,7 @@ find_package(glim REQUIRED)
+ find_package(OpenCV REQUIRED)
+ find_package(GTSAM REQUIRED)
+ 
+-add_library(dbow3
++add_library(dbow3 STATIC
+   thirdparty/DBoW3/src/quicklz.c
+   thirdparty/DBoW3/src/BowVector.cpp
+   thirdparty/DBoW3/src/Database.cpp
+@@ -22,6 +22,7 @@ add_library(dbow3
+   thirdparty/DBoW3/src/ScoringObject.cpp
+   thirdparty/DBoW3/src/Vocabulary.cpp
+ )
++set_target_properties(dbow3 PROPERTIES POSITION_INDEPENDENT_CODE ON)
+ target_include_directories(dbow3 PRIVATE
+   thirdparty/DBoW3/src
+   ${OpenCV_INCLUDE_DIRS}
+@@ -33,7 +34,7 @@ target_link_libraries(dbow3
+ )
+ 
+ 
+-add_library(dbow_loop_detector
++add_library(dbow_loop_detector SHARED
+   src/glim_ext/dbow_loop_detector.cpp
+ )
+ target_include_directories(dbow_loop_detector PRIVATE
+@@ -45,22 +45,8 @@ target_include_directories(dbow_loop_detector PRIVATE
+ )
+ target_link_libraries(dbow_loop_detector
+   dbow3
++  glim_ext
+   ${OpenCV_LIBRARIES}
+   ${GTSAM_LIBRARIES}
+   ${glim_LIBRARIES}
+ )
+-
+-add_executable(dbow3_training
+-  src/glim_ext/dbow3_training.cpp
+-)
+-target_include_directories(dbow3_training PRIVATE
+-  include
+-  thirdparty/DBoW3/src
+-  ${glim_INCLUDE_DIRS}
+-  ${OpenCV_INCLUDE_DIRS}
+-)
+-target_link_libraries(dbow3_training
+-  dbow3
+-  ${glim_LIBRARIES}
+-  ${OpenCV_LIBRARIES}
+-)
+--- a/modules/example/glim_callback_demo/CMakeLists.txt
++++ b/modules/example/glim_callback_demo/CMakeLists.txt
+@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.22)
+ project(glim_callback_demo)
+ 
+ find_package(glim REQUIRED)
++find_package(OpenCV REQUIRED COMPONENTS core)
+ 
+ add_library(glim_callback_demo SHARED
+   src/glim_ext/glim_callback_demo.cpp
+@@ -11,4 +12,5 @@ target_include_directories(glim_callback_demo PRIVATE
+ )
+ target_link_libraries(glim_callback_demo
+   glim::glim
++  opencv_core
+ )
+--- a/modules/mapping/dbow_loop_detector/src/glim_ext/dbow_loop_detector.cpp
++++ b/modules/mapping/dbow_loop_detector/src/glim_ext/dbow_loop_detector.cpp
+@@ -13,11 +13,11 @@
+ #include <gtsam_points/factors/integrated_gicp_factor.hpp>
+ #include <gtsam_points/optimizers/levenberg_marquardt_ext.hpp>
+ 
+-#include <glim/common/callbacks.hpp>
+ #include <glim/mapping/callbacks.hpp>
+-#include <glim/util/console_colors.hpp>
+ #include <glim/util/concurrent_vector.hpp>
+ #include <glim/util/extension_module.hpp>
++#include <glim/util/logging.hpp>
++#include <glim_ext/util/config_ext.hpp>
+ 
+ namespace glim {
+ 
+@@ -76,11 +76,11 @@
+     // Create DBoW2 vocabulary
+-    const std::string voc_path = "/home/koide/voc.yaml.gz";
++    const std::string voc_path = GlobalConfigExt::get_data_path() + "/orbvoc.dbow3";
+     std::cerr << "[DBoW] Loading ORB vocabulary..." << std::endl;
+-    notify(INFO, "[DBoW] Loading ORB vocabulary...");
++    get_default_logger()->info("[DBoW] Loading ORB vocabulary...");
+     voc.reset(new DBoW3::Vocabulary(voc_path));
+     db.reset(new DBoW3::Database(*voc, false, 0));
+     std::cerr << "[DBoW] LORB vocabulary loaded" << std::endl;
+-    notify(INFO, "[DBoW] ORB vocabulary loaded");
++    get_default_logger()->info("[DBoW] ORB vocabulary loaded");
+ 
+     while (!kill_switch) {
+       auto new_submaps = new_submaps_queue.get_all_and_clear();
+@@ -153,10 +153,10 @@
+         if (!submap1 || !submap2) {
+           continue;
+         }
+-        notify(INFO, "[DBoW] Loop candidate found");
+-        notify(INFO, (boost::format("query:%.6f found:%.6f") % vv_stamps[query] % vv_stamps[found]).str());
++        get_default_logger()->info("[DBoW] Loop candidate found");
++        get_default_logger()->info((boost::format("query:%.6f found:%.6f") % vv_stamps[query] % vv_stamps[found]).str());
+ 
+-        const Eigen::Isometry3d T_frame1_frame2 = Eigen::Isometry3d::Identity();
++        Eigen::Isometry3d T_frame1_frame2 = Eigen::Isometry3d::Identity();
+         Eigen::Isometry3d T_origin1_origin2 = T_origin1_frame1 * T_frame1_frame2 * T_origin2_frame2.inverse();
+         // warning: Accessing T_world_origin is actually not thread-safe
+         //        : But, I dont'care, this is just a proof-of-concept implementation
+@@ -171,17 +171,17 @@
+         std::cout << "error_trans:" << error_trans << " error_angle:" << error_angle << std::endl;
+ 
+         if (error_angle > 15.0 * M_PI / 180.0 || error_trans > 20.0) {
+-          notify(INFO, (boost::format("[DBoW] Loop candidate rejected (%.3f [m] / %.3f [rad] errors)") % error_trans % error_angle).str());
++          get_default_logger()->info((boost::format("[DBoW] Loop candidate rejected (%.3f [m] / %.3f [rad] errors)") % error_trans % error_angle).str());
+           continue;
+         }
+ 
+         double inlier_fraction = 0.0;
+         if (!validate_loop(submap1->frame, submap2->frame, T_origin1_origin2, inlier_fraction)) {
+-          notify(INFO, (boost::format("[DBoW] Loop candidate rejected (%.3f inliers)") % inlier_fraction).str());
++          get_default_logger()->info((boost::format("[DBoW] Loop candidate rejected (%.3f inliers)") % inlier_fraction).str());
+           continue;
+         }
+ 
+-        notify(INFO, "[DBoW] Loop factor created");
++        get_default_logger()->info("[DBoW] Loop factor created");
+ 
+         using gtsam::symbol_shorthand::X;
+         const auto noise_model = gtsam::noiseModel::Isotropic::Precision(6, 1e6);
+@@ -215,10 +215,10 @@
+     double& inlier_fraction) const {
+     gtsam::Values values;
+-    values.insert(0, gtsam::Pose3::identity());
++    values.insert(0, gtsam::Pose3::Identity());
+     values.insert(1, gtsam::Pose3(T_frame1_frame2.matrix()));
+ 
+     gtsam::NonlinearFactorGraph graph;
+-    graph.emplace_shared<gtsam::PriorFactor<gtsam::Pose3>>(0, gtsam::Pose3::identity(), gtsam::noiseModel::Isotropic::Precision(6, 1e6));
++    graph.emplace_shared<gtsam::PriorFactor<gtsam::Pose3>>(0, gtsam::Pose3::Identity(), gtsam::noiseModel::Isotropic::Precision(6, 1e6));
+ 
+     auto factor = gtsam::make_shared<gtsam_points::IntegratedGICPFactor>(0, 1, frame1, frame2);
+     factor->set_num_threads(2);
