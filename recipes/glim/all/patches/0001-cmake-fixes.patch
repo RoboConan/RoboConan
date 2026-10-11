@@ -2,21 +2,21 @@
 +++ b/CMakeLists.txt
 @@ -1,7 +1,6 @@
  cmake_minimum_required(VERSION 3.16)
- project(glim VERSION 1.1.0 LANGUAGES CXX)
- 
+ project(glim VERSION 1.2.2 LANGUAGES CXX)
+
 -add_compile_options(-std=c++17)
  set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
  
  if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-@@ -28,6 +27,7 @@
- find_package(gtsam_points REQUIRED)
+@@ -28,6 +27,7 @@ find_package(GTSAM 4.2 REQUIRED)
+ find_package(gtsam_points 1.2.2 REQUIRED)
  find_package(OpenMP REQUIRED)
  find_package(spdlog REQUIRED)
 +find_package(nlohmann_json REQUIRED)
  
  if(BUILD_WITH_VIEWER)
    find_package(Iridescence REQUIRED)
-@@ -99,7 +99,6 @@
+@@ -100,7 +100,6 @@ add_library(glim SHARED
  )
  target_include_directories(glim PUBLIC
    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -24,11 +24,29 @@
    $<INSTALL_INTERFACE:include/glim>
    ${OpenCV_INCLUDE_DIRS}
  )
-@@ -111,6 +108,7 @@
+@@ -112,9 +111,10 @@ target_link_libraries(glim
    gtsam_points::gtsam_points
    OpenMP::OpenMP_CXX
    spdlog::spdlog
 +  nlohmann_json::nlohmann_json
    $<TARGET_NAME_IF_EXISTS:Iridescence::Iridescence>
-   ${OpenCV_LIBRARIES}
+-  ${OpenCV_LIBRARIES}
  )
+ if(BUILD_WITH_OPENCV)
++  target_link_libraries(glim opencv_core)
+   target_compile_definitions(glim PUBLIC GLIM_USE_OPENCV)
+ endif()
+--- a/src/glim/viewer/standard_viewer_callbacks.cpp
++++ b/src/glim/viewer/standard_viewer_callbacks.cpp
+@@ -233,10 +233,10 @@ void StandardViewer::set_callbacks() {
+   OdometryEstimationCallbacks::on_smoother_update.add([this](
+                                                         gtsam_points::IncrementalFixedLagSmootherExtWithFallback& smoother,
+                                                         gtsam::NonlinearFactorGraph& new_factors,
+                                                         gtsam::Values& new_values,
+                                                         std::map<std::uint64_t, double>& new_stamps) {
+     //
+-    std::vector<std::pair<std::weak_ptr<gtsam::NonlinearFactor>, FactorLineGetter>> new_factor_lines;
++    std::vector<std::pair<gtsam_points::weak_ptr<gtsam::NonlinearFactor>, FactorLineGetter>> new_factor_lines;
+     new_factor_lines.reserve(new_factors.size());
+
+     for (const auto& factor : new_factors) {
