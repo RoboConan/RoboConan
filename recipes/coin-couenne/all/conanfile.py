@@ -41,6 +41,9 @@ class CoinCouenneConan(ConanFile):
     def layout(self):
         basic_layout(self, src_folder="src")
 
+    def configure(self):
+        self.options["coin-bonmin"].with_asl = self.options.with_asl
+
     def requirements(self):
         self.requires("coin-bonmin/[^1.8.9]", transitive_headers=True, transitive_libs=True)
         self.requires("coin-osi/[>=0.108.10 <1]", transitive_headers=True, transitive_libs=True)
@@ -79,7 +82,7 @@ class CoinCouenneConan(ConanFile):
 
     def generate(self):
         deps = PkgConfigDeps(self)
-        deps.set_property("ampl-asl", "pkg_config_name", "coinasl")
+        deps.set_property("ampl-asl::asl", "pkg_config_aliases", ["coinasl"])
         deps.set_property("scip", "pkg_config_name", "coinscip")
         deps.generate()
 
@@ -89,11 +92,11 @@ class CoinCouenneConan(ConanFile):
         tc.configure_args += [
             f"--with-asl={yes_no(self.options.with_asl)}",
             f"--with-scip={yes_no(self.options.with_scip)}",
-            f"--with-osicplex={yes_no(osi.options.with_cplex)}",
-            f"--with-osigurobi={yes_no(osi.options.with_gurobi)}",
-            f"--with-osimosek={yes_no(osi.options.with_mosek)}",
-            f"--with-osisoplex={yes_no(osi.options.with_soplex)}",
-            f"--with-osixpress={yes_no(osi.options.with_xpress)}",
+            f"--with-cpx={yes_no(osi.options.with_cplex)}",
+            f"--with-grb={yes_no(osi.options.with_gurobi)}",
+            f"--with-msk={yes_no(osi.options.with_mosek)}",
+            f"--with-spx={yes_no(osi.options.with_soplex)}",
+            f"--with-xpr={yes_no(osi.options.with_xpress)}",
             "F77=unavailable",
         ]
 
@@ -104,6 +107,9 @@ class CoinCouenneConan(ConanFile):
 
         if self.options.with_nauty:
             nauty_info = self.dependencies["nauty"].cpp_info
+            # The legacy symbol probe calls nauty() without a declaration,
+            # which is rejected by modern C compilers. The package link verifies it instead.
+            tc.configure_args.append("--disable-nauty-libcheck")
             tc.configure_args.append(f"--with-nauty-lib=-l{nauty_info.libs[0]} -L{unix_path(self, nauty_info.libdir)}")
             tc.configure_args.append(f"--with-nauty-incdir={unix_path(self, nauty_info.includedir)}")
 
@@ -117,6 +123,9 @@ class CoinCouenneConan(ConanFile):
 
         env = tc.environment()
         env.define("PKG_CONFIG_PATH", self.generators_folder)
+        if str(self.settings.compiler) in ["gcc", "clang", "apple-clang"]:
+            # The old configure script probes GNU C before initializing the object suffix.
+            env.define("ac_cv_c_compiler_gnu", "yes")
         if is_msvc(self):
             compile_wrapper = unix_path(self, self.conf.get("user.automake:compile-wrapper"))
             ar_wrapper = unix_path(self, self.conf.get("user.automake:lib-wrapper"))
@@ -162,16 +171,32 @@ class CoinCouenneConan(ConanFile):
         if self.settings.os in ["Linux", "FreeBSD"]:
             self.cpp_info.components["libcouenne"].system_libs = ["m", "pthread", "rt", "dl"]
         self.cpp_info.components["libcouenne"].requires = [
-            "coin-bonmin::coin-bonmin",
-            "coin-osi::coin-osi",
+            "coin-bonmin::libbonmin",
+            "coin-osi::libosi",
         ]
         if self.options.with_nauty:
             self.cpp_info.components["libcouenne"].requires.append("nauty::nauty")
         if self.options.with_scip:
             self.cpp_info.components["libcouenne"].requires.append("scip::scip")
+        if self.dependencies["coin-osi"].options.with_cplex:
+            self.cpp_info.components["libcouenne"].requires.append("coin-osi::osi-cplex")
+        if self.dependencies["coin-osi"].options.with_gurobi:
+            self.cpp_info.components["libcouenne"].requires.append("coin-osi::osi-gurobi")
+        if self.dependencies["coin-osi"].options.with_mosek:
+            self.cpp_info.components["libcouenne"].requires.append("coin-osi::osi-mosek")
+        if self.dependencies["coin-osi"].options.with_soplex:
+            self.cpp_info.components["libcouenne"].requires.append("coin-osi::osi-soplex")
+        if self.dependencies["coin-osi"].options.with_xpress:
+            self.cpp_info.components["libcouenne"].requires.append("coin-osi::osi-xpress")
+        if self.options.with_asl:
+            self.cpp_info.components["libcouenne"].requires.append("coin-bonmin::bonminamplinterface")
+            self.cpp_info.components["libcouenne"].requires.append("ampl-asl::asl")
 
         if self.options.with_asl:
-            self.cpp_info.components["couenneinterfaces"].set_property("pkg_config_name", "couenneinterfaces")  # unofficial
-            self.cpp_info.components["couenneinterfaces"].libs = ["CouenneInterfaces"]
-            self.cpp_info.components["couenneinterfaces"].includedirs.append("include/coin")
-            self.cpp_info.components["couenneinterfaces"].requires = ["libcouenne", "ampl-asl::asl"]
+            self.cpp_info.components["readnl"].libs = ["CouenneReadnl"]
+            self.cpp_info.components["readnl"].includedirs.append("include/coin")
+            self.cpp_info.components["readnl"].requires = [
+                "libcouenne",
+                "coin-bonmin::bonminamplinterface",
+                "ampl-asl::asl",
+            ]

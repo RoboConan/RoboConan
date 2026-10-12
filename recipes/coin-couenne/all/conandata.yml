@@ -1,10 +1,4 @@
 sources:
-  "0.5.8":
-    url: "https://github.com/coin-or/Couenne/archive/refs/tags/releases/0.5.8.tar.gz"
-    sha256: "73b36e7475910f576ca25f8323553b9d5201fcb2656cef0a2c72e69dc0681051"
-patches:
-  "0.5.8":
-    - patch_file: "patches/scip-v9-support.patch"
-      patch_source: "https://github.com/coin-or/Couenne/commit/599d6a40599fa78a5b60bd3de8e49846b94702a5"
-    - patch_file: "patches/cxx17-fix.patch"
-      patch_source: "https://github.com/coin-or/Couenne/commit/fdfe17562c59518b4db478ca51c18ab5e01a59a5"
+  "0.5.9":
+    url: "https://github.com/coin-or/Couenne/archive/refs/tags/releases/0.5.9.tar.gz"
+    sha256: "5b67c9b33aaddf022914b91c7f23dc3d44d2bad31dace8b6a39f2e41fb121ef8"
