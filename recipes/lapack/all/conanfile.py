@@ -60,7 +60,8 @@ class LapackConan(ConanFile):
             self.requires("nvpl_lapack/[<1]")
 
     def package_id(self):
-        self.info.clear()
+        self.info.settings.clear()
+        self.info.requires["blas"].full_package_mode()
 
     @cached_property
     def _dependency(self):
