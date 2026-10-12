@@ -109,6 +109,11 @@ class OnnxRuntimeConan(ConanFile):
         if not self.dependencies["onnx"].options.disable_static_registration:
             raise ConanInvalidConfiguration("ONNX must be built with `-o onnx/*:disable_static_registration=True`.")
 
+    def package_id(self):
+        # ONNX Runtime selects full or lite protobuf from ONNX's protobuf
+        # configuration, which is part of the exact ONNX binary identity.
+        self.info.requires["onnx"].full_package_mode()
+
     def build_requirements(self):
         self.tool_requires("cmake/[>=3.28 <5]")
         if self.options.with_cuda:
@@ -184,6 +189,10 @@ class OnnxRuntimeConan(ConanFile):
         deps = CMakeDeps(self)
         deps.set_property("boost::headers", "cmake_target_name", "Boost::mp11")
         deps.set_property("flatbuffers", "cmake_target_name", "flatbuffers::flatbuffers")
+        # ONNX Runtime names these imported targets directly throughout its
+        # build instead of using ONNX's installed namespace.
+        deps.set_property("onnx::libonnx", "cmake_target_name", "onnx")
+        deps.set_property("onnx::onnx_proto", "cmake_target_name", "onnx_proto")
         deps.set_property("cudnn", "cmake_target_name", "CUDNN::cudnn_all")
         deps.generate()
 
