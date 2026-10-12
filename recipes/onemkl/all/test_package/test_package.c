@@ -72,17 +72,18 @@
 */
 #include <stdlib.h>
 #include <stdio.h>
+#include <mkl_types.h>
 
 /* Complex datatype */
 struct _fcomplex { float re, im; };
 typedef struct _fcomplex fcomplex;
 
 /* CGESV prototype */
-extern void cgesv( int* n, int* nrhs, fcomplex* a, int* lda, int* ipiv,
-                fcomplex* b, int* ldb, int* info );
+extern void cgesv( MKL_INT* n, MKL_INT* nrhs, fcomplex* a, MKL_INT* lda, MKL_INT* ipiv,
+                fcomplex* b, MKL_INT* ldb, MKL_INT* info );
 /* Auxiliary routines prototypes */
 extern void print_matrix( char* desc, int m, int n, fcomplex* a, int lda );
-extern void print_int_vector( char* desc, int n, int* a );
+extern void print_int_vector( char* desc, int n, MKL_INT* a );
 
 /* Parameters */
 #define N 4
@@ -93,9 +94,9 @@ extern void print_int_vector( char* desc, int n, int* a );
 /* Main program */
 int main() {
         /* Locals */
-        int n = N, nrhs = NRHS, lda = LDA, ldb = LDB, info;
+        MKL_INT n = N, nrhs = NRHS, lda = LDA, ldb = LDB, info;
         /* Local arrays */
-        int ipiv[N];
+        MKL_INT ipiv[N];
         fcomplex a[LDA*N] = {
            { 1.23f, -5.50f}, {-2.14f, -1.12f}, {-4.30f, -7.10f}, { 1.27f,  7.29f},
            { 7.91f, -5.38f}, {-9.92f, -0.79f}, {-6.47f,  2.52f}, { 8.90f,  6.92f},
@@ -113,7 +114,8 @@ int main() {
         /* Check for the exact singularity */
         if( info > 0 ) {
                 printf( "The diagonal element of the triangular factor of A,\n" );
-                printf( "U(%i,%i) is zero, so that A is singular;\n", info, info );
+                printf( "U(%lld,%lld) is zero, so that A is singular;\n",
+                        (long long)info, (long long)info );
                 printf( "the solution could not be computed.\n" );
                 exit( 1 );
         }
@@ -138,9 +140,9 @@ void print_matrix( char* desc, int m, int n, fcomplex* a, int lda ) {
 }
 
 /* Auxiliary routine: printing a vector of integers */
-void print_int_vector( char* desc, int n, int* a ) {
+void print_int_vector( char* desc, int n, MKL_INT* a ) {
         int j;
         printf( "\n %s\n", desc );
-        for( j = 0; j < n; j++ ) printf( " %6i", a[j] );
+        for( j = 0; j < n; j++ ) printf( " %6lld", (long long)a[j] );
         printf( "\n" );
 }

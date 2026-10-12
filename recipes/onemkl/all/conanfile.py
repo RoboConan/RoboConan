@@ -290,6 +290,8 @@ class OneMKLConan(ConanFile):
         if self.options.get_safe("sdl"):
             self.cpp_info.components["mkl-sdl"].set_property("pkg_config_name", "mkl-sdl")
             self.cpp_info.components["mkl-sdl"].libs = ["mkl_rt"]
+            if interface == "ilp64":
+                self.cpp_info.components["mkl-sdl"].defines = ["MKL_ILP64"]
             # Configure the default interface via env vars
             # https://www.intel.com/content/www/us/en/docs/onemkl/developer-guide-linux/2025-1/dynamic-select-the-interface-and-threading-layer.html
             sdl_interface = interface.upper()
