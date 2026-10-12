@@ -1,4 +1,7 @@
 sources:
+  "2.24.1":
+    url: "https://github.com/intel/libva/archive/refs/tags/2.24.1.tar.gz"
+    sha256: "0b4a3649ee8d683b9cce2ef094df4fb039d276c0cef7e49337c43d3b297b9f42"
   "2.22.0":
     url: "https://github.com/intel/libva/archive/refs/tags/2.22.0.tar.gz"
     sha256: "467c418c2640a178c6baad5be2e00d569842123763b80507721ab87eb7af8735"

@@ -149,7 +149,7 @@ class PackageConan(ConanFile):
         if self.options.get_safe("with_glx"):
             self.cpp_info.components["glx"].libs = ["va-glx"]
             self.cpp_info.components["glx"].set_property("pkg_config_name", "libva-glx")
-            self.cpp_info.components["glx"].requires = ["va", "opengl::opengl"]
+            self.cpp_info.components["glx"].requires = ["x11", "opengl::opengl"]
 
         if self.options.get_safe("with_wayland"):
             self.cpp_info.components["wayland"].libs = ["va-wayland"]
