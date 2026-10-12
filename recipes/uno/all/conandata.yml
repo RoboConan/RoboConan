@@ -1,7 +1,10 @@
 sources:
-  "2.0.3":
-    url: "https://github.com/cvanaret/Uno/archive/refs/tags/v2.0.3.tar.gz"
-    sha256: "b5440461ea86146aa95bf6e54b959f8845a7c332dd67550072b442a89a9517fa"
+  "2.9.0":
+    url: "https://github.com/cvanaret/Uno/archive/refs/tags/v2.9.0.tar.gz"
+    sha256: "639b61189270e9f66de081c42cb0cab42afe73ad2adfdd3fc8936121630be2b4"
 patches:
-  "2.0.3":
-    - patch_file: "patches/2.0.3-cmake-fixes.patch"
+  "2.9.0":
+    - patch_file: "patches/2.9.0-conan-dependencies.patch"
+    - patch_file: "patches/2.9.0-missing-cstdint.patch"
+    - patch_file: "patches/2.9.0-missing-algorithm.patch"
+    - patch_file: "patches/2.9.0-lazy-logger-stream.patch"

@@ -1,0 +1,9 @@
+--- a/interfaces/AMPL/AMPLModel.cpp
++++ b/interfaces/AMPL/AMPLModel.cpp
+@@ -2,5 +2,6 @@
+ // Licensed under the MIT license. See LICENSE file in the project directory for details.
+
++#include <algorithm>
+ #include <array>
+ #include <cassert>
+ #include <csetjmp>

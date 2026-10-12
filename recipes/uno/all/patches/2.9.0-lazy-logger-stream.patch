@@ -1,0 +1,60 @@
+--- a/uno/tools/Logger.hpp
++++ b/uno/tools/Logger.hpp
+@@ -15,7 +15,7 @@ namespace uno {
+    class Logger {
+    public:
+        static Level level;
+-       inline static std::ostream* stream = &std::cout;
++       static std::ostream& stream();
+        static void set_logger(const std::string& logger_level);
+        static void set_stream(std::ostream& output_stream);
+        static void flush();
+@@ -25,7 +25,7 @@ namespace uno {
+    template <typename T>
+    const Level& operator<<(const Level& level, const T& element) {
+       if (level <= Logger::level) {
+-         (*Logger::stream) << element;
++         Logger::stream() << element;
+       }
+       return level;
+    }
+--- a/uno/tools/Logger.cpp
++++ b/uno/tools/Logger.cpp
+@@ -4,6 +4,16 @@
+ #include "Logger.hpp"
+
+ namespace uno {
++   namespace {
++      std::ostream* logger_stream = nullptr;
++   }
++
++   std::ostream& Logger::stream() {
++      // Resolve std::cout lazily, after the process and any loaded DSOs have
++      // completed their static initialization.
++      return logger_stream == nullptr ? std::cout : *logger_stream;
++   }
++
+    void Logger::set_logger(const std::string& logger_level) {
+       if (logger_level == "SILENT") {
+          Logger::level = SILENT;
+@@ -32,16 +42,16 @@ namespace uno {
+    }
+
+    void Logger::set_stream(std::ostream& output_stream) {
+-      Logger::stream = &output_stream;
++      logger_stream = &output_stream;
+    }
+
+    void Logger::flush() {
+-      Logger::stream->flush();
++      Logger::stream().flush();
+    }
+
+    const Level& operator<<(const Level& level, std::ostream& (*element)(std::ostream&)) {
+       if (level <= Logger::level) {
+-         (*Logger::stream) << element;
++         Logger::stream() << element;
+       }
+       return level;
+    }
+ } // namespace

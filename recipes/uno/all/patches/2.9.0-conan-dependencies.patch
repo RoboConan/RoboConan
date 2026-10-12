@@ -1,0 +1,196 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -151,30 +151,13 @@
+    set(_compile_ma57 ON)
+    set(_compile_ma27 ON)
+    set(_compile_ma86 ON)
+-else()
+-   find_library(HSL hsl)
+-   if(HSL)
+-      link_to_uno(hsl ${HSL})
+-      set(_compile_ma57 ON)
+-      set(_compile_ma27 ON)
+-      set(_compile_ma86 ON)
+-   else()
+-      find_library(MA57 ma57)
+-      if(MA57)
+-         link_to_uno(ma57 ${MA57})
+-         set(_compile_ma57 ON)
+-      endif()
+-      find_library(MA27 ma27)
+-      if(MA27)
+-         link_to_uno(ma27 ${MA27})
+-         set(_compile_ma27 ON)
+-      endif()
+-      find_library(MA86 ma86)
+-      if(MA86)
+-         link_to_uno(ma86 ${MA86})
+-         set(_compile_ma86 ON)
+-      endif()
+-   endif()
++elseif(WITH_HSL)
++   find_package(HSL REQUIRED CONFIG)
++   target_link_libraries(uno_dependencies INTERFACE HSL::HSL)
++   target_compile_definitions(uno_dependencies INTERFACE HAS_HSL)
++   set(_compile_ma57 ON)
++   set(_compile_ma27 ON)
++   set(_compile_ma86 ON)
+ endif()
+ if(_compile_ma57)
+    target_sources(compiled_uno_files PRIVATE uno/ingredients/subproblem_solvers/MA57/MA57Solver.cpp)
+@@ -197,9 +180,10 @@
+ endif()
+
+ # BQPD
+-find_library(BQPD bqpd)
+-if(BQPD)
+-   link_to_uno(bqpd ${BQPD})
++if(WITH_BQPD)
++   find_package(BQPD REQUIRED CONFIG)
++   target_link_libraries(uno_dependencies INTERFACE BQPD::BQPD)
++   target_compile_definitions(uno_dependencies INTERFACE HAS_BQPD)
+    target_sources(compiled_uno_files PRIVATE
+            uno/ingredients/subproblem_solvers/BQPD/BQPDSolver.cpp
+            uno/ingredients/subproblem_solvers/BQPD/BQPDQuadraticProgram.cpp)
+@@ -209,13 +193,11 @@
+ endif()
+
+ # HiGHS
+-find_library(HIGHS highs)
+-if(HIGHS)
+-   target_link_libraries(uno_dependencies INTERFACE ${HIGHS})
++if(WITH_HIGHS)
++   find_package(HIGHS REQUIRED CONFIG)
++   target_link_libraries(uno_dependencies INTERFACE HIGHS::HIGHS)
+    target_compile_definitions(uno_dependencies INTERFACE HAS_HIGHS)
+
+-   target_include_directories(uno_dependencies SYSTEM INTERFACE ${HIGHS_INCLUDE_DIR})
+-
+    target_sources(compiled_uno_files PRIVATE
+            uno/ingredients/subproblem_solvers/HiGHS/HiGHSSolver.cpp
+            uno/ingredients/subproblem_solvers/HiGHS/HiGHSQuadraticProgram.cpp)
+@@ -227,71 +209,39 @@
+ endif()
+
+ # MUMPS
+-find_package(MUMPS)
+-if(MUMPS_LIBRARY)
+-   target_link_libraries(uno_dependencies INTERFACE ${MUMPS_LIBRARY} ${MUMPS_COMMON_LIBRARY} ${MUMPS_PORD_LIBRARY})
++if(WITH_MUMPS)
++   find_package(MUMPS REQUIRED CONFIG)
++   target_link_libraries(uno_dependencies INTERFACE MUMPS::MUMPS)
+-   target_compile_definitions(uno_dependencies INTERFACE HAS_MUMPS)
++   target_compile_definitions(uno_dependencies INTERFACE HAS_MUMPS HAS_MPI MUMPS_PARALLEL)
+
+    target_sources(compiled_uno_files PRIVATE uno/ingredients/subproblem_solvers/MUMPS/MUMPSSolver.cpp)
+-   target_include_directories(uno_dependencies SYSTEM INTERFACE ${MUMPS_INCLUDE_DIR})
+    if(ENABLE_TESTS)
+       target_sources(run_unotest PRIVATE unotest/functional_tests/MUMPSSolverTests.cpp)
+    endif()
+
+-   if(NOT MUMPS_MPISEQ_LIBRARY) # parallel
+-      find_package(MPI REQUIRED)
+-      target_link_libraries(uno_dependencies INTERFACE MPI::MPI_CXX MPI::MPI_Fortran)
+-      target_compile_definitions(uno_dependencies INTERFACE HAS_MPI MUMPS_PARALLEL)
+-
+-      find_package(BLACS REQUIRED)
+-      target_link_libraries(uno_dependencies INTERFACE ${BLACS_LIBRARY})
+-      target_include_directories(uno_dependencies SYSTEM INTERFACE ${BLACS_INCLUDE_DIRS})
+-
+-      find_package(ScaLAPACK REQUIRED)
+-      target_link_libraries(uno_dependencies INTERFACE ${ScaLAPACK_LIBRARY})
+-      target_include_directories(uno_dependencies SYSTEM INTERFACE ${ScaLAPACK_INCLUDE_DIRS})
+-   else()
+-      # link dummy parallel library (provided by MUMPS distribution)
+-      link_to_uno(MUMPS_MPISEQ_LIBRARY ${MUMPS_MPISEQ_LIBRARY})
+-   endif()
+-
+-   find_package(METIS REQUIRED)
+-   target_link_libraries(uno_dependencies INTERFACE ${METIS_LIBRARY})
+-   target_include_directories(uno_dependencies SYSTEM INTERFACE ${METIS_INCLUDE_DIRS})
+-
+-   if(USE_OPENMP)
+-      find_package(OpenMP REQUIRED)
+-      target_link_libraries(uno_dependencies INTERFACE OpenMP::OpenMP_CXX)
+-   endif()
+-
+    message(STATUS "Found MUMPS")
+ endif()
+
+ # SPRAL SSIDS
+-find_library(SPRAL NAMES spral)
+-if(SPRAL)
+-   target_link_libraries(uno_dependencies INTERFACE ${SPRAL})
++if(WITH_SPRAL)
++   find_package(SPRAL REQUIRED CONFIG)
++   target_link_libraries(uno_dependencies INTERFACE SPRAL::SPRAL)
+    target_compile_definitions(uno_dependencies INTERFACE HAS_SPRAL)
+
+-   target_include_directories(uno_dependencies SYSTEM INTERFACE ${SPRAL_INCLUDE_DIR})
+    target_sources(compiled_uno_files PRIVATE uno/ingredients/subproblem_solvers/SSIDS/SSIDSSolver.cpp)
+
+    if(ENABLE_TESTS)
+       target_sources(run_unotest PRIVATE unotest/functional_tests/SSIDSSolverTests.cpp)
+    endif()
+
+-   if(USE_OPENMP)
+-      find_package(OpenMP REQUIRED)
+-      target_link_libraries(uno_dependencies INTERFACE OpenMP::OpenMP_CXX)
+-   endif()
+-
+    message(STATUS "Found SPRAL")
+ endif()
+
+ # METIS
+-find_library(METIS metis)
+-if(METIS)
+-   link_to_uno(metis ${METIS})
++if(WITH_METIS)
++   find_package(METIS REQUIRED CONFIG)
++   target_link_libraries(uno_dependencies INTERFACE METIS::METIS)
++   target_compile_definitions(uno_dependencies INTERFACE HAS_METIS)
+ endif()
+
+ # helper function: resolve a mixed list of -lflags and relative paths to absolute paths
+@@ -312,7 +262,2 @@
+-if(LAPACK_LIBRARIES)
+-   resolve_library_paths(LAPACK_LIBRARIES ABSOLUTE_LAPACK_LIBRARIES)
+-   target_link_libraries(uno_dependencies INTERFACE ${ABSOLUTE_LAPACK_LIBRARIES})
+-else()
+-   find_package(LAPACK REQUIRED)
+-   target_link_libraries(uno_dependencies INTERFACE LAPACK::LAPACK)
+-endif()
++find_package(LAPACK REQUIRED CONFIG)
++target_link_libraries(uno_dependencies INTERFACE LAPACK::LAPACK)
+@@ -321,7 +266,2 @@
+-if(BLAS_LIBRARIES)
+-   resolve_library_paths(BLAS_LIBRARIES ABSOLUTE_BLAS_LIBRARIES)
+-   target_link_libraries(uno_dependencies INTERFACE ${ABSOLUTE_BLAS_LIBRARIES})
+-else()
+-   find_package(BLAS REQUIRED)
+-   target_link_libraries(uno_dependencies INTERFACE BLAS::BLAS)
+-endif()
++find_package(BLAS REQUIRED CONFIG)
++target_link_libraries(uno_dependencies INTERFACE BLAS::BLAS)
+@@ -386,17 +326,13 @@ endif()
+ # AMPL executable
+ # ======================
+
+-find_library(AMPLSOLVER amplsolver)
+-if(AMPLSOLVER)
++if(WITH_ASL)
++   find_package(ampl-asl REQUIRED CONFIG)
+    message(STATUS "Found amplsolver")
+
+-   add_executable(uno_ampl EXCLUDE_FROM_ALL interfaces/AMPL/AMPLModel.cpp interfaces/AMPL/uno_ampl.cpp)
+-   target_link_libraries(uno_ampl PUBLIC ${DEFAULT_UNO_LIB} ${AMPLSOLVER} uno_dependencies ${CMAKE_DL_LIBS})
++   add_executable(uno_ampl interfaces/AMPL/AMPLModel.cpp interfaces/AMPL/uno_ampl.cpp)
++   target_link_libraries(uno_ampl PUBLIC ${DEFAULT_UNO_LIB} ampl-asl::asl uno_dependencies ${CMAKE_DL_LIBS})
+    target_compile_definitions(uno_ampl PRIVATE HAS_AMPLSOLVER)
+-
+-   # include the corresponding directory
+-   get_filename_component(directory ${AMPLSOLVER} DIRECTORY)
+-   target_include_directories(uno_ampl PRIVATE ${directory})
+ endif()
+
+ # =========================
