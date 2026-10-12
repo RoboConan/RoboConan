@@ -36,9 +36,6 @@ class OpenjpegConan(ConanFile):
     def layout(self):
         cmake_layout(self, src_folder="src")
 
-    def package_id(self):
-        del self.info.options.build_codec # not used for the moment
-
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
         apply_conandata_patches(self)
@@ -54,7 +51,15 @@ class OpenjpegConan(ConanFile):
         tc.variables["BUILD_DOC"] = False
         tc.variables["BUILD_STATIC_LIBS"] = not self.options.shared
         tc.variables["BUILD_LUTS_GENERATOR"] = False
-        tc.variables["BUILD_CODEC"] = False
+        tc.variables["BUILD_CODEC"] = self.options.build_codec
+        # Keep the codec tools reproducible and limited to their built-in
+        # image formats instead of discovering undeclared host libraries.
+        if self.options.build_codec:
+            tc.variables["CMAKE_DISABLE_FIND_PACKAGE_ZLIB"] = True
+            tc.variables["CMAKE_DISABLE_FIND_PACKAGE_PNG"] = True
+            tc.variables["CMAKE_DISABLE_FIND_PACKAGE_TIFF"] = True
+            tc.variables["CMAKE_DISABLE_FIND_PACKAGE_LCMS"] = True
+            tc.variables["CMAKE_DISABLE_FIND_PACKAGE_LCMS2"] = True
         if Version(self.version) < "2.5.0":
             tc.variables["BUILD_MJ2"] = False
             tc.variables["BUILD_JPWL"] = False
