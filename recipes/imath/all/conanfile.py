@@ -76,6 +76,7 @@ class ImathConan(ConanFile):
         # Imath::ImathConfig - header only library
         imath_config = self.cpp_info.components["imath_config"]
         imath_config.set_property("cmake_target_name", "Imath::ImathConfig")
+        imath_config.set_property("cmake_target_aliases", ["Imath::Config"])
         imath_config.includedirs.append(os.path.join("include", "Imath"))
 
         # Imath::Imath - linkable library
@@ -84,5 +85,7 @@ class ImathConan(ConanFile):
         imath_lib.set_property("pkg_config_name", "Imath")
         imath_lib.libs = collect_libs(self)
         imath_lib.requires = ["imath_config"]
+        if self.settings.os in ["Linux", "FreeBSD"]:
+            imath_lib.system_libs = ["m"]
         if self.settings.os == "Windows" and self.options.shared:
             imath_lib.defines.append("IMATH_DLL")

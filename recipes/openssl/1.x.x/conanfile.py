@@ -17,6 +17,16 @@ from conan.tools.microsoft import is_msvc, msvc_runtime_flag, unix_path
 required_conan_version = ">=2.1"
 
 
+_OPENSSL_FEATURES = (
+    "threads", "asm", "stdio", "sse2", "bf", "cast", "des", "dh", "dsa",
+    "hmac", "md5", "mdc2", "rc2", "rsa", "sha", "async", "dso", "aria",
+    "blake2", "camellia", "chacha", "cms", "comp", "ct", "deprecated", "dgram",
+    "engine", "filenames", "gost", "idea", "md4", "ocsp", "pinshared", "rmd160",
+    "sm2", "sm3", "sm4", "srp", "srtp", "ssl", "ts", "whirlpool", "ec", "ecdh",
+    "ecdsa", "rfc3779", "seed", "sock", "ssl3", "tls1",
+)
+
+
 class OpenSSLConan(ConanFile):
     name = "openssl"
     package_type = "library"
@@ -27,67 +37,22 @@ class OpenSSLConan(ConanFile):
 
     settings = "os", "arch", "compiler", "build_type"
     options = {
-        "no_threads": [True, False],
         "shared": [True, False],
         "fPIC": [True, False],
-        "no_asm": [True, False],
         "enable_weak_ssl_ciphers": [True, False],
         "386": [True, False],
-        "no_stdio": [True, False],
-        "no_tests": [True, False],
-        "no_sse2": [True, False],
-        "no_bf": [True, False],
-        "no_cast": [True, False],
-        "no_des": [True, False],
-        "no_dh": [True, False],
-        "no_dsa": [True, False],
-        "no_hmac": [True, False],
-        "no_md5": [True, False],
-        "no_mdc2": [True, False],
-        "no_rc2": [True, False],
-        "no_rsa": [True, False],
-        "no_sha": [True, False],
-        "no_async": [True, False],
-        "no_dso": [True, False],
-        "no_aria": [True, False],
-        "no_blake2": [True, False],
-        "no_camellia": [True, False],
-        "no_chacha": [True, False],
-        "no_cms": [True, False],
-        "no_comp": [True, False],
-        "no_ct": [True, False],
-        "no_deprecated": [True, False],
-        "no_dgram": [True, False],
-        "no_engine": [True, False],
-        "no_filenames": [True, False],
-        "no_gost": [True, False],
-        "no_idea": [True, False],
-        "no_md4": [True, False],
-        "no_ocsp": [True, False],
-        "no_pinshared": [True, False],
-        "no_rmd160": [True, False],
-        "no_sm2": [True, False],
-        "no_sm3": [True, False],
-        "no_sm4": [True, False],
-        "no_srp": [True, False],
-        "no_srtp": [True, False],
-        "no_ssl": [True, False],
-        "no_ts": [True, False],
-        "no_whirlpool": [True, False],
-        "no_ec": [True, False],
-        "no_ecdh": [True, False],
-        "no_ecdsa": [True, False],
-        "no_rfc3779": [True, False],
-        "no_seed": [True, False],
-        "no_sock": [True, False],
-        "no_ssl3": [True, False],
-        "no_tls1": [True, False],
+        **{feature: [True, False] for feature in _OPENSSL_FEATURES},
         "capieng_dialog": [True, False],
         "enable_capieng": [True, False],
         "openssldir": [None, "ANY"],
     }
-    default_options = {key: False for key in options.keys()}
+    default_options = {key: True for key in options.keys()}
+    default_options["shared"] = False
     default_options["fPIC"] = True
+    default_options["enable_weak_ssl_ciphers"] = False
+    default_options["386"] = False
+    default_options["capieng_dialog"] = False
+    default_options["enable_capieng"] = False
     default_options["openssldir"] = None
 
     @property
@@ -114,10 +79,9 @@ class OpenSSLConan(ConanFile):
             del self.options.enable_capieng
 
         if self.settings.os == "Emscripten":
-            self.options.no_asm = True
-            self.options.no_threads = True
-            self.options.no_stdio = True
-            self.options.no_tests = True
+            self.options.asm.value = False
+            self.options.threads.value = False
+            self.options.stdio.value = False
 
     def configure(self):
         if self.options.shared:
@@ -130,12 +94,12 @@ class OpenSSLConan(ConanFile):
 
     def validate(self):
         if self.settings.os == "Emscripten":
-            if not all((self.options.no_asm, self.options.no_threads, self.options.no_stdio, self.options.no_tests)):
-                raise ConanInvalidConfiguration("os=Emscripten requires openssl:{no_asm,no_threads,no_stdio,no_tests}=True")
+            if any((self.options.asm, self.options.threads, self.options.stdio)):
+                raise ConanInvalidConfiguration("os=Emscripten requires openssl:{asm,threads,stdio}=False")
 
     def build_requirements(self):
         if self.settings_build.os == "Windows":
-            if not self.options.no_asm:
+            if self.options.asm:
                 self.tool_requires("nasm/[*]")
             if self._use_nmake:
                 self.tool_requires("strawberryperl/[^5.32.1.1]")
@@ -339,7 +303,6 @@ class OpenSSLConan(ConanFile):
             "--prefix=/",
             f"--openssldir=\"{openssldir}\"",
             "no-unit-test",
-            "no-threads" if self.options.no_threads else "threads",
             f"PERL={self._perl}",
             "no-tests",
             "--debug" if self.settings.build_type == "Debug" else "--release",
@@ -368,11 +331,13 @@ class OpenSSLConan(ConanFile):
             # #error <stdatomic.h> is not yet supported when compiling as C, but this is planned for a future release.
             args.append("-D__STDC_NO_ATOMICS__")
 
-        possible_values = self.options.possible_values
-        for option_name in possible_values:
-            activated = self.options.get_safe(option_name)
-            if activated and option_name not in ["fPIC", "openssldir", "capieng_dialog", "enable_capieng"]:
-                self.output.info("activated option: %s" % option_name)
+        for option_name in _OPENSSL_FEATURES:
+            if not getattr(self.options, option_name):
+                self.output.info("disabled option: %s" % option_name)
+                args.append(f"no-{option_name.replace('_', '-')}")
+
+        for option_name in ("386", "enable_weak_ssl_ciphers"):
+            if getattr(self.options, option_name):
                 args.append(option_name.replace("_", "-"))
         return args
 
@@ -614,12 +579,12 @@ class OpenSSLConan(ConanFile):
 
         if self.settings.os == "Windows":
             self.cpp_info.components["crypto"].system_libs.extend(["crypt32", "ws2_32", "advapi32", "user32", "bcrypt"])
-        elif self.settings.os in ["Linux", "FreeBSD"]:
-            self.cpp_info.components["crypto"].system_libs.extend(["dl", "rt"])
-            self.cpp_info.components["ssl"].system_libs.append("dl")
-            if not self.options.no_threads:
+        elif self.settings.os == "Linux":
+            self.cpp_info.components["crypto"].system_libs.append("dl")
+            if self.options.threads:
                 self.cpp_info.components["crypto"].system_libs.append("pthread")
-                self.cpp_info.components["ssl"].system_libs.append("pthread")
+        elif self.settings.os == "FreeBSD" and self.options.threads:
+            self.cpp_info.components["crypto"].system_libs.append("pthread")
         elif self.settings.os == "Neutrino":
             self.cpp_info.components["crypto"].system_libs.append("atomic")
             self.cpp_info.components["ssl"].system_libs.append("atomic")

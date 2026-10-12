@@ -105,8 +105,8 @@ class PodofoConan(ConanFile):
         tc.variables["PODOFO_WITH_UNISTRING"] = self.options.with_unistring
 
         tc.variables["PODOFO_HAVE_OPENSSL_1_1"] = self.dependencies["openssl"].ref.version >= "1.1"
-        if "no_rc4" in self.dependencies["openssl"].options:
-            tc.variables["PODOFO_HAVE_OPENSSL_NO_RC4"] = self.dependencies["openssl"].options.no_rc4
+        openssl = self.dependencies["openssl"]
+        tc.variables["PODOFO_HAVE_OPENSSL_NO_RC4"] = not openssl.options.rc4
 
         tc.generate()
 

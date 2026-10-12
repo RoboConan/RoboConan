@@ -15,6 +15,17 @@ from conan.tools.scm import Version
 required_conan_version = ">=2.1"
 
 
+_OPENSSL_FEATURES = (
+    "aria", "apps", "autoload_config", "asm", "async", "blake2", "bf",
+    "camellia", "chacha", "cms", "comp", "ct", "cast", "deprecated", "des",
+    "dgram", "dh", "dsa", "dso", "ec", "ecdh", "ecdsa", "engine", "filenames",
+    "fips", "gost", "idea", "legacy", "md2", "md4", "mdc2", "module", "ocsp",
+    "pinshared", "rc2", "rc4", "rc5", "rfc3779", "rmd160", "sm2", "sm3", "sm4",
+    "srp", "srtp", "sse2", "ssl", "stdio", "seed", "sock", "ssl3", "threads",
+    "tls1", "ts", "whirlpool",
+)
+
+
 class OpenSSLConan(ConanFile):
     name = "openssl"
     homepage = "https://github.com/openssl/openssl"
@@ -31,67 +42,23 @@ class OpenSSLConan(ConanFile):
         "capieng_dialog": [True, False],
         "enable_capieng": [True, False],
         "enable_trace": [True, False],
-        "no_aria": [True, False],
-        "no_apps": [True, False],
-        "no_autoload_config": [True, False],
-        "no_asm": [True, False],
-        "no_async": [True, False],
-        "no_blake2": [True, False],
-        "no_bf": [True, False],
-        "no_camellia": [True, False],
-        "no_chacha": [True, False],
-        "no_cms": [True, False],
-        "no_comp": [True, False],
-        "no_ct": [True, False],
-        "no_cast": [True, False],
-        "no_deprecated": [True, False],
-        "no_des": [True, False],
-        "no_dgram": [True, False],
-        "no_dh": [True, False],
-        "no_dsa": [True, False],
-        "no_dso": [True, False],
-        "no_ec": [True, False],
-        "no_ecdh": [True, False],
-        "no_ecdsa": [True, False],
-        "no_engine": [True, False],
-        "no_filenames": [True, False],
-        "no_fips": [True, False],
-        "no_gost": [True, False],
-        "no_idea": [True, False],
-        "no_legacy": [True, False],
-        "no_md2": [True, False],
-        "no_md4": [True, False],
-        "no_mdc2": [True, False],
-        "no_module": [True, False],
-        "no_ocsp": [True, False],
-        "no_pinshared": [True, False],
-        "no_rc2": [True, False],
-        "no_rc4": [True, False],
-        "no_rc5": [True, False],
-        "no_rfc3779": [True, False],
-        "no_rmd160": [True, False],
-        "no_sm2": [True, False],
-        "no_sm3": [True, False],
-        "no_sm4": [True, False],
-        "no_srp": [True, False],
-        "no_srtp": [True, False],
-        "no_sse2": [True, False],
-        "no_ssl": [True, False],
-        "no_stdio": [True, False],
-        "no_seed": [True, False],
-        "no_sock": [True, False],
-        "no_ssl3": [True, False],
-        "no_threads": [True, False],
-        "no_tls1": [True, False],
-        "no_ts": [True, False],
-        "no_whirlpool": [True, False],
-        "no_zlib": [True, False],
+        **{feature: [True, False] for feature in _OPENSSL_FEATURES},
+        "with_zlib": [True, False],
+        "with_brotli": [True, False],
+        "with_zstd": [True, False],
         "openssldir": [None, "ANY"],
         "tls_security_level": [None, 0, 1, 2, 3, 4, 5],
     }
-    default_options = {key: False for key in options.keys()}
+    default_options = {key: True for key in options.keys()}
+    default_options["shared"] = False
     default_options["fPIC"] = True
-    default_options["no_md2"] = True
+    default_options["enable_weak_ssl_ciphers"] = False
+    default_options["386"] = False
+    default_options["capieng_dialog"] = False
+    default_options["enable_capieng"] = False
+    default_options["enable_trace"] = False
+    default_options["with_brotli"] = False
+    default_options["with_zstd"] = False
     default_options["openssldir"] = None
     default_options["tls_security_level"] = None
 
@@ -109,6 +76,9 @@ class OpenSSLConan(ConanFile):
         return self._is_clang_cl or is_msvc(self)
 
     def config_options(self):
+        if Version(self.version) < "3.2":
+            self.options.rm_safe("with_brotli")
+            self.options.rm_safe("with_zstd")
         if self.settings.os != "Windows":
             self.options.rm_safe("capieng_dialog")
             self.options.rm_safe("enable_capieng")
@@ -125,8 +95,12 @@ class OpenSSLConan(ConanFile):
         basic_layout(self, src_folder="src")
 
     def requirements(self):
-        if not self.options.no_zlib:
+        if self.options.with_zlib:
             self.requires("zlib-ng/[^2.0]")
+        if self.options.get_safe("with_brotli"):
+            self.requires("brotli/[^1.1]")
+        if self.options.get_safe("with_zstd"):
+            self.requires("zstd/[~1.5]")
 
     def validate(self):
         if self.settings.os == "iOS" and self.options.shared:
@@ -134,7 +108,7 @@ class OpenSSLConan(ConanFile):
 
     def build_requirements(self):
         if self.settings_build.os == "Windows":
-            if not self.options.no_asm and self.settings.arch in ["x86", "x86_64"]:
+            if self.options.asm and self.settings.arch in ["x86", "x86_64"]:
                 self.tool_requires("nasm/[*]")
             if self._use_nmake:
                 self.tool_requires("strawberryperl/[^5.32.1.1]")
@@ -343,7 +317,6 @@ class OpenSSLConan(ConanFile):
             "--prefix=/",
             "--libdir=lib",
             f"--openssldir=\"{openssldir}\"",
-            "no-threads" if self.options.no_threads else "threads",
             f"PERL={self._perl}",
             "no-unit-test",
             "no-tests",
@@ -359,48 +332,60 @@ class OpenSSLConan(ConanFile):
         else:
             args.append("-fPIC" if self.options.get_safe("fPIC", True) else "no-pic")
 
-        args.append("no-fips" if self.options.get_safe("no_fips", True) else "enable-fips")
-        args.append("no-md2" if self.options.get_safe("no_md2", True) else "enable-md2")
         if str(self.options.tls_security_level) != "None":
             args.append(f"-DOPENSSL_TLS_SECURITY_LEVEL={self.options.tls_security_level}")
 
-        if self.options.get_safe("enable_trace"):
+        if self.options.enable_trace:
             args.append("enable-trace")
 
         if self.settings.os == "Neutrino":
             args.append("no-asm -lsocket -latomic")
 
-        if not self.options.no_zlib:
+        if self.options.with_zlib:
             zlib_cpp_info = self.dependencies["zlib-ng"].cpp_info.aggregated_components()
             include_path = self._adjust_path(zlib_cpp_info.includedirs[0])
-            is_shared_zlib = self.dependencies["zlib-ng"].options.shared
-
-
-            # the --with-zlib-lib flag takes a different value depending on platform and if ZLIB is shared
-            # From https://github.com/openssl/openssl/blob/openssl-3.4.1/INSTALL.md#with-zlib-lib
-            # On Unix: the directory where the zlib library is (for -L flag)
-            # On Windows with static zlib: the path to the static library to link (assumed)
-            # On Windows with shared zlib: the leaf name of the dll (its loaded with LoadLibrary)
             if self._use_nmake:
-                # notes: consider where this should be "if on windows"
-                #        zlib1 is assumed to be the name of the zlib1.dll for all windows configurations
-                lib_path = self._adjust_path(os.path.join(zlib_cpp_info.libdirs[0], f"{zlib_cpp_info.libs[0]}.lib"))
-                zlib_lib_flag = "zlib1" if is_shared_zlib else lib_path
+                zlib_lib_flag = self._adjust_path(
+                    os.path.join(zlib_cpp_info.libdirs[0], f"{zlib_cpp_info.libs[0]}.lib")
+                )
             else:
-                # Just path, GNU like compilers will find the right file
                 zlib_lib_flag = self._adjust_path(zlib_cpp_info.libdirs[0])
-
-            zlib_configure_arg = "zlib-dynamic" if is_shared_zlib else "zlib"
-            args.append(zlib_configure_arg)
-
             args.extend([
+                "zlib",
                 f'--with-zlib-include="{include_path}"',
                 f'--with-zlib-lib="{zlib_lib_flag}"',
             ])
+        else:
+            args.append("no-zlib")
 
-        for option_name in self.default_options.keys():
-            if self.options.get_safe(option_name, False) and option_name not in ("shared", "fPIC", "openssldir", "tls_security_level", "capieng_dialog", "enable_capieng", "zlib", "no_fips", "no_md2"):
-                self.output.info(f"Activated option: {option_name}")
+        if self.options.get_safe("with_brotli"):
+            brotli_cpp_info = self.dependencies["brotli"].cpp_info.aggregated_components()
+            args.extend([
+                "enable-brotli",
+                f'--with-brotli-include="{self._adjust_path(brotli_cpp_info.includedirs[0])}"',
+                f'--with-brotli-lib="{self._adjust_path(brotli_cpp_info.libdirs[0])}"',
+            ])
+
+        if self.options.get_safe("with_zstd"):
+            zstd_cpp_info = self.dependencies["zstd"].cpp_info.aggregated_components()
+            zstd_lib = self._adjust_path(zstd_cpp_info.libdirs[0])
+            if self._use_nmake:
+                zstd_lib = self._adjust_path(
+                    os.path.join(zstd_cpp_info.libdirs[0], f"{zstd_cpp_info.libs[0]}.lib")
+                )
+            args.extend([
+                "enable-zstd",
+                f'--with-zstd-include="{self._adjust_path(zstd_cpp_info.includedirs[0])}"',
+                f'--with-zstd-lib="{zstd_lib}"',
+            ])
+
+        for feature in _OPENSSL_FEATURES:
+            if not getattr(self.options, feature):
+                self.output.info(f"Disabled option: {feature}")
+                args.append(f"no-{feature.replace('_', '-')}")
+
+        for option_name in ("386", "enable_weak_ssl_ciphers"):
+            if getattr(self.options, option_name):
                 args.append(option_name.replace("_", "-"))
         return args
 
@@ -569,7 +554,7 @@ class OpenSSLConan(ConanFile):
                 if file.endswith(".a"):
                     os.unlink(os.path.join(libdir, file))
 
-        if not self.options.no_fips:
+        if self.options.fips:
             provdir = os.path.join(self.source_folder, "providers")
             modules_dir = os.path.join(self.package_folder, "lib", "ossl-modules")
             if self.settings.os == "Macos":
@@ -653,17 +638,24 @@ class OpenSSLConan(ConanFile):
 
         self.cpp_info.components["ssl"].requires = ["crypto"]
 
-        if not self.options.no_zlib:
+        if self.options.with_zlib:
             self.cpp_info.components["crypto"].requires.append("zlib-ng::zlib-ng")
+        if self.options.get_safe("with_brotli"):
+            self.cpp_info.components["crypto"].requires.extend([
+                "brotli::brotlienc",
+                "brotli::brotlidec",
+            ])
+        if self.options.get_safe("with_zstd"):
+            self.cpp_info.components["crypto"].requires.append("zstd::zstd")
 
         if self.settings.os == "Windows":
             self.cpp_info.components["crypto"].system_libs.extend(["crypt32", "ws2_32", "advapi32", "user32", "bcrypt"])
         elif self.settings.os == "Linux":
-            self.cpp_info.components["crypto"].system_libs.extend(["dl", "rt"])
-            self.cpp_info.components["ssl"].system_libs.append("dl")
-            if not self.options.no_threads:
+            self.cpp_info.components["crypto"].system_libs.append("dl")
+            if self.options.threads:
                 self.cpp_info.components["crypto"].system_libs.append("pthread")
-                self.cpp_info.components["ssl"].system_libs.append("pthread")
+        elif self.settings.os == "FreeBSD" and self.options.threads:
+            self.cpp_info.components["crypto"].system_libs.append("pthread")
         elif self.settings.os == "Neutrino":
             self.cpp_info.components["crypto"].system_libs.append("atomic")
             self.cpp_info.components["ssl"].system_libs.append("atomic")

@@ -16,15 +16,15 @@ class TestPackageConan(ConanFile):
         self.requires(self.tested_reference_str)
 
     def _with_legacy(self):
-        return (not self.dependencies["openssl"].options.no_legacy and
-            ((not self.dependencies["openssl"].options.no_md4) or
-              (not self.dependencies["openssl"].options.no_rmd160)))
+        return (self.dependencies["openssl"].options.legacy and
+            (self.dependencies["openssl"].options.md4 or
+              self.dependencies["openssl"].options.rmd160))
 
     def generate(self):
         tc = CMakeToolchain(self)
         tc.cache_variables["OPENSSL_WITH_LEGACY"] = self._with_legacy()
-        tc.cache_variables["OPENSSL_WITH_MD4"] = not self.dependencies["openssl"].options.no_md4
-        tc.cache_variables["OPENSSL_WITH_RIPEMD160"] = not self.dependencies["openssl"].options.no_rmd160
+        tc.cache_variables["OPENSSL_WITH_MD4"] = self.dependencies["openssl"].options.md4
+        tc.cache_variables["OPENSSL_WITH_RIPEMD160"] = self.dependencies["openssl"].options.rmd160
         tc.generate()
 
     def build(self):
