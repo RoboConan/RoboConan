@@ -1,0 +1,23 @@
+sources:
+  "0.0.12+casadi":
+    license:
+      url: "https://github.com/madsuite-org/libMad/archive/v0.0.12-casadi.tar.gz"
+      sha256: "a0ee7e3d10b827bfc6f4f961b9216d2dfe2c3d839c1de51f3387b10490e0639c"
+    Linux:
+      x86_64:
+        url: "https://github.com/madsuite-org/libMad/releases/download/v0.0.12-casadi/libMad-ubuntu-x86_64-v0.0.12-casadi.tar.gz"
+        sha256: "14b5e69783b94c94d8e6f343a7ba072b3d04938078c322b4afce6d16864d96da"
+        cuda:
+          url: "https://github.com/madsuite-org/libMad/releases/download/v0.0.12-casadi/libMad-ubuntu-x86_64-v0.0.12-casadi-cuda.tar.gz"
+          sha256: "cb656fec944d5f2087001e2ed0af6eb2c91978602e7ab81d8f72b162534e506a"
+    Macos:
+      armv8:
+        url: "https://github.com/madsuite-org/libMad/releases/download/v0.0.12-casadi/libMad-apple-aarch64-v0.0.12-casadi.tar.gz"
+        sha256: "ef5af74a28ead2d9e4d69d1b2cf844b34c2b3bd9e57e7d5e77d50dbaf23e2de7"
+    Windows:
+      x86_64:
+        url: "https://github.com/madsuite-org/libMad/releases/download/v0.0.12-casadi/libMad-windows-x86_64-v0.0.12-casadi.tar.gz"
+        sha256: "4320b347b82be1acf34a135a1b5ab9264ed04832aa9c2014f93f336672f6fa07"
+        cuda:
+          url: "https://github.com/madsuite-org/libMad/releases/download/v0.0.12-casadi/libMad-windows-x86_64-v0.0.12-casadi-cuda.tar.gz"
+          sha256: "ccd39faf49c348993c2159792866ebfb74a9c7b7683d0dbb9927ff73733deb12"
