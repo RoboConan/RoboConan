@@ -21,7 +21,6 @@ class ProjConan(ConanFile):
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
-        "threadsafe": [True, False],
         "with_tiff": [True, False],
         "with_curl": [True, False],
         "build_executables": [True, False],
@@ -29,7 +28,6 @@ class ProjConan(ConanFile):
     default_options = {
         "shared": False,
         "fPIC": True,
-        "threadsafe": True,
         "with_tiff": True,
         "with_curl": True,
         "build_executables": True,
@@ -48,20 +46,19 @@ class ProjConan(ConanFile):
             self.requires("libcurl/[>=7.78.0 <9]")
 
     def build_requirements(self):
-        self.tool_requires("cmake/[>=3.16 <5]")
+        self.tool_requires("cmake/[>=3.22.1 <5]")
         self.tool_requires("sqlite3/<host_version>")
 
     def validate(self):
         if Version(self.version) >= "9.6.0":
-            # https://github.com/OSGeo/PROJ/issues/4450
-            check_min_cppstd(self, 14)
+            # https://github.com/OSGeo/PROJ/blob/9.6.0/CMakeLists.txt#L24-L27
+            check_min_cppstd(self, 17)
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
 
     def generate(self):
         tc = CMakeToolchain(self)
-        tc.cache_variables["USE_THREAD"] = self.options.threadsafe
         tc.cache_variables["BUILD_CCT"] = self.options.build_executables
         tc.cache_variables["BUILD_CS2CS"] = self.options.build_executables
         tc.cache_variables["BUILD_GEOD"] = self.options.build_executables
@@ -79,10 +76,12 @@ class ProjConan(ConanFile):
             # Workaround for: https://github.com/conan-io/conan/issues/13560
             libdirs_host = [l for dependency in self.dependencies.host.values() for l in dependency.cpp_info.aggregated_components().libdirs]
             tc.cache_variables["CMAKE_BUILD_RPATH"] = ";".join(libdirs_host)
-        tc.cache_variables["CMAKE_POLICY_DEFAULT_CMP0077"] = "NEW"
         tc.generate()
 
         deps = CMakeDeps(self)
+        if self.options.with_tiff:
+            # PROJ consumes CMake's FindTIFF target rather than libtiff's config target.
+            deps.set_property("libtiff", "cmake_find_mode", "module")
         deps.generate()
 
     def _patch_sources(self):
@@ -133,9 +132,10 @@ class ProjConan(ConanFile):
         self.cpp_info.components["projlib"].libs = collect_libs(self)
         if self.settings.os in ["Linux", "FreeBSD"]:
             self.cpp_info.components["projlib"].system_libs.append("m")
-            if self.options.threadsafe:
-                self.cpp_info.components["projlib"].system_libs.append("pthread")
-        elif self.settings.os == "Windows":
+            self.cpp_info.components["projlib"].system_libs.append("pthread")
+        if self.settings.os == "Linux":
+            self.cpp_info.components["projlib"].system_libs.append("dl")
+        if self.settings.os == "Windows":
             self.cpp_info.components["projlib"].system_libs.extend(["shell32", "ole32"])
         if not self.options.shared:
             libcxx = stdcpp_library(self)
