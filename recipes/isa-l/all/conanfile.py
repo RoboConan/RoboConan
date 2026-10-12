@@ -43,13 +43,12 @@ class LibisalConan(ConanFile):
         basic_layout(self, src_folder="src")
 
     def validate(self):
-        if self.settings.arch not in ["x86", "x86_64"]:
-            raise ConanInvalidConfiguration(f"{self.settings.arch} architecture is not supported")
-        if self.version == "2.30.0" and self.settings_build.arch == "armv8":
-            raise ConanInvalidConfiguration(f"Version {self.version} does not support armv8")
+        if is_msvc(self) and self.settings.arch != "x86_64":
+            raise ConanInvalidConfiguration("ISA-L's nmake build supports only x86_64")
 
     def build_requirements(self):
-        self.tool_requires("nasm/[*]")
+        if self.settings.arch == "x86_64":
+            self.tool_requires("nasm/[*]")
         if not is_msvc(self):
             self.tool_requires("libtool/[^2.4.7]")
             if self.settings_build.os == "Windows":
@@ -68,10 +67,12 @@ class LibisalConan(ConanFile):
             tc.generate()
         else:
             tc = AutotoolsToolchain(self)
-            # ./configure bugs out if $AS executable has an absolute path
-            env = tc.environment()
-            env.define("AS", "nasm")
-            tc.generate(env)
+            # ISA-L probes NASM itself and expects AS to be unset. The NASM
+            # package exports AS as an absolute path, which sends configure
+            # through its generic assembler probe instead.
+            tc_env = tc.environment()
+            tc_env.unset("AS")
+            tc.generate(tc_env)
 
     def build(self):
         with chdir(self, self.source_folder):
