@@ -1,4 +1,7 @@
 sources:
+  "113":
+    url: "https://github.com/casadi/mockups/archive/v113.tar.gz"
+    sha256: "61f2b923fe7e4404258beea26d890e762588d8b2d3b48db784ebcf18e8c1d30c"
   "89":
-    url: "https://github.com/casadi/mockups/archive/refs/tags/v89.tar.gz"
+    url: "https://github.com/casadi/mockups/archive/v89.tar.gz"
     sha256: "8e87d4f9951eade1fc31c5b764d3c031278337af226714eb7e8c5523ac0ac330"

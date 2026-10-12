@@ -3,6 +3,7 @@ import os
 from conan import ConanFile
 from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
 from conan.tools.files import *
+from conan.tools.scm import Version
 
 required_conan_version = ">=2.1"
 
@@ -28,7 +29,8 @@ class MadNlpConan(ConanFile):
 
     def build(self):
         cmake = CMake(self)
-        cmake.configure(build_script_folder="madnlp")
+        source_subfolder = "libmad" if Version(self.version) >= "113" else "madnlp"
+        cmake.configure(build_script_folder=source_subfolder)
         cmake.build()
 
     def package(self):
@@ -38,7 +40,12 @@ class MadNlpConan(ConanFile):
         rmdir(self, os.path.join(self.package_folder, "cmake"))
 
     def package_info(self):
-        self.cpp_info.set_property("cmake_file_name", "madnlp")
-        self.cpp_info.set_property("cmake_target_name", "madnlp::madnlp")
-        self.cpp_info.components["madnlp_c"].set_property("cmake_target_name", "madnlp::madnlp_c")
-        self.cpp_info.components["madnlp_c"].libs = ["madnlp_c"]
+        if Version(self.version) >= "113":
+            self.cpp_info.set_property("cmake_file_name", "libmad")
+            self.cpp_info.set_property("cmake_target_name", "libmad::libMad")
+            self.cpp_info.libs = ["libMad" if self.settings.os == "Windows" else "Mad"]
+        else:
+            self.cpp_info.set_property("cmake_file_name", "madnlp")
+            self.cpp_info.set_property("cmake_target_name", "madnlp::madnlp")
+            self.cpp_info.components["madnlp_c"].set_property("cmake_target_name", "madnlp::madnlp_c")
+            self.cpp_info.components["madnlp_c"].libs = ["madnlp_c"]
