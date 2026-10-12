@@ -11,7 +11,7 @@ required_conan_version = ">=2.4"
 
 class LibslzConan(ConanFile):
     name = "libslz"
-    description = "Simple, modern libpng alternative "
+    description = "Small and fast zlib/gzip compatible compression and decompression library"
     license = "X11"
     homepage = "http://www.libslz.org/"
     topics = ("zlib", "compression")
