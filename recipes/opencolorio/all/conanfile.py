@@ -8,7 +8,7 @@ from conan.tools.files import *
 from conan.tools.microsoft import is_msvc
 from conan.tools.scm import Version
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.26"
 
 
 class OpenColorIOConan(ConanFile):
@@ -102,9 +102,12 @@ class OpenColorIOConan(ConanFile):
         tc.cache_variables["CMAKE_POLICY_DEFAULT_CMP0091"] = "NEW"
 
         if self.settings.os == "Linux":
-            # Workaround for: https://github.com/conan-io/conan/issues/13560
-            libdirs_host = [l for dependency in self.dependencies.host.values() for l in dependency.cpp_info.aggregated_components().libdirs]
-            tc.variables["CMAKE_BUILD_RPATH"] = ";".join(libdirs_host)
+            # OpenColorIO's applications link its shared library, whose private shared
+            # dependencies need to be discoverable by the linker. This is deliberately
+            # link-time-only so target libraries aren't added to the build-machine runtime
+            # environment when cross-building.
+            # https://github.com/conan-io/conan/issues/13560
+            tc.add_rpath_link = True
 
         tc.generate()
 

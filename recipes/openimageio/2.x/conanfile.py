@@ -7,7 +7,7 @@ from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
 from conan.tools.microsoft import is_msvc_static_runtime
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.26"
 
 
 class OpenImageIOConan(ConanFile):
@@ -212,8 +212,7 @@ class OpenImageIOConan(ConanFile):
         if self.settings.os == "Linux":
             # Workaround for: https://github.com/conan-io/conan/issues/13560
             # note: should not be needed if CMakeConfigDeps is used
-            libdirs_host = [l for dependency in self.dependencies.host.values() for l in dependency.cpp_info.aggregated_components().libdirs]
-            tc.cache_variables["CMAKE_BUILD_RPATH"] = ";".join(libdirs_host)
+            tc.add_rpath_link = True
         tc.generate()
 
         deps = CMakeDeps(self)

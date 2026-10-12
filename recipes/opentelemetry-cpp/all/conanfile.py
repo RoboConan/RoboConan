@@ -8,7 +8,7 @@ from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
 from conan.tools.scm import Version
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.26"
 
 
 class OpenTelemetryCppConan(ConanFile):
@@ -150,8 +150,7 @@ class OpenTelemetryCppConan(ConanFile):
         if self.settings.os == "Linux":
             # So that the linker can pick up the correct openssl transitive dependency from libcurl
             # when building shared
-            libdirs_host = [l for dependency in self.dependencies.host.values() for l in dependency.cpp_info.aggregated_components().libdirs]
-            tc.cache_variables["CMAKE_BUILD_RPATH"] = ";".join(libdirs_host)
+            tc.add_rpath_link = True
         if self.options.get_safe("with_otlp_file"):
             tc.cache_variables["WITH_OTLP_FILE"] = True
         if self._needs_proto:

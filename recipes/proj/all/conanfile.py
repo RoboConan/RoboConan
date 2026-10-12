@@ -7,7 +7,7 @@ from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
 from conan.tools.scm import Version
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.26"
 
 
 class ProjConan(ConanFile):
@@ -74,8 +74,7 @@ class ProjConan(ConanFile):
         tc.cache_variables["CMAKE_MACOSX_BUNDLE"] = False
         if self.settings.os == "Linux":
             # Workaround for: https://github.com/conan-io/conan/issues/13560
-            libdirs_host = [l for dependency in self.dependencies.host.values() for l in dependency.cpp_info.aggregated_components().libdirs]
-            tc.cache_variables["CMAKE_BUILD_RPATH"] = ";".join(libdirs_host)
+            tc.add_rpath_link = True
         tc.generate()
 
         deps = CMakeDeps(self)
