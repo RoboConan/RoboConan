@@ -51,8 +51,8 @@ class NppConan(ConanFile):
         del self.info.settings.build_type
         del self.info.settings.cuda.architectures
         self.info.settings.cuda.version = self.cuda.major
-        self.info.settings.rm_safe("cmake_alias")
-        self.info.settings.rm_safe("use_stubs")
+        self.info.options.rm_safe("cmake_alias")
+        self.info.options.rm_safe("use_stubs")
 
     def requirements(self):
         self.cuda.requires("cudart", transitive_headers=True, transitive_libs=True)
