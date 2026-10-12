@@ -45,11 +45,11 @@ class ProxSuiteConan(ConanFile):
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
+        # The dependency lookup runs before project(), and therefore before the
+        # Conan toolchain can add CMakeDeps files to CMAKE_PREFIX_PATH.
         replace_in_file(self, "CMakeLists.txt",
-                        "cmake_minimum_required(VERSION 3.10)",
-                        "cmake_minimum_required(VERSION 3.22)")
-        # get jrl-cmakemodules from Conan
-        replace_in_file(self, "CMakeLists.txt", "set(JRL_CMAKE_MODULES ", " # set(JRL_CMAKE_MODULES ")
+                        'set(JRL_CMAKE_MODULES "${CMAKE_CURRENT_LIST_DIR}/cmake-module")',
+                        "# JRL_CMAKE_MODULES is provided by Conan")
 
     def generate(self):
         tc = CMakeToolchain(self)
@@ -62,7 +62,6 @@ class ProxSuiteConan(ConanFile):
         tc.cache_variables["BUILD_WITH_VECTORIZATION_SUPPORT"] = self.options.vectorization
         tc.cache_variables["BUILD_WITH_OPENMP_SUPPORT"] = self.options.openmp
         tc.cache_variables["JRL_CMAKE_MODULES"] = self.dependencies.build["jrl-cmakemodules"].cpp_info.builddirs[0].replace("\\", "/")
-        tc.cache_variables["FETCHCONTENT_FULLY_DISCONNECTED"] = True
         tc.generate()
 
         deps = CMakeDeps(self)

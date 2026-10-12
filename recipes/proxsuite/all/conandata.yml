@@ -1,4 +1,4 @@
 sources:
-  "0.7.2":
-    url: "https://github.com/Simple-Robotics/proxsuite/archive/refs/tags/v0.7.2.tar.gz"
-    sha256: "e1a4af1d862a8b78f3d449a04fc8a29d5431ddacf9d9e73e9f5033fda1dcd2f0"
+  "0.7.3":
+    url: "https://github.com/Simple-Robotics/proxsuite/archive/v0.7.3.tar.gz"
+    sha256: "e634babff534c8812c6dbc6b022b1d01f9a2a4a9a73cf87a6dc299a4de996904"
