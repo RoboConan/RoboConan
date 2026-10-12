@@ -30,7 +30,6 @@ class GrpcConan(ConanFile):
         "fPIC": [True, False],
         "codegen": [True, False],
         "secure": [True, False],
-        "csharp_ext": [True, False],
         "csharp_plugin": [True, False],
         "node_plugin": [True, False],
         "objective_c_plugin": [True, False],
@@ -45,7 +44,6 @@ class GrpcConan(ConanFile):
         "fPIC": True,
         "codegen": True,
         "secure": False,
-        "csharp_ext": False,
         "csharp_plugin": False,
         "node_plugin": False,
         "objective_c_plugin": False,
@@ -77,9 +75,13 @@ class GrpcConan(ConanFile):
     def configure(self):
         if self.options.shared:
             self.options.rm_safe("fPIC")
-            self.options["protobuf"].shared = True
-            if cross_building(self):
-                self.options["grpc"].shared = True
+        if not self.options.codegen:
+            self.options.rm_safe("csharp_plugin")
+            self.options.rm_safe("node_plugin")
+            self.options.rm_safe("objective_c_plugin")
+            self.options.rm_safe("php_plugin")
+            self.options.rm_safe("python_plugin")
+            self.options.rm_safe("ruby_plugin")
 
     def layout(self):
         cmake_layout(self, src_folder="src")
@@ -95,7 +97,10 @@ class GrpcConan(ConanFile):
         self.requires("protobuf/[>=3.27.0]", transitive_headers=True, transitive_libs=True)
         self.requires("re2/[>=20220601]")
         self.requires("c-ares/[>=1.19.1 <2]")
-        self.requires("openssl/[<5]")
+        if Version(self.version) >= "1.83":
+            self.requires("openssl/[<4]")
+        else:
+            self.requires("openssl/[<5]")
         self.requires("zlib-ng/[^2.0]")
         if self.options.get_safe("with_libsystemd"):
             self.requires("libsystemd/[^255]")
@@ -132,6 +137,9 @@ class GrpcConan(ConanFile):
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
+        if self.version in self.conan_data.get("grpc_proto", {}):
+            get(self, **self.conan_data["grpc_proto"][self.version], strip_root=True,
+                destination=os.path.join("third_party", "grpc-proto"))
         apply_conandata_patches(self)
         # Let Conan define CMAKE_MSVC_RUNTIME_LIBRARY
         replace_in_file(self, os.path.join(self.source_folder, "CMakeLists.txt"), "include(cmake/msvc_static_runtime.cmake)", "")
@@ -140,7 +148,6 @@ class GrpcConan(ConanFile):
         tc = CMakeToolchain(self)
         tc.cache_variables["CMAKE_PROJECT_grpc_INCLUDE"] = "conan_cmake_project_include.cmake"
         tc.cache_variables["gRPC_BUILD_CODEGEN"] = self.options.codegen
-        tc.cache_variables["gRPC_BUILD_CSHARP_EXT"] = self.options.csharp_ext
         tc.cache_variables["gRPC_BUILD_TESTS"] = False
         # We need the generated cmake/ files (bc they depend on the list of targets, which is dynamic)
         tc.cache_variables["gRPC_INSTALL"] = True
@@ -211,7 +218,7 @@ class GrpcConan(ConanFile):
         for executable, plugin_info in self._target_info["plugins"].items():
             target = f"gRPC::{executable}"
             option_name = executable.replace("grpc_", "")
-            if executable == "grpc_cpp_plugin" or self.options.get_safe(option_name):
+            if self.options.codegen and (executable == "grpc_cpp_plugin" or self.options.get_safe(option_name)):
                 self._create_executable_module_file(target, executable)
 
     def _create_executable_module_file(self, target, executable):
@@ -241,6 +248,8 @@ class GrpcConan(ConanFile):
                 continue
             if not self.options.codegen and name in ["grpc++_reflection", "grpcpp_channelz"]:
                 continue
+            if name == "grpcpp_otel_plugin" and not self.options.get_safe("otel_plugin"):
+                continue
             component = self.cpp_info.components[renames.get(name, name)]
             component.set_property("cmake_target_name", f"gRPC::{name}")
             # actually only gpr, grpc, grpc_unsecure, grpc++ and grpc++_unsecure should have a .pc file
@@ -259,7 +268,7 @@ class GrpcConan(ConanFile):
         grpc_modules = []
         for executable, plugin_info in self._target_info["plugins"].items():
             option_name = executable.replace("grpc_", "")
-            if executable == "grpc_cpp_plugin" or self.options.get_safe(option_name):
+            if self.options.codegen and (executable == "grpc_cpp_plugin" or self.options.get_safe(option_name)):
                 grpc_modules.append(os.path.join(self._module_path, f"{executable}.cmake"))
         self.cpp_info.set_property("cmake_build_modules", grpc_modules)
 

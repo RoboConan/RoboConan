@@ -37,6 +37,7 @@ abseil_irregular = {
     "absl/random:bit_gen_ref": "abseil::random_bit_gen_ref",
     "absl/random:distributions": "abseil::random_distributions",
     "absl/random:random": "abseil::random_random",
+    "absl/strings:internal": "abseil::strings_internal",
 }
 
 
@@ -61,15 +62,15 @@ def parse_build_data(data):
     plugins = {}
     for t in all_targets:
         name = t.pop("name")
+        build = t.pop("build", None)
         t.pop("public_headers", None)
         t.pop("headers", None)
         t.pop("src", None)
         t.pop("language", None)
-        t.pop("build", None)
         t["deps"] = [rename_dep(x) for x in t.get("deps", [])]
         if name == t.get("lib"):
             del t["lib"]
-        if name.endswith("_plugin"):
+        if build == "protoc" and name.endswith("_plugin"):
             plugins[name] = t
         elif name not in unvendored:
             targets[name] = t

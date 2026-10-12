@@ -1,0 +1,246 @@
+targets:
+  address_sorting:
+    deps: []
+  gpr:
+    deps:
+    - abseil::base
+    - abseil::config
+    - abseil::core_headers
+    - abseil::log_severity
+    - abseil::cleanup
+    - abseil::flags
+    - abseil::flags_marshalling
+    - abseil::any_invocable
+    - abseil::bind_front
+    - abseil::check
+    - abseil::log_globals
+    - abseil::log
+    - abseil::memory
+    - abseil::bits
+    - abseil::random_random
+    - abseil::status
+    - abseil::cord
+    - abseil::str_format
+    - abseil::strings
+    - abseil::synchronization
+    - abseil::time
+    - abseil::optional
+  grpc:
+    deps:
+    - upb_json_lib
+    - upb_textformat_lib
+    - re2::re2
+    - zlib-ng::zlib-ng
+    - abseil::algorithm_container
+    - abseil::no_destructor
+    - abseil::btree
+    - abseil::flat_hash_map
+    - abseil::flat_hash_set
+    - abseil::inlined_vector
+    - abseil::node_hash_map
+    - abseil::function_ref
+    - abseil::hash
+    - abseil::type_traits
+    - abseil::random_bit_gen_ref
+    - abseil::random_distributions
+    - abseil::statusor
+    - abseil::string_view
+    - abseil::span
+    - abseil::utility
+    - c-ares::cares
+    - gpr
+    - openssl::openssl
+    - address_sorting
+    baselib: true
+    generate_plugin_registry: true
+  grpc_unsecure:
+    deps:
+    - upb_textformat_lib
+    - zlib-ng::zlib-ng
+    - abseil::algorithm_container
+    - abseil::no_destructor
+    - abseil::btree
+    - abseil::flat_hash_map
+    - abseil::flat_hash_set
+    - abseil::inlined_vector
+    - abseil::node_hash_map
+    - abseil::function_ref
+    - abseil::hash
+    - abseil::type_traits
+    - abseil::random_bit_gen_ref
+    - abseil::random_distributions
+    - abseil::statusor
+    - abseil::string_view
+    - abseil::span
+    - abseil::utility
+    - c-ares::cares
+    - gpr
+    - address_sorting
+    baselib: true
+    generate_plugin_registry: true
+  upb_base_lib:
+    deps: []
+  upb_descriptor_lib:
+    deps: []
+  upb_hash_lib:
+    deps:
+    - upb_base_lib
+    - upb_mem_lib
+  upb_json_lib:
+    deps:
+    - upb_lex_lib
+    - upb_reflection_lib
+  upb_lex_lib:
+    deps: []
+  upb_mem_lib:
+    deps: []
+  upb_message_lib:
+    deps:
+    - upb_mini_table_lib
+  upb_mini_descriptor_lib:
+    deps:
+    - upb_mini_table_lib
+    - abseil::strings
+  upb_mini_table_lib:
+    deps:
+    - upb_hash_lib
+  upb_reflection_lib:
+    deps:
+    - upb_mini_descriptor_lib
+    - upb_descriptor_lib
+    - upb_wire_lib
+  upb_textformat_lib:
+    deps:
+    - upb_lex_lib
+    - upb_reflection_lib
+  upb_wire_lib:
+    deps:
+    - utf8_range_lib
+    - upb_message_lib
+  utf8_range_lib:
+    deps: []
+  grpc++:
+    deps:
+    - abseil::dynamic_annotations
+    - abseil::prefetch
+    - abseil::layout
+    - abseil::absl_check
+    - abseil::absl_log
+    - abseil::charset
+    - abseil::strings_internal
+    - grpc
+    - protobuf::libprotobuf
+    baselib: true
+  grpc++_alts:
+    deps:
+    - grpc++
+    baselib: true
+  grpc++_error_details:
+    deps:
+    - grpc++
+  grpc++_reflection:
+    deps:
+    - grpc++
+  grpc++_unsecure:
+    deps:
+    - abseil::dynamic_annotations
+    - abseil::prefetch
+    - abseil::layout
+    - abseil::absl_check
+    - abseil::absl_log
+    - abseil::charset
+    - abseil::strings_internal
+    - grpc_unsecure
+    - protobuf::libprotobuf
+    baselib: true
+  grpc_authorization_provider:
+    deps:
+    - upb_textformat_lib
+    - re2::re2
+    - zlib-ng::zlib-ng
+    - abseil::no_destructor
+    - abseil::btree
+    - abseil::flat_hash_map
+    - abseil::flat_hash_set
+    - abseil::inlined_vector
+    - abseil::node_hash_map
+    - abseil::function_ref
+    - abseil::hash
+    - abseil::type_traits
+    - abseil::statusor
+    - abseil::string_view
+    - abseil::span
+    - abseil::utility
+    - c-ares::cares
+    - gpr
+    - address_sorting
+  grpc_plugin_support:
+    deps:
+    - utf8_range_lib
+    - zlib-ng::zlib-ng
+    - abseil::algorithm_container
+    - abseil::base
+    - abseil::config
+    - abseil::core_headers
+    - abseil::dynamic_annotations
+    - abseil::no_destructor
+    - abseil::prefetch
+    - abseil::cleanup
+    - abseil::btree
+    - abseil::fixed_array
+    - abseil::flat_hash_map
+    - abseil::flat_hash_set
+    - abseil::layout
+    - abseil::any_invocable
+    - abseil::function_ref
+    - abseil::overload
+    - abseil::hash
+    - abseil::absl_check
+    - abseil::absl_log
+    - abseil::memory
+    - abseil::type_traits
+    - abseil::bits
+    - abseil::status
+    - abseil::statusor
+    - abseil::charset
+    - abseil::cord
+    - abseil::strings_internal
+    - abseil::str_format
+    - abseil::string_view
+    - abseil::strings
+    - abseil::synchronization
+    - abseil::time
+    - abseil::optional
+    - abseil::span
+    - abseil::utility
+    - protobuf::libprotobuf
+    - protobuf::libprotoc
+  grpcpp_channelz:
+    deps:
+    - grpc++
+  grpcpp_otel_plugin:
+    deps:
+    - grpc++
+    - opentelemetry-cpp::api
+plugins:
+  grpc_cpp_plugin:
+    deps:
+    - grpc_plugin_support
+  grpc_csharp_plugin:
+    deps:
+    - grpc_plugin_support
+  grpc_node_plugin:
+    deps:
+    - grpc_plugin_support
+  grpc_objective_c_plugin:
+    deps:
+    - grpc_plugin_support
+  grpc_php_plugin:
+    deps:
+    - grpc_plugin_support
+  grpc_python_plugin:
+    deps:
+    - grpc_plugin_support
+  grpc_ruby_plugin:
+    deps:
+    - grpc_plugin_support

@@ -16,7 +16,8 @@ class TestPackageConan(ConanFile):
         self.requires(self.tested_reference_str)
 
     def build_requirements(self):
-        self.tool_requires(self.tested_reference_str)
+        self.tool_requires("protobuf/<host_version>")
+        self.tool_requires(self.tested_reference_str, options={"codegen": True})
 
     def build(self):
         cmake = CMake(self)

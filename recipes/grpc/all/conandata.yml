@@ -1,4 +1,10 @@
 sources:
+  "1.84.0":
+    url: "https://github.com/grpc/grpc/archive/v1.84.0.tar.gz"
+    sha256: "17a4d25717f4871eb71cfdf191f7491f66a59c8ebc782ab53d52fcbfc478959f"
+  "1.83.1":
+    url: "https://github.com/grpc/grpc/archive/v1.83.1.tar.gz"
+    sha256: "60caa8397426d8a500e3e57ab6a49d1cb5aa62a36f2591eb9da3d77fa38ad8c9"
   "1.74.1":
     url: "https://github.com/grpc/grpc/archive/v1.74.1.tar.gz"
     sha256: "7bf97c11cf3808d650a3a025bbf9c5f922c844a590826285067765dfd055d228"
@@ -8,3 +14,7 @@ sources:
   "1.69.0":
     url: "https://github.com/grpc/grpc/archive/v1.69.0.tar.gz"
     sha256: "cd256d91781911d46a57506978b3979bfee45d5086a1b6668a3ae19c5e77f8dc"
+grpc_proto:
+  "1.84.0":
+    url: "https://github.com/grpc/grpc-proto/archive/ec30f589e2519d595688b9a42f88a91bdd6b733f.tar.gz"
+    sha256: "5e9b520b22afbd53a662cc29017064be253c1dfa6df8958738594e7fec6ade33"
