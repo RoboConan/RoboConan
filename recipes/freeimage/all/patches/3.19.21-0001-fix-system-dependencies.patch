@@ -1,0 +1,49 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index c0d66e0..698d81c 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1338,10 +1338,9 @@ target_include_directories(${PROJECT_NAME} PUBLIC
+ # Preprocessor definitions
+-target_compile_definitions(${PROJECT_NAME} PUBLIC
++target_compile_definitions(${PROJECT_NAME} PRIVATE
+     DISABLE_PERF_MEASUREMENT
+-    OPJ_STATIC
+     NO_LCMS
+     NO_WINDOWS
+ )
+ # Static consumers must see this or FreeImage.h uses dllimport for the
+ # symbols they are linking directly. Directory add_definitions() does not
+ # propagate out of add_subdirectory().
+diff --git a/Source/FreeImage/PluginEXR.cpp b/Source/FreeImage/PluginEXR.cpp
+index e0c4afd..984bed6 100644
+--- a/Source/FreeImage/PluginEXR.cpp
++++ b/Source/FreeImage/PluginEXR.cpp
+@@ -38,5 +38,6 @@
+ // against), so this file - unlike PluginTIFF.cpp's standalone LogLuv use of
+ // half.h - must switch to the matching system Imath header too.
++#include <Imath/half.h>
+ #include <OpenEXR/ImfIO.h>
+ #include <OpenEXR/Iex.h>
+ #include <OpenEXR/ImfOutputFile.h>
+@@ -46,7 +47,6 @@
+ #include <OpenEXR/ImfRgba.h>
+ #include <OpenEXR/ImfArray.h>
+ #include <OpenEXR/ImfPreviewImage.h>
+-#include <Imath/half.h>
+ #else
+ #include "../OpenEXR/IlmImf/ImfIO.h"
+ #include "../OpenEXR/Iex/Iex.h"
+diff --git a/Source/FreeImage/PluginJXR.cpp b/Source/FreeImage/PluginJXR.cpp
+index 3344802..8e5d30b 100644
+--- a/Source/FreeImage/PluginJXR.cpp
++++ b/Source/FreeImage/PluginJXR.cpp
+@@ -27,6 +27,9 @@
+ #include "Utilities.h"
+ #include "../Metadata/FreeImageTag.h"
+ 
++// External jxrlib's NO_WINDOWS branch includes a Windows CE header that its
++// distribution does not contain.
++#undef NO_WINDOWS
+ #include <JXRGlue.h>
+ 
+ // ==========================================================
