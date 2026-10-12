@@ -1,5 +1,8 @@
 # See https://protobuf.dev/support/version-support/ for the versioning logic and EOL dates.
 sources:
+  "7.36.2":
+    url: "https://github.com/protocolbuffers/protobuf/archive/v36.2.tar.gz"
+    sha256: "7e7eaf580ec77f1a392ff1ab1013c13d3b04a6716f002f697f67f3c1113f0530"
   "6.34.1":
     url: "https://github.com/protocolbuffers/protobuf/archive/refs/tags/v34.1.tar.gz"
     sha256: "a83103b7ed3afaeedee9a212c8f65825444f58144f5e075b73c83f2b4ff27b62"

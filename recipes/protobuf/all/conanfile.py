@@ -79,7 +79,9 @@ class ProtobufConan(ConanFile):
     def requirements(self):
         if self.options.with_zlib:
             self.requires("zlib-ng/[^2.0]")
-        if Version(self.version) >= "6.30":
+        if Version(self.version) >= "7.36":
+            self.requires("abseil/[>=20250512.1]", transitive_headers=True, transitive_libs=True)
+        elif Version(self.version) >= "6.30":
             self.requires("abseil/[>=20240722.0]", transitive_headers=True, transitive_libs=True)
         elif self._protobuf_release >= "22.0":
             self.requires("abseil/[>=20230802.1 <=20250127.0]", transitive_headers=True, transitive_libs=True)
@@ -143,6 +145,8 @@ class ProtobufConan(ConanFile):
         tc.cache_variables["protobuf_WITH_ZLIB"] = self.options.with_zlib
         tc.cache_variables["protobuf_BUILD_TESTS"] = False
         tc.cache_variables["protobuf_BUILD_PROTOC_BINARIES"] = self.settings.os != "tvOS"
+        if self._protobuf_release >= "36.0":
+            tc.cache_variables["protobuf_BUILD_LIBPROTOBUF"] = True
         if not self.options.debug_suffix:
             tc.cache_variables["protobuf_DEBUG_POSTFIX"] = ""
         tc.cache_variables["protobuf_BUILD_LIBPROTOC"] = self.settings.os != "tvOS"
