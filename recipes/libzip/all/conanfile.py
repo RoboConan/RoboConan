@@ -83,6 +83,8 @@ class LibZipConan(ConanFile):
     def validate(self):
         if self.options.crypto == "win32" and self.settings.os != "Windows":
             raise ConanInvalidConfiguration("Windows is required to use win32 crypto libraries")
+        if Version(self.version) >= "1.12" and self.options.crypto == "mbedtls":
+            raise ConanInvalidConfiguration("libzip 1.12 and newer no longer support mbedTLS")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
@@ -92,8 +94,11 @@ class LibZipConan(ConanFile):
         tc = CMakeToolchain(self)
         tc.variables["BUILD_TOOLS"] = self.options.tools
         tc.variables["BUILD_REGRESS"] = False
+        tc.variables["BUILD_OSSFUZZ"] = False
         tc.variables["BUILD_EXAMPLES"] = False
         tc.variables["BUILD_DOC"] = False
+        tc.variables["ENABLE_COVERAGE"] = False
+        tc.variables["LIMIT_LZMA_WINDOW"] = False
         tc.variables["ENABLE_LZMA"] = self.options.with_lzma
         tc.variables["ENABLE_BZIP2"] = self.options.with_bzip2
         if (self.settings.compiler == "gcc"
@@ -107,12 +112,17 @@ class LibZipConan(ConanFile):
             tc.variables["ENABLE_ZSTD"] = self.options.with_zstd
         tc.variables["ENABLE_COMMONCRYPTO"] = False  # TODO: We need CommonCrypto package
         tc.variables["ENABLE_GNUTLS"] = self.options.crypto == "gnutls"
-        tc.variables["ENABLE_MBEDTLS"] = self.options.crypto == "mbedtls"
+        if Version(self.version) < "1.12":
+            tc.variables["ENABLE_MBEDTLS"] = self.options.crypto == "mbedtls"
         tc.variables["ENABLE_OPENSSL"] = self.options.crypto == "openssl"
         tc.variables["ENABLE_WINDOWS_CRYPTO"] = self.options.crypto == "win32"
+        tc.variables["CMAKE_SKIP_INSTALL_RPATH"] = True
         tc.generate()
 
         deps = CMakeDeps(self)
+        if self.options.with_lzma:
+            deps.set_property("xz_utils", "cmake_file_name", "LibLZMA")
+            deps.set_property("xz_utils", "cmake_target_name", "LibLZMA::LibLZMA")
         deps.generate()
 
     def build(self):
