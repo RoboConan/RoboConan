@@ -4,4 +4,4 @@ project(test_package LANGUAGES CXX)
 find_package(libheif REQUIRED CONFIG)
 
 add_executable(${PROJECT_NAME} test_package.cpp)
-target_link_libraries(${PROJECT_NAME} PRIVATE libheif::heif)
+target_link_libraries(${PROJECT_NAME} PRIVATE heif)

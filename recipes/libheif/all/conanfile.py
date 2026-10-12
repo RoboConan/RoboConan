@@ -60,7 +60,7 @@ class LibheifConan(ConanFile):
         if self.options.get_safe("with_openjpeg"):
             self.requires("openjpeg/[^2.5.2]")
         if self.options.get_safe("with_openjph"):
-            self.requires("openjph/0.16.0", transitive_headers=False)
+            self.requires("openjph/[>=0.32 <1]")
         if self.options.get_safe("with_openh264"):
             self.requires("openh264/[^2.4.1]")
 
@@ -81,23 +81,49 @@ class LibheifConan(ConanFile):
 
     def generate(self):
         tc = CMakeToolchain(self)
+        tc.cache_variables["ENABLE_PLUGIN_LOADING"] = False
         tc.cache_variables["WITH_LIBSHARPYUV"] = False
         tc.cache_variables["WITH_LIBDE265"] = self.options.with_libde265
+        tc.cache_variables["WITH_LIBDE265_PLUGIN"] = False
         tc.cache_variables["WITH_X265"] = self.options.with_x265
-        tc.cache_variables["WITH_AOM"] = self.options.with_libaomav1
+        tc.cache_variables["WITH_X265_PLUGIN"] = False
+        tc.cache_variables["WITH_KVAZAAR"] = False
+        tc.cache_variables["WITH_UVG266"] = False
+        tc.cache_variables["WITH_VVDEC"] = False
+        tc.cache_variables["WITH_VVENC"] = False
+        tc.cache_variables["WITH_X264"] = False
+        tc.cache_variables["WITH_OpenH264_DECODER"] = self.options.get_safe("with_openh264", False)
+        tc.cache_variables["WITH_OpenH264_DECODER_PLUGIN"] = False
         tc.cache_variables["WITH_AOM_DECODER"] = self.options.with_libaomav1
         tc.cache_variables["WITH_AOM_ENCODER"] = self.options.with_libaomav1
+        tc.cache_variables["WITH_AOM_DECODER_PLUGIN"] = False
+        tc.cache_variables["WITH_AOM_ENCODER_PLUGIN"] = False
         tc.cache_variables["WITH_RAV1E"] = False
+        tc.cache_variables["WITH_SvtEnc"] = False
         tc.cache_variables["WITH_DAV1D"] = self.options.with_dav1d
+        tc.cache_variables["WITH_DAV1D_PLUGIN"] = False
+        tc.cache_variables["WITH_FFMPEG_DECODER"] = False
+        tc.cache_variables["WITH_UNCOMPRESSED_CODEC"] = False
+        tc.cache_variables["WITH_WEBCODECS"] = False
         tc.cache_variables["WITH_EXAMPLES"] = False
+        tc.cache_variables["WITH_EXAMPLE_HEIF_THUMB"] = False
+        tc.cache_variables["WITH_EXAMPLE_HEIF_VIEW"] = False
         tc.cache_variables["WITH_GDK_PIXBUF"] = False
         tc.cache_variables["BUILD_TESTING"] = False
+        tc.cache_variables["BUILD_DEVELOPMENT_TOOLS"] = False
+        tc.cache_variables["BUILD_DOCUMENTATION"] = False
+        tc.cache_variables["WITH_FUZZERS"] = False
+        tc.cache_variables["WITH_HEADER_COMPRESSION"] = False
         tc.cache_variables["WITH_JPEG_DECODER"] = self.options.get_safe("with_jpeg", False)
         tc.cache_variables["WITH_JPEG_ENCODER"] = self.options.get_safe("with_jpeg", False)
+        tc.cache_variables["WITH_JPEG_DECODER_PLUGIN"] = False
+        tc.cache_variables["WITH_JPEG_ENCODER_PLUGIN"] = False
         tc.cache_variables["WITH_OpenJPEG_DECODER"] = self.options.get_safe("with_openjpeg", False)
         tc.cache_variables["WITH_OpenJPEG_ENCODER"] = self.options.get_safe("with_openjpeg", False)
+        tc.cache_variables["WITH_OpenJPEG_DECODER_PLUGIN"] = False
+        tc.cache_variables["WITH_OpenJPEG_ENCODER_PLUGIN"] = False
         tc.cache_variables["WITH_OPENJPH_ENCODER"] = self.options.get_safe("with_openjph", False)
-        tc.cache_variables["WITH_OPENH264_DECODER"] = self.options.get_safe("with_openh264", False)
+        tc.cache_variables["WITH_OPENJPH_ENCODER_PLUGIN"] = False
         tc.cache_variables["CMAKE_DISABLE_FIND_PACKAGE_Doxygen"] = True
         tc.cache_variables["CMAKE_COMPILE_WARNING_AS_ERROR"] = False
         tc.generate()
@@ -105,7 +131,7 @@ class LibheifConan(ConanFile):
         deps = CMakeDeps(self)
         deps.set_property("dav1d", "cmake_additional_variables_prefixes", ["DAV1D"])
         deps.set_property("libde265", "cmake_file_name", "LIBDE265")
-        deps.set_property("openjph", "cmake_file_name", "OPENJPH")
+        deps.set_property("openjph", "cmake_additional_variables_prefixes", ["OPENJPH"])
         if Version(self.version) >= "1.19.0":
             deps.set_property("openh264", "cmake_file_name", "OpenH264")
         deps.generate()
@@ -124,9 +150,25 @@ class LibheifConan(ConanFile):
 
     def package_info(self):
         self.cpp_info.set_property("cmake_file_name", "libheif")
-        self.cpp_info.set_property("cmake_target_name", "libheif::heif")
+        self.cpp_info.set_property("cmake_target_name", "heif")
         self.cpp_info.set_property("pkg_config_name", "libheif")
         self.cpp_info.libs = ["heif"]
+        if self.options.with_libde265:
+            self.cpp_info.requires.append("libde265::libde265")
+        if self.options.with_x265:
+            self.cpp_info.requires.append("libx265::libx265")
+        if self.options.with_libaomav1:
+            self.cpp_info.requires.append("libaom-av1::libaom-av1")
+        if self.options.with_dav1d:
+            self.cpp_info.requires.append("dav1d::dav1d")
+        if self.options.get_safe("with_jpeg"):
+            self.cpp_info.requires.append("libjpeg-meta::jpeg")
+        if self.options.get_safe("with_openjpeg"):
+            self.cpp_info.requires.append("openjpeg::openjpeg")
+        if self.options.get_safe("with_openjph"):
+            self.cpp_info.requires.append("openjph::openjph")
+        if self.options.get_safe("with_openh264"):
+            self.cpp_info.requires.append("openh264::openh264")
         if not self.options.shared:
             self.cpp_info.defines = ["LIBHEIF_STATIC_BUILD"]
         if self.settings.os in ["Linux", "FreeBSD"]:
