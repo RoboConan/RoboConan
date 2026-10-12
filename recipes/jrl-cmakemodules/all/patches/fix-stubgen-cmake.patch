@@ -43,23 +43,14 @@ diff --git a/stubs.cmake b/stubs.cmake
    set(STUBGEN_MAIN_FILE ${STUBGEN_DIR}/src/pybind11_stubgen/__init__.py)
  endmacro(LOAD_STUBGEN)
  
-@@ -136,12 +107,17 @@
-     set(ENV_DLL_PATH PYBIND11_STUBGEN_ADD_DLL_DIRECTORY=${_join_target_path})
-   endif()
- 
+@@ -136,0 +107,4 @@
 +  set(_pathsep ":")
 +  if(WIN32)
 +    set(_pathsep "\\;")
 +  endif(WIN32)
-   add_custom_target(
-     ${target_name}
-     ALL
-     COMMAND
+@@ -141,2 +116,3 @@
 -      ${CMAKE_COMMAND} -E env ${ENV_DLL_PATH} ${CMAKE_COMMAND} -E env
 -      PYTHONPATH=${PYTHONPATH} "${PYTHON_EXECUTABLE}" "${STUBGEN_MAIN_FILE}"
 +      ${CMAKE_COMMAND} -E env ${ENV_DLL_PATH} ${CMAKE_COMMAND}
 +      -E env PYTHONPATH=${module_path}${_pathsep}$ENV{PYTHONPATH}
 +      "${PYTHON_EXECUTABLE}" "${STUBGEN_MAIN_FILE}"
-       "-o" "${module_path}" "${module_name}" "--boost-python" --ignore-invalid
-       signature "--no-setup-py" "--root-module-suffix" ""
-     VERBATIM

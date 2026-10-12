@@ -1,8 +1,8 @@
 sources:
-  "0.0+git.20250623":
+  "0.0+git.20261004":
     cmake:
-      url: "https://github.com/jrl-umi3218/jrl-cmakemodules/archive/9982101b22135509d684e2228dac747e7afa3bcf.zip"
-      sha256: "0a140d5826e68ab9f1f1488acd9acaf9ce1b0c571f8225dbff1f0de372515009"
+      url: "https://github.com/jrl-umi3218/jrl-cmakemodules/archive/701754821e946b5752f4712f272909e4cf7c6667.zip"
+      sha256: "61ea10ef766ca40f59b8d70ee7e0f253c61dd8946f034f85d6dd1ac7b1b2ceae"
     stubgen:
       url: "https://github.com/jcarpent/pybind11-stubgen/archive/0402ab02eb188a9012b6dfd5fe25508403e9eb2c.tar.gz"
       sha256: "2a2af58c67c785319543e876e986d4b897a0845d3702b175aa7a4367b31e9a47"
