@@ -81,13 +81,11 @@ class CoinDipConan(ConanFile):
         tc.configure_args += [
             f"--with-asl={yes_no(self.options.with_asl)}",
             f"--with-clp={yes_no(self.options.with_clp)}",
-            f"--with-osiclp={yes_no(self.options.with_clp)}",
             f"--with-cbc={yes_no(self.options.with_cbc)}",
-            f"--with-osicbc={yes_no(self.options.with_cbc)}",
-            f"--with-osysym={yes_no(self.options.with_symphony)}",
-            f"--with-osicplex={yes_no(osi.options.with_cplex)}",
-            f"--with-osigurobi={yes_no(osi.options.with_gurobi)}",
-            f"--with-osixpress={yes_no(osi.options.with_xpress)}",
+            f"--with-symphony={yes_no(self.options.with_symphony)}",
+            f"--with-cpx={yes_no(osi.options.with_cplex)}",
+            f"--with-grb={yes_no(osi.options.with_gurobi)}",
+            f"--with-xpr={yes_no(osi.options.with_xpress)}",
             f"--enable-openmp={yes_no(self.options.with_openmp)}",
             "F77=unavailable",
             f"PYTHON=echo",
@@ -112,7 +110,7 @@ class CoinDipConan(ConanFile):
         tc.generate(env)
 
         deps = PkgConfigDeps(self)
-        deps.set_property("ampl-asl", "pkg_config_name", "coinasl")
+        deps.set_property("ampl-asl::asl", "pkg_config_aliases", ["coinasl"])
         deps.generate()
 
     def build(self):
@@ -140,5 +138,28 @@ class CoinDipConan(ConanFile):
         self.cpp_info.set_property("pkg_config_name", "dip")
         self.cpp_info.libs = ["Decomp"]
         self.cpp_info.includedirs.append("include/coin")
+        self.cpp_info.requires = [
+            "coin-utils::coin-utils",
+            "coin-osi::libosi",
+            "coin-alps::coin-alps",
+            "coin-cgl::coin-cgl",
+        ]
+        if self.options.with_asl:
+            self.cpp_info.requires.append("ampl-asl::asl")
+        if self.options.with_clp:
+            self.cpp_info.requires.append("coin-clp::osi-clp")
+        if self.options.with_cbc:
+            self.cpp_info.requires.append("coin-cbc::libcbc")
+            self.cpp_info.requires.append("coin-cbc::osi-cbc")
+        if self.options.with_symphony:
+            self.cpp_info.requires.append("coin-symphony::osi-sym")
+        if self.dependencies["coin-osi"].options.with_cplex:
+            self.cpp_info.requires.append("coin-osi::osi-cplex")
+        if self.dependencies["coin-osi"].options.with_gurobi:
+            self.cpp_info.requires.append("coin-osi::osi-gurobi")
+        if self.dependencies["coin-osi"].options.with_xpress:
+            self.cpp_info.requires.append("coin-osi::osi-xpress")
+        if self.options.with_openmp:
+            self.cpp_info.requires.append("openmp::openmp")
         if self.settings.os in ["Linux", "FreeBSD"]:
             self.cpp_info.system_libs = ["m", "pthread"]
