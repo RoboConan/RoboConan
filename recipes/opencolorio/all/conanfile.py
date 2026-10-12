@@ -112,6 +112,8 @@ class OpenColorIOConan(ConanFile):
         tc.generate()
 
         deps = CMakeDeps(self)
+        deps.set_property("minizip-ng", "cmake_file_name", "minizip")
+        deps.set_property("minizip-ng", "cmake_target_name", "MINIZIP::minizip")
         deps.generate()
 
     def build(self):
@@ -146,7 +148,7 @@ class OpenColorIOConan(ConanFile):
         self.cpp_info.libs = ["OpenColorIO"]
 
         if is_apple_os(self):
-            self.cpp_info.frameworks.extend(["Foundation", "IOKit", "ColorSync", "CoreGraphics"])
+            self.cpp_info.frameworks.extend(["ColorSync", "CoreFoundation", "CoreGraphics", "IOKit"])
 
         if is_msvc(self) and not self.options.shared:
             self.cpp_info.defines.append("OpenColorIO_SKIP_IMPORTS")
