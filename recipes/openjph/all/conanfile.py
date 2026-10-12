@@ -60,17 +60,22 @@ class OpenJPH(ConanFile):
     def generate(self):
         tc = CMakeToolchain(self)
         tc.cache_variables["OJPH_BUILD_EXECUTABLES"] = self.options.with_executables
+        tc.cache_variables["OJPH_BUILD_FUZZER"] = False
         tc.cache_variables["OJPH_ENABLE_TIFF_SUPPORT"] = self.options.get_safe("with_tiff", False)
+        tc.cache_variables["OJPH_BUILD_TESTS"] = False
         tc.cache_variables["OJPH_BUILD_STREAM_EXPAND"] = self.options.with_stream_expand_tool
         tc.cache_variables["OJPH_DISABLE_SIMD"] = self.options.disable_simd
         tc.generate()
         deps = CMakeDeps(self)
+        if self.options.get_safe("with_tiff"):
+            deps.set_property("libtiff", "cmake_file_name", "TIFF")
+            deps.set_property("libtiff::tiff", "cmake_target_name", "TIFF::TIFF")
         deps.generate()
 
     def build(self):
         cmake = CMake(self)
-        cmake .configure()
-        cmake .build()
+        cmake.configure()
+        cmake.build()
 
     def package(self):
         copy(self, "LICENSE", src=self.source_folder, dst=os.path.join(self.package_folder, "licenses"))
@@ -81,7 +86,7 @@ class OpenJPH(ConanFile):
 
     def package_info(self):
         self.cpp_info.set_property("cmake_file_name", "openjph")
-        self.cpp_info.set_property("cmake_target_name", "openjph::openjph")
+        self.cpp_info.set_property("cmake_target_name", "openjph")
         self.cpp_info.set_property("pkg_config_name", "openjph")
 
         version_suffix = "_d" if self.settings.build_type == "Debug" else ""
