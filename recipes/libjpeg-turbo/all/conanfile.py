@@ -2,9 +2,10 @@ import os
 
 from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
-from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
+from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.env import VirtualBuildEnv
 from conan.tools.files import *
+from conan.tools.gnu import PkgConfigDeps
 from conan.tools.microsoft import is_msvc, is_msvc_static_runtime
 from conan.tools.scm import Version
 
@@ -53,6 +54,8 @@ class LibjpegTurboConan(ConanFile):
         if Version(self.version) >= "3.0.0":
             del self.options.enable12bit
             del self.options.mem_src_dst
+        if Version(self.version) >= "3.2.0":
+            del self.options.java
 
     def configure(self):
         if self.options.shared:
@@ -61,7 +64,7 @@ class LibjpegTurboConan(ConanFile):
         self.settings.rm_safe("compiler.libcxx")
 
         if self.options.get_safe("enable12bit"):
-            del self.options.java
+            self.options.rm_safe("java")
             del self.options.turbojpeg
         if self.options.get_safe("enable12bit") or self.settings.os == "Emscripten":
             del self.options.SIMD
@@ -82,6 +85,11 @@ class LibjpegTurboConan(ConanFile):
         if self.options.shared and is_msvc(self) and is_msvc_static_runtime(self):
             raise ConanInvalidConfiguration(f"{self.ref} shared can't be built with static vc runtime")
 
+    def requirements(self):
+        if Version(self.version) >= "3.2.0" and self.options.get_safe("turbojpeg"):
+            self.requires("libspng/[^0.7.4]")
+            self.requires("zlib-ng/[^2.0]")
+
     def build_requirements(self):
         if self.options.get_safe("SIMD") and self.settings.arch in ["x86", "x86_64"]:
             self.tool_requires("nasm/[*]")
@@ -92,10 +100,12 @@ class LibjpegTurboConan(ConanFile):
         replace_in_file(self, "CMakeLists.txt",
                         "include(cmakescripts/GNUInstallDirs.cmake)",
                         "include(GNUInstallDirs)")
-        # do not override /MT by /MD if shared
-        replace_in_file(self, "sharedlib/CMakeLists.txt",
-                        """string(REGEX REPLACE "/MT" "/MD" ${var} "${${var}}")""",
-                        "")
+        if Version(self.version) < "3.2.0":
+            # do not override /MT by /MD if shared
+            # Fixed by https://github.com/libjpeg-turbo/libjpeg-turbo/commit/c39ea08d81553657da649bc870a206365163b822
+            replace_in_file(self, "sharedlib/CMakeLists.txt",
+                            """string(REGEX REPLACE "/MT" "/MD" ${var} "${${var}}")""",
+                            "")
 
     @property
     def _is_arithmetic_encoding_enabled(self):
@@ -120,7 +130,16 @@ class LibjpegTurboConan(ConanFile):
         tc.variables["WITH_JPEG7"] = self.options.libjpeg7_compatibility
         tc.variables["WITH_JPEG8"] = self.options.libjpeg8_compatibility
         tc.variables["WITH_TURBOJPEG"] = self.options.get_safe("turbojpeg", False)
-        tc.variables["WITH_JAVA"] = self.options.get_safe("java", False)
+        tc.variables["WITH_TOOLS"] = False
+        tc.variables["WITH_TESTS"] = False
+        tc.variables["WITH_FUZZ"] = False
+        tc.variables["WITH_PROFILE"] = False
+        if Version(self.version) < "3.2.0":
+            tc.variables["WITH_JAVA"] = self.options.get_safe("java", False)
+        else:
+            tc.variables["WITH_JNA"] = ""
+            tc.variables["WITH_SYSTEM_SPNG"] = self.options.get_safe("turbojpeg", False)
+            tc.variables["WITH_SYSTEM_ZLIB"] = self.options.get_safe("turbojpeg", False)
         if Version(self.version) < "3.0.0":
             tc.variables["WITH_MEM_SRCDST"] = self.options.get_safe("mem_src_dst", False)
             tc.variables["WITH_12BIT"] = self.options.enable12bit
@@ -131,6 +150,12 @@ class LibjpegTurboConan(ConanFile):
         if Version(self.version) < "3.0.2":
             tc.cache_variables["CMAKE_POLICY_VERSION_MINIMUM"] = "3.5" # CMake 4 support
         tc.generate()
+
+        if Version(self.version) >= "3.2.0" and self.options.get_safe("turbojpeg"):
+            CMakeDeps(self).generate()
+            deps = PkgConfigDeps(self)
+            deps.set_property("libspng", "pkg_config_name", "spng")
+            deps.generate()
 
     def build(self):
         cmake = CMake(self)
@@ -168,3 +193,5 @@ class LibjpegTurboConan(ConanFile):
             self.cpp_info.components["turbojpeg"].set_property("cmake_target_name", f"libjpeg-turbo::turbojpeg{cmake_target_suffix}")
             self.cpp_info.components["turbojpeg"].set_property("pkg_config_name", "libturbojpeg")
             self.cpp_info.components["turbojpeg"].libs = [f"turbojpeg{lib_suffix}"]
+            if Version(self.version) >= "3.2.0":
+                self.cpp_info.components["turbojpeg"].requires = ["libspng::libspng", "zlib-ng::zlib-ng"]
