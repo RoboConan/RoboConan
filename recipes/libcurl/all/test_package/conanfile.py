@@ -27,9 +27,10 @@ class TestPackageConan(ConanFile):
     def test(self):
         if self.dependencies[self.tested_reference_str].options.build_executable:
             ext = ".exe" if self.settings.os == "Windows" else ""
-            assert os.path.exists(os.path.join(self.dependencies[self.tested_reference_str].cpp_info.bindir, f"curl{ext}"))
+            curl = os.path.join(self.dependencies[self.tested_reference_str].cpp_info.bindir, f"curl{ext}")
+            assert os.path.exists(curl)
 
         if can_run(self):
             self.run(self._test_executable, env="conanrun")
             if self.dependencies[self.tested_reference_str].options.build_executable:
-                self.run("curl --version", env="conanrun")
+                self.run(f'"{curl}" --version', env="conanrun")

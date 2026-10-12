@@ -47,7 +47,6 @@ class LibcurlConan(ConanFile):
         "with_mqtt": [True, False],
         "with_libssh2": [True, False],
         "with_libidn": [True, False],
-        "with_libgsasl": [True, False],
         "with_libpsl": [True, False],
         "with_largemaxwritesize": [True, False],
         "with_nghttp2": [True, False],
@@ -95,7 +94,6 @@ class LibcurlConan(ConanFile):
         "with_tftp": True,
         "with_libssh2": False,
         "with_libidn": False,
-        "with_libgsasl": False,
         "with_libpsl": False,
         "with_largemaxwritesize": False,
         "with_nghttp2": False,
@@ -142,8 +140,6 @@ class LibcurlConan(ConanFile):
     def config_options(self):
         if self.settings.os == "Windows":
             del self.options.fPIC
-        if self._is_using_cmake_build:
-            del self.options.with_libgsasl
         if not is_apple_os(self):
             del self.options.with_apple_sectrust
 
@@ -185,7 +181,7 @@ class LibcurlConan(ConanFile):
         if self.options.get_safe("with_libpsl"):
             self.requires("libpsl/[>=0.21.1 <1]")
         if self.options.with_libidn:
-            self.requires("libidn2/2.3.0")
+            self.requires("libidn2/[^2.3.0]")
 
 
     def validate(self):
@@ -193,14 +189,15 @@ class LibcurlConan(ConanFile):
             raise ConanInvalidConfiguration("schannel only suppported on Windows.")
         if self.options.with_ssl == "openssl":
             openssl = self.dependencies["openssl"]
-            if self.options.with_ntlm and openssl.options.no_des:
-                raise ConanInvalidConfiguration("option with_ntlm=True requires openssl/*:no_des=False")
+            if self.options.with_ntlm and not openssl.options.des:
+                raise ConanInvalidConfiguration("option with_ntlm=True requires openssl/*:des=True")
         if self.options.with_ssl == "wolfssl" and not self.dependencies["wolfssl"].options.with_curl:
             raise ConanInvalidConfiguration("option with_ssl=wolfssl requires wolfssl/*:with_curl=True")
         if self.options.get_safe("with_apple_sectrust") and self.options.with_ssl != "openssl":
             raise ConanInvalidConfiguration("Apple SecTrust is only supported with OpenSSL")
 
     def build_requirements(self):
+        self.tool_requires("cmake/[>=3.18 <5]")
         if self._is_using_cmake_build:
             if self._is_win_x_android:
                 self.tool_requires("ninja/[^1.10]")
@@ -218,8 +215,8 @@ class LibcurlConan(ConanFile):
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
         apply_conandata_patches(self)
-        cert_url = self.conf.get("user.libcurl.cert:url", check_type=str) or "https://curl.se/ca/cacert-2025-11-04.pem"
-        cert_sha256 = self.conf.get("user.libcurl.cert:sha256", check_type=str) or "8ac40bdd3d3e151a6b4078d2b2029796e8f843e3f86fbf2adbc4dd9f05e79def"
+        cert_url = self.conf.get("user.libcurl.cert:url", check_type=str) or "https://curl.se/ca/cacert-2026-09-25.pem"
+        cert_sha256 = self.conf.get("user.libcurl.cert:sha256", check_type=str) or "a41b5d356aea97a529fe27e0f7316d2f9d946d75927476cf9cf1b90637d00505"
         download(self, cert_url, "cacert.pem", verify=True, sha256=cert_sha256)
         replace_in_file(self, "CMakeLists.txt", "find_package(NGHTTP2 MODULE)", "find_package(NGHTTP2 CONFIG REQUIRED)")
         replace_in_file(self, "CMakeLists.txt", "find_package(Cares MODULE REQUIRED)", "find_package(Cares CONFIG REQUIRED)")
@@ -320,7 +317,7 @@ class LibcurlConan(ConanFile):
         tc.configure_args.extend([
             f"--with-libidn2={self._yes_no(self.options.with_libidn)}",
             f"--with-libpsl={self._yes_no(self.options.with_libpsl)}",
-            f"--with-libgsasl={self._yes_no(self.options.with_libgsasl)}",
+            "--without-libgsasl",
             f"--with-schannel={self._yes_no(self.options.with_ssl == 'schannel')}",
             f"--with-brotli={self._yes_no(self.options.with_brotli)}",
             f"--enable-shared={self._yes_no(self.options.shared)}",
@@ -641,7 +638,7 @@ class LibcurlConan(ConanFile):
             self.cpp_info.components["curl"].libs = ["curl"]
 
         if self.settings.os in ["Linux", "FreeBSD"]:
-            self.cpp_info.components["curl"].system_libs = ["rt", "pthread"]
+            self.cpp_info.components["curl"].system_libs = ["pthread"]
         elif self.settings.os == "Windows":
             # used on Windows for VS build, native and cross mingw build
             self.cpp_info.components["curl"].system_libs = ["ws2_32", "bcrypt", "iphlpapi"]
@@ -686,7 +683,7 @@ class LibcurlConan(ConanFile):
         if self.options.with_zlib:
             self.cpp_info.components["curl"].requires.append("zlib-ng::zlib-ng")
         if self.options.with_brotli:
-            self.cpp_info.components["curl"].requires.append("brotli::brotli")
+            self.cpp_info.components["curl"].requires.append("brotli::brotlidec")
         if self.options.with_zstd:
             self.cpp_info.components["curl"].requires.append("zstd::zstd")
         if self.options.with_c_ares:
