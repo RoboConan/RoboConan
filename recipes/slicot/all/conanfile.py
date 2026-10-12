@@ -53,8 +53,8 @@ class SlicotConan(ConanFile):
 
     def generate(self):
         tc = CMakeToolchain(self)
-        tc.cache_variables["SLICOT_VERSION"] = self.version
-        tc.cache_variables["SLICOT_VERSION_MAJOR"] = self.version.split(".")[0]
+        tc.cache_variables["SLICOT_TESTING"] = False
+        tc.cache_variables["SLICOT_INTEGER8"] = self.dependencies["blas"].options.interface == "ilp64"
         tc.generate()
         deps = CMakeDeps(self)
         deps.generate()
@@ -70,10 +70,15 @@ class SlicotConan(ConanFile):
         cmake.install()
 
     def package_info(self):
-        self.cpp_info.libs = ["slicot", "lpkaux"]
+        ilp64 = self.dependencies["blas"].options.interface == "ilp64"
+        self.cpp_info.languages = ["Fortran"]
+        self.cpp_info.set_property("cmake_file_name", "SLICOT64" if ilp64 else "SLICOT")
+        self.cpp_info.set_property("cmake_target_name", "SLICOT::slicot")
+        self.cpp_info.set_property("pkg_config_name", "slicot64" if ilp64 else "slicot")
+        self.cpp_info.libs = ["slicot64" if ilp64 else "slicot"]
         self.cpp_info.includedirs = []
         if not self.options.shared:
             if self.settings.os in ["Linux", "FreeBSD"]:
                 self.cpp_info.system_libs = ["m", "mvec"]
-            if "gfortran" in self._fortran_compiler:
+            if "gfortran" in (self._fortran_compiler or ""):
                 self.cpp_info.system_libs.append("gfortran")

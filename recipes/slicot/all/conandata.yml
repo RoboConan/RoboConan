@@ -1,4 +1,4 @@
 sources:
-  "5.9":
-    url: "https://github.com/SLICOT/SLICOT-Reference/archive/refs/tags/v5.9.tar.gz"
-    sha256: "af5dc4773bf76e6f137d3c1dbc4838fbb360a134b5a09afce90b9ce690363b7b"
+  "5.9.1":
+    url: "https://github.com/SLICOT/SLICOT-Reference/archive/v5.9.1.tar.gz"
+    sha256: "37b0c0fc1800454f8d7553a004a5bb6fac9e042fe2b592ce1eec92045ce9b7a1"
