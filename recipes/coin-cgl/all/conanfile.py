@@ -22,14 +22,10 @@ class CoinCglConan(ConanFile):
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
-        "with_dylp": [True, False],
-        "with_vol": [True, False],
     }
     default_options = {
         "shared": False,
         "fPIC": True,
-        "with_dylp": True,
-        "with_vol": True,
     }
     implements = ["auto_shared_fpic"]
 
@@ -43,12 +39,9 @@ class CoinCglConan(ConanFile):
         basic_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("coin-osi/[>=0.108.10 <1]")
-        self.requires("coin-clp/[^1.17.9]")
-        if self.options.with_dylp:
-            self.requires("coin-dylp/[^1.10.4]")
-        if self.options.with_vol:
-            self.requires("coin-vol/[^1.5.4]")
+        self.requires("coin-utils/[^2.11.11]", transitive_headers=True, transitive_libs=True)
+        self.requires("coin-osi/[>=0.108.10 <1]", transitive_headers=True, transitive_libs=True)
+        self.requires("coin-clp/[^1.17.9]", transitive_headers=True, transitive_libs=True)
 
     def build_requirements(self):
         self.tool_requires("coin-buildtools/[*]")
@@ -66,20 +59,10 @@ class CoinCglConan(ConanFile):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
 
     def generate(self):
-        yes_no = lambda v: "yes" if v else "no"
-        osi = self.dependencies["coin-osi"]
         tc = AutotoolsToolchain(self)
         tc.configure_args.extend([
             "--with-clp=yes",
             "--with-osiclp=yes",
-            f"--with-osidylp={yes_no(self.options.with_dylp)}",
-            f"--with-osivol={yes_no(self.options.with_vol)}",
-            f"--with-osicplex={yes_no(osi.options.with_cplex)}",
-            f"--with-osiglpk={yes_no(osi.options.with_glpk)}",
-            f"--with-osigurobi={yes_no(osi.options.with_gurobi)}",
-            f"--with-osimosek={yes_no(osi.options.with_mosek)}",
-            f"--with-osisoplex={yes_no(osi.options.with_soplex)}"
-            f"--with-osixpress={yes_no(osi.options.with_xpress)}",
             "--without-sample",
             "--disable-dependency-linking",
             "F77=unavailable",
@@ -128,3 +111,8 @@ class CoinCglConan(ConanFile):
         self.cpp_info.set_property("pkg_config_name", "cgl")
         self.cpp_info.libs = ["Cgl"]
         self.cpp_info.includedirs.append("include/coin")
+        self.cpp_info.requires = [
+            "coin-utils::coin-utils",
+            "coin-osi::libosi",
+            "coin-clp::osi-clp",
+        ]
