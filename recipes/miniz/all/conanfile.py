@@ -64,6 +64,7 @@ class MinizConan(ConanFile):
         tc = CMakeToolchain(self)
         tc.variables["BUILD_EXAMPLES"] = False
         tc.variables["BUILD_FUZZERS"] = False
+        tc.variables["BUILD_TESTS"] = False
         tc.variables["AMALGAMATE_SOURCES"] = False
         tc.variables["BUILD_HEADER_ONLY"] = False
         tc.variables["INSTALL_PROJECT"] = True
