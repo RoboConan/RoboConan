@@ -1,28 +1,12 @@
 sources:
-  "3.8.1":
-    url: "https://github.com/libarchive/libarchive/releases/download/v3.8.1/libarchive-3.8.1.tar.xz"
-    sha256: "19f917d42d530f98815ac824d90c7eaf648e9d9a50e4f309c812457ffa5496b5"
-  "3.7.9":
-    url: "https://github.com/libarchive/libarchive/releases/download/v3.7.9/libarchive-3.7.9.tar.xz"
-    sha256: "ed8b5732e4cd6e30fae909fb945cad8ff9cb7be5c6cdaa3944ec96e4a200c04c"
+  "3.8.9":
+    url: "https://github.com/libarchive/libarchive/releases/download/v3.8.9/libarchive-3.8.9.tar.xz"
+    sha256: "888c934f9d95648ecb9163dc8e23ab80a476ecb81a8f1154704a227b5b676dde"
 patches:
-  "3.8.1":
-    - patch_file: "patches/0003-3.8.1-cmake.patch"
+  "3.8.9":
+    - patch_file: "patches/0003-3.8.9-cmake.patch"
       patch_description: "Make CMake build-system compatible with Conan"
-      patch_type: "conan"
-    - patch_file: "patches/0005-3.8.1-try-compile-cmakedeps.patch"
-      patch_description: "Patch try_compile check to work with imported CMake targets from Conan packages"
-      patch_type: "conan"
-    - patch_file: "patches/0006-3.8.1-fix-msvc-build.patch"
+    - patch_file: "patches/0005-3.8.9-try-compile-cmakedeps.patch"
+      patch_description: "Make crypto feature checks work with imported CMake targets from Conan packages"
+    - patch_file: "patches/0006-3.8.9-fix-msvc-build.patch"
       patch_description: "Fix MSVC build"
-      patch_type: "conan"
-  "3.7.9":
-    - patch_file: "patches/0003-3.7.9-cmake.patch"
-      patch_description: "Make CMake build-system compatible with Conan"
-      patch_type: "conan"
-    - patch_file: "patches/0005-3.7.9-try-compile-cmakedeps.patch"
-      patch_description: "Patch try_compile check to work with imported CMake targets from Conan packages"
-      patch_type: "conan"
-    - patch_file: "patches/0006-3.7.9-fix-msvc-build.patch"
-      patch_description: "Fix MSVC build"
-      patch_type: "conan"

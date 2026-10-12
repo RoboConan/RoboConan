@@ -5,7 +5,6 @@ from conan.errors import ConanInvalidConfiguration
 from conan.tools.cmake import CMake, cmake_layout, CMakeDeps, CMakeToolchain
 from conan.tools.files import *
 from conan.tools.microsoft import is_msvc
-from conan.tools.scm import Version
 
 required_conan_version = ">=2.1"
 
@@ -80,6 +79,8 @@ class LibarchiveConan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
+        if self.settings.os == "Linux" and self.options.with_acl:
+            self.requires("acl/[>=2.3 <3]")
         if self.options.with_zlib:
             self.requires("zlib-ng/[^2.0]")
         if self.options.with_bzip2:
@@ -93,11 +94,11 @@ class LibarchiveConan(ConanFile):
         if self.options.with_pcreposix:
             self.requires("pcre/[^8.45]")
         if self.options.with_nettle:
-            self.requires("nettle/3.9.1")
+            self.requires("nettle/[^3.9.1]")
         if self.options.with_openssl:
             self.requires("openssl/[>=1.1 <4]")
         if self.options.with_libb2:
-            self.requires("libb2/20190723")
+            self.requires("libb2/[>=20190723]")
         if self.options.with_lz4:
             self.requires("lz4/[^1.9.4]")
         if self.options.with_lzo:
@@ -116,8 +117,7 @@ class LibarchiveConan(ConanFile):
 
     def validate(self):
         if self.settings.os != "Windows" and self.options.with_cng:
-            # TODO: add cng when available in CCI
-            raise ConanInvalidConfiguration("cng recipe not yet available in CCI.")
+            raise ConanInvalidConfiguration("CNG is only available on Windows")
         if self.options.with_expat and self.options.with_libxml2:
             raise ConanInvalidConfiguration("libxml2 and expat options are exclusive. They cannot be used together as XML engine")
 
@@ -131,11 +131,9 @@ class LibarchiveConan(ConanFile):
 
     def generate(self):
         cmake_deps = CMakeDeps(self)
+        cmake_deps.set_property("expat", "cmake_find_mode", "module")
         cmake_deps.generate()
         tc = CMakeToolchain(self)
-        # CMake 4 support
-        if Version(self.version) < "3.7.9":
-            tc.cache_variables["CMAKE_POLICY_VERSION_MINIMUM"] = "3.5"
         # turn off deps to avoid picking up them accidentally
         tc.variables["ENABLE_NETTLE"] = self.options.with_nettle
         tc.variables["ENABLE_OPENSSL"] = self.options.with_openssl
@@ -153,7 +151,7 @@ class LibarchiveConan(ConanFile):
         tc.variables["ENABLE_PCREPOSIX"] = self.options.with_pcreposix
         if self.options.with_pcreposix:
             tc.variables["POSIX_REGEX_LIB"] = "LIBPCREPOSIX"
-        tc.variables["ENABLE_LibGCC"] = False
+        tc.variables["ENABLE_LIBGCC"] = True
         tc.variables["ENABLE_CNG"] = self.options.with_cng
         # turn off features
         tc.variables["ENABLE_ACL"] = self.options.with_acl
@@ -162,7 +160,11 @@ class LibarchiveConan(ConanFile):
         tc.variables["ENABLE_CPIO"] = False
         tc.variables["ENABLE_CAT"] = False
         tc.variables["ENABLE_TEST"] = False
+        tc.variables["ENABLE_COVERAGE"] = False
+        tc.variables["ENABLE_INSTALL"] = True
+        tc.variables["ENABLE_CLANG_TIDY"] = False
         tc.variables["ENABLE_UNZIP"] = False
+        tc.variables["DONT_FAIL_ON_CRC_ERROR"] = False
         # too strict check
         tc.variables["ENABLE_WERROR"] = False
         tc.variables["ENABLE_MBEDTLS"] = self.options.with_mbedtls
@@ -189,11 +191,42 @@ class LibarchiveConan(ConanFile):
         self.cpp_info.set_property("cmake_target_name", "LibArchive::LibArchive")
         self.cpp_info.set_property("pkg_config_name", "libarchive")
 
-
         self.cpp_info.libs = collect_libs(self)
+        if self.settings.os == "Linux" and self.options.with_acl:
+            self.cpp_info.requires.append("acl::acl")
+        if self.options.with_zlib:
+            self.cpp_info.requires.append("zlib-ng::zlib-ng")
+        if self.options.with_bzip2:
+            self.cpp_info.requires.append("bzip2::bzip2")
+        if self.options.with_libxml2:
+            self.cpp_info.requires.append("libxml2::libxml2")
+        if self.options.with_expat:
+            self.cpp_info.requires.append("expat::expat")
+        if self.options.with_iconv:
+            self.cpp_info.requires.append("libiconv::libiconv")
+        if self.options.with_pcreposix:
+            self.cpp_info.requires.append("pcre::libpcreposix")
+        if self.options.with_nettle:
+            self.cpp_info.requires.append("nettle::libnettle")
+        if self.options.with_openssl:
+            self.cpp_info.requires.append("openssl::crypto")
+        if self.options.with_libb2:
+            self.cpp_info.requires.append("libb2::libb2")
+        if self.options.with_lz4:
+            self.cpp_info.requires.append("lz4::lz4")
+        if self.options.with_lzo:
+            self.cpp_info.requires.append("lzo::lzo")
+        if self.options.with_lzma:
+            self.cpp_info.requires.append("xz_utils::xz_utils")
+        if self.options.with_zstd:
+            self.cpp_info.requires.append("zstd::zstd")
+        if self.options.get_safe("with_mbedtls"):
+            self.cpp_info.requires.append("mbedtls::libembedtls")
+        if self.options.get_safe("with_pcre2"):
+            self.cpp_info.requires.append("pcre2::pcre2-posix")
         if self.settings.os == "Windows" and self.options.with_cng:
             self.cpp_info.system_libs.append("bcrypt")
-        if Version(self.version) >= "3.8.0" and self.settings.os == "Windows" and not self.options.with_libxml2 and not self.options.with_expat:
+        if self.settings.os == "Windows" and not self.options.with_libxml2 and not self.options.with_expat:
             self.cpp_info.system_libs.append("xmllite")
         if is_msvc(self) and not self.options.shared:
             self.cpp_info.defines = ["LIBARCHIVE_STATIC"]
