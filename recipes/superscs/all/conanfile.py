@@ -71,6 +71,7 @@ class SuperSCSConan(ConanFile):
 
     def requirements(self):
         self.requires("blas/latest")
+        self.requires("lapack/latest")
         if self.options.build_direct:
             self.requires("suitesparse-ldl/[^3.3]")
         if self.options.with_openmp:
@@ -149,6 +150,6 @@ class SuperSCSConan(ConanFile):
                 component.defines.append("SCS_CASADI=1")
             if self.settings.os in ["Linux", "FreeBSD"]:
                 component.system_libs.extend(["m", "rt"])
-            component.requires.append("blas::blas")
+            component.requires.extend(["blas::blas", "lapack::lapack"])
             if self.options.with_openmp:
                 component.requires.append("openmp::openmp")
