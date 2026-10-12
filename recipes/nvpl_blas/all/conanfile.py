@@ -67,7 +67,8 @@ class NvplBlasConan(ConanFile):
         copy(self, f"*{self._backend_name}*.so*", os.path.join(self.source_folder, "lib"), os.path.join(self.package_folder, "lib"))
         if self.options.compatibility_headers:
             save(self, os.path.join(self.package_folder, "include", "cblas.h"), '#include "nvpl_blas_cblas.h"\n')
-            save(self, os.path.join(self.package_folder, "include", "f77blas.h"), '#include "nvpl_blas_f77_blas.h"\n')
+            save(self, os.path.join(self.package_folder, "include", "f77blas.h"),
+                 '#include "nvpl_blas_f77_blas.h"\ntypedef nvpl_int_t blasint;\n')
 
     def package_info(self):
         self.cpp_info.set_property("cmake_file_name", "nvpl_blas")
