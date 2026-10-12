@@ -75,5 +75,7 @@ class MinizipConan(ConanFile):
     def package_info(self):
         self.cpp_info.libs = ["minizip"]
         self.cpp_info.includedirs.append(os.path.join("include", "minizip"))
+        self.cpp_info.requires.append("zlib-ng::zlib-ng")
         if self.options.bzip2:
             self.cpp_info.defines.append("HAVE_BZIP2")
+            self.cpp_info.requires.append("bzip2::bzip2")

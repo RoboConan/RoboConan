@@ -29,6 +29,9 @@ set(HEADER_FILES
     ${MINIZIP_SRC_DIR}/zip.h
     ${MINIZIP_SRC_DIR}/mztools.h
 )
+if(EXISTS "${MINIZIP_SRC_DIR}/ints.h")
+    list(APPEND HEADER_FILES ${MINIZIP_SRC_DIR}/ints.h)
+endif()
 if(WIN32)
     list(APPEND HEADER_FILES ${MINIZIP_SRC_DIR}/iowin32.h)
 endif()
