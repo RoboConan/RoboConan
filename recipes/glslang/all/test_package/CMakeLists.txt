@@ -4,9 +4,7 @@ project(test_package LANGUAGES CXX)
 find_package(glslang REQUIRED CONFIG)
 
 add_executable(${PROJECT_NAME} test_package.cpp)
-if(TARGET glslang::MachineIndependent)
-    target_link_libraries(${PROJECT_NAME} PRIVATE glslang::MachineIndependent)
-else()
-    target_link_libraries(${PROJECT_NAME} PRIVATE glslang::glslang)
-endif()
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    glslang::glslang
+    glslang::glslang-default-resource-limits)
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_11)
