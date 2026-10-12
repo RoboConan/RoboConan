@@ -59,6 +59,7 @@ class LcmsConan(ConanFile):
         tc = MesonToolchain(self)
         tc.project_options["auto_features"] = "enabled"
         tc.project_options["jpeg"] = feature(self.options.jpeg)
+        tc.project_options["tests"] = "disabled"
         tc.project_options["tiff"] = feature(self.options.tiff)
         tc.generate()
         deps = PkgConfigDeps(self)
