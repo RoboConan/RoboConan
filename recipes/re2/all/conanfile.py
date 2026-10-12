@@ -43,7 +43,12 @@ class Re2Conan(ConanFile):
             self.requires("abseil/[>=20240116.1 <=20250127.0]", transitive_headers=True)
 
     def validate(self):
-        min_cppstd = 14 if Version(self.version) >= "20230601" else 11
+        if Version(self.version) >= "20251105":
+            min_cppstd = 17
+        elif Version(self.version) >= "20230601":
+            min_cppstd = 14
+        else:
+            min_cppstd = 11
         check_min_cppstd(self, min_cppstd)
 
         if "abseil" in self.dependencies.host:
@@ -61,6 +66,7 @@ class Re2Conan(ConanFile):
     def generate(self):
         tc = CMakeToolchain(self)
         tc.variables["RE2_BUILD_TESTING"] = False
+        tc.variables["RE2_USE_ICU"] = self.options.with_icu
         tc.generate()
 
         deps = CMakeDeps(self)
@@ -83,6 +89,26 @@ class Re2Conan(ConanFile):
         self.cpp_info.set_property("cmake_target_name", "re2::re2")
         self.cpp_info.set_property("pkg_config_name", "re2")
         self.cpp_info.libs = ["re2"]
+        if Version(self.version) >= "20251105":
+            self.cpp_info.requires = [
+                "abseil::absl_check",
+                "abseil::absl_log",
+                "abseil::base",
+                "abseil::core_headers",
+                "abseil::fixed_array",
+                "abseil::flags",
+                "abseil::flat_hash_map",
+                "abseil::flat_hash_set",
+                "abseil::hash",
+                "abseil::inlined_vector",
+                "abseil::optional",
+                "abseil::span",
+                "abseil::str_format",
+                "abseil::strings",
+                "abseil::synchronization",
+            ]
+        if self.options.get_safe("with_icu"):
+            self.cpp_info.requires.append("icu::icu-uc")
         if self.settings.os in ["Linux", "FreeBSD"]:
             self.cpp_info.system_libs = ["m", "pthread"]
 
