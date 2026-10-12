@@ -1,4 +1,4 @@
 sources:
-  "0.2.0.3":
-    url: "https://github.com/AcademySoftwareFoundation/openapv/archive/refs/tags/v0.2.0.3.tar.gz"
-    sha256: "9da0f758534d6243cd6e5c5ca46404e6fdd7e298a17da50b676b71c53ce6a083"
+  "1.1.3.0":
+    url: "https://github.com/AcademySoftwareFoundation/openapv/archive/refs/tags/v1.1.3.0.tar.gz"
+    sha256: "38f841ce44e80c40b682a5323b4f3ebc6e339b6071965bc1c705a17d46ab2fc8"

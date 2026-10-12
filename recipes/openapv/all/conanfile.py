@@ -68,7 +68,6 @@ class OpenAPVConan(ConanFile):
         self.cpp_info.libs = ["oapv"]
         self.cpp_info.includedirs.append("include/oapv")
         if not self.options.shared:
-            self.cpp_info.libdirs = ["lib/oapv"]
             self.cpp_info.defines = ["OAPV_STATIC_DEFINE"]
         if self.settings.os in ["Linux", "FreeBSD"]:
-            self.cpp_info.system_libs = ["m"]
+            self.cpp_info.system_libs = ["m", "pthread"]
