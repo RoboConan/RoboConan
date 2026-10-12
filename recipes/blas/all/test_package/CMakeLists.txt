@@ -7,7 +7,3 @@ add_executable(${PROJECT_NAME} test_package.cpp)
 target_link_libraries(${PROJECT_NAME} BLAS::BLAS)
 
 message(STATUS "CONAN_BLA_VENDOR: ${CONAN_BLA_VENDOR}")
-
-if(NOT CONAN_BLA_VENDOR MATCHES "^(FLAME|Intel10)$")
-    target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_F77BLAS)
-endif()

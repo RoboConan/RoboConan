@@ -46,7 +46,8 @@ class BlasConan(ConanFile):
         }.get(provider, provider)
 
     def configure(self):
-        self.options[self._dep_name].interface = self.options.interface
+        if self.options.provider != "accelerate":
+            self.options[self._dep_name].interface = self.options.interface
         if self.options.provider in ["mkl", "nvpl", "accelerate"]:
             self.options.shared.value = True
         else:
@@ -74,9 +75,12 @@ class BlasConan(ConanFile):
         return self.dependencies[self._dep_name]
 
     def validate(self):
-        if self.options.provider == "accelerate" and not is_apple_os(self):
-            raise ConanInvalidConfiguration("Accelerate provider is only available on Apple OS-s")
-        if self._dependency.options.interface != self.options.interface:
+        if self.options.provider == "accelerate":
+            if not is_apple_os(self):
+                raise ConanInvalidConfiguration("Accelerate provider is only available on Apple OS-s")
+            if self.options.interface != "lp64":
+                raise ConanInvalidConfiguration("Accelerate only supports the LP64 interface")
+        elif self._dependency.options.interface != self.options.interface:
             raise ConanInvalidConfiguration(f"-o {self._dependency.ref}:interface != {self.options.interface} value from -o {self.ref}:interface")
         if self.options.provider not in ["mkl", "nvpl", "accelerate"]:
             if self._dependency.options.shared != self.options.shared:
@@ -99,7 +103,10 @@ class BlasConan(ConanFile):
         self.cpp_info.set_property("cmake_find_mode", "both")
         self.cpp_info.set_property("cmake_file_name", "BLAS")
         self.cpp_info.set_property("cmake_target_name", "BLAS::BLAS")
-        self.cpp_info.set_property("cmake_extra_variables", {"CONAN_BLA_VENDOR": self._bla_vendor})
+        self.cpp_info.set_property("cmake_extra_variables", {
+            "CONAN_BLA_VENDOR": self._bla_vendor,
+            "BLA_SIZEOF_INTEGER": 8 if self.options.interface == "ilp64" else 4,
+        })
         self.cpp_info.set_property("pkg_config_name", "blas")
 
         self.cpp_info.bindirs = []
