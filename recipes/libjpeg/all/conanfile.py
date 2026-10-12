@@ -75,11 +75,10 @@ class LibjpegConan(ConanFile):
             with chdir(self, self.source_folder):
                 self.run("nmake /f makefile.vs setupcopy-v16")
 
-                # Rename target to 'libjpeg.lib' to match legacy behaviour (otherwise we break backwards compatibility)
-                # static: "libjpeg.lib"
-                # shared: "libjpeg.lib" (import), "libjpeg-9.dll" (DLL)
+                # Keep the static/import library named libjpeg.lib and version only the shared DLL.
                 jpeg_vcxproj = os.path.join(self.source_folder, "jpeg.vcxproj")
-                target_name = "libjpeg-9" if self.options.shared else "libjpeg"
+                dll_version = "10" if self.version == "10" else "9"
+                target_name = f"libjpeg-{dll_version}" if self.options.shared else "libjpeg"
                 replace_in_file(self, jpeg_vcxproj, """<PropertyGroup Label="UserMacros" />""",
                                 f""" <PropertyGroup Label="UserMacros" /><PropertyGroup Label="TargetName"> <TargetName>{target_name}</TargetName></PropertyGroup>
                                 """)
@@ -108,7 +107,7 @@ class LibjpegConan(ConanFile):
                 )
 
                 # Patch settings for a different build type
-                if self.settings.build_type is not "Release":
+                if self.settings.build_type != "Release":
                     replacements = {
                         "Release": str(self.settings.build_type)
                     }
