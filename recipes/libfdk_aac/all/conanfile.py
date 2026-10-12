@@ -119,6 +119,9 @@ class LibFDKAACConan(ConanFile):
 
     def package(self):
         copy(self, "NOTICE", src=self.source_folder, dst=os.path.join(self.package_folder, "licenses"))
+        if Version(self.version) >= "3.0.0":
+            copy(self, "NOTICE", src=os.path.join(self.source_folder, "xhe-aac"),
+                 dst=os.path.join(self.package_folder, "licenses", "xhe-aac"))
         if self._use_cmake:
             cmake = CMake(self)
             cmake.install()
@@ -137,8 +140,23 @@ class LibFDKAACConan(ConanFile):
 
     def package_info(self):
         self.cpp_info.set_property("cmake_file_name", "fdk-aac")
-        self.cpp_info.set_property("cmake_target_name", "FDK-AAC::fdk-aac")
-        self.cpp_info.set_property("pkg_config_name", "fdk-aac")
-        self.cpp_info.libs = ["fdk-aac"]
-        if self.settings.os in ["Linux", "FreeBSD", "Android"]:
-            self.cpp_info.system_libs.append("m")
+        if Version(self.version) >= "3.0.0":
+            fdk_aac = self.cpp_info.components["libfdk_aac"]
+            fdk_aac.set_property("cmake_target_name", "FDK-AAC::fdk-aac")
+            fdk_aac.set_property("pkg_config_name", "fdk-aac")
+            fdk_aac.libs = ["fdk-aac"]
+
+            fdk_xhe_aac = self.cpp_info.components["libfdk_xhe_aac"]
+            fdk_xhe_aac.set_property("cmake_target_name", "FDK-XHE-AAC::fdk-xhe-aac")
+            fdk_xhe_aac.set_property("pkg_config_name", "fdk-xhe-aac")
+            fdk_xhe_aac.libs = ["fdk-xhe-aac"]
+
+            if self.settings.os in ["Linux", "FreeBSD", "Android"]:
+                fdk_aac.system_libs.append("m")
+                fdk_xhe_aac.system_libs.append("m")
+        else:
+            self.cpp_info.set_property("cmake_target_name", "FDK-AAC::fdk-aac")
+            self.cpp_info.set_property("pkg_config_name", "fdk-aac")
+            self.cpp_info.libs = ["fdk-aac"]
+            if self.settings.os in ["Linux", "FreeBSD", "Android"]:
+                self.cpp_info.system_libs.append("m")

@@ -1,4 +1,7 @@
 sources:
+  "3.0.0":
+    url: "https://github.com/mstorsjo/fdk-aac/archive/refs/tags/v3.0.0.tar.gz"
+    sha256: "8538ea8f0f9915e460c106a13e1866a9e13c7ee48c1b67d0b2cf7b4e8159bd1a"
   "2.0.3":
     url: "https://downloads.sourceforge.net/opencore-amr/fdk-aac-2.0.3.tar.gz"
     sha256: "829b6b89eef382409cda6857fd82af84fabb63417b08ede9ea7a553f811cb79e"
