@@ -18,12 +18,18 @@ class LibAVIFConan(ConanFile):
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
-        "with_decoder": ["aom", "dav1d"],
+        "with_decoder": ["none", "aom", "dav1d"],
+        "with_encoder": ["none", "aom", "svt"],
+        "with_libsharpyuv": [True, False],
+        "with_libyuv": [True, False],
     }
     default_options = {
         "shared": False,
         "fPIC": True,
         "with_decoder": "dav1d",
+        "with_encoder": "aom",
+        "with_libsharpyuv": True,
+        "with_libyuv": True,
     }
     implements = ["auto_shared_fpic"]
     languages = ["C"]
@@ -32,11 +38,16 @@ class LibAVIFConan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("libaom-av1/[^3.6.1]")
-        self.requires("libyuv/[>=1854]")
-        self.requires("libwebp/[^1.3.2]")
+        if self.options.with_decoder == "aom" or self.options.with_encoder == "aom":
+            self.requires("libaom-av1/[^3.6.1]")
         if self.options.with_decoder == "dav1d":
             self.requires("dav1d/[^1.2.1]")
+        if self.options.with_encoder == "svt":
+            self.requires("libsvtav1/[>=4.1 <5]")
+        if self.options.with_libsharpyuv:
+            self.requires("libwebp/[^1.3.2]")
+        if self.options.with_libyuv:
+            self.requires("libyuv/[>=1854]")
 
     def build_requirements(self):
         self.tool_requires("cmake/[>=3.22 <5]")
@@ -51,27 +62,35 @@ class LibAVIFConan(ConanFile):
         tc.variables["AVIF_BUILD_EXAMPLES"] = False
         tc.variables["AVIF_BUILD_MAN_PAGES"] = False
         tc.variables["AVIF_BUILD_TESTS"] = False
-        tc.variables["AVIF_CODEC_AOM"] = "SYSTEM"
-        tc.variables["AVIF_CODEC_AOM_ENCODE"] = True
+        with_aom = self.options.with_decoder == "aom" or self.options.with_encoder == "aom"
+        tc.variables["AVIF_CODEC_AOM"] = "SYSTEM" if with_aom else "OFF"
+        tc.variables["AVIF_CODEC_AOM_ENCODE"] = self.options.with_encoder == "aom"
         tc.variables["AVIF_CODEC_DAV1D"] = "SYSTEM" if self.options.with_decoder == "dav1d" else "OFF"
         tc.variables["AVIF_CODEC_AOM_DECODE"] = self.options.with_decoder == "aom"
         tc.variables["AVIF_CODEC_AVM"] = "OFF"
         tc.variables["AVIF_CODEC_LIBGAV1"] = "OFF"
         tc.variables["AVIF_CODEC_RAV1E"] = "OFF"
-        tc.variables["AVIF_CODEC_SVT"] = "OFF"
+        tc.variables["AVIF_CODEC_SVT"] = "SYSTEM" if self.options.with_encoder == "svt" else "OFF"
         tc.variables["AVIF_JPEG"] = "OFF"
-        tc.variables["AVIF_LIBSHARPYUV"] = "SYSTEM"
-        tc.variables["AVIF_LIBYUV"] = "SYSTEM"
+        tc.variables["AVIF_LIBSHARPYUV"] = "SYSTEM" if self.options.with_libsharpyuv else "OFF"
+        tc.variables["AVIF_LIBYUV"] = "SYSTEM" if self.options.with_libyuv else "OFF"
         tc.variables["AVIF_ZLIBPNG"] = "OFF"
-        tc.variables["LIBYUV_VERSION"] = str(self.dependencies["libyuv"].ref.version)
+        if self.options.with_libyuv:
+            tc.variables["LIBYUV_VERSION"] = str(self.dependencies["libyuv"].ref.version)
         tc.generate()
 
         deps = CMakeDeps(self)
-        deps.set_property("libaom-av1", "cmake_file_name", "aom")
-        deps.set_property("libaom-av1", "cmake_target_name", "aom")
-        deps.set_property("libyuv", "cmake_target_name", "yuv::yuv")
-        deps.set_property("libwebp", "cmake_file_name", "libsharpyuv")
-        deps.set_property("libwebp::sharpyuv", "cmake_target_name", "sharpyuv::sharpyuv")
+        if with_aom:
+            deps.set_property("libaom-av1", "cmake_file_name", "aom")
+            deps.set_property("libaom-av1", "cmake_target_name", "aom")
+        if self.options.with_encoder == "svt":
+            deps.set_property("libsvtav1", "cmake_file_name", "svt")
+            deps.set_property("libsvtav1::encoder", "cmake_target_name", "SvtAv1Enc")
+        if self.options.with_libyuv:
+            deps.set_property("libyuv", "cmake_target_name", "yuv::yuv")
+        if self.options.with_libsharpyuv:
+            deps.set_property("libwebp", "cmake_file_name", "libsharpyuv")
+            deps.set_property("libwebp::sharpyuv", "cmake_target_name", "sharpyuv::sharpyuv")
         deps.generate()
 
     def build(self):
@@ -97,7 +116,14 @@ class LibAVIFConan(ConanFile):
             self.cpp_info.system_libs = ["pthread", "m"]
             if self.options.with_decoder == "dav1d":
                 self.cpp_info.system_libs.append("dl")
-        self.cpp_info.requires = ["libyuv::libyuv", "libaom-av1::libaom-av1"]
+        self.cpp_info.requires = []
+        if self.options.with_decoder == "aom" or self.options.with_encoder == "aom":
+            self.cpp_info.requires.append("libaom-av1::libaom-av1")
         if self.options.with_decoder == "dav1d":
             self.cpp_info.requires.append("dav1d::dav1d")
-        self.cpp_info.requires.append("libwebp::sharpyuv")
+        if self.options.with_encoder == "svt":
+            self.cpp_info.requires.append("libsvtav1::encoder")
+        if self.options.with_libyuv:
+            self.cpp_info.requires.append("libyuv::libyuv")
+        if self.options.with_libsharpyuv:
+            self.cpp_info.requires.append("libwebp::sharpyuv")
