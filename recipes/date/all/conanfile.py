@@ -49,15 +49,15 @@ class DateConan(ConanFile):
         if self.options.header_only:
             del self.options.shared
             self.package_type = "header-library"
-            del self.settings.tzdb
+            del self.options.tzdb
 
     def layout(self):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        if self.options.get_safe("with_tzdb") == "conan":
+        if self.options.get_safe("tzdb") == "conan":
             self.requires("tz/[*]")
-        elif self.options.get_safe("with_tzdb") == "download":
+        elif self.options.get_safe("tzdb") == "download":
             self.requires("libcurl/[>=7.78 <9]")
 
     def package_id(self):
@@ -66,13 +66,13 @@ class DateConan(ConanFile):
 
     def validate(self):
         check_min_cppstd(self, 11)
-        if self.options.get_safe("with_tzdb") != "download" and self.options.use_tz_db_in_dot:
-            raise ConanInvalidConfiguration("'use_tz_db_in_dot=True' is only valid when 'with_tzdb=\"download\"'")
+        if self.options.get_safe("tzdb") != "download" and self.options.use_tz_db_in_dot:
+            raise ConanInvalidConfiguration("'use_tz_db_in_dot=True' is only valid when 'tzdb=\"download\"'")
         if self.settings.os == "Windows":
-            if self.options.get_safe("with_tzdb") == "system":
+            if self.options.get_safe("tzdb") == "system":
                 # https://github.com/HowardHinnant/date/blob/v3.0.3/include/date/tz.h#L85-L89
                 raise ConanInvalidConfiguration("'system' tzdb is not supported on Windows")
-            if self.dependencies["tz"].options.with_binary_db:
+            if self.options.get_safe("tzdb") == "conan" and self.dependencies["tz"].options.with_binary_db:
                 raise ConanInvalidConfiguration(
                     "date does not currently support parsing the binary tzdb on Windows. "
                     "An attempt has been made to introduce this in https://github.com/HowardHinnant/date/pull/611, "
@@ -80,7 +80,7 @@ class DateConan(ConanFile):
                 )
 
     def build_requirements(self):
-        self.tool_requires("cmake/[^4]")
+        self.tool_requires("cmake/[>=3.7 <5]")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
@@ -91,8 +91,8 @@ class DateConan(ConanFile):
         tc.variables["ENABLE_DATE_TESTING"] = False
         tc.variables["BUILD_TZ_LIB"] = True
         tc.variables["USE_TZ_DB_IN_DOT"] = self.options.use_tz_db_in_dot
-        tc.variables["USE_SYSTEM_TZ_DB"] = self.options.get_safe("with_tzdb") in ["system", "conan"]
-        tc.variables["MANUAL_TZ_DB"] = self.options.get_safe("with_tzdb") in ["manual", "conan"]
+        tc.variables["USE_SYSTEM_TZ_DB"] = self.options.get_safe("tzdb") in ["system", "conan"]
+        tc.variables["MANUAL_TZ_DB"] = self.options.get_safe("tzdb") in ["manual", "conan"]
         # workaround for gcc 7 and clang 5 not having string_view
         if Version(self.version) >= "3.0.0" and \
                 ((self.settings.compiler == "gcc" and Version(self.settings.compiler.version) <= "7.0") or
@@ -133,7 +133,7 @@ class DateConan(ConanFile):
             self.cpp_info.libs = ["date-tz" if Version(self.version) >= "3.0.0" else "tz"]
             if self.settings.os in ["Linux", "FreeBSD"]:
                 self.cpp_info.system_libs.extend(["m", "pthread"])
-            if self.options.get_safe("with_tzdb") in ["system", "conan"]:
+            if self.options.get_safe("tzdb") in ["system", "conan"]:
                 self.cpp_info.defines.append("USE_OS_TZDB=1")
             if self.settings.os == "Windows" and self.options.shared:
                 self.cpp_info.defines.append("DATE_USE_DLL=1")
