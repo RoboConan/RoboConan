@@ -85,8 +85,11 @@ class LibjxlConan(ConanFile):
         tc.variables["JPEGXL_STATIC"] = False
         tc.variables["JPEGXL_BUNDLE_LIBPNG"] = False
         tc.variables["JPEGXL_ENABLE_BENCHMARK"] = False
+        tc.variables["JPEGXL_ENABLE_COVERAGE"] = False
+        tc.variables["JPEGXL_ENABLE_DEVTOOLS"] = False
         tc.variables["JPEGXL_ENABLE_DOXYGEN"] = False
         tc.variables["JPEGXL_ENABLE_EXAMPLES"] = False
+        tc.variables["JPEGXL_ENABLE_FUZZERS"] = False
         tc.variables["JPEGXL_ENABLE_JNI"] = False
         tc.variables["JPEGXL_ENABLE_MANPAGES"] = False
         tc.variables["JPEGXL_ENABLE_OPENEXR"] = False
@@ -96,22 +99,30 @@ class LibjxlConan(ConanFile):
         tc.variables["JPEGXL_ENABLE_TCMALLOC"] = self.options.with_tcmalloc
         tc.variables["JPEGXL_ENABLE_VIEWERS"] = False
         tc.variables["JPEGXL_ENABLE_TOOLS"] = False
+        tc.variables["JPEGXL_ENABLE_LTO"] = False
+        tc.variables["JPEGXL_TEST_TOOLS"] = False
         tc.variables["JPEGXL_FORCE_SYSTEM_BROTLI"] = True
         tc.variables["JPEGXL_FORCE_SYSTEM_GTEST"] = True
         tc.variables["JPEGXL_FORCE_SYSTEM_HWY"] = True
         tc.variables["JPEGXL_FORCE_SYSTEM_LCMS2"] = True
         tc.variables["JPEGXL_WARNINGS_AS_ERRORS"] = False
         tc.variables["JPEGXL_FORCE_NEON"] = False
-        tc.variables["JPEGXL_ENABLE_AVX512"] = self.options.get_safe("avx512", False)
-        tc.variables["JPEGXL_ENABLE_AVX512_SPR"] = self.options.get_safe("avx512_spr", False)
-        tc.variables["JPEGXL_ENABLE_AVX512_ZEN4"] = self.options.get_safe("avx512_zen4", False)
+        if Version(self.version) >= "0.12":
+            tc.variables["JPEGXL_ENABLE_HWY_AVX3"] = self.options.get_safe("avx512", False)
+            tc.variables["JPEGXL_ENABLE_HWY_AVX3_DL"] = self.options.get_safe("avx512", False)
+            tc.variables["JPEGXL_ENABLE_HWY_AVX3_SPR"] = self.options.get_safe("avx512_spr", False)
+            tc.variables["JPEGXL_ENABLE_HWY_AVX3_ZEN4"] = self.options.get_safe("avx512_zen4", False)
+        else:
+            tc.variables["JPEGXL_ENABLE_AVX512"] = self.options.get_safe("avx512", False)
+            tc.variables["JPEGXL_ENABLE_AVX512_SPR"] = self.options.get_safe("avx512_spr", False)
+            tc.variables["JPEGXL_ENABLE_AVX512_ZEN4"] = self.options.get_safe("avx512_zen4", False)
         if cross_building(self):
             tc.variables["CMAKE_SYSTEM_PROCESSOR"] = str(self.settings.arch)
         # Allow non-cache_variables to be used
         tc.cache_variables["CMAKE_POLICY_DEFAULT_CMP0077"] = "NEW"
         # Skip the buggy custom FindAtomic and force the use of atomic library directly for libstdc++
         tc.variables["ATOMICS_LIBRARIES"] = "atomic" if self._atomic_required else ""
-        if Version(self.version) >= "0.8":
+        if Version(self.version) >= "0.8" and Version(self.version) < "0.12":
             # TODO: add support for the jpegli JPEG encoder library
             tc.variables["JPEGXL_ENABLE_JPEGLI"] = False
             tc.variables["JPEGXL_ENABLE_JPEGLI_LIBJPEG"] = False
@@ -193,7 +204,7 @@ class LibjxlConan(ConanFile):
             self.cpp_info.components["jxl_cms"].libs = [self._lib_name("jxl_cms")]
             self.cpp_info.components["jxl_cms"].requires = ["lcms::lcms", "highway::highway"]
             if not self.options.shared:
-                self.cpp_info.components["jxl"].defines.append("JXL_CMS_STATIC_DEFINE")
+                self.cpp_info.components["jxl_cms"].defines.append("JXL_CMS_STATIC_DEFINE")
             if libcxx:
                 self.cpp_info.components["jxl_cms"].system_libs.append(libcxx)
             self.cpp_info.components["jxl"].requires.append("jxl_cms")
