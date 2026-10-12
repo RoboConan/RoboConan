@@ -48,8 +48,6 @@ class LibRawConan(ConanFile):
             del self.options.fPIC
         if is_msvc(self):
             del self.options.build_thread_safe
-        if Version(self.version) < "0.22.0":
-            del self.options.max_cr3_raw_file_size
 
     def configure(self):
         if self.options.shared:
