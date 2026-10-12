@@ -1,5 +1,4 @@
 import os
-import textwrap
 
 from conan import ConanFile
 from conan.tools.cmake import CMakeToolchain, CMake
@@ -7,7 +6,7 @@ from conan.tools.files import *
 from conan.tools.layout import basic_layout
 from conan.tools.scm import Version
 
-required_conan_version = ">=2.4"
+required_conan_version = ">=2.21"  # for cmake_extra_variables
 
 
 class XZUtilsConan(ConanFile):
@@ -51,8 +50,8 @@ class XZUtilsConan(ConanFile):
     def generate(self):
         tc = CMakeToolchain(self)
         tc.cache_variables["XZ_NLS"] = self.options.i18n
+        tc.cache_variables["XZ_DOC"] = False
         tc.cache_variables["XZ_TOOL_LZMADEC"] = self.options.tools
-        tc.cache_variables["XZ_TOOL_LZMAINFO"] = self.options.tools
         tc.cache_variables["XZ_TOOL_LZMAINFO"] = self.options.tools
         tc.cache_variables["XZ_TOOL_SCRIPTS"] = self.options.tools
         tc.cache_variables["XZ_TOOL_XZ"] = self.options.tools
@@ -73,31 +72,25 @@ class XZUtilsConan(ConanFile):
         rmdir(self, os.path.join(self.package_folder, "lib", "pkgconfig"))
         rmdir(self, os.path.join(self.package_folder, "share", "doc"))
         rmdir(self, os.path.join(self.package_folder, "share", "man"))
-        self._create_cmake_module_variables(os.path.join(self.package_folder, self._module_file_rel_path))
-
-    def _create_cmake_module_variables(self, module_file):
-        content = textwrap.dedent(f"""\
-            set(LIBLZMA_FOUND TRUE)
-            set(LIBLZMA_VERSION_MAJOR {Version(self.version).major})
-            set(LIBLZMA_VERSION_MINOR {Version(self.version).minor})
-            set(LIBLZMA_VERSION_PATCH {Version(self.version).patch})
-            set(LIBLZMA_VERSION_STRING "{self.version}")
-            set(LIBLZMA_HAS_AUTO_DECODER TRUE)
-            set(LIBLZMA_HAS_EASY_ENCODER TRUE)
-            set(LIBLZMA_HAS_LZMA_PRESET TRUE)
-        """)
-        save(self, module_file, content)
-
-    @property
-    def _module_file_rel_path(self):
-        return os.path.join("lib", "cmake", f"conan-official-{self.name}-variables.cmake")
 
     def package_info(self):
+        version = Version(self.version)
         self.cpp_info.set_property("cmake_find_mode", "both")
-        self.cpp_info.set_property("cmake_file_name", "LibLZMA")
-        self.cpp_info.set_property("cmake_target_name", "LibLZMA::LibLZMA")
+        self.cpp_info.set_property("cmake_file_name", "liblzma")
+        self.cpp_info.set_property("cmake_target_name", "liblzma::liblzma")
+        self.cpp_info.set_property("cmake_module_file_name", "LibLZMA")
+        self.cpp_info.set_property("cmake_module_target_name", "LibLZMA::LibLZMA")
         self.cpp_info.set_property("cmake_additional_variables_prefixes", ["LIBLZMA"])
-        self.cpp_info.set_property("cmake_build_modules", [self._module_file_rel_path])
+        self.cpp_info.set_property("cmake_extra_variables", {
+            "LIBLZMA_FOUND": True,
+            "LIBLZMA_VERSION_MAJOR": int(str(version.major)),
+            "LIBLZMA_VERSION_MINOR": int(str(version.minor)),
+            "LIBLZMA_VERSION_PATCH": int(str(version.patch)),
+            "LIBLZMA_VERSION_STRING": self.version,
+            "LIBLZMA_HAS_AUTO_DECODER": True,
+            "LIBLZMA_HAS_EASY_ENCODER": True,
+            "LIBLZMA_HAS_LZMA_PRESET": True,
+        })
         self.cpp_info.set_property("pkg_config_name", "liblzma")
         self.cpp_info.libs = ["lzma"]
         if self.options.i18n:

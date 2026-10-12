@@ -1,10 +1,14 @@
 cmake_minimum_required(VERSION 3.15)
 project(test_package LANGUAGES C)
 
-find_package(LibLZMA REQUIRED)
+find_package(liblzma REQUIRED CONFIG)
+find_package(LibLZMA REQUIRED MODULE)
 
 add_executable(${PROJECT_NAME} test_package.c)
 target_link_libraries(${PROJECT_NAME} PRIVATE LibLZMA::LibLZMA)
+
+add_executable(${PROJECT_NAME}_config test_package.c)
+target_link_libraries(${PROJECT_NAME}_config PRIVATE liblzma::liblzma)
 
 # Test whether variables from https://cmake.org/cmake/help/latest/module/FindLibLZMA.html
 # are properly defined in conan generators
