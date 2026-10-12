@@ -11,3 +11,9 @@ sources:
   "1.2.3":
     url: "https://github.com/kspalaiologos/bzip3/releases/download/1.2.3/bzip3-1.2.3.tar.xz"
     sha256: "a6a4fa418bdff6f15be3604e8e85b5b73bf0f20e31de9603d55dc100914a111f"
+patches:
+  "1.5.4":
+    - patch_file: "patches/1.5.4-0001-add-missing-cmake-config-template.patch"
+      patch_description: "Add the CMake package config template omitted from the release archive"
+      patch_type: "backport"
+      patch_source: "https://github.com/kspalaiologos/bzip3/blob/1.5.4/bzip3-config.cmake.in"
