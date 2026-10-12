@@ -22,8 +22,11 @@ class LibpngConan(ConanFile):
         "fPIC": [True, False],
         "neon": [True, "check", False],
         "msa": [True, False],
+        "mmi": [True, False],
         "sse": [True, False],
         "vsx": [True, False],
+        "lsx": [True, False],
+        "rvv": [True, False],
         "api_prefix": ["ANY"],
     }
     default_options = {
@@ -31,8 +34,11 @@ class LibpngConan(ConanFile):
         "fPIC": True,
         "neon": True,
         "msa": True,
+        "mmi": True,
         "sse": True,
         "vsx": True,
+        "lsx": True,
+        "rvv": False,
         "api_prefix": "",
     }
     implements = ["auto_shared_fpic"]
@@ -60,6 +66,14 @@ class LibpngConan(ConanFile):
         return "ppc" in self.settings.arch
 
     @property
+    def _has_lsx_support(self):
+        return self.settings.arch == "loongarch64"
+
+    @property
+    def _has_rvv_support(self):
+        return "riscv" in self.settings.arch
+
+    @property
     def _neon_msa_sse_vsx_mapping(self):
         return {
             "True": "on",
@@ -74,10 +88,15 @@ class LibpngConan(ConanFile):
             del self.options.neon
         if not self._has_msa_support:
             del self.options.msa
+            del self.options.mmi
         if not self._has_sse_support:
             del self.options.sse
         if not self._has_vsx_support:
             del self.options.vsx
+        if not self._has_lsx_support:
+            del self.options.lsx
+        if not self._has_rvv_support:
+            del self.options.rvv
 
     def layout(self):
         cmake_layout(self, src_folder="src")
@@ -99,10 +118,15 @@ class LibpngConan(ConanFile):
             tc.cache_variables["PNG_ARM_NEON"] = self._neon_msa_sse_vsx_mapping[str(self.options.neon)]
         if self._has_msa_support:
             tc.cache_variables["PNG_MIPS_MSA"] = self._neon_msa_sse_vsx_mapping[str(self.options.msa)]
+            tc.cache_variables["PNG_MIPS_MMI"] = self._neon_msa_sse_vsx_mapping[str(self.options.mmi)]
         if self._has_sse_support:
             tc.cache_variables["PNG_INTEL_SSE"] = self._neon_msa_sse_vsx_mapping[str(self.options.sse)]
         if self._has_vsx_support:
             tc.cache_variables["PNG_POWERPC_VSX"] = self._neon_msa_sse_vsx_mapping[str(self.options.vsx)]
+        if self._has_lsx_support:
+            tc.cache_variables["PNG_LOONGARCH_LSX"] = self._neon_msa_sse_vsx_mapping[str(self.options.lsx)]
+        if self._has_rvv_support:
+            tc.cache_variables["PNG_RISCV_RVV"] = self._neon_msa_sse_vsx_mapping[str(self.options.rvv)]
         tc.cache_variables["PNG_FRAMEWORK"] = False  # changed from False to True by default in PNG 1.6.41
         tc.cache_variables["PNG_TOOLS"] = False
         tc.cache_variables["CMAKE_MACOSX_BUNDLE"] = False
@@ -155,5 +179,6 @@ class LibpngConan(ConanFile):
             if self.settings.build_type == "Debug":
                 suffix += "d"
         self.cpp_info.libs = [f"{prefix}png{suffix}"]
+        self.cpp_info.requires = ["zlib-ng::zlib-ng"]
         if self.settings.os in ["Linux", "Android", "FreeBSD", "SunOS", "AIX"]:
             self.cpp_info.system_libs.append("m")
