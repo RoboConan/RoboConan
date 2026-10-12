@@ -49,7 +49,6 @@ class CutlassConan(ConanFile):
         tc.cache_variables["CUTLASS_ENABLE_HEADERS_ONLY"] = True  # non-header-only is only used for tests, tools and examples
         tc.cache_variables["CUTLASS_ENABLE_LIBRARY"] = True
         tc.cache_variables["CUTLASS_ENABLE_TOOLS"] = False
-        tc.cache_variables["CUTLASS_NATIVE_CUDA"] = False
         tc.cache_variables["CUTLASS_ENABLE_CUBLAS"] = False  # used only in tests
         tc.cache_variables["CUTLASS_ENABLE_CUDNN"] = False  # used only in tests
         tc.cache_variables["CUTLASS_ENABLE_PROFILER"] = False  # tool
