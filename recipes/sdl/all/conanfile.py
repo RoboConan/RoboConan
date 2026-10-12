@@ -242,6 +242,15 @@ class SDLConan(ConanFile):
         tc.variables["SDL_OPENGLES"] = self.options.opengles
         tc.variables["SDL_VULKAN"] = self.options.vulkan
         tc.variables["SDL_HIDAPI"] = self.options.hidapi
+        # TODO: Model these optional external dependencies as Conan options before enabling them.
+        # Leaving the upstream defaults enabled makes the package depend on libraries from the host.
+        tc.variables["SDL_PIPEWIRE"] = False
+        tc.variables["SDL_KMSDRM"] = False
+        tc.variables["SDL_DBUS"] = False
+        tc.variables["SDL_IBUS"] = False
+        tc.variables["SDL_LIBUDEV"] = False
+        tc.variables["SDL_WAYLAND_LIBDECOR"] = False
+
         if self.settings.os == "Linux":
             # See https://github.com/bincrafters/community/issues/696
             tc.variables["SDL_VIDEO_DRIVER_X11_SUPPORTS_GENERIC_EVENTS"] = 1
