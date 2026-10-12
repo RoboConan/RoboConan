@@ -1,8 +1,8 @@
 sources:
-  "20160605":
-    sha256: "2669b49ee000150af7709b21c7656f1f6cbea09fd33116c40b41310adeb2b73e"
-    url: "https://github.com/ImageMagick/jbig/archive/5d8f5f6fa71766ced5e828bf7bfff642ddb8a6ad.zip"
+  "20250929":
+    url: "https://github.com/ImageMagick/jbig/archive/c431166292d1590280b30a8edefee4d36c7a6219.tar.gz"
+    sha256: "d2e1fdab8dc937773c1d4dbb048bbef6b973c806e30d4a1d13dd42789bd8f909"
 patches:
-  "20160605":
+  "20250929":
     - patch_file: patches/0001-add-missing-export.patch
     - patch_file: patches/0002-fix-msvc-export.patch

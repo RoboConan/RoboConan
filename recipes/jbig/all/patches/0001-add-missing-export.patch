@@ -1,6 +1,7 @@
 --- a/libjbig/jbig.h
 +++ b/libjbig/jbig.h
-@@ -307,5 +309,6 @@
+@@ -297,6 +297,7 @@ extern JBIGEXPORT void jbg_split_planes(unsigned long x, unsigned long y, int has_planes,
+                                         int encode_planes,
                                          const unsigned char *src, unsigned char **dest,
                                          int use_graycode);
  extern JBIGEXPORT int jbg_newlen(unsigned char *bie, size_t len);
