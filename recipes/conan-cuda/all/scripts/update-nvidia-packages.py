@@ -43,10 +43,50 @@ conanfile_policies = {
 nv_packages = {
     "cuda-crt": ["cuda_crt", "cuda_nvcc"],
     "cuda-opencl": ["cuda_opencl", "cuda_cudart"],
+    "cuda-tileiras": ["cuda_tileiras"],
     "cudnn": ["cudnn"],
     "culibos": ["cuda_culibos", "cuda_cudart"],
     "nvptxcompiler": ["libnvptxcompiler", "cuda_nvcc"],
     "nvvm": ["libnvvm", "cuda_nvcc"],
+}
+
+# NVIDIA redistribution manifest components that intentionally do not have a
+# matching binary recipe. Keep this list exact so newly introduced components
+# fail the audit instead of being hidden by a prefix or category wildcard.
+ignored_nv_packages = {
+    "cccl": "provided by the cuda-cccl source recipe",
+    "collectx_bringup": "driver and datacenter deployment tooling",
+    "cuda_cccl": "provided by the cuda-cccl source recipe",
+    "cuda_compat": "driver compatibility package",
+    "cuda_compat_orin": "driver compatibility package for Jetson Orin",
+    "cuda_demo_suite": "CUDA demonstration binaries",
+    "cuda_documentation": "documentation payload",
+    "cuda_memcheck": "legacy developer tool superseded by Compute Sanitizer",
+    "cuda_nsight": "legacy Nsight IDE payload",
+    "cuda_nvtx": "provided by the nvtx source recipe",
+    "cuda_nvvp": "legacy Visual Profiler payload",
+    "cuda_sandbox_dev": "not yet packaged nvsandboxutils development payload",
+    "cudnn_jit": "selected by the cudnn recipe's precompiled option",
+    "cudnn_samples": "cuDNN sample sources",
+    "driver_assistant": "driver installation helper",
+    "fabricmanager": "datacenter driver management service",
+    "imex": "datacenter GPU fabric service",
+    "libcuobjclient": "not yet packaged GPUDirect object-storage client",
+    "libnvidia_nscq": "datacenter switch-configuration library",
+    "libnvsdm": "datacenter switch-management library",
+    "libnvvm_samples": "NVVM sample sources",
+    "mft": "Mellanox firmware tooling",
+    "mft_autocomplete": "Mellanox firmware-tooling shell completions",
+    "mft_oem": "Mellanox firmware-tooling OEM payload",
+    "nsight_compute": "Nsight Compute developer tool",
+    "nsight_nvtx": "legacy Nsight NVTX payload",
+    "nsight_systems": "Nsight Systems developer tool",
+    "nsight_vse": "Nsight Visual Studio integration",
+    "nvidia_driver": "GPU driver payload",
+    "nvidia_fs": "GPUDirect Storage kernel module",
+    "nvlsm": "NVLink fabric management service",
+    "nvpl_common": "metadata-only NVPL CMake umbrella package",
+    "visual_studio_integration": "NVCC Visual Studio integration bundled by the nvcc recipe",
 }
 
 cutensornet_versions = {
@@ -92,7 +132,7 @@ def find_nvidia_redist_json_packages():
 def _process_base_url(base_url, redist_conan_packages):
     r = requests.get(base_url)
     r.raise_for_status()
-    redist_files = re.findall(r"redistrib_[^'>]+\.json", r.text)
+    redist_files = sorted(set(re.findall(r"redistrib_[^'>]+\.json", r.text)))
     relevant_nv_packages = {}
     for conan_pkg, info in redist_conan_packages.items():
         if base_url in info["urls"]:
@@ -108,22 +148,25 @@ def _fetch_and_process_redist_file(url, relevant_nv_packages, hashes, url_dates)
     redist_info = r.json()
     url_dates[url] = redist_info.get("release_date", None)
     results = {}
+    manifest_components = set()
     for nv_pkg_name, package_info in redist_info.items():
         if not isinstance(package_info, dict) or "version" not in package_info:
             continue
+        manifest_components.add(nv_pkg_name)
         version = package_info["version"]
         cuda_versions = package_info.get("cuda_variant")
         if cuda_versions:
             cuda_versions = [Version(v) for v in cuda_versions]
         if nv_pkg_name in relevant_nv_packages:
             results[nv_pkg_name] = (version, cuda_versions, url)
-    return results
+    return results, manifest_components
 
 
 def find_all_redist_package_versions(redist_conan_packages):
     versions = {}
     hashes = {}
     url_dates = {}
+    manifest_components = set()
     base_urls = sorted(set().union(*(info["urls"] for info in redist_conan_packages.values())))
     redist_urls = []
     with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -142,7 +185,8 @@ def find_all_redist_package_versions(redist_conan_packages):
         for future in tqdm(
             concurrent.futures.as_completed(futures), total=len(futures), desc="Fetching redist files"
         ):
-            result = future.result()
+            result, components = future.result()
+            manifest_components.update(components)
             # Iterate over "nv_packages" for each Conan package name to allow earlier names to take precedence
             for conan_pkg, info in redist_conan_packages.items():
                 for nv_pkg_name in info["nv_packages"]:
@@ -159,7 +203,27 @@ def find_all_redist_package_versions(redist_conan_packages):
                         for cuda_major in cuda_versions or [0]:
                             versions[conan_pkg][version].append((cuda_major, url_dates[url], url))
                         break
-    return versions, hashes
+    return versions, hashes, manifest_components
+
+
+def find_unmapped_manifest_components(manifest_components, redist_conan_packages):
+    mapped_components = {
+        nv_pkg_name
+        for info in redist_conan_packages.values()
+        for nv_pkg_name in info["nv_packages"]
+    }
+    return sorted(manifest_components - mapped_components - ignored_nv_packages.keys())
+
+
+def validate_manifest_components(manifest_components, redist_conan_packages):
+    unmapped = find_unmapped_manifest_components(manifest_components, redist_conan_packages)
+    if unmapped:
+        package_list = "\n".join(f"  - {package}" for package in unmapped)
+        raise SystemExit(
+            "NVIDIA redistribution manifests contain unmapped components. "
+            "Add a recipe/updater mapping or a reviewed exact-key ignore entry:\n"
+            f"{package_list}"
+        )
 
 
 def _select_versions(versions_dict, version_range=None, policy="latest_minor"):
@@ -254,6 +318,11 @@ def parse_args(argv=None):
         help="List of specific packages to update. If not provided, all NVIDIA redist packages will be updated.",
     )
     parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose output")
+    parser.add_argument(
+        "--audit-only",
+        action="store_true",
+        help="Audit manifest component coverage without updating recipe metadata",
+    )
     return parser.parse_args(argv)
 
 
@@ -264,8 +333,13 @@ def main(argv=None):
         for pkg in args.packages:
             if pkg not in redist_conan_packages:
                 raise ValueError(f"Unknown package: {pkg}")
-        redist_conan_packages = {pkg: redist_conan_packages[pkg] for pkg in args.packages}
-    all_versions, hashes = find_all_redist_package_versions(redist_conan_packages)
+    all_versions, hashes, manifest_components = find_all_redist_package_versions(redist_conan_packages)
+    validate_manifest_components(manifest_components, redist_conan_packages)
+    if args.audit_only:
+        print(f"All {len(manifest_components)} NVIDIA redistribution manifest components are mapped or explicitly ignored.")
+        return
+    if args.packages:
+        all_versions = {pkg: all_versions[pkg] for pkg in args.packages}
     if args.verbose:
         pprint(all_versions)
     update_all_conandata(all_versions, hashes)
