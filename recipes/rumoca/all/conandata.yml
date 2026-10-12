@@ -1,4 +1,4 @@
 sources:
-  "0.5.0":
-    url: "https://github.com/CogniPilot/rumoca/archive/e83e5d31fd8b3ea4861dea438747fdc5a5ca4a46.tar.gz"
-    sha256: "50f0a6be9e07340b299f736f8545b2bd5ce848e7a600984b8089c6986f56b214"
+  "0.10.2":
+    url: "https://github.com/CogniPilot/rumoca/archive/v0.10.2.tar.gz"
+    sha256: "d884a09fdd6bf82fcd1870100cd792ce9d1000e72122040166b4779ce743ac93"
