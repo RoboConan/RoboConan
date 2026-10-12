@@ -1,4 +1,7 @@
 sources:
+  "0.9.4":
+    url: "https://github.com/vstakhov/libucl/archive/refs/tags/0.9.4.tar.gz"
+    sha256: "319d8ff13441f55d91cd7f3708a54bd03779733e26958c2346c5109014520aaf"
   "0.9.0":
     url: "https://github.com/vstakhov/libucl/archive/refs/tags/0.9.0.tar.gz"
     sha256: "87b233048bca7d307b14cffb882d3c198dc3fff96b19e0c3515428f027b3ebfe"
@@ -9,6 +12,10 @@ sources:
     url: "https://github.com/vstakhov/libucl/archive/refs/tags/0.8.1.tar.gz"
     sha256: "a6397e179672f0e8171a0f9a2cfc37e01432b357fd748b13f4394436689d24ef"
 patches:
+  "0.9.4":
+    - patch_file: "patches/0007-0.9.4-conan.patch"
+      patch_description: "Use Conan dependencies, disable package tests and fix installation"
+      patch_type: "conan"
   "0.9.0":
     - patch_file: "patches/0001-0.8.1-shared-win32.patch"
       patch_description: "fix UCL_EXTERN definition for shared build on win32"

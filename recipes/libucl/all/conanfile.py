@@ -45,7 +45,7 @@ class LibuclConan(ConanFile):
         if self.options.with_lua == "lua":
             self.requires("lua/[^5.4.6]")
         elif self.options.with_lua == "luajit":
-            self.requires("luajit/2.0.5")
+            self.requires("luajit/[>=2.1.0-beta3 <2.2]")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
@@ -53,11 +53,13 @@ class LibuclConan(ConanFile):
 
     def generate(self):
         tc = CMakeToolchain(self)
-        on_off = lambda v: "ON" if v else "OFF"
-        tc.variables["ENABLE_URL_INCLUDE"] = on_off(self.options.enable_url_include)
-        tc.variables["ENABLE_URL_SIGN"] = on_off(self.options.enable_url_sign)
-        tc.variables["ENABLE_LUA"] = on_off(self.options.with_lua == "lua")
-        tc.variables["ENABLE_LUAJIT"] = on_off(self.options.with_lua == "luajit")
+        tc.variables["ENABLE_URL_INCLUDE"] = self.options.enable_url_include
+        tc.variables["ENABLE_URL_SIGN"] = self.options.enable_url_sign
+        tc.variables["ENABLE_LUA"] = self.options.with_lua == "lua"
+        tc.variables["ENABLE_LUAJIT"] = self.options.with_lua == "luajit"
+        tc.variables["ENABLE_UTILS"] = False
+        tc.variables["ENABLE_SANITIZERS"] = False
+        tc.variables["BUILD_TESTING"] = False
         tc.generate()
 
         deps = CMakeDeps(self)
@@ -75,11 +77,29 @@ class LibuclConan(ConanFile):
         rmdir(self, os.path.join(self.package_folder, "share"))
 
     def package_info(self):
-        self.cpp_info.libs = ["ucl"]
-        if self.settings.os == "Windows" and not self.options.shared:
-            self.cpp_info.defines.append("UCL_STATIC")
+        self.cpp_info.set_property("cmake_file_name", "ucl")
 
-        self.cpp_info.set_property("pkg_config_name", "libucl")
+        ucl = self.cpp_info.components["ucl"]
+        ucl.libs = ["ucl"]
+        ucl.set_property("cmake_target_name", "ucl::ucl")
+        ucl.set_property("pkg_config_name", "libucl")
+        if self.settings.os == "Windows" and not self.options.shared:
+            ucl.defines.append("UCL_STATIC")
 
         if Version(self.version) >= "0.9.0" and self.settings.os in ["Linux", "FreeBSD"]:
-            self.cpp_info.system_libs.append("m")
+            ucl.system_libs.append("m")
+
+        if self.options.enable_url_include:
+            ucl.requires.append("libcurl::curl")
+        if self.options.enable_url_sign:
+            ucl.requires.append("openssl::crypto")
+
+        if self.options.with_lua:
+            lua = self.cpp_info.components["lua"]
+            lua.libs = ["lua-ucl"]
+            lua.requires = ["ucl"]
+            lua.set_property("cmake_target_name", "ucl::lua")
+            if self.options.with_lua == "lua":
+                lua.requires.append("lua::lua")
+            else:
+                lua.requires.append("luajit::luajit")

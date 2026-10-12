@@ -1,0 +1,177 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -5,12 +5,10 @@
+ SET(LIBUCL_VERSION_MINOR 9)
+ SET(LIBUCL_VERSION_PATCH 4)
+
+-SET(LIBUCL_VERSION
+-        "${LIBUCL_VERSION_MAJOR}.${LIBUCL_VERSION_MINOR}.${LIBUCL_VERSION_PATCH}")
++SET(LIBUCL_VERSION "${LIBUCL_VERSION_MAJOR}.${LIBUCL_VERSION_MINOR}.${LIBUCL_VERSION_PATCH}")
+
+ INCLUDE(CheckCCompilerFlag)
+ INCLUDE(CheckCSourceCompiles)
+-INCLUDE(FindOpenSSL)
+ INCLUDE(GNUInstallDirs)
+
+ OPTION(ENABLE_URL_INCLUDE  "Enable urls in ucl includes (requires libcurl or libfetch) [default: OFF]" OFF)
+@@ -20,6 +18,7 @@
+ OPTION(ENABLE_LUAJIT "Enable luajit support [default: OFF]" OFF)
+ OPTION(ENABLE_UTILS "Enable building utility binaries [default: OFF]" OFF)
+ OPTION(ENABLE_SANITIZERS "Enable sanitizers (address, undefined, etc.) [default: OFF]" OFF)
++OPTION(BUILD_TESTING "Build tests [default: OFF]" OFF)
+ SET(SANITIZE_TYPE "address" CACHE STRING "Type of sanitizer to use (address, thread, undefined, memory, leak)")
+ SET_PROPERTY(CACHE SANITIZE_TYPE PROPERTY STRINGS address thread undefined memory leak)
+
+@@ -138,29 +137,7 @@
+ ENDIF(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+
+ IF(ENABLE_URL_INCLUDE MATCHES "ON")
+-    FIND_LIBRARY(LIBFETCH_LIBRARY NAMES fetch PATHS	PATH_SUFFIXES lib64 lib
+-                      PATHS
+-                          ~/Library/Frameworks
+-                          /Library/Frameworks
+-                          /usr/local
+-                          /usr
+-                          /sw
+-                          /opt/local
+-                          /opt/csw
+-                          /opt
+-                     DOC "Path where the libfetch library can be found")
+-    IF(LIBFETCH_LIBRARY)
+-    	FIND_FILE(HAVE_FETCH_H NAMES fetch.h PATHS /usr/include
+-    											   /opt/include
+-    											   /usr/local/include
+-    				DOC "Path to libfetch header")
+-    ELSE(LIBFETCH_LIBRARY)
+-    	# Try to find libcurl
+-        FIND_PACKAGE(CURL)
+-    	IF(NOT CURL_FOUND)
+-    		MESSAGE(WARNING "Neither libcurl nor libfetch were found, no support of URL includes in configuration")
+-    	ENDIF(NOT CURL_FOUND)
+-    ENDIF(LIBFETCH_LIBRARY)
++    FIND_PACKAGE(CURL REQUIRED)
+ ENDIF(ENABLE_URL_INCLUDE MATCHES "ON")
+
+ set(SYNC_BUILTINS_TEST_SOURCE [====[
+@@ -216,10 +193,8 @@
+ ENDIF()
+
+ IF(ENABLE_URL_SIGN MATCHES "ON")
+-	IF(OPENSSL_FOUND)
+-		SET(HAVE_OPENSSL 1)
+-		INCLUDE_DIRECTORIES("${OPENSSL_INCLUDE_DIR}")
+-	ENDIF(OPENSSL_FOUND)
++	FIND_PACKAGE(OpenSSL REQUIRED)
++	SET(HAVE_OPENSSL 1)
+ ENDIF(ENABLE_URL_SIGN MATCHES "ON")
+
+ SET(UCL_COMPILE_DEFS)
+@@ -272,31 +247,20 @@
+-IF(ENABLE_LUA MATCHES "ON")
++IF(ENABLE_LUA OR ENABLE_LUAJIT)
+ 	IF(ENABLE_LUAJIT MATCHES "ON")
+-		FindLua(VERSION_MAJOR "5" VERSION_MINOR "1" ROOT "${LUA_ROOT}")
+-		IF(NOT LUA_FOUND)
+-			MESSAGE(FATAL_ERROR "Lua not found, lua support is required")
+-		ELSE(NOT LUA_FOUND)
+-			INCLUDE_DIRECTORIES("${LUA_INCLUDE_DIR}")
+-		ENDIF(NOT LUA_FOUND)
++		FIND_PACKAGE(luajit REQUIRED CONFIG)
+ 	ELSE(ENABLE_LUAJIT MATCHES "ON")
+-		FOREACH(LUA_MINOR RANGE 4 1 -1)
+-				FindLua(VERSION_MAJOR "5" VERSION_MINOR ${LUA_MINOR} ROOT "${LUA_ROOT}")
+-			IF(LUA_FOUND)
+-				BREAK()
+-			ENDIF(LUA_FOUND)
+-		ENDFOREACH(LUA_MINOR RANGE 4 1 -1)
+-		IF(NOT LUA_FOUND)
+-			MESSAGE(FATAL_ERROR "Lua not found, lua support is required")
+-		ELSE(NOT LUA_FOUND)
+-			INCLUDE_DIRECTORIES("${LUA_INCLUDE_DIR}")
+-		ENDIF(NOT LUA_FOUND)
++		FIND_PACKAGE(lua REQUIRED CONFIG)
+ 	ENDIF(ENABLE_LUAJIT MATCHES "ON")
+ 	SET(UCL_LUA_SRC lua/lua_ucl.c)
+ 	ADD_LIBRARY(lua-ucl ${LIB_TYPE} ${UCL_LUA_SRC})
+ 	ADD_LIBRARY(ucl::lua ALIAS lua-ucl)
+ 	IF(ENABLE_LUAJIT MATCHES "ON")
+-		TARGET_LINK_LIBRARIES(lua-ucl "${LUAJIT_LIBRARY}")
++		TARGET_LINK_LIBRARIES(lua-ucl luajit::luajit)
+ 	ELSE(ENABLE_LUAJIT MATCHES "ON")
+-		TARGET_LINK_LIBRARIES(lua-ucl "${LUA_LIBRARY}")
++		TARGET_LINK_LIBRARIES(lua-ucl lua::lua)
+ 	ENDIF(ENABLE_LUAJIT MATCHES "ON")
+ 	TARGET_LINK_LIBRARIES(lua-ucl ucl)
+-	TARGET_INCLUDE_DIRECTORIES(lua-ucl PUBLIC include PRIVATE src uthash)
++	TARGET_INCLUDE_DIRECTORIES(lua-ucl
++		PUBLIC
++		  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
++		  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
++		PRIVATE src uthash)
+@@ -303,8 +263,12 @@
+ 	SET_TARGET_PROPERTIES(lua-ucl PROPERTIES
+ 		VERSION ${LIBUCL_VERSION}
+ 		SOVERSION ${LIBUCL_VERSION_MAJOR}
++		EXPORT_NAME lua
+ 		PUBLIC_HEADER include/lua_ucl.h)
+-	INSTALL(TARGETS lua-ucl DESTINATION ${CMAKE_INSTALL_LIBDIR}
++	INSTALL(TARGETS lua-ucl EXPORT uclConfig
++			RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
++			LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
++			ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+ 			PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+ ENDIF()
+
+@@ -312,12 +276,12 @@
+     TARGET_LINK_LIBRARIES(ucl fetch)
+ ELSE(HAVE_FETCH_H)
+     IF(CURL_FOUND)
+-        TARGET_LINK_LIBRARIES(ucl ${CURL_LIBRARIES})
++        TARGET_LINK_LIBRARIES(ucl CURL::libcurl)
+     ENDIF(CURL_FOUND)
+ ENDIF(HAVE_FETCH_H)
+ IF(ENABLE_URL_SIGN MATCHES "ON")
+ 	IF(OPENSSL_FOUND)
+-		TARGET_LINK_LIBRARIES(ucl ${OPENSSL_LIBRARIES})
++		TARGET_LINK_LIBRARIES(ucl OpenSSL::Crypto)
+ 	ENDIF(OPENSSL_FOUND)
+ ENDIF(ENABLE_URL_SIGN MATCHES "ON")
+
+@@ -328,11 +292,16 @@
+ SET_TARGET_PROPERTIES(ucl PROPERTIES
+ 	PUBLIC_HEADER "${UCLHDR}")
+
+-INSTALL(TARGETS ucl EXPORT uclConfig DESTINATION ${CMAKE_INSTALL_LIBDIR}
++INSTALL(TARGETS ucl EXPORT uclConfig
++		RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
++		LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
++		ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+ 		PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+-ENABLE_TESTING()
+-ADD_SUBDIRECTORY(tests)
++IF(BUILD_TESTING)
++	ENABLE_TESTING()
++	ADD_SUBDIRECTORY(tests)
++ENDIF()
+
+ IF(ENABLE_UTILS MATCHES "ON")
+     ADD_SUBDIRECTORY(utils)
+diff --git a/include/ucl.h b/include/ucl.h
+--- a/include/ucl.h
++++ b/include/ucl.h
+@@ -33,7 +33,13 @@
+ #include <stdio.h>
+
+ #ifdef _WIN32
++#ifdef ucl_EXPORTS
+ #define UCL_EXTERN __declspec(dllexport)
++#elif !defined(UCL_STATIC)
++#define UCL_EXTERN __declspec(dllimport)
++#else
++#define UCL_EXTERN
++#endif
+ #else
+ #define UCL_EXTERN
+ #endif
