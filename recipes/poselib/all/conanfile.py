@@ -48,7 +48,11 @@ class PoselibConan(ConanFile):
 
     def generate(self):
         tc = CMakeToolchain(self)
+        tc.cache_variables["BUILD_TESTS"] = False
+        tc.cache_variables["ENABLE_ASAN"] = False
         tc.cache_variables["MARCH_NATIVE"] = False
+        tc.cache_variables["PYTHON_PACKAGE"] = False
+        tc.cache_variables["WITH_BENCHMARK"] = False
         tc.cache_variables["CMAKE_POLICY_DEFAULT_CMP0077"] = "NEW"
         tc.generate()
         deps = CMakeDeps(self)
@@ -71,6 +75,7 @@ class PoselibConan(ConanFile):
 
         suffix = "d" if self.settings.build_type == "Debug" else ""
         self.cpp_info.libs = ["PoseLib" + suffix]
+        self.cpp_info.defines = [f"POSELIB_DEBUG={1 if self.settings.build_type == 'Debug' else 0}"]
 
         if self.settings.os in ["Linux", "FreeBSD"]:
             self.cpp_info.system_libs = ["m"]

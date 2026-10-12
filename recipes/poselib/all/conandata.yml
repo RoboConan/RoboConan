@@ -1,4 +1,7 @@
 sources:
+  "3.0.0-git.20260623":
+    url: "https://github.com/PoseLib/PoseLib/archive/fa7280fee27f97aff31ae7f98bab7f583fac7d08.zip"
+    sha256: "5408d4ae8ce367cb2f076bc6c5f0f6f78abd3573d2c015304b04e46f23455f5b"
   "2.0.5":
     url: "https://github.com/PoseLib/PoseLib/archive/refs/tags/v2.0.5.tar.gz"
     sha256: "a9493e6725c58e6ae541fe416c0a6179185a60006880ff3ddf32737a43695668"
