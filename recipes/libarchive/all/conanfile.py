@@ -81,6 +81,10 @@ class LibarchiveConan(ConanFile):
     def requirements(self):
         if self.settings.os == "Linux" and self.options.with_acl:
             self.requires("acl/[>=2.3 <3]")
+        if self.settings.os == "Linux" and self.options.with_xattr:
+            self.requires("libattr/[^2.5.1]")
+        if self.settings.os == "FreeBSD" and not self.options.with_openssl:
+            self.requires("libmd/[^1.1]")
         if self.options.with_zlib:
             self.requires("zlib-ng/[^2.0]")
         if self.options.with_bzip2:
@@ -120,6 +124,8 @@ class LibarchiveConan(ConanFile):
             raise ConanInvalidConfiguration("CNG is only available on Windows")
         if self.options.with_expat and self.options.with_libxml2:
             raise ConanInvalidConfiguration("libxml2 and expat options are exclusive. They cannot be used together as XML engine")
+        if self.options.with_libxml2 and not self.options.with_iconv:
+            raise ConanInvalidConfiguration("libxml2 support requires with_iconv=True")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
@@ -148,6 +154,9 @@ class LibarchiveConan(ConanFile):
         tc.variables["ENABLE_LIBXML2"] = self.options.with_libxml2
         tc.variables["ENABLE_ICONV"] = self.options.with_iconv
         tc.variables["ENABLE_EXPAT"] = self.options.with_expat
+        tc.variables["ENABLE_WIN32_XMLLITE"] = (
+            self.settings.os == "Windows" and not self.options.with_libxml2 and not self.options.with_expat
+        )
         tc.variables["ENABLE_PCREPOSIX"] = self.options.with_pcreposix
         if self.options.with_pcreposix:
             tc.variables["POSIX_REGEX_LIB"] = "LIBPCREPOSIX"
@@ -170,6 +179,10 @@ class LibarchiveConan(ConanFile):
         tc.variables["ENABLE_MBEDTLS"] = self.options.with_mbedtls
         tc.variables["ENABLE_PCRE2POSIX"] = self.options.with_pcre2
         tc.variables["ENABLE_XATTR"] = self.options.with_xattr
+        # RichACL has no maintained package and must not be picked up from the host.
+        tc.variables["HAVE_LIBRICHACL"] = False
+        if self.settings.os != "FreeBSD":
+            tc.variables["LIBMD_FOUND"] = False
         tc.cache_variables["CMAKE_TRY_COMPILE_CONFIGURATION"] = str(self.settings.build_type)
         tc.generate()
 
@@ -194,6 +207,10 @@ class LibarchiveConan(ConanFile):
         self.cpp_info.libs = collect_libs(self)
         if self.settings.os == "Linux" and self.options.with_acl:
             self.cpp_info.requires.append("acl::acl")
+        if self.settings.os == "Linux" and self.options.with_xattr:
+            self.cpp_info.requires.append("libattr::libattr")
+        if self.settings.os == "FreeBSD" and not self.options.with_openssl:
+            self.cpp_info.requires.append("libmd::libmd")
         if self.options.with_zlib:
             self.cpp_info.requires.append("zlib-ng::zlib-ng")
         if self.options.with_bzip2:
@@ -221,12 +238,14 @@ class LibarchiveConan(ConanFile):
         if self.options.with_zstd:
             self.cpp_info.requires.append("zstd::zstd")
         if self.options.get_safe("with_mbedtls"):
-            self.cpp_info.requires.append("mbedtls::libembedtls")
+            self.cpp_info.requires.append("mbedtls::mbedcrypto")
         if self.options.get_safe("with_pcre2"):
             self.cpp_info.requires.append("pcre2::pcre2-posix")
         if self.settings.os == "Windows" and self.options.with_cng:
             self.cpp_info.system_libs.append("bcrypt")
         if self.settings.os == "Windows" and not self.options.with_libxml2 and not self.options.with_expat:
-            self.cpp_info.system_libs.append("xmllite")
+            self.cpp_info.system_libs.extend(["xmllite", "uuid"])
+        if self.settings.os == "Haiku":
+            self.cpp_info.system_libs.append("bsd")
         if is_msvc(self) and not self.options.shared:
             self.cpp_info.defines = ["LIBARCHIVE_STATIC"]
