@@ -1,6 +1,7 @@
 import os
 
 from conan import ConanFile
+from conan.tools.apple import is_apple_os
 from conan.tools.build import cross_building, stdcpp_library, check_min_cppstd
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.env import VirtualBuildEnv
@@ -195,8 +196,10 @@ class LibjxlConan(ConanFile):
             self.cpp_info.components["jxl"].system_libs.append("atomic")
         if not self.options.shared:
             self.cpp_info.components["jxl"].defines.append("JXL_STATIC_DEFINE")
-        if libcxx:
-            self.cpp_info.components["jxl"].system_libs.append(libcxx)
+            if not is_msvc(self) and not is_apple_os(self):
+                self.cpp_info.components["jxl"].system_libs.append("m")
+            if libcxx:
+                self.cpp_info.components["jxl"].system_libs.append(libcxx)
 
         # jxl_cms
         if Version(self.version) >= "0.9.0":
@@ -205,8 +208,10 @@ class LibjxlConan(ConanFile):
             self.cpp_info.components["jxl_cms"].requires = ["lcms::lcms", "highway::highway"]
             if not self.options.shared:
                 self.cpp_info.components["jxl_cms"].defines.append("JXL_CMS_STATIC_DEFINE")
-            if libcxx:
-                self.cpp_info.components["jxl_cms"].system_libs.append(libcxx)
+                if not is_msvc(self) and not is_apple_os(self):
+                    self.cpp_info.components["jxl_cms"].system_libs.append("m")
+                if libcxx:
+                    self.cpp_info.components["jxl_cms"].system_libs.append(libcxx)
             self.cpp_info.components["jxl"].requires.append("jxl_cms")
 
         # jxl_dec
@@ -225,5 +230,7 @@ class LibjxlConan(ConanFile):
             self.cpp_info.components["jxl_threads"].system_libs = ["pthread"]
         if not self.options.shared:
             self.cpp_info.components["jxl_threads"].defines.append("JXL_THREADS_STATIC_DEFINE")
-        if libcxx:
-            self.cpp_info.components["jxl_threads"].system_libs.append(libcxx)
+            if not is_msvc(self) and not is_apple_os(self):
+                self.cpp_info.components["jxl_threads"].system_libs.append("m")
+            if libcxx:
+                self.cpp_info.components["jxl_threads"].system_libs.append(libcxx)
