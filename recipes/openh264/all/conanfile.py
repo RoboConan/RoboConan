@@ -38,6 +38,9 @@ class OpenH264Conan(ConanFile):
     def layout(self):
         basic_layout(self, src_folder="src")
 
+    def export_sources(self):
+        export_conandata_patches(self)
+
     def build_requirements(self):
         self.tool_requires("meson/[^1]")
         if self.settings.arch in ["x86", "x86_64"]:
@@ -48,6 +51,7 @@ class OpenH264Conan(ConanFile):
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
+        apply_conandata_patches(self)
 
     def generate(self):
         tc = MesonToolchain(self)
