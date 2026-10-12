@@ -95,6 +95,10 @@ int main() {
   // Pass the model to HiGHS
   return_status = highs.passModel(model);
   assert(return_status==HighsStatus::kOk);
+#ifdef TEST_HIPO
+  return_status = highs.setOptionValue("solver", "ipm");
+  assert(return_status==HighsStatus::kOk);
+#endif
   //
   // Get a const reference to the LP data in HiGHS
   const HighsLp& lp = highs.getLp();
@@ -145,6 +149,10 @@ int main() {
     model.lp_.integrality_[col] = HighsVarType::kInteger;
 
   highs.passModel(model);
+#ifdef TEST_HIPO
+  return_status = highs.setOptionValue("solver", "choose");
+  assert(return_status==HighsStatus::kOk);
+#endif
   // Solve the model
   return_status = highs.run();
   assert(return_status==HighsStatus::kOk);
