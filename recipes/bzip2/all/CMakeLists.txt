@@ -19,7 +19,7 @@ target_include_directories(bz2 PUBLIC ${BZ2_SRC_DIR})
 set_target_properties(bz2
     PROPERTIES
     PUBLIC_HEADER "bzlib.h"
-    SOVERSION ${BZ2_VERSION_MAJOR}
+    SOVERSION ${BZ2_VERSION_MAJOR}.0
     VERSION ${BZ2_VERSION_STRING}
     WINDOWS_EXPORT_ALL_SYMBOLS ON
 )
