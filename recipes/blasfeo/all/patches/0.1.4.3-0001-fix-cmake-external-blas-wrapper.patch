@@ -1,0 +1,35 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1384,6 +1384,22 @@ if(${LA} MATCHES REFERENCE)
+ 
+ endif()
+ 
++if(${LA} MATCHES EXTERNAL_BLAS_WRAPPER)
++
++	list(APPEND BLASFEO_SRC ${KERNEL_ALIGN_SRC})
++	if(${DP_ROUTINES})
++		list(APPEND BLASFEO_SRC ${AUX_REF_DP_SRC})
++		list(APPEND BLASFEO_SRC ${BLASFEO_WR_DP_SRC})
++	endif()
++	if(${SP_ROUTINES})
++		list(APPEND BLASFEO_SRC ${AUX_REF_SP_SRC})
++		list(APPEND BLASFEO_SRC ${BLASFEO_WR_SP_SRC})
++	endif()
++
++	find_package(BLAS REQUIRED CONFIG)
++
++endif()
++
+ # TODO WR
+ 
+ list(APPEND BLASFEO_SRC ${AUX_EXT_DEP_SRC})
+@@ -1405,5 +1421,9 @@ endif()
+ # add library
+ add_library(blasfeo ${BLASFEO_SRC})
+ 
++if(TARGET BLAS::BLAS)
++	target_link_libraries(blasfeo PUBLIC BLAS::BLAS)
++endif()
++
+ # Read version from the 'version' file
+ file(READ "${CMAKE_CURRENT_SOURCE_DIR}/version" BLASFEO_VERSION)

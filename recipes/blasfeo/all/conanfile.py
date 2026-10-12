@@ -1,6 +1,7 @@
 import os
 
 from conan import ConanFile
+from conan.errors import ConanInvalidConfiguration
 from conan.tools.apple import is_apple_os
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
@@ -46,11 +47,12 @@ class BlasfeoConan(ConanFile):
     implements = ["auto_shared_fpic"]
     languages = ["C"]
 
+    def export_sources(self):
+        export_conandata_patches(self)
+
     def config_options(self):
         if self.settings.os == "Windows":
             del self.options.fPIC
-        if self.settings.arch == "x86_64":
-            self.options.target = "x64_intel_skylake_x"
         if is_apple_os(self) and self.settings.arch == "armv8":
             self.options.target = "armv8a_apple_m1"
 
@@ -62,7 +64,13 @@ class BlasfeoConan(ConanFile):
         if self.settings.compiler == "msvc":
             self.options.target.value = "generic"
         if self.options.fortran_blas_api:
-            self.provides = ["blasfeo", "blas", "lapack"]
+            self.provides = ["blas", "lapack"]
+
+    def validate(self):
+        if self.options.use_external_blas and self.options.fortran_blas_api:
+            raise ConanInvalidConfiguration(
+                "use_external_blas and fortran_blas_api cannot be enabled simultaneously"
+            )
 
     def layout(self):
         cmake_layout(self, src_folder="src")
@@ -72,11 +80,11 @@ class BlasfeoConan(ConanFile):
             self.requires("blas/latest")
 
     def build_requirements(self):
-        self.tool_requires("nasm/[*]")
         self.tool_requires("cmake/[<4]")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
+        apply_conandata_patches(self)
 
     def generate(self):
         tc = CMakeToolchain(self)
@@ -85,7 +93,8 @@ class BlasfeoConan(ConanFile):
             tc.cache_variables["MF"] = "PANELMAJ" if self.options.matrix_format == "panel_major" else "COLMAJ"
         else:
             tc.cache_variables["LA"] = "EXTERNAL_BLAS_WRAPPER"
-            tc.cache_variables["EXTERNAL_BLAS"] = "OPENBLAS"
+            tc.cache_variables["MF"] = "COLMAJ"
+            tc.cache_variables["EXTERNAL_BLAS"] = "0"
         tc.cache_variables["TARGET"] = str(self.options.target).upper()
         tc.cache_variables["BLAS_API"] = True
         tc.cache_variables["FORTRAN_BLAS_API"] = self.options.fortran_blas_api
