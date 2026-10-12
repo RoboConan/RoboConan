@@ -1,4 +1,6 @@
 versions:
+  "0.0+git.20261006":
+    folder: all
   "0.0+git.20230410":
     folder: all
   "0.0+git.20200615":

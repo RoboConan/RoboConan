@@ -1,4 +1,7 @@
 sources:
+  "0.0+git.20261006":
+    url: "https://github.com/lvandeve/lodepng/archive/e584a8490db1b76b81bf298c11c09d3b55d9c270.tar.gz"
+    sha256: "c9cc1dcd143bd1365f0ce50cfc14bacab43d7bee5a2be212d6f4b73eefa8626f"
   "0.0+git.20230410":
     url: "https://github.com/lvandeve/lodepng/archive/c18b949b71f45e78b1f9a28c5d458bce0da505d6.tar.gz"
     sha256: "915d1bf834e67632b87bd18c932e6041ed0ca46a7e3493f5e3290980092cf2d9"
