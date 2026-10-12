@@ -1,4 +1,4 @@
 sources:
-  "0.6.2":
-    url: "https://github.com/PREDICT-EPFL/piqp/archive/refs/tags/v0.6.2.tar.gz"
-    sha256: "7109d02ef2895109db06d73a52d80f0ca7be306679c369239d17217d9a9d8a3d"
+  "0.6.4":
+    url: "https://github.com/PREDICT-EPFL/piqp/archive/v0.6.4.tar.gz"
+    sha256: "8a6381e65ac8626f804c98453966aed064bced0f6a0fc1ebc9010604fae3d676"

@@ -24,3 +24,6 @@ class TestPackageConan(ConanFile):
         if can_run(self):
             bin_path = os.path.join(self.cpp.build.bindir, "test_package")
             self.run(bin_path, env="conanrun")
+            if self.dependencies["piqp"].options.get_safe("c_interface"):
+                c_api_path = os.path.join(self.cpp.build.bindir, "test_c_api")
+                self.run(c_api_path, env="conanrun")

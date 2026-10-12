@@ -24,6 +24,7 @@ class PiqpConan(ConanFile):
         "c_interface": [True, False],
         "with_blasfeo": [True, False],
         "with_openmp": [True, False],
+        "eigen_max_align_bytes": [True, False],
     }
     default_options = {
         "header_only": False,
@@ -32,6 +33,7 @@ class PiqpConan(ConanFile):
         "c_interface": True,
         "with_blasfeo": True,
         "with_openmp": True,
+        "eigen_max_align_bytes": False,
     }
     implements = ["auto_shared_fpic", "auto_header_only"]
 
@@ -55,13 +57,14 @@ class PiqpConan(ConanFile):
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
-        replace_in_file(self, "include/piqp/dense/ldlt_no_pivot.hpp", "EIGEN_NOEXCEPT", "noexcept")
 
     def generate(self):
         tc = CMakeToolchain(self)
         tc.cache_variables["BUILD_WITH_TEMPLATE_INSTANTIATION"] = not self.options.header_only
         tc.cache_variables["BUILD_WITH_BLASFEO"] = self.options.with_blasfeo
         tc.cache_variables["BUILD_WITH_OPENMP"] = self.options.with_openmp
+        tc.cache_variables["BUILD_WITH_EIGEN_MAX_ALIGN_BYTES"] = self.options.eigen_max_align_bytes
+        tc.cache_variables["BUILD_WITH_TRACY"] = False
         tc.cache_variables["BUILD_WITH_STD_OPTIONAL"] = True
         tc.cache_variables["BUILD_WITH_STD_FILESYSTEM"] = True
         tc.cache_variables["BUILD_C_INTERFACE"] = self.options.c_interface
@@ -71,8 +74,11 @@ class PiqpConan(ConanFile):
         tc.cache_variables["BUILD_TESTS"] = False
         tc.cache_variables["BUILD_EXAMPLES"] = False
         tc.cache_variables["BUILD_BENCHMARKS"] = False
-        tc.cache_variables["BUILD_MAROS_MESZAROS_TEST"] = False
+        tc.cache_variables["BUILD_MAROS_MESZAROS_TESTS"] = False
+        tc.cache_variables["BUILD_NETLIB_TESTS"] = False
         tc.cache_variables["ENABLE_INSTALL"] = True
+        tc.cache_variables["ENABLE_SANITIZERS"] = False
+        tc.cache_variables["DEBUG_PRINTS"] = False
         tc.generate()
 
         deps = CMakeDeps(self)
@@ -95,6 +101,8 @@ class PiqpConan(ConanFile):
         self.cpp_info.components["piqp_header_only"].set_property("cmake_target_name", "piqp::piqp_header_only")
         self.cpp_info.components["piqp_header_only"].defines = ["PIQP_STD_OPTIONAL", "PIQP_STD_FILESYSTEM"]
         self.cpp_info.components["piqp_header_only"].requires = ["eigen::eigen"]
+        if self.options.eigen_max_align_bytes:
+            self.cpp_info.components["piqp_header_only"].defines.append("EIGEN_MAX_ALIGN_BYTES=64")
         if self.options.with_blasfeo:
             self.cpp_info.components["piqp_header_only"].requires.append("blasfeo::blasfeo")
             self.cpp_info.components["piqp_header_only"].defines.append("PIQP_HAS_BLASFEO")
