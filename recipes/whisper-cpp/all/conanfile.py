@@ -55,24 +55,14 @@ class WhisperCppConan(ConanFile):
             del self.settings.cuda
         if not self.options.get_safe("with_coreml"):
             del self.options.coreml_allow_fallback
-        else:
-            self.options["ggml"].with_coreml = True
-            self.options["ggml"].coreml_allow_fallback = self.options.coreml_allow_fallback
 
     def requirements(self):
         self.requires("ggml/[>=0.9 <1]", transitive_headers=True, transitive_libs=True)
-        if self.options.with_cuda:
-            self.cuda.requires("cudart")
-            self.cuda.requires("cublas")
         if self.options.with_openvino:
             self.requires("openvino/[>=2024.5.0]")
-        if self.options.with_openmp:
-            self.requires("openmp/system")
 
     def build_requirements(self):
-        if self.options.with_cuda:
-            self.cuda.tool_requires("nvcc")
-            self.tool_requires("cmake/[>=3.18]")
+        self.tool_requires("cmake/[>=3.18 <5]")
 
     def layout(self):
         cmake_layout(self, src_folder="src")
@@ -84,10 +74,17 @@ class WhisperCppConan(ConanFile):
         tc = CMakeToolchain(self)
         tc.variables["WHISPER_BUILD_TESTS"] = False
         tc.variables["WHISPER_BUILD_EXAMPLES"] = False
+        tc.variables["WHISPER_BUILD_SERVER"] = False
+        tc.variables["WHISPER_BUILD_IS_DEV"] = False
         tc.variables["BUILD_SHARED_LIBS"] = self.options.shared
         tc.variables["WHISPER_USE_SYSTEM_GGML"] = True
+        tc.variables["WHISPER_USE_SYSTEM_LLAMA"] = False
+        tc.variables["WHISPER_COMMON_FFMPEG"] = False
         tc.variables["WHISPER_CUDA"] = self.options.with_cuda
         tc.variables["WHISPER_OPENVINO"] = self.options.with_openvino
+        tc.variables["WHISPER_COREML"] = self.options.get_safe("with_coreml", False)
+        tc.variables["WHISPER_COREML_ALLOW_FALLBACK"] = self.options.get_safe("coreml_allow_fallback", False)
+        tc.variables["WHISPER_VITISAI"] = False
         tc.generate()
 
         deps = CMakeDeps(self)
@@ -114,12 +111,30 @@ class WhisperCppConan(ConanFile):
 
     def package_info(self):
         self.cpp_info.set_property("cmake_file_name", "whisper")
-        self.cpp_info.set_property("cmake_target_name", "whisper")
-        self.cpp_info.set_property("pkg_config_name", "whisper")
-        self.cpp_info.libs = ["whisper"]
         self.cpp_info.resdirs = ["share"]
-        if is_apple_os(self):
-            if self.options.with_coreml:
-                self.cpp_info.frameworks.append("CoreML")
-        elif self.settings.os in ["Linux", "FreeBSD"]:
-            self.cpp_info.system_libs = ["dl", "m", "pthread"]
+
+        whisper = self.cpp_info.components["whisper"]
+        whisper.set_property("cmake_target_name", "whisper")
+        whisper.set_property("pkg_config_name", "whisper")
+        whisper.libs = ["whisper"]
+        whisper.requires = ["ggml::ggml_"]
+
+        parakeet = self.cpp_info.components["parakeet"]
+        parakeet.set_property("cmake_target_name", "parakeet")
+        parakeet.set_property("pkg_config_name", "parakeet")
+        parakeet.libs = ["parakeet"]
+        parakeet.requires = ["ggml::ggml_"]
+
+        if self.options.get_safe("with_coreml"):
+            coreml = self.cpp_info.components["whisper-coreml"]
+            coreml.set_property("cmake_target_name", "whisper.coreml")
+            coreml.libs = ["whisper.coreml"]
+            coreml.frameworks = ["CoreML", "Foundation"]
+            whisper.requires.append("whisper-coreml")
+
+        if self.options.with_openvino:
+            whisper.requires.append("openvino::Runtime")
+
+        if self.settings.os in ["Linux", "FreeBSD"]:
+            whisper.system_libs = ["dl", "m", "pthread"]
+            parakeet.system_libs = ["dl", "m", "pthread"]

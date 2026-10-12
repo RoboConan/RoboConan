@@ -7,7 +7,7 @@ from conan.tools.cmake import cmake_layout, CMake
 
 class TestPackageConan(ConanFile):
     settings = "os", "arch", "compiler", "build_type"
-    generators = "CMakeDeps", "CMakeToolchain"
+    generators = "CMakeDeps", "CMakeToolchain", "PkgConfigDeps", "VirtualBuildEnv"
 
     def requirements(self):
         self.requires(self.tested_reference_str)
@@ -19,6 +19,14 @@ class TestPackageConan(ConanFile):
         cmake_layout(self)
 
     def build(self):
+        self.run(
+            f"pkgconf --with-path={self.generators_folder} --validate whisper parakeet",
+            env="conanbuild",
+        )
+        self.run(
+            f"pkgconf --with-path={self.generators_folder} --cflags --libs whisper parakeet",
+            env="conanbuild",
+        )
         cmake = CMake(self)
         cmake.configure()
         cmake.build()
