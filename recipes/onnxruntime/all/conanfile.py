@@ -38,6 +38,8 @@ class OnnxRuntimeConan(ConanFile):
         "with_nccl": False,
         # https://github.com/microsoft/onnxruntime/blob/v1.14.0/cmake/external/onnxruntime_external_deps.cmake#L410
         "onnx/*:disable_static_registration": True,
+        # ONNX Runtime uses ONNX implementation symbols that shared libonnx does not export.
+        "onnx/*:shared": False,
     }
     implements = ["auto_shared_fpic"]
 
@@ -108,6 +110,11 @@ class OnnxRuntimeConan(ConanFile):
         check_min_cppstd(self, min_cppstd)
         if not self.dependencies["onnx"].options.disable_static_registration:
             raise ConanInvalidConfiguration("ONNX must be built with `-o onnx/*:disable_static_registration=True`.")
+        if self.dependencies["onnx"].options.get_safe("shared"):
+            raise ConanInvalidConfiguration(
+                "ONNX Runtime cannot link against shared ONNX because its external ONNX integration "
+                "uses implementation symbols that libonnx does not export"
+            )
 
     def package_id(self):
         # ONNX Runtime selects full or lite protobuf from ONNX's protobuf
