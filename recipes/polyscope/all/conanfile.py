@@ -126,15 +126,18 @@ class PolyscopeConan(ConanFile):
     def package_info(self):
         # The project does not define any CMake targets
         self.cpp_info.libs = ["polyscope"]
-        self.cpp_info.requires = ["glm::glm", "imgui::core", "implot::implot"]
+        self.cpp_info.requires = [
+            "glm::glm",
+            "imgui::core",
+            "implot::implot",
+            "nlohmann_json::nlohmann_json",
+        ]
         if self.options.backend_glfw:
             self.cpp_info.requires.append("glfw::glfw")
         if self.options.backend_glfw or self.options.get_safe("backend_egl"):
             self.cpp_info.requires.append("glad::glad")
         if self.options.get_safe("backend_egl"):
             self.cpp_info.requires.append("egl::egl")
-        # nlohmann_json is used only while compiling the library; no public header exposes it.
-        self.cpp_info.ignored_requires = ["nlohmann_json"]
         self.cpp_info.defines.append("GLM_ENABLE_EXPERIMENTAL")
         if self.settings.os in ["Linux", "FreeBSD"]:
             self.cpp_info.system_libs = ["m"]
