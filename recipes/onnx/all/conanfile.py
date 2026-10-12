@@ -87,7 +87,7 @@ class OnnxConan(ConanFile):
                 )
 
     def build_requirements(self):
-        self.tool_requires("cmake/[>=3.18 <4]")
+        self.tool_requires("cmake/[>=3.26 <5]")
         self.tool_requires("protobuf/<host_version>")
 
     def source(self):
@@ -101,7 +101,8 @@ class OnnxConan(ConanFile):
     def generate(self):
         tc = CMakeToolchain(self)
         tc.variables["ONNX_USE_PROTOBUF_SHARED_LIBS"] = self.dependencies.host["protobuf"].options.shared
-        tc.variables["BUILD_ONNX_PYTHON"] = False
+        python_option = "ONNX_BUILD_PYTHON" if Version(self.version) >= "1.22.0" else "BUILD_ONNX_PYTHON"
+        tc.variables[python_option] = False
         tc.variables["ONNX_GEN_PB_TYPE_STUBS"] = False
         tc.variables["ONNX_WERROR"] = False
         tc.variables["ONNX_COVERAGE"] = False
