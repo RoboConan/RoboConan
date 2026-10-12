@@ -3,6 +3,7 @@ from pathlib import Path
 
 from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
+from conan.tools.apple import is_apple_os
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
 from conan.tools.microsoft import is_msvc
@@ -71,7 +72,7 @@ class LibtiffConan(ConanFile):
         if self.options.jpeg:
             self.requires("libjpeg-meta/latest")
         if self.options.jbig:
-            self.requires("jbig/20160605")
+            self.requires("jbig/[>=20250929]")
         if self.options.zstd:
             self.requires("zstd/[~1.5]")
         if self.options.webp:
@@ -116,7 +117,9 @@ class LibtiffConan(ConanFile):
         tc.variables["tiff-tests"] = False
         tc.variables["tiff-contrib"] = False
         tc.variables["tiff-docs"] = False
-        tc.variables["cxx"] = self.options.cxx
+        tc.variables["tiff-cxx"] = self.options.cxx
+        if is_apple_os(self) and self.settings.os != "Macos":
+            tc.cache_variables["tiff-framework"] = False
         # BUILD_SHARED_LIBS must be set in command line because defined upstream before project()
         tc.cache_variables["BUILD_SHARED_LIBS"] = bool(self.options.shared)
         tc.cache_variables["CMAKE_FIND_PACKAGE_PREFER_CONFIG"] = True
@@ -149,9 +152,11 @@ class LibtiffConan(ConanFile):
 
     def package_info(self):
         self.cpp_info.set_property("cmake_find_mode", "both")
-        self.cpp_info.set_property("cmake_file_name", "TIFF")
+        self.cpp_info.set_property("cmake_file_name", "tiff")
+        self.cpp_info.set_property("cmake_module_file_name", "TIFF")
 
-        self.cpp_info.components["tiff"].set_property("cmake_target_name", "TIFF::TIFF")
+        self.cpp_info.components["tiff"].set_property("cmake_target_name", "TIFF::tiff")
+        self.cpp_info.components["tiff"].set_property("cmake_module_target_name", "TIFF::TIFF")
         self.cpp_info.components["tiff"].set_property("pkg_config_name", f"libtiff-{Version(self.version).major}")
         suffix = "d" if is_msvc(self) and self.settings.build_type == "Debug" else ""
         self.cpp_info.components["tiff"].libs.append(f"tiff{suffix}")
@@ -178,9 +183,8 @@ class LibtiffConan(ConanFile):
 
         if self.options.cxx:
             self.cpp_info.components["tiffxx"].libs.append(f"tiffxx{suffix}")
-            # https://cmake.org/cmake/help/latest/module/FindTIFF.html#imported-targets
-            # https://github.com/libsdl-org/libtiff/blob/v4.6.0/libtiff/CMakeLists.txt#L229
-            self.cpp_info.components["tiffxx"].set_property("cmake_target_name", "TIFF::CXX")
+            self.cpp_info.components["tiffxx"].set_property("cmake_target_name", "TIFF::tiffxx")
+            self.cpp_info.components["tiffxx"].set_property("cmake_module_target_name", "TIFF::CXX")
             # Note: the project does not export tiffxx as a pkg-config component, this is unofficial
             self.cpp_info.components["tiffxx"].set_property("pkg_config_name", f"libtiffxx-{Version(self.version).major}")
             self.cpp_info.components["tiffxx"].requires = ["tiff"]

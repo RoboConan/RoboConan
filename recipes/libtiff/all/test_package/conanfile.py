@@ -23,8 +23,10 @@ class TestPackageConan(ConanFile):
 
     def test(self):
         if can_run(self):
-            bin_path = os.path.join(self.cpp.build.bindir, "test_package_c")
-            self.run(bin_path, env="conanrun")
-            if self.dependencies["libtiff"].options.cxx:
-                bin_path = os.path.join(self.cpp.build.bindir, "test_package_cxx")
+            for executable in ("test_package_c", "test_package_module_c"):
+                bin_path = os.path.join(self.cpp.build.bindir, executable)
                 self.run(bin_path, env="conanrun")
+            if self.dependencies["libtiff"].options.cxx:
+                for executable in ("test_package_cxx", "test_package_module_cxx"):
+                    bin_path = os.path.join(self.cpp.build.bindir, executable)
+                    self.run(bin_path, env="conanrun")
