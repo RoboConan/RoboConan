@@ -64,7 +64,7 @@ class Libx265Conan(ConanFile):
 
     def requirements(self):
         if self.options.get_safe("with_numa", False):
-            self.requires("libnuma/[^2.0.14]")
+            self.requires("libnuma/[^2.0.14]", options={"shared": self.options.shared})
 
     def validate_build(self):
         if cross_building(self) and self.settings.os == "Android" and self.options.assembly:
@@ -77,6 +77,10 @@ class Libx265Conan(ConanFile):
             raise ConanInvalidConfiguration(f"{self.ref} fails to build with '&:assembly=True' for Android. Contributions are welcome.")
 
     def validate(self):
+        if self.options.SVG_HEVC_encoder:
+            raise ConanInvalidConfiguration(
+                "SVG_HEVC_encoder=True requires SVT-HEVC 1.4.1, which is not packaged in RoboConan"
+            )
         if self.options.shared and is_msvc(self) and is_msvc_static_runtime(self):
             raise ConanInvalidConfiguration("shared not supported with static runtime")
 

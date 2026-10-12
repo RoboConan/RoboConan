@@ -1,0 +1,10 @@
+--- source/dynamicHDR10/json11/json11.cpp
++++ source/dynamicHDR10/json11/json11.cpp
+@@ -25,6 +25,7 @@
+ #include <cstdlib>
+ #include <cstdio>
+ #include <limits>
++#include <cstdint>
+ 
+ #if _MSC_VER
+ #pragma warning(disable: 4510) //const member cannot be default initialized

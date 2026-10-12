@@ -1,0 +1,6 @@
+--- a/source/CMakeLists.txt
++++ b/source/CMakeLists.txt
+@@ -254,0 +255,3 @@
++if(MSVC AND ARM64)
++    add_definitions("-DHAVE_NEON=1")
++endif()
