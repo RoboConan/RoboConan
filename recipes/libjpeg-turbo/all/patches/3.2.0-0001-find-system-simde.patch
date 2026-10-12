@@ -1,0 +1,18 @@
+--- a/simd/CMakeLists.txt
++++ b/simd/CMakeLists.txt
+@@ -239,5 +239,6 @@ set(SIMD_ARCHITECTURE ${SIMD_ARCHITECTURE} PARENT_SCOPE)
+ if(WITH_SIMDE)
+ 
++find_package(simde REQUIRED CONFIG)
+ if(NOT DEFINED HAVE_VLD1_S16_X3)
+   set(HAVE_VLD1_S16_X3 1)
+ endif()
+@@ -374,5 +375,8 @@ endif()
+ 
+ add_library(simd OBJECT ${SIMD_SOURCES} arm/aarch${BITS}/jsimdcpu.c jsimd.c)
++if(WITH_SIMDE)
++  target_link_libraries(simd PRIVATE simde::simde)
++endif()
+ 
+ if(CMAKE_POSITION_INDEPENDENT_CODE OR ENABLE_SHARED)
+   set_target_properties(simd PROPERTIES POSITION_INDEPENDENT_CODE 1)
