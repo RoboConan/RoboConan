@@ -34,6 +34,11 @@ class HarfbuzzConan(ConanFile):
         "with_directwrite": [True, False],
         "with_coretext": [True, False],
         "with_introspection": [True, False],
+        "with_png": [True, False],
+        "with_zlib": [True, False],
+        "with_raster": [True, False],
+        "with_vector": [True, False],
+        "with_gpu": [True, False],
     }
     default_options = {
         "shared": False,
@@ -46,6 +51,11 @@ class HarfbuzzConan(ConanFile):
         "with_directwrite": False,
         "with_coretext": True,
         "with_introspection": False,
+        "with_png": True,
+        "with_zlib": True,
+        "with_raster": True,
+        "with_vector": True,
+        "with_gpu": True,
     }
 
     python_requires = "conan-utils/latest"
@@ -59,6 +69,12 @@ class HarfbuzzConan(ConanFile):
             del self.options.with_directwrite
         if not is_apple_os(self):
             del self.options.with_coretext
+        if Version(self.version) < "14.0.0":
+            del self.options.with_png
+            del self.options.with_zlib
+            del self.options.with_raster
+            del self.options.with_vector
+            del self.options.with_gpu
 
     def configure(self):
         if self.options.shared:
@@ -79,6 +95,10 @@ class HarfbuzzConan(ConanFile):
             self.requires("freetype/[^2.13.2]")
         if self.options.with_icu:
             self.requires("icu/[*]")
+        if self.options.get_safe("with_png"):
+            self.requires("libpng/[~1.6]")
+        if self.options.get_safe("with_zlib"):
+            self.requires("zlib-ng/[^2.0]")
 
     def validate(self):
         if self.options.shared and self.options.with_glib and not self.dependencies["glib"].options.shared:
@@ -142,6 +162,16 @@ class HarfbuzzConan(ConanFile):
         tc.project_options["freetype"] = is_enabled(self.options.with_freetype)
         if Version(self.version) >= "9.0.0":
             tc.project_options["fontations"] = "disabled"  # TODO
+        if Version(self.version) >= "14.0.0":
+            # harfbuzz-subset has always been part of this package and is
+            # represented by the `subset` Conan component below.
+            tc.project_options["subset"] = "enabled"
+            tc.project_options["png"] = is_enabled(self.options.with_png)
+            tc.project_options["zlib"] = is_enabled(self.options.with_zlib)
+            tc.project_options["raster"] = is_enabled(self.options.with_raster)
+            tc.project_options["vector"] = is_enabled(self.options.with_vector)
+            tc.project_options["gpu"] = is_enabled(self.options.with_gpu)
+            tc.project_options["gpu_demo"] = "disabled"
         tc.project_options["gdi"] = is_enabled(self.options.get_safe("with_gdi"))
         tc.project_options["directwrite"] = is_enabled(self.options.get_safe("with_directwrite"))
         tc.project_options["coretext"] = is_enabled(self.options.get_safe("with_coretext"))
@@ -213,6 +243,28 @@ class HarfbuzzConan(ConanFile):
         self.cpp_info.components["subset"].set_property("pkg_config_name", "harfbuzz-subset")
         self.cpp_info.components["subset"].libs = ["harfbuzz-subset"]
         self.cpp_info.components["subset"].requires = ["harfbuzz_"]
+
+        if self.options.get_safe("with_raster"):
+            self.cpp_info.components["raster"].set_property("cmake_target_name", "harfbuzz::raster")
+            self.cpp_info.components["raster"].set_property("pkg_config_name", "harfbuzz-raster")
+            self.cpp_info.components["raster"].libs = ["harfbuzz-raster"]
+            self.cpp_info.components["raster"].requires = ["harfbuzz_"]
+            if self.options.with_png:
+                self.cpp_info.components["raster"].requires.append("libpng::libpng")
+
+        if self.options.get_safe("with_vector"):
+            self.cpp_info.components["vector"].set_property("cmake_target_name", "harfbuzz::vector")
+            self.cpp_info.components["vector"].set_property("pkg_config_name", "harfbuzz-vector")
+            self.cpp_info.components["vector"].libs = ["harfbuzz-vector"]
+            self.cpp_info.components["vector"].requires = ["harfbuzz_"]
+            if self.options.with_zlib:
+                self.cpp_info.components["vector"].requires.append("zlib-ng::zlib-ng")
+
+        if self.options.get_safe("with_gpu"):
+            self.cpp_info.components["gpu"].set_property("cmake_target_name", "harfbuzz::gpu")
+            self.cpp_info.components["gpu"].set_property("pkg_config_name", "harfbuzz-gpu")
+            self.cpp_info.components["gpu"].libs = ["harfbuzz-gpu"]
+            self.cpp_info.components["gpu"].requires = ["harfbuzz_"]
 
         if self.options.with_icu:
             self.cpp_info.components["icu"].set_property("cmake_target_name", "harfbuzz::icu")
