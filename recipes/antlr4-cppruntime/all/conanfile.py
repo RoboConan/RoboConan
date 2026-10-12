@@ -85,7 +85,10 @@ class Antlr4CppRuntimeConan(ConanFile):
 
     def package_info(self):
         self.cpp_info.set_property("cmake_file_name", "antlr4-runtime")
-        self.cpp_info.set_property("cmake_target_name", "antlr4_shared" if self.options.shared else "antlr4_static")
+        target_name = "antlr4_shared" if self.options.shared else "antlr4_static"
+        target_alias = "antlr4_static" if self.options.shared else "antlr4_shared"
+        self.cpp_info.set_property("cmake_target_name", target_name)
+        self.cpp_info.set_property("cmake_target_aliases", [target_alias])
         libname = "antlr4-runtime"
         if is_msvc(self) and not self.options.shared:
             libname += "-static"
