@@ -1,4 +1,4 @@
 sources:
-  "2.16.2":
-    url: "https://gitlab.freedesktop.org/fontconfig/fontconfig/-/archive/2.16.2/fontconfig-2.16.2.tar.bz2"
-    sha256: "fd9dfb5fe4d4503ae286e95fd85973c3c0490cf5d88ebf49e7f943973443262b"
+  "2.18.3":
+    url: "https://gitlab.freedesktop.org/api/v4/projects/890/packages/generic/fontconfig/2.18.3/fontconfig-2.18.3.tar.xz"
+    sha256: "4f7b554a38cdf78c033f666c8871f3749e14a094f65a07f630c91ed0b43d35e3"
