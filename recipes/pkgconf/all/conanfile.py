@@ -5,6 +5,7 @@ from conan.tools.apple import fix_apple_shared_install_name
 from conan.tools.files import *
 from conan.tools.layout import basic_layout
 from conan.tools.meson import Meson, MesonToolchain
+from conan.tools.scm import Version
 
 required_conan_version = ">=2.4"
 
@@ -63,7 +64,8 @@ class PkgConfConan(ConanFile):
     def generate(self):
         tc = MesonToolchain(self)
         tc.project_options["auto_features"] = "enabled"
-        tc.project_options["tests"] = "disabled"
+        if Version(self.version) < "3.0.0":
+            tc.project_options["tests"] = "disabled"
         if not self.options.enable_lib:
             tc.project_options["default_library"] = "static"
         tc.generate()
@@ -73,9 +75,10 @@ class PkgConfConan(ConanFile):
             replace_in_file(self, os.path.join(self.source_folder, "meson.build"),
                             "'-DLIBPKGCONF_EXPORT'",
                             "'-DPKGCONFIG_IS_STATIC'")
-            replace_in_file(self, os.path.join(self.source_folder, "meson.build"),
-                            "project('pkgconf', 'c',",
-                            "project('pkgconf', 'c',\ndefault_options : ['c_std=gnu99'],")
+            if Version(self.version) < "3.0.0":
+                replace_in_file(self, os.path.join(self.source_folder, "meson.build"),
+                                "project('pkgconf', 'c',",
+                                "project('pkgconf', 'c',\ndefault_options : ['c_std=gnu99'],")
 
     def build(self):
         self._patch_sources()

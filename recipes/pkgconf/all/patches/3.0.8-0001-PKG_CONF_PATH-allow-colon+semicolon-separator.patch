@@ -1,0 +1,5 @@
+--- libpkgconf/path.c
++++ libpkgconf/path.c
+@@ -211,1 +211,1 @@
+-	while ((p = strtok(iter, PKG_CONFIG_PATH_SEP_S)) != NULL)
++	while ((p = strtok(iter, ";:")) != NULL)
