@@ -13,6 +13,9 @@ add_library(gif
     openbsd-reallocarray.c
     quantize.c
 )
+if(UNIX)
+    set_target_properties(gif PROPERTIES VERSION 7.2.0 SOVERSION 7)
+endif()
 if(WIN32)
     if(BUILD_SHARED_LIBS)
         set_property(TARGET gif PROPERTY PREFIX )
@@ -41,7 +44,6 @@ if(UTILS)
     target_link_libraries(giflib_util PRIVATE gif)
 
     set(GIF_UTILS
-        gif2rgb
         gifbuild
         giffix
         giftext
