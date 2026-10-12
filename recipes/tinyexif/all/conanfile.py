@@ -62,8 +62,10 @@ class TinyEXIFConan(ConanFile):
         rmdir(self, os.path.join(self.package_folder, "lib", "cmake"))
 
     def package_info(self):
-        suffix = "-2" if self.settings.os == "Windows" and self.options.shared else ""
-        self.cpp_info.libs = [f"TinyEXIF{suffix}"]
-
         self.cpp_info.set_property("cmake_file_name", "TinyEXIF")
         self.cpp_info.set_property("cmake_target_name", "TinyEXIF::TinyEXIF")
+
+        suffix = "-2" if self.settings.os == "Windows" and self.options.shared else ""
+        self.cpp_info.libs = [f"TinyEXIF{suffix}"]
+        if self.options.shared:
+            self.cpp_info.defines = ["TINYEXIF_IMPORT"]
