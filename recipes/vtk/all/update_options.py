@@ -10,7 +10,7 @@ from pathlib import Path
 
 #### EXTRACT METADATA ####
 
-# Based on https://gitlab.kitware.com/vtk/vtk/-/blob/v9.3.1/CMake/vtkModule.cmake?ref_type=tags#L262-266
+# Based on https://gitlab.kitware.com/vtk/vtk/-/blob/v9.7.1/CMake/vtkModule.cmake?ref_type=tags
 OPTIONS = {
     "implementable",
     "exclude_wrap",
@@ -113,24 +113,27 @@ def load_vtk_info(root):
 
 #### DUMP OPTIONS ####
 
-# Third-party libraries that are not available as Conan packages
-missing_from_cci = {
-    "catalyst"
+# Third-party modules kept in the generated dependency graph. Most are bundled;
+# some are externally supplied without their own VTK module.
+tracked_third_party_modules = {
+    "conduit",
     "diy2",
     "exodusII",
     "fides",
     "gl2ps",
-    "h5part",
-    "holoplaycore",
+    "glad",
+    "h5hut",
     "ioss",
     "kwiml",
     "metaio",
     "mpi4py",
     "octree",
-    "pegtl",
+    "token",
     "verdict",
+    "viskores",
     "vpic",
     "vtkm",
+    "x11",
     "xdmf2",
     "xdmf3",
 }
@@ -156,7 +159,6 @@ required_modules = {
 
 # Non-optional third-party deps
 ignored_deps = {
-    "doubleconversion",
     "exprtk",
     "fmt",
     "fast_float",
@@ -166,10 +168,22 @@ ignored_deps = {
     "loguru",
     "lz4",
     "lzma",
+    "nlohmannjson",
+    "pegtl",
     "pugixml",
+    "scn",
     "utf8",
     "verdict",
     "zlib",
+}
+
+# These dependencies have no external package support but are required by
+# otherwise-unconditional modules. Keep their own third-party modules in the
+# generated metadata while omitting them from module option requirements.
+always_internal_deps = {
+    "glad",
+    "token",
+    "x11",
 }
 
 # Dependencies that are not modelled via modules and are used directly instead
@@ -181,28 +195,31 @@ missing_deps = {
     "GUISupportQtQuick": ["qt"],
     "GUISupportQtSQL": ["qt"],
     "GeovisGDAL": ["gdal"],
+    "FiltersONNX": ["onnxruntime"],
     "IOADIOS2": ["adios2"],
+    "IOAlembic": ["alembic"],
     "IOCatalystConduit": ["catalyst"],
     "IOFFMPEG": ["ffmpeg"],
     "IOGDAL": ["gdal"],
+    "IOIFC": ["boost", "ifcopenshell", "opencascade"],
     "IOLAS": ["liblas", "boost"],
+    "IONanoVDB": ["nanovdb"],
     "IOMySQL": ["mysql"],
     "IOOCCT": ["opencascade"],
     "IOODBC": ["odbc"],
     "IOOpenVDB": ["openvdb"],
     "IOPDAL": ["pdal"],
     "IOPostgreSQL": ["postgresql"],
+    "IOUSD": ["openusd"],
     "InfovisBoost": ["boost"],
     "InfovisBoostGraphAlgorithms": ["boost"],
     "RenderingFreeTypeFontConfig": ["fontconfig"],
-    "RenderingLookingGlass": ["holoplaycore"],
+    "RenderingAnari": ["anari"],
     "RenderingOpenVR": ["openvr"],
     "RenderingOpenXR": ["openxr"],
-    "RenderingOpenXRRemoting": ["openxr"],
+    "RenderingOpenXRRemoting": ["openxr", "openxrremoting"],
     "RenderingQt": ["qt"],
-    "RenderingUI": ["sdl2"],
     "RenderingVR": ["zeromq"],
-    "RenderingWebGPU": ["sdl2", "glew"],
     "RenderingZSpace": ["zspace"],
     "ViewsQt": ["qt"],
     "fides": ["adios2"],
@@ -210,10 +227,10 @@ missing_deps = {
 }
 missing_optional_deps = {
     "CommonCore": ["memkind"],
-    "RenderingOpenGL2": ["sdl2", "x11", "cocoa", "directx"],
+    "RenderingOpenGL2": ["x11", "wayland", "cocoa", "directx"],
     "RenderingRayTracing": ["ospray", "openimagedenoise", "visrtx"],
-    "RenderingUI": ["sdl2", "x11", "cocoa"],
-    "RenderingWebGPU": ["dawn"],
+    "RenderingUI": ["x11", "wayland", "cocoa"],
+    "RenderingWebGPU": ["dawn", "wayland"],
 }
 
 def _strip_prefix(name):
@@ -226,19 +243,25 @@ def _is_ext_dep(name):
     return name[0].islower() and name != "sys"
 
 def _flattened_deps(dependencies_map):
-    def _traverse(module_name, all_deps):
+    def _traverse(module_name, visiting):
         if module_name in flat_deps:
             return flat_deps[module_name]
-        deps = all_deps.get(module_name, set())
-        for dep in list(deps):
-            deps.union(_traverse(dep, all_deps))
-        deps = set(dep for dep in deps if _is_ext_dep(dep))
+        if module_name in visiting:
+            return set()
+        visiting.add(module_name)
+        deps = set()
+        for dep in dependencies_map.get(module_name, set()):
+            if _is_ext_dep(dep):
+                deps.add(dep)
+            else:
+                deps.update(_traverse(dep, visiting))
+        visiting.remove(module_name)
         flat_deps[module_name] = deps
         return deps
 
     flat_deps = {}
     for mod in dependencies_map:
-        _traverse(mod, dependencies_map)
+        _traverse(mod, set())
     return flat_deps
 
 def dump_options(vtk_info):
@@ -246,7 +269,7 @@ def dump_options(vtk_info):
     for module_name, module_info in vtk_info["modules"].items():
         module_name = _strip_prefix(module_name)
         deps = module_info.get("depends", []) + module_info.get("private_depends", []) + missing_deps.get(module_name, [])
-        deps = set(_strip_prefix(dep) for dep in deps) - ignored_deps
+        deps = set(_strip_prefix(dep) for dep in deps) - ignored_deps - always_internal_deps
         modules_deps[module_name] = deps
     flat_deps = _flattened_deps(modules_deps)
     for req in required_modules:
@@ -254,7 +277,7 @@ def dump_options(vtk_info):
     flat_deps = {
         k: sorted(v)
         for k, v in sorted(flat_deps.items())
-        if not k in required_modules and (not _is_ext_dep(k) or k in missing_from_cci)
+        if k not in required_modules and (not _is_ext_dep(k) or k in tracked_third_party_modules)
     }
 
     conditions = defaultdict(list)

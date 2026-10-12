@@ -18,3 +18,5 @@ if (VTK_ENABLE_KITS)
 else ()
    target_link_libraries(${PROJECT_NAME} VTK::CommonCore VTK::RenderingFreeType)
 endif ()
+
+vtk_module_autoinit(TARGETS ${PROJECT_NAME} MODULES ${VTK_LIBRARIES})

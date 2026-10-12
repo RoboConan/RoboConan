@@ -1,0 +1,1271 @@
+{
+  "flat_external_deps": {
+    "AcceleratorsVTKmCore": [
+      "viskores"
+    ],
+    "AcceleratorsVTKmDataModel": [
+      "viskores"
+    ],
+    "AcceleratorsVTKmFilters": [
+      "viskores"
+    ],
+    "ChartsCore": [
+      "diy2",
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "png",
+      "tiff"
+    ],
+    "CommonCache": [],
+    "DICOMParser": [],
+    "DomainsChemistry": [
+      "eigen",
+      "expat",
+      "jsoncpp"
+    ],
+    "DomainsChemistryOpenGL2": [
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "octree",
+      "png",
+      "tiff"
+    ],
+    "DomainsMicroscopy": [
+      "jpeg",
+      "metaio",
+      "openslide",
+      "png",
+      "tiff"
+    ],
+    "DomainsParallelChemistry": [
+      "diy2",
+      "eigen",
+      "expat",
+      "jsoncpp",
+      "mpi"
+    ],
+    "FiltersAMR": [
+      "eigen",
+      "expat"
+    ],
+    "FiltersCellGrid": [
+      "eigen"
+    ],
+    "FiltersExtraction": [
+      "diy2",
+      "eigen",
+      "expat"
+    ],
+    "FiltersFlowPaths": [
+      "eigen"
+    ],
+    "FiltersGeneric": [],
+    "FiltersGeometry": [],
+    "FiltersGeometryPreview": [],
+    "FiltersHybrid": [
+      "jsoncpp"
+    ],
+    "FiltersHyperTree": [],
+    "FiltersImaging": [
+      "eigen"
+    ],
+    "FiltersMeshing": [],
+    "FiltersModeling": [],
+    "FiltersONNX": [
+      "onnxruntime"
+    ],
+    "FiltersOpenTURNS": [
+      "diy2",
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "png",
+      "tiff"
+    ],
+    "FiltersParallel": [
+      "diy2",
+      "eigen",
+      "expat",
+      "jsoncpp"
+    ],
+    "FiltersParallelDIY2": [
+      "diy2",
+      "eigen",
+      "expat",
+      "jsoncpp"
+    ],
+    "FiltersParallelFlowPaths": [
+      "eigen",
+      "expat",
+      "mpi"
+    ],
+    "FiltersParallelGeometry": [
+      "diy2",
+      "eigen",
+      "expat",
+      "jsoncpp",
+      "mpi"
+    ],
+    "FiltersParallelImaging": [
+      "diy2",
+      "eigen",
+      "expat",
+      "jsoncpp"
+    ],
+    "FiltersParallelMPI": [
+      "diy2",
+      "eigen",
+      "expat",
+      "jsoncpp",
+      "mpi"
+    ],
+    "FiltersParallelStatistics": [
+      "eigen"
+    ],
+    "FiltersParallelVerdict": [
+      "eigen"
+    ],
+    "FiltersPoints": [],
+    "FiltersProgrammable": [],
+    "FiltersPython": [],
+    "FiltersReduction": [],
+    "FiltersReebGraph": [
+      "boost"
+    ],
+    "FiltersSMP": [],
+    "FiltersSelection": [],
+    "FiltersSources": [],
+    "FiltersStatistics": [
+      "eigen"
+    ],
+    "FiltersTemporal": [],
+    "FiltersTensor": [],
+    "FiltersTexture": [],
+    "FiltersTopology": [],
+    "GUISupportMFC": [
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "octree",
+      "png",
+      "tiff"
+    ],
+    "GUISupportQt": [
+      "diy2",
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "octree",
+      "png",
+      "qt",
+      "tiff"
+    ],
+    "GUISupportQtQuick": [
+      "diy2",
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "octree",
+      "png",
+      "qt",
+      "tiff"
+    ],
+    "GUISupportQtSQL": [
+      "diy2",
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "octree",
+      "png",
+      "qt",
+      "sqlite",
+      "tiff"
+    ],
+    "GeovisCore": [
+      "libproj"
+    ],
+    "GeovisGDAL": [
+      "gdal",
+      "jpeg",
+      "metaio",
+      "png",
+      "tiff"
+    ],
+    "IOADIOS2": [
+      "adios2",
+      "eigen"
+    ],
+    "IOAMR": [
+      "eigen",
+      "expat",
+      "hdf5"
+    ],
+    "IOAlembic": [
+      "alembic",
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "png",
+      "tiff"
+    ],
+    "IOAsynchronous": [
+      "eigen",
+      "expat",
+      "jpeg",
+      "metaio",
+      "png",
+      "tiff"
+    ],
+    "IOAvmesh": [],
+    "IOCGNSReader": [
+      "cgns",
+      "diy2",
+      "eigen",
+      "expat",
+      "hdf5"
+    ],
+    "IOCONVERGECFD": [
+      "hdf5"
+    ],
+    "IOCatalystConduit": [
+      "catalyst",
+      "eigen",
+      "expat"
+    ],
+    "IOCellGrid": [
+      "eigen"
+    ],
+    "IOCesium3DTiles": [
+      "diy2",
+      "eigen",
+      "expat",
+      "jpeg",
+      "jsoncpp",
+      "libproj",
+      "metaio",
+      "png",
+      "tiff"
+    ],
+    "IOChemistry": [
+      "eigen",
+      "expat",
+      "jsoncpp"
+    ],
+    "IOCityGML": [],
+    "IOCore": [],
+    "IOERF": [
+      "hdf5"
+    ],
+    "IOEnSight": [
+      "eigen"
+    ],
+    "IOEngys": [],
+    "IOExodus": [
+      "exodusII",
+      "expat"
+    ],
+    "IOExport": [
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "png",
+      "tiff"
+    ],
+    "IOExportGL2PS": [
+      "eigen",
+      "expat",
+      "freetype",
+      "gl2ps",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "octree",
+      "png",
+      "tiff"
+    ],
+    "IOExportPDF": [
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "libharu",
+      "metaio",
+      "png",
+      "tiff"
+    ],
+    "IOFDS": [
+      "diy2",
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "libxml2",
+      "metaio",
+      "png",
+      "tiff"
+    ],
+    "IOFFMPEG": [
+      "ffmpeg"
+    ],
+    "IOFLUENTCFF": [
+      "hdf5"
+    ],
+    "IOFides": [
+      "eigen",
+      "fides",
+      "viskores"
+    ],
+    "IOGDAL": [
+      "gdal",
+      "jpeg",
+      "metaio",
+      "png",
+      "tiff"
+    ],
+    "IOGeoJSON": [
+      "jsoncpp"
+    ],
+    "IOGeometry": [
+      "eigen",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "png",
+      "tiff"
+    ],
+    "IOH5Rage": [
+      "eigen",
+      "hdf5"
+    ],
+    "IOH5part": [
+      "h5hut",
+      "hdf5"
+    ],
+    "IOHDF": [
+      "eigen",
+      "hdf5"
+    ],
+    "IOHDFTools": [
+      "hdf5"
+    ],
+    "IOIFC": [
+      "boost",
+      "diy2",
+      "eigen",
+      "expat",
+      "ifcopenshell",
+      "jsoncpp",
+      "opencascade"
+    ],
+    "IOIOSS": [
+      "diy2",
+      "eigen",
+      "expat",
+      "ioss",
+      "netcdf"
+    ],
+    "IOImage": [
+      "jpeg",
+      "metaio",
+      "png",
+      "tiff"
+    ],
+    "IOImport": [
+      "eigen",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "png",
+      "tiff"
+    ],
+    "IOInfovis": [
+      "diy2",
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "libxml2",
+      "metaio",
+      "png",
+      "tiff"
+    ],
+    "IOLANLX3D": [],
+    "IOLAS": [
+      "boost",
+      "liblas"
+    ],
+    "IOLSDyna": [
+      "expat"
+    ],
+    "IOLegacy": [
+      "eigen"
+    ],
+    "IOMINC": [
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "netcdf",
+      "png",
+      "tiff"
+    ],
+    "IOMPIImage": [
+      "eigen",
+      "jpeg",
+      "metaio",
+      "mpi",
+      "png",
+      "tiff"
+    ],
+    "IOMPIParallel": [
+      "diy2",
+      "eigen",
+      "expat",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "mpi",
+      "png",
+      "tiff"
+    ],
+    "IOMotionFX": [
+      "eigen",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "png",
+      "tiff"
+    ],
+    "IOMovie": [],
+    "IOMySQL": [
+      "mysql",
+      "sqlite"
+    ],
+    "IONanoVDB": [
+      "eigen",
+      "jsoncpp",
+      "nanovdb"
+    ],
+    "IONetCDF": [
+      "netcdf"
+    ],
+    "IOOCCT": [
+      "opencascade"
+    ],
+    "IOODBC": [
+      "odbc",
+      "sqlite"
+    ],
+    "IOOMF": [
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "png",
+      "tiff"
+    ],
+    "IOOggTheora": [
+      "theora"
+    ],
+    "IOOpenVDB": [
+      "eigen",
+      "jsoncpp",
+      "openvdb"
+    ],
+    "IOPDAL": [
+      "pdal"
+    ],
+    "IOPIO": [
+      "eigen",
+      "hdf5"
+    ],
+    "IOPLY": [],
+    "IOParallel": [
+      "diy2",
+      "eigen",
+      "expat",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "png",
+      "tiff"
+    ],
+    "IOParallelExodus": [
+      "eigen",
+      "exodusII",
+      "expat",
+      "netcdf"
+    ],
+    "IOParallelLSDyna": [
+      "eigen",
+      "expat"
+    ],
+    "IOParallelNetCDF": [
+      "eigen",
+      "mpi",
+      "netcdf"
+    ],
+    "IOParallelXML": [
+      "eigen",
+      "expat"
+    ],
+    "IOParallelXdmf3": [
+      "diy2",
+      "eigen",
+      "expat",
+      "mpi",
+      "xdmf3"
+    ],
+    "IOPostgreSQL": [
+      "postgresql",
+      "sqlite"
+    ],
+    "IOSQL": [
+      "sqlite"
+    ],
+    "IOSegY": [
+      "jpeg",
+      "metaio",
+      "png",
+      "tiff"
+    ],
+    "IOTRUCHAS": [
+      "hdf5"
+    ],
+    "IOTecplotTable": [],
+    "IOUSD": [
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "openusd",
+      "png",
+      "tiff"
+    ],
+    "IOVPIC": [
+      "eigen",
+      "vpic"
+    ],
+    "IOVeraOut": [
+      "hdf5"
+    ],
+    "IOVideo": [],
+    "IOXML": [
+      "expat"
+    ],
+    "IOXMLParser": [
+      "expat"
+    ],
+    "IOXdmf2": [
+      "diy2",
+      "eigen",
+      "expat",
+      "libxml2",
+      "xdmf2"
+    ],
+    "IOXdmf3": [
+      "diy2",
+      "eigen",
+      "expat",
+      "xdmf3"
+    ],
+    "ImagingColor": [],
+    "ImagingCore": [],
+    "ImagingFourier": [],
+    "ImagingGeneral": [],
+    "ImagingHybrid": [
+      "jpeg",
+      "metaio",
+      "png",
+      "tiff"
+    ],
+    "ImagingMath": [],
+    "ImagingMorphological": [],
+    "ImagingOpenGL2": [
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "octree",
+      "png",
+      "tiff"
+    ],
+    "ImagingSources": [],
+    "ImagingStatistics": [],
+    "ImagingStencil": [],
+    "InfovisBoost": [
+      "boost"
+    ],
+    "InfovisBoostGraphAlgorithms": [
+      "boost",
+      "diy2",
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "png",
+      "tiff"
+    ],
+    "InfovisCore": [
+      "diy2",
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "png",
+      "tiff"
+    ],
+    "InfovisLayout": [
+      "diy2",
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "png",
+      "tiff"
+    ],
+    "InteractionImage": [
+      "diy2",
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "png",
+      "tiff"
+    ],
+    "InteractionStyle": [
+      "diy2",
+      "eigen",
+      "expat",
+      "jsoncpp"
+    ],
+    "InteractionWidgets": [
+      "diy2",
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "png",
+      "tiff"
+    ],
+    "Java": [],
+    "ParallelCore": [
+      "eigen"
+    ],
+    "ParallelDIY": [
+      "diy2",
+      "eigen",
+      "expat"
+    ],
+    "ParallelMPI": [
+      "eigen",
+      "mpi"
+    ],
+    "ParallelMPI4Py": [
+      "eigen",
+      "mpi",
+      "mpi4py"
+    ],
+    "Python": [],
+    "PythonContext2D": [
+      "freetype",
+      "jsoncpp"
+    ],
+    "PythonInterpreter": [],
+    "RenderingAnari": [
+      "anari",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "octree",
+      "png",
+      "tiff"
+    ],
+    "RenderingAnnotation": [
+      "freetype",
+      "jsoncpp"
+    ],
+    "RenderingCellGrid": [
+      "eigen",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "octree",
+      "png",
+      "tiff"
+    ],
+    "RenderingContext2D": [
+      "freetype",
+      "jsoncpp"
+    ],
+    "RenderingContextOpenGL2": [
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "octree",
+      "png",
+      "tiff"
+    ],
+    "RenderingCore": [
+      "jsoncpp"
+    ],
+    "RenderingExternal": [
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "octree",
+      "png",
+      "tiff"
+    ],
+    "RenderingFFMPEGOpenGL2": [
+      "ffmpeg",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "octree",
+      "png",
+      "tiff"
+    ],
+    "RenderingFreeType": [
+      "freetype",
+      "jsoncpp"
+    ],
+    "RenderingFreeTypeFontConfig": [
+      "fontconfig",
+      "freetype",
+      "jsoncpp"
+    ],
+    "RenderingGL2PSOpenGL2": [
+      "freetype",
+      "gl2ps",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "octree",
+      "png",
+      "tiff"
+    ],
+    "RenderingGridAxes": [
+      "diy2",
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "octree",
+      "png",
+      "tiff"
+    ],
+    "RenderingHyperTreeGrid": [
+      "jsoncpp"
+    ],
+    "RenderingImage": [
+      "jsoncpp"
+    ],
+    "RenderingLICOpenGL2": [
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "octree",
+      "png",
+      "tiff"
+    ],
+    "RenderingLOD": [
+      "jsoncpp"
+    ],
+    "RenderingLabel": [
+      "freetype",
+      "jsoncpp",
+      "octree"
+    ],
+    "RenderingMatplotlib": [
+      "freetype",
+      "jsoncpp"
+    ],
+    "RenderingOpenGL2": [
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "octree",
+      "png",
+      "tiff"
+    ],
+    "RenderingOpenVR": [
+      "diy2",
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "octree",
+      "openvr",
+      "png",
+      "tiff",
+      "zeromq"
+    ],
+    "RenderingOpenXR": [
+      "diy2",
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "octree",
+      "openxr",
+      "png",
+      "tiff",
+      "zeromq"
+    ],
+    "RenderingOpenXRRemoting": [
+      "diy2",
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "octree",
+      "openxr",
+      "openxrremoting",
+      "png",
+      "tiff",
+      "zeromq"
+    ],
+    "RenderingParallel": [
+      "diy2",
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "octree",
+      "png",
+      "tiff"
+    ],
+    "RenderingParallelLIC": [
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "mpi",
+      "octree",
+      "png",
+      "tiff"
+    ],
+    "RenderingQt": [
+      "diy2",
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "octree",
+      "png",
+      "qt",
+      "tiff"
+    ],
+    "RenderingRayTracing": [
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "octree",
+      "png",
+      "tiff"
+    ],
+    "RenderingSceneGraph": [
+      "jsoncpp"
+    ],
+    "RenderingTk": [
+      "diy2",
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "octree",
+      "png",
+      "tiff"
+    ],
+    "RenderingUI": [
+      "jsoncpp"
+    ],
+    "RenderingVR": [
+      "diy2",
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "octree",
+      "png",
+      "tiff",
+      "zeromq"
+    ],
+    "RenderingVRModels": [
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "octree",
+      "png",
+      "tiff"
+    ],
+    "RenderingVolume": [
+      "jsoncpp"
+    ],
+    "RenderingVolumeAMR": [
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "octree",
+      "png",
+      "tiff"
+    ],
+    "RenderingVolumeOpenGL2": [
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "octree",
+      "png",
+      "tiff"
+    ],
+    "RenderingVtkJS": [
+      "jsoncpp"
+    ],
+    "RenderingWebGPU": [
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "octree",
+      "png",
+      "tiff"
+    ],
+    "RenderingWebXR": [
+      "diy2",
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "octree",
+      "png",
+      "tiff",
+      "zeromq"
+    ],
+    "RenderingZSpace": [
+      "diy2",
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "octree",
+      "png",
+      "tiff",
+      "zspace"
+    ],
+    "SerializationManager": [],
+    "UtilitiesBenchmarks": [
+      "diy2",
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "octree",
+      "png",
+      "tiff"
+    ],
+    "ViewsContext2D": [
+      "diy2",
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "png",
+      "tiff"
+    ],
+    "ViewsCore": [
+      "diy2",
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "png",
+      "tiff"
+    ],
+    "ViewsInfovis": [
+      "diy2",
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "octree",
+      "png",
+      "tiff"
+    ],
+    "ViewsQt": [
+      "diy2",
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "octree",
+      "png",
+      "qt",
+      "tiff"
+    ],
+    "WebAssembly": [
+      "jsoncpp"
+    ],
+    "WebAssemblyAsync": [
+      "jsoncpp"
+    ],
+    "WebAssemblySession": [
+      "jsoncpp"
+    ],
+    "WebCore": [
+      "diy2",
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "png",
+      "tiff"
+    ],
+    "WebGLExporter": [
+      "diy2",
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "png",
+      "tiff"
+    ],
+    "WebPython": [
+      "diy2",
+      "eigen",
+      "expat",
+      "freetype",
+      "jpeg",
+      "jsoncpp",
+      "metaio",
+      "png",
+      "tiff"
+    ],
+    "WrappingJavaScript": [],
+    "WrappingPythonCore": [],
+    "WrappingTools": [],
+    "conduit": [],
+    "diy2": [],
+    "exodusII": [
+      "hdf5",
+      "netcdf"
+    ],
+    "fides": [
+      "adios2",
+      "eigen",
+      "viskores"
+    ],
+    "gl2ps": [
+      "png"
+    ],
+    "glad": [],
+    "h5hut": [
+      "hdf5"
+    ],
+    "ioss": [
+      "cgns",
+      "exodusII"
+    ],
+    "kwiml": [],
+    "metaio": [],
+    "mpi4py": [
+      "mpi"
+    ],
+    "octree": [],
+    "token": [],
+    "verdict": [],
+    "viskores": [],
+    "vpic": [],
+    "vtkm": [
+      "viskores"
+    ],
+    "x11": [],
+    "xdmf2": [
+      "hdf5",
+      "libxml2"
+    ],
+    "xdmf3": [
+      "boost",
+      "hdf5",
+      "libxml2"
+    ]
+  },
+  "optional_external_deps": {
+    "CommonCore": [
+      "memkind"
+    ],
+    "IOADIOS2": [
+      "mpi"
+    ],
+    "IOFides": [
+      "conduit",
+      "mpi"
+    ],
+    "IOIOSS": [
+      "mpi"
+    ],
+    "RenderingOpenGL2": [
+      "cocoa",
+      "directx",
+      "wayland",
+      "x11"
+    ],
+    "RenderingRayTracing": [
+      "openimagedenoise",
+      "ospray",
+      "visrtx"
+    ],
+    "RenderingUI": [
+      "cocoa",
+      "wayland",
+      "x11"
+    ],
+    "RenderingWebGPU": [
+      "dawn",
+      "wayland"
+    ]
+  },
+  "conditions": {
+    "CMAKE_VERSION VERSION_GREATER 3.18": [
+      "RenderingAnari"
+    ],
+    "EMSCRIPTEN OR VTK_WRAP_PYTHON": [
+      "RenderingWebXR"
+    ],
+    "FALSE": [
+      "vtkm"
+    ],
+    "MSVC": [
+      "GUISupportMFC"
+    ],
+    "NOT ANDROID AND NOT APPLE_IOS AND NOT EMSCRIPTEN AND NOT VTK_OPENGL_USE_GLES": [
+      "IOExportGL2PS"
+    ],
+    "NOT ANDROID AND NOT APPLE_IOS AND NOT VTK_OPENGL_USE_GLES": [
+      "RenderingGL2PSOpenGL2",
+      "gl2ps"
+    ],
+    "NOT CMAKE_CXX_COMPILER_ID STREQUAL \"MSVC\" OR CMAKE_CXX_COMPILER_VERSION VERSION_GREATER \"18.0.0\"": [
+      "IOMotionFX"
+    ],
+    "NOT WIN32": [
+      "IOMPIParallel"
+    ],
+    "VTK_USE_MPI": [
+      "mpi4py"
+    ],
+    "VTK_USE_TK": [
+      "RenderingTk"
+    ],
+    "VTK_WRAP_JAVASCRIPT": [
+      "WrappingJavaScript"
+    ],
+    "VTK_WRAP_PYTHON": [
+      "CommonPython",
+      "FiltersPython",
+      "ParallelMPI4Py",
+      "PythonContext2D",
+      "WebPython"
+    ],
+    "WIN32": [
+      "RenderingOpenXRRemoting",
+      "RenderingZSpace"
+    ]
+  }
+}
