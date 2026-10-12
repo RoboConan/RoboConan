@@ -19,6 +19,9 @@ class CubConan(ConanFile):
     settings = "os", "arch", "compiler", "build_type"
     no_copy_source = True
 
+    def export_sources(self):
+        export_conandata_patches(self)
+
     def layout(self):
         basic_layout(self, src_folder="src")
 
@@ -43,6 +46,7 @@ class CubConan(ConanFile):
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
+        apply_conandata_patches(self)
         cmake_config = os.path.join(self._cmake_dir, "cub-config.cmake")
         replace_in_file(self, cmake_config,
                         "${_CUB_VERSION_INCLUDE_DIR}",

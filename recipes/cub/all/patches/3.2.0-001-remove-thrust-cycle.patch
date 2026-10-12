@@ -1,0 +1,36 @@
+--- lib/cmake/cub/cub-config.cmake
++++ lib/cmake/cub/cub-config.cmake
+@@ -65,25 +65,6 @@
+ # Setup dependencies
+ #
+
+-if (NOT TARGET CUB::Thrust)
+-  if (NOT TARGET Thrust::Thrust)
+-    find_package(
+-      Thrust
+-      ${CUB_VERSION}
+-      EXACT
+-      CONFIG
+-      ${required_flag}
+-      ${quiet_flag}
+-      NO_DEFAULT_PATH
+-      HINTS "${CMAKE_CURRENT_LIST_DIR}/../thrust/"
+-    )
+-  endif()
+-  _cub_declare_interface_alias(CUB::Thrust _CUB_Thrust)
+-  # Just link Thrust::Thrust -- this is the minimal target that only provides
+-  # headers with no host/device system setup, which is all CUB needs.
+-  target_link_libraries(_CUB_Thrust INTERFACE Thrust::Thrust)
+-endif()
+-
+ if (NOT TARGET CUB::libcudacxx)
+   if (NOT TARGET libcudacxx::libcudacxx)
+     find_package(
+@@ -110,7 +91,6 @@
+   _CUB_CUB
+   INTERFACE #
+     CUB::libcudacxx
+-    CUB::Thrust
+ )
+
+ function(_cub_test_flag_option flag)

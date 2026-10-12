@@ -39,9 +39,10 @@ class ThrustConan(ConanFile):
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
         cmake_config = os.path.join(self._cmake_dir, "thrust-config.cmake")
-        replace_in_file(self, cmake_config,
-                        "find_package(CUB ",
-                        'message(TRACE "find_package(CUB" ')
+        if Version(self.version) < "3.2":
+            replace_in_file(self, cmake_config,
+                            "find_package(CUB ",
+                            'message(TRACE "find_package(CUB" ')
         replace_in_file(self, cmake_config,
                         "${_THRUST_VERSION_INCLUDE_DIR}",
                         "${${CMAKE_FIND_PACKAGE_NAME}_INCLUDE_DIR}")
