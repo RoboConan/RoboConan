@@ -1,7 +1,7 @@
 sources:
-  "0.7.2":
-    url: "https://github.com/darnstrom/daqp/archive/refs/tags/v0.7.2.tar.gz"
-    sha256: "0e867507c38b97b7c88831201247ea7fe8c55a7a9b77b67d09d65181377bc9bb"
+  "0.10.3":
+    url: "https://github.com/darnstrom/daqp/archive/v0.10.3.tar.gz"
+    sha256: "6105b9875100214786fce5caf2829380c3e49981757fede84e42b0008a210949"
   "0.4.2-acados":
     url: "https://github.com/darnstrom/daqp/archive/b84fe8716325db90b4ef3ee3969f92cf045a4931.tar.gz"
     sha256: "91e6c0932f740b409d7d8406ca7de33a68587120761123ba73988f0af4da1018"

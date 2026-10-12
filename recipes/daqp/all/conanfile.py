@@ -46,7 +46,7 @@ class DaqpConan(ConanFile):
 
     def requirements(self):
         if self.options.get_safe("with_eigen"):
-            self.requires("eigen/[>=3.3 <6]", transitive_headers=True)
+            self.requires("eigen/[>=3.4 <6]", transitive_headers=True)
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
@@ -74,6 +74,15 @@ class DaqpConan(ConanFile):
         else:
             replace_in_file(self, cmakelists, "install(TARGETS daqp ", "message(TRACE ")
             save(self, cmakelists, "\nset_target_properties(daqp PROPERTIES EXCLUDE_FROM_ALL 1)\n", append=True)
+        if self.options.get_safe("with_eigen"):
+            eigen_cmakelists = os.path.join(self.source_folder, "interfaces", "daqp-eigen", "CMakeLists.txt")
+            replace_in_file(self, eigen_cmakelists,
+                            "add_library(${PROJECT_NAME} SHARED daqp.cpp)",
+                            "add_library(${PROJECT_NAME} daqp.cpp)")
+            replace_in_file(self, eigen_cmakelists,
+                            "target_link_libraries(${PROJECT_NAME} PUBLIC Eigen3::Eigen daqpstat)",
+                            f"target_link_libraries(${{PROJECT_NAME}} PUBLIC Eigen3::Eigen "
+                            f"{'daqp' if self.options.shared else 'daqpstat'})")
 
     def build(self):
         self._patch_sources()
@@ -94,12 +103,14 @@ class DaqpConan(ConanFile):
         self.cpp_info.components["core"].libs = ["daqp" if self.options.shared else "daqpstat"]
         self.cpp_info.components["core"].includedirs = ["include"]
         if self.options.soft_weights:
-            self.cpp_info.components["core"].defines.append("SOFT_WEIGHTS")
-        if not self.options.shared:
-            if self.settings.os in ["Linux", "FreeBSD"]:
-                self.cpp_info.components["core"].system_libs = ["m"]
+            if Version(self.version) < "0.8":
+                self.cpp_info.components["core"].defines.append("SOFT_WEIGHTS")
+        elif Version(self.version) >= "0.8":
+            self.cpp_info.components["core"].defines.append("DAQP_NO_SOFT_WEIGHTS")
+        if self.settings.os in ["Linux", "FreeBSD"]:
+            self.cpp_info.components["core"].system_libs = ["m"]
 
         if self.options.get_safe("with_eigen"):
             self.cpp_info.components["daqp_eigen"].set_property("cmake_target_name", "daqp_eigen")
             self.cpp_info.components["daqp_eigen"].libs = ["daqp_eigen"]
-            self.cpp_info.components["daqp_eigen"].requires = ["core"]
+            self.cpp_info.components["daqp_eigen"].requires = ["core", "eigen::eigen"]
