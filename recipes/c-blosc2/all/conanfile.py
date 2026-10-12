@@ -2,7 +2,6 @@ import glob
 import os
 
 from conan import ConanFile
-from conan.errors import ConanInvalidConfiguration
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.env import VirtualBuildEnv
 from conan.tools.files import *
@@ -24,8 +23,8 @@ class CBlosc2Conan(ConanFile):
         "shared": [True, False],
         "fPIC": [True, False],
         "simd_intrinsics": [None, "sse2", "avx2", "avx512"],
-        "with_lz4": [True, False],
         "with_zlib": [True, False],
+        "with_zfp": [True, False],
         "with_zstd": [True, False],
         "with_plugins": [True, False],
     }
@@ -33,8 +32,8 @@ class CBlosc2Conan(ConanFile):
         "shared": False,
         "fPIC": True,
         "simd_intrinsics": "avx2",
-        "with_lz4": True,
         "with_zlib": True,
+        "with_zfp": False,
         "with_zstd": True,
         "with_plugins": True,
     }
@@ -51,6 +50,11 @@ class CBlosc2Conan(ConanFile):
     def configure(self):
         if self.options.shared:
             self.options.rm_safe("fPIC")
+        if Version(self.version) >= "3.0.0":
+            if not self.options.with_plugins:
+                self.options.rm_safe("with_zfp")
+        else:
+            self.options.rm_safe("with_zfp")
         self.settings.rm_safe("compiler.cppstd")
         self.settings.rm_safe("compiler.libcxx")
 
@@ -58,18 +62,13 @@ class CBlosc2Conan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        if self.options.with_lz4:
-            self.requires("lz4/[^1.9.4]")
+        self.requires("lz4/[^1.9.4]")
         if self.options.with_zlib:
             self.requires("zlib-ng/[^2.0]")
+        if self.options.get_safe("with_zfp"):
+            self.requires("zfp/[>=1 <2]")
         if self.options.with_zstd:
             self.requires("zstd/[~1.5]")
-
-    def validate(self):
-        if Version(self.version) < "2.11.0" \
-           and self.info.settings.arch in ["x86", "x86_64"] \
-           and self.options.simd_intrinsics == "avx512":
-            raise ConanInvalidConfiguration(f"{self.ref} doesn't support 'avx512' SIMD intrinsics")
 
     def build_requirements(self):
         self.tool_requires("cmake/[>=3.16.3 <5]")
@@ -89,6 +88,9 @@ class CBlosc2Conan(ConanFile):
         env.generate()
 
         tc = CMakeToolchain(self)
+        if Version(self.version) >= "3.0.0":
+            tc.cache_variables["BLOSC_DEPENDENCY_MODE"] = "EXTERNAL"
+            tc.cache_variables["BLOSC_ENABLE_ZFP"] = "ON" if self.options.get_safe("with_zfp") else "OFF"
         tc.cache_variables["BLOSC_IS_SUBPROJECT"] = False
         tc.cache_variables["BLOSC_INSTALL"] = True
         tc.cache_variables["BUILD_STATIC"] = not bool(self.options.shared)
@@ -100,22 +102,18 @@ class CBlosc2Conan(ConanFile):
         simd_intrinsics = self.options.get_safe("simd_intrinsics", False)
         tc.cache_variables["DEACTIVATE_AVX2"] = simd_intrinsics not in ["avx2", "avx512"]
         tc.cache_variables["DEACTIVATE_AVX512"] = simd_intrinsics != "avx512"
-        tc.cache_variables["DEACTIVATE_LZ4"] = not bool(self.options.with_lz4)
-        tc.cache_variables["PREFER_EXTERNAL_LZ4"] = True
+        if Version(self.version) < "3.0.0":
+            tc.cache_variables["PREFER_EXTERNAL_LZ4"] = True
         tc.cache_variables["DEACTIVATE_ZLIB"] = not bool(self.options.with_zlib)
         tc.cache_variables["PREFER_EXTERNAL_ZLIB"] = True
         tc.cache_variables["DEACTIVATE_ZSTD"] = not bool(self.options.with_zstd)
         tc.cache_variables["PREFER_EXTERNAL_ZSTD"] = True
         tc.cache_variables["BUILD_PLUGINS"] = bool(self.options.with_plugins)
-        if Version(self.version) >= "2.15.2":
-            tc.cache_variables["WITH_ZLIB_OPTIM"] = self.settings.arch != "wasm"
+        tc.cache_variables["WITH_ZLIB_OPTIM"] = self.settings.arch != "wasm"
         tc.generate()
 
         deps = CMakeDeps(self)
-        if self.options.with_lz4:
-            deps.set_property("lz4", "cmake_file_name", "LZ4")
-        if self.options.with_zstd:
-            deps.set_property("zstd", "cmake_file_name", "ZSTD")
+        deps.set_property("lz4", "cmake_target_name", "LZ4::lz4")
         deps.generate()
 
     def build(self):
@@ -124,7 +122,11 @@ class CBlosc2Conan(ConanFile):
         cmake.build()
 
     def package(self):
-        licenses = ["BLOSC.txt", "BITSHUFFLE.txt", "FASTLZ.txt", "LZ4.txt", "ZLIB.txt", "STDINT.txt"]
+        if Version(self.version) >= "3.0.0":
+            copy(self, "LICENSE.txt", src=self.source_folder, dst=os.path.join(self.package_folder, "licenses"))
+            licenses = ["BITSHUFFLE.txt", "FASTLZ.txt", "LZ4.txt", "ZLIB.txt", "ZSTD.txt"]
+        else:
+            licenses = ["BLOSC.txt", "BITSHUFFLE.txt", "FASTLZ.txt", "LZ4.txt", "ZLIB.txt", "STDINT.txt"]
         for license_file in licenses:
             copy(self, pattern=license_file, dst=os.path.join(self.package_folder, "licenses"), src=os.path.join(self.source_folder, "LICENSES"))
 
@@ -139,9 +141,18 @@ class CBlosc2Conan(ConanFile):
             rm(self, pattern=dll_pattern_to_remove, folder=os.path.join(self.package_folder, "bin"), recursive=True)
 
     def package_info(self):
+        self.cpp_info.set_property("cmake_file_name", "Blosc2")
+        self.cpp_info.set_property("cmake_target_name", "Blosc2::blosc2")
         self.cpp_info.set_property("pkg_config_name", "blosc2")
 
         prefix = "lib" if is_msvc(self) and not self.options.shared else ""
         self.cpp_info.libs = [f"{prefix}blosc2"]
+        self.cpp_info.requires.append("lz4::lz4")
+        if self.options.with_zlib:
+            self.cpp_info.requires.append("zlib-ng::zlib-ng")
+        if self.options.get_safe("with_zfp"):
+            self.cpp_info.requires.append("zfp::_zfp")
+        if self.options.with_zstd:
+            self.cpp_info.requires.append("zstd::zstd")
         if self.settings.os in ["Linux", "FreeBSD"]:
             self.cpp_info.system_libs = ["rt", "m", "pthread", "dl"]
