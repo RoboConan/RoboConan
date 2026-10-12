@@ -120,4 +120,4 @@ class VolConan(ConanFile):
         if self.options.with_osi:
             self.cpp_info.components["osi-vol"].set_property("pkg_config_name", "osi-vol")
             self.cpp_info.components["osi-vol"].libs = ["OsiVol"]
-            self.cpp_info.components["osi-vol"].requires = ["vol", "coin-osi::coin-osi"]
+            self.cpp_info.components["osi-vol"].requires = ["vol", "coin-osi::libosi"]
