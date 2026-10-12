@@ -13,3 +13,8 @@ else()
     add_executable(${PROJECT_NAME} test_package_v2.c)
 endif()
 target_link_libraries(${PROJECT_NAME} PRIVATE sundials::sundials)
+
+if(TEST_SUNDIALS_CORE_MPI)
+    add_executable(test_core test_core.c)
+    target_link_libraries(test_core PRIVATE SUNDIALS::core)
+endif()

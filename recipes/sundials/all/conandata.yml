@@ -1,7 +1,7 @@
 sources:
-  "7.4.0":
-    url: "https://github.com/LLNL/sundials/releases/download/v7.4.0/sundials-7.4.0.tar.gz"
-    sha256: "679ddacdd77610110e613164e8297d6d0cd35bae8e9c3afc8e8ff6f99a1c2a7b"
+  "7.9.0":
+    url: "https://github.com/LLNL/sundials/releases/download/v7.9.0/sundials-7.9.0.tar.gz"
+    sha256: "13f898a27b48fe3449483f9e438a800ed545abf93bc2e2ceec2d1e00ae8db5ef"
   "6.7.0":
     url: "https://github.com/LLNL/sundials/releases/download/v6.7.0/sundials-6.7.0.tar.gz"
     sha256: "5f113a1564a9d2d98ff95249f4871a4c815a05dbb9b8866a82b13ab158c37adb"
@@ -9,9 +9,12 @@ sources:
     url: "https://github.com/LLNL/sundials/releases/download/v5.8.0/sundials-5.8.0.tar.gz"
     sha256: "d4ed403351f72434d347df592da6c91a69452071860525385b3339c824e8a213"
   "2.7.0":
-    url: "https://github.com/LLNL/sundials/archive/refs/tags/v2.7.0.tar.gz"
+    url: "https://github.com/LLNL/sundials/archive/v2.7.0.tar.gz"
     sha256: "ea7045ba0a20dbfc9579fbc1901b6a7cda4bf8ee211cd6468f0f2cb626265569"
 patches:
+  "5.8.0":
+    - patch_file: "patches/5.8.0-cmake4.patch"
+      patch_description: "Fix CMake 4 try-compile compatibility and MPI include propagation"
   "2.7.0":
     - patch_file: "patches/2.7.0-casadi-fixes.patch"
       patch_source:

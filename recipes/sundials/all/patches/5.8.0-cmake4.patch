@@ -1,0 +1,22 @@
+--- a/cmake/tpl/SundialsPOSIXTimers.cmake
++++ b/cmake/tpl/SundialsPOSIXTimers.cmake
+@@ -43,7 +43,7 @@ if(USE_GENERIC_MATH)
+ 
+     # Create a CMakeLists.txt file which will generate the test executable
+     file(WRITE ${POSIXTest_DIR}/CMakeLists.txt
+-      "CMAKE_MINIMUM_REQUIRED(VERSION 3.0.2)\n"
++      "CMAKE_MINIMUM_REQUIRED(VERSION 3.5)\n"
+       "PROJECT(posixtimerstest C)\n"
+       "SET(CMAKE_VERBOSE_MAKEFILE ON)\n"
+       "SET(CMAKE_C_COMPILER \"${CMAKE_C_COMPILER}\")\n"
+--- a/src/nvector/manyvector/CMakeLists.txt
++++ b/src/nvector/manyvector/CMakeLists.txt
+@@ -46,7 +46,7 @@ if(BUILD_NVECTOR_MPIMANYVECTOR)
+   if(MPI_C_COMPILER)
+     # use MPI wrapper as the compiler
+     set(CMAKE_C_COMPILER ${MPI_C_COMPILER})
+-  elseif()
++  else()
+     # add MPI_INCLUDE_PATH to include directories
+     include_directories(${MPI_INCLUDE_PATH})
+   endif()
