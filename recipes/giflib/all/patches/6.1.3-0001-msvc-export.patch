@@ -19,9 +19,9 @@ diff --git a/gif_lib.h b/gif_lib.h
 +  #define GIF_EXPORT
 +#endif /* _MSC_VER */
 +
- #define GIFLIB_MAJOR 5
- #define GIFLIB_MINOR 2
- #define GIFLIB_RELEASE 2
+ #define GIFLIB_MAJOR 6
+ #define GIFLIB_MINOR 1
+ #define GIFLIB_RELEASE 3
 @@ -125,13 +139,13 @@
  ******************************************************************************/
  
@@ -31,19 +31,19 @@ diff --git a/gif_lib.h b/gif_lib.h
                                const bool GifTestExistence, int *Error);
 -GifFileType *EGifOpenFileHandle(const int GifFileHandle, int *Error);
 -GifFileType *EGifOpen(void *userPtr, OutputFunc writeFunc, int *Error);
--int EGifSpew(GifFileType *GifFile);
+-int EGifSpew(GifFileType *GifFile, int *ErrorCode);
 -const char *EGifGetGifVersion(GifFileType *GifFile); /* new in 5.x */
 -int EGifCloseFile(GifFileType *GifFile, int *ErrorCode);
 +GIF_EXPORT GifFileType *EGifOpenFileHandle(const int GifFileHandle, int *Error);
 +GIF_EXPORT GifFileType *EGifOpen(void *userPtr, OutputFunc writeFunc, int *Error);
-+GIF_EXPORT int EGifSpew(GifFileType *GifFile);
++GIF_EXPORT int EGifSpew(GifFileType *GifFile, int *ErrorCode);
 +GIF_EXPORT const char *EGifGetGifVersion(GifFileType *GifFile); /* new in 5.x */
 +GIF_EXPORT int EGifCloseFile(GifFileType *GifFile, int *ErrorCode);
  
  #define E_GIF_SUCCEEDED 0
- #define E_GIF_ERR_OPEN_FAILED 1 /* And EGif possible errors. */
+ #define E_GIF_ERR_OPEN_FAILED 201 /* And EGif possible errors. */
 @@ -146,39 +160,39 @@
- #define E_GIF_ERR_NOT_WRITEABLE 10
+ #define E_GIF_ERR_NOT_WRITEABLE 210
  
  /* These are legacy.  You probably do not want to call them directly */
 -int EGifPutScreenDesc(GifFileType *GifFile, const int GifWidth,
@@ -218,3 +218,15 @@ diff --git a/gif_lib.h b/gif_lib.h
                                  const char *legend, const int border,
                                  const int bg, const int fg);
  
+diff --git a/quantize.c b/quantize.c
+--- a/quantize.c
++++ b/quantize.c
+@@ -59,7 +59,7 @@
+    Also non of the parameter are allocated by this routine.
+    This function returns GIF_OK if successful, GIF_ERROR otherwise.
+ ******************************************************************************/
+-int GifQuantizeBuffer(unsigned int Width, unsigned int Height,
++GIF_EXPORT int GifQuantizeBuffer(unsigned int Width, unsigned int Height,
+                       int *ColorMapSize, const GifByteType *RedInput,
+                       const GifByteType *GreenInput,
+                       const GifByteType *BlueInput, GifByteType *OutputBuffer,

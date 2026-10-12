@@ -11,6 +11,7 @@ add_library(gif
     gif_font.c
     gif_hash.c
     openbsd-reallocarray.c
+    quantize.c
 )
 if(WIN32)
     if(BUILD_SHARED_LIBS)
@@ -35,7 +36,6 @@ install(
 if(UTILS)
     add_library(giflib_util STATIC
         qprintf.c
-        quantize.c
         getarg.c
     )
     target_link_libraries(giflib_util PRIVATE gif)

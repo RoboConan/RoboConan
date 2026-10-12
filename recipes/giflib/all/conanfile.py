@@ -31,16 +31,18 @@ class GiflibConan(ConanFile):
 
     def export_sources(self):
         copy(self, "CMakeLists.txt", self.recipe_folder, os.path.join(self.export_sources_folder, "src"))
+        export_conandata_patches(self)
 
     def layout(self):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
         if is_msvc(self) and self.options.utils:
-            self.requires("getopt-for-visual-studio/20200201")
+            self.requires("getopt-for-visual-studio/[>=20200201]")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
+        apply_conandata_patches(self)
 
     def generate(self):
         tc = CMakeToolchain(self)
