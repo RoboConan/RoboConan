@@ -3,16 +3,15 @@ import os
 from conan import ConanFile
 from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
 from conan.tools.files import *
-from conan.tools.scm import Version
 
 required_conan_version = ">=2.4"
 
 
 class ZipConan(ConanFile):
     name = "kuba-zip"
-    license = "Unlicense"
-    homepage = "https://github.com/kuba--/zip"
     description = "A portable, simple zip library written in C"
+    license = "MIT"
+    homepage = "https://github.com/kuba--/zip"
     topics = ("zip", "compression", "c", "miniz", "portable", "hacking")
 
     package_type = "library"
@@ -38,10 +37,15 @@ class ZipConan(ConanFile):
     def generate(self):
         tc = CMakeToolchain(self)
         tc.variables["CMAKE_DISABLE_TESTING"] = True
+        tc.variables["CMAKE_ENABLE_SANITIZERS"] = False
         tc.variables["ZIP_STATIC_PIC"] = self.options.get_safe("fPIC", True)
         tc.variables["ZIP_BUILD_DOCS"] = False
-        if Version(self.version) < "0.2.3":
-            tc.cache_variables["CMAKE_POLICY_VERSION_MINIMUM"] = "3.5" # CMake 4 support
+        tc.variables["ZIP_BUILD_FUZZ"] = False
+        tc.variables["ZIP_BUILD_TOOLS"] = False
+        tc.variables["ZIP_ENABLE_INFLATE"] = True
+        tc.variables["ZIP_ENABLE_DEFLATE"] = True
+        tc.variables["ZIP_HAVE_SYMLINK"] = True
+        tc.variables["MINIZ_NO_STDIO"] = False
         tc.generate()
 
     def build(self):
@@ -50,7 +54,8 @@ class ZipConan(ConanFile):
         cmake.build()
 
     def package(self):
-        copy(self, "UNLICENSE", src=self.source_folder, dst=os.path.join(self.package_folder, "licenses"))
+        license_file = "LICENSE.txt"
+        copy(self, license_file, self.source_folder, os.path.join(self.package_folder, "licenses"))
         cmake = CMake(self)
         cmake.install()
         rmdir(self, os.path.join(self.package_folder, "lib", "cmake"))
