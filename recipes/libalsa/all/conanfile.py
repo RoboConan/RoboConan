@@ -38,9 +38,6 @@ class LibalsaConan(ConanFile):
         if self.settings.os != "Linux":
             raise ConanInvalidConfiguration(f"{self.name} only supports Linux")
 
-    def build_requirements(self):
-        self.tool_requires("libtool/[^2.4.7]")
-
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
 
@@ -54,7 +51,6 @@ class LibalsaConan(ConanFile):
 
     def build(self):
         autotools = Autotools(self)
-        autotools.autoreconf()
         autotools.configure()
         autotools.make()
 
@@ -68,11 +64,20 @@ class LibalsaConan(ConanFile):
     def package_info(self):
         self.cpp_info.set_property("cmake_find_mode", "both")
         self.cpp_info.set_property("cmake_file_name", "ALSA")
-        self.cpp_info.set_property("cmake_target_name", "ALSA::ALSA")
-        self.cpp_info.set_property("pkg_config_name", "alsa")
-        self.cpp_info.libs = ["asound"]
-        self.cpp_info.resdirs = ["share"]
-        self.cpp_info.system_libs = ["dl", "m", "rt", "pthread"]
+
+        libalsa = self.cpp_info.components["libalsa"]
+        libalsa.set_property("cmake_target_name", "ALSA::ALSA")
+        libalsa.set_property("pkg_config_name", "alsa")
+        libalsa.libs = ["asound"]
+        libalsa.resdirs = ["share"]
+        libalsa.system_libs = ["dl", "m", "rt", "pthread"]
+
+        atopology = self.cpp_info.components["atopology"]
+        atopology.set_property("cmake_target_name", "ALSA::atopology")
+        atopology.set_property("pkg_config_name", "alsa-topology")
+        atopology.libs = ["atopology"]
+        atopology.requires = ["libalsa"]
+
         alsa_config_dir = os.path.join(self.package_folder, "share", "alsa")
         self.runenv_info.define_path("ALSA_CONFIG_DIR", alsa_config_dir)
         aclocal_dir = os.path.join(self.package_folder, "share", "aclocal")

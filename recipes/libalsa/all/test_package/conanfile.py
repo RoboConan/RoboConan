@@ -24,3 +24,5 @@ class TestPackageConan(ConanFile):
         if can_run(self):
             bin_path = os.path.join(self.cpp.build.bindir, "test_package")
             self.run(bin_path, env="conanrun")
+            bin_path = os.path.join(self.cpp.build.bindir, "test_package_atopology")
+            self.run(bin_path, env="conanrun")
