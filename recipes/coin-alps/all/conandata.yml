@@ -1,7 +1,7 @@
 sources:
   "2.0.2":
-    url: "https://github.com/coin-or/CHiPPS-ALPS/archive/refs/tags/releases/2.0.2.tar.gz"
+    url: "https://github.com/coin-or/CHiPPS-ALPS/archive/releases/2.0.2.tar.gz"
     sha256: "4ed8ef38a2e5f370470ba775b342b4bdd0108fd6de3f8dff426a682116f070a1"
   "1.5.12":
-    url: "https://github.com/coin-or/CHiPPS-ALPS/archive/refs/tags/releases/1.5.12.tar.gz"
+    url: "https://github.com/coin-or/CHiPPS-ALPS/archive/releases/1.5.12.tar.gz"
     sha256: "b781e32c0e1bedd3ba7eddf72943408693e314377879ee3ef8ef562aa94bbdfc"

@@ -1,4 +1,4 @@
 sources:
   "0.5.9":
-    url: "https://github.com/coin-or/Couenne/archive/refs/tags/releases/0.5.9.tar.gz"
+    url: "https://github.com/coin-or/Couenne/archive/releases/0.5.9.tar.gz"
     sha256: "5b67c9b33aaddf022914b91c7f23dc3d44d2bad31dace8b6a39f2e41fb121ef8"

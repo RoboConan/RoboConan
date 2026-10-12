@@ -1,6 +1,6 @@
 sources:
   "2.10.13":
-    url: "https://github.com/coin-or/Cbc/archive/refs/tags/releases/2.10.13.tar.gz"
+    url: "https://github.com/coin-or/Cbc/archive/releases/2.10.13.tar.gz"
     sha256: "62fde44dcf6f3d05c5cd291d7435cdd1b7e8acd3c78ec481dd39fe49cbc40399"
 patches:
   "2.10.13":

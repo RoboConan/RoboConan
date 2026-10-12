@@ -1,4 +1,4 @@
 sources:
   "1.5.4":
-    url: "https://github.com/coin-or/Vol/archive/refs/tags/releases/1.5.4.tar.gz"
+    url: "https://github.com/coin-or/Vol/archive/releases/1.5.4.tar.gz"
     sha256: "93c2afff8ce920de964fee5e679f5c11de3c3f472ebccde62fb513d8d3a9f467"

@@ -1,7 +1,7 @@
 sources:
   "0.8.11":
     source:
-      url: "https://github.com/coin-or-tools/BuildTools/archive/refs/tags/releases/0.8.11.tar.gz"
+      url: "https://github.com/coin-or-tools/BuildTools/archive/releases/0.8.11.tar.gz"
       sha256: "ec4cec2455537b4911b1ce223f1f946f5afa2ea6264fc96ae4da6bea63af34dc"
     license:
       url: "https://raw.githubusercontent.com/coin-or-tools/BuildTools/20208f47f7bbc0056a92adefdfd43fded969f674/LICENSE"
