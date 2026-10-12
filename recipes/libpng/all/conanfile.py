@@ -141,7 +141,7 @@ class LibpngConan(ConanFile):
         self.cpp_info.set_property("cmake_find_mode", "both")
         self.cpp_info.set_property("cmake_file_name", "PNG")
         self.cpp_info.set_property("cmake_target_name", "PNG::PNG")
-        self.cpp_info.set_property("cmake_target_aliases", [f"PNG::png_shared" if self.options.shared else "PNG::png_static"])
+        self.cpp_info.set_property("cmake_target_aliases", ["PNG::png_shared" if self.options.shared else "PNG::png_static"])
         self.cpp_info.set_property("pkg_config_name", "libpng")
         self.cpp_info.set_property("pkg_config_aliases", [f"libpng{major_min_version}"])
 
