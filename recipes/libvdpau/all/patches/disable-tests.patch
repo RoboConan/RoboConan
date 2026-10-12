@@ -1,0 +1,8 @@
+--- a/meson.build
++++ b/meson.build
+@@ -45,5 +45,4 @@
+ subdir('doc')
+ subdir('include')
+ subdir('src')
+-subdir('test')
+ subdir('trace')
