@@ -37,7 +37,7 @@ class AbseilConan(ConanFile):
         export_conandata_patches(self)
 
     def validate(self):
-        check_min_cppstd(self, 14)
+        check_min_cppstd(self, 17 if Version(self.version) >= "20250512" else 14)
 
         if self.options.shared and is_msvc(self) and Version(self.version) < "20230802.1":
             # upstream tries its best to export symbols, but it's broken for the moment
