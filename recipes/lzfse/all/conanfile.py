@@ -40,7 +40,7 @@ class LzfseConan(ConanFile):
     def generate(self):
         tc = CMakeToolchain(self)
         tc.variables["LZFSE_BUNDLE_MODE"] = False
-        tc.variables["LZFSE_DISABLE_TESTS"] = False
+        tc.variables["LZFSE_DISABLE_TESTS"] = True
         # Relocatable shared lib on Macos
         tc.cache_variables["CMAKE_POLICY_DEFAULT_CMP0042"] = "NEW"
         tc.cache_variables["CMAKE_POLICY_VERSION_MINIMUM"] = "3.5" # CMake 4 support
