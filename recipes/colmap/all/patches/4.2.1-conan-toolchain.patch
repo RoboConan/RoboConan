@@ -1,0 +1,22 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -124,4 +124,0 @@
+-set(CMAKE_CXX_STANDARD 17)
+-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+-set(CMAKE_CUDA_STANDARD 17)
+-set(CMAKE_CUDA_STANDARD_REQUIRED ON)
+--- a/cmake/FindDependencies.cmake
++++ b/cmake/FindDependencies.cmake
+@@ -16,1 +16,3 @@
+-find_package(OpenMP REQUIRED COMPONENTS C CXX)
++if(OPENMP_ENABLED)
++    find_package(OpenMP REQUIRED COMPONENTS C CXX)
++endif()
+--- a/src/colmap/util/CMakeLists.txt
++++ b/src/colmap/util/CMakeLists.txt
+@@ -94,4 +94,5 @@
+             colmap_util
+             CUDA::cudart
++            CUDA::curand
+     )
+ endif()
