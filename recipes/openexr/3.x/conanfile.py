@@ -21,10 +21,14 @@ class OpenEXRConan(ConanFile):
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
+        "threading": [True, False],
+        "with_tbb": [True, False],
     }
     default_options = {
         "shared": False,
         "fPIC": True,
+        "threading": True,
+        "with_tbb": False,
     }
     implements = ["auto_shared_fpic"]
 
@@ -41,6 +45,12 @@ class OpenEXRConan(ConanFile):
         self.requires("libdeflate/[^1.19]")
         self.requires("openjph/[>=0.32 <1]")
         self.requires("zstd/[^1.5.0]")
+        if self.options.with_tbb:
+            self.requires("onetbb/[>=2021.13 <2024]")
+
+    def configure(self):
+        if self.options.with_tbb:
+            self.options.threading.value = True
 
     def validate(self):
         check_min_cppstd(self, 17)
@@ -58,6 +68,8 @@ class OpenEXRConan(ConanFile):
         tc = CMakeToolchain(self)
         tc.variables["OPENEXR_INSTALL"] = True
         tc.variables["OPENEXR_BUILD_LIBS"] = True
+        tc.variables["OPENEXR_ENABLE_THREADING"] = self.options.threading
+        tc.variables["OPENEXR_USE_TBB"] = self.options.with_tbb
         tc.variables["OPENEXR_BUILD_TOOLS"] = False
         tc.variables["OPENEXR_INSTALL_TOOLS"] = False
         tc.variables["OPENEXR_INSTALL_DEVELOPER_TOOLS"] = False
@@ -94,7 +106,6 @@ class OpenEXRConan(ConanFile):
         rmdir(self, os.path.join(self.package_folder, "lib", "cmake"))
 
     def _add_component(self, name):
-        comp_name = "openexr_" if name == "OpenEXR" else name.lower()
         component = self.cpp_info.components[name.lower()]
         component.set_property("cmake_target_name", f"OpenEXR::{name}")
         return component
@@ -133,8 +144,10 @@ class OpenEXRConan(ConanFile):
         IlmThread = self._add_component("IlmThread")
         IlmThread.libs = [f"IlmThread{lib_suffix}"]
         IlmThread.requires = ["openexrconfig", "iex"]
-        if self.settings.os in ["Linux", "FreeBSD"]:
+        if self.options.threading and self.settings.os in ["Linux", "FreeBSD"]:
             IlmThread.system_libs = ["pthread"]
+        if self.options.with_tbb:
+            IlmThread.requires.append("onetbb::libtbb")
         if self.settings.os == "Linux":
             IlmThread.system_libs.append("dl")
 
@@ -145,8 +158,6 @@ class OpenEXRConan(ConanFile):
             "openexrconfig", "imath::imath",
             "libdeflate::libdeflate", "openjph::openjph", "zstd::zstd",
         ]
-        if not self.options.shared and self.settings.os in ["Linux", "FreeBSD"]:
-            OpenEXRCore.system_libs = ["m"]
         if self.settings.os == "Linux":
             OpenEXRCore.system_libs.append("dl")
 
