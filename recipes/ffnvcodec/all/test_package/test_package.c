@@ -1,4 +1,4 @@
-#include <ffnvcodec/nvEncodeAPI.h>
+#include <ffnvcodec/dynlink_loader.h>
 #include <stdio.h>
 
 int main() {

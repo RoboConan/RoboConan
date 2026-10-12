@@ -46,6 +46,9 @@ class FfNvCodecHeaders(ConanFile):
 
     def package_info(self):
         self.cpp_info.set_property("pkg_config_name", "ffnvcodec")
+        # https://github.com/FFmpeg/nv-codec-headers/blob/n13.1.15.0/ffnvcodec.pc.in#L6
+        if self.version == "13.1.15.0":
+            self.cpp_info.set_property("system_package_version", "13.1.15.0.1")
         if self.options.prefixless_includes:
             self.cpp_info.includedirs.append("include/ffnvcodec")
         self.cpp_info.bindirs = []
