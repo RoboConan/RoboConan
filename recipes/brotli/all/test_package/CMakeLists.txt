@@ -4,4 +4,7 @@ project(test_package LANGUAGES CXX)
 find_package(brotli REQUIRED CONFIG)
 
 add_executable(${PROJECT_NAME} test_package.cpp)
-target_link_libraries(${PROJECT_NAME} PRIVATE brotli::brotli)
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    brotli::brotlidec
+    brotli::brotlienc
+)
