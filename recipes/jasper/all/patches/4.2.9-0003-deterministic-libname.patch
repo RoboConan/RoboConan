@@ -1,8 +1,8 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index c6925e4..8392edf 100644
+index bf79211..7e593ed 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -274,7 +274,7 @@ message("JAS_MULTICONFIGURATION_GENERATOR ${JAS_MULTICONFIGURATION_GENERATOR}")
+@@ -276,7 +276,7 @@ message("JAS_MULTICONFIGURATION_GENERATOR ${JAS_MULTICONFIGURATION_GENERATOR}")
  # If a multiconfiguration generator is used, ensure that various output
  # files are not placed in subdirectories (such as Debug and Release)
  # as this will cause the CTest test suite to fail.
