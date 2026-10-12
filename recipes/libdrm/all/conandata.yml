@@ -1,4 +1,8 @@
 sources:
-  "2.4.126":
-    url: "https://dri.freedesktop.org/libdrm/libdrm-2.4.126.tar.xz"
-    sha256: "6cab16d4d259b6abc9f485233863454114a3c307eca806679aad3edbe967bf42"
+  "2.4.134":
+    url: "https://dri.freedesktop.org/libdrm/libdrm-2.4.134.tar.xz"
+    sha256: "ac5e74d157830eb8bee44c6a6bf3ad49774ef0dd2a72bdad74a8f20308b52a95"
+patches:
+  "2.4.134":
+    - patch_file: "patches/2.4.134-0001-respect-tests-option-for-intel-tests.patch"
+      patch_description: "Do not build Intel's internal test program when tests are disabled"

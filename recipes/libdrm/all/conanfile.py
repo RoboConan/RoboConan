@@ -59,6 +59,9 @@ class LibdrmConan(ConanFile):
     implements = ["auto_shared_fpic"]
     languages = ["C"]
 
+    def export_sources(self):
+        export_conandata_patches(self)
+
     def layout(self):
         basic_layout(self, src_folder="src")
 
@@ -79,11 +82,13 @@ class LibdrmConan(ConanFile):
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
+        apply_conandata_patches(self)
 
     def generate(self):
         tc = MesonToolchain(self)
         tc.project_options["auto_features"] = "enabled"
         tc.project_options["cairo-tests"] = "disabled"
+        tc.project_options["tests"] = "false"
         tc.project_options["install-test-programs"] = "false"
         tc.project_options["freedreno-kgsl"] = "true" if self.options.get_safe("freedreno-kgsl") else "false"
         tc.project_options["udev"] = "true" if self.options.udev else "false"
@@ -125,34 +130,27 @@ class LibdrmConan(ConanFile):
             self.cpp_info.components["libdrm_vc4"].set_property("pkg_config_name", "libdrm_vc4")
             self.cpp_info.components["libdrm_vc4"].requires = ["libdrm_libdrm"]
 
-        if self.options.freedreno:
-            self.cpp_info.components["libdrm_freedreno"].set_property("pkg_config_name", "libdrm_freedreno")
-            self.cpp_info.components["libdrm_freedreno"].libs = ["drm_freedreno"]
-            self.cpp_info.components["libdrm_freedreno"].includedirs.extend(["include/libdrm", "include/freedreno"])
-            self.cpp_info.components["libdrm_freedreno"].requires = ["libdrm_libdrm"]
+        component_includedirs = {
+            "freedreno": ["include/freedreno"],
+            "nouveau": ["include/libdrm/nouveau"],
+            "omap": ["include/omap"],
+            "exynos": ["include/exynos"],
+        }
+        for name in (
+            "freedreno", "amdgpu", "nouveau", "intel", "radeon",
+            "omap", "exynos", "tegra", "etnaviv",
+        ):
+            if not self.options.get_safe(name):
+                continue
 
-        if self.options.amdgpu:
-            self.cpp_info.components["libdrm_amdgpu"].set_property("pkg_config_name", "libdrm_amdgpu")
-            self.cpp_info.components["libdrm_amdgpu"].libs = ["drm_amdgpu"]
-            self.cpp_info.components["libdrm_amdgpu"].includedirs.append("include/libdrm")
-            self.cpp_info.components["libdrm_amdgpu"].requires = ["libdrm_libdrm"]
-
-        if self.options.nouveau:
-            self.cpp_info.components["libdrm_nouveau"].set_property("pkg_config_name", "libdrm_nouveau")
-            self.cpp_info.components["libdrm_nouveau"].libs = ["drm_nouveau"]
-            self.cpp_info.components["libdrm_nouveau"].includedirs.extend(["include/libdrm", "include/libdrm/nouveau"])
-            self.cpp_info.components["libdrm_nouveau"].requires = ["libdrm_libdrm"]
-            if self.settings.os in ["Linux", "FreeBSD"]:
-                self.cpp_info.components["libdrm_nouveau"].system_libs = ["pthread"]
-
-        if self.options.intel:
-            self.cpp_info.components["libdrm_intel"].set_property("pkg_config_name", "libdrm_intel")
-            self.cpp_info.components["libdrm_intel"].libs = ["drm_intel"]
-            self.cpp_info.components["libdrm_intel"].includedirs.append("include/libdrm")
-            self.cpp_info.components["libdrm_intel"].requires = ["libdrm_libdrm", "libpciaccess::libpciaccess"]
-
-        if self.options.radeon:
-            self.cpp_info.components["libdrm_radeon"].set_property("pkg_config_name", "libdrm_radeon")
-            self.cpp_info.components["libdrm_radeon"].libs = ["drm_radeon"]
-            self.cpp_info.components["libdrm_radeon"].includedirs.append("include/libdrm")
-            self.cpp_info.components["libdrm_radeon"].requires = ["libdrm_libdrm"]
+            component = self.cpp_info.components[f"libdrm_{name}"]
+            component.set_property("pkg_config_name", f"libdrm_{name}")
+            component.libs = [f"drm_{name}"]
+            component.includedirs.append("include/libdrm")
+            component.includedirs.extend(component_includedirs.get(name, []))
+            component.requires = ["libdrm_libdrm"]
+            if name == "intel":
+                component.requires.append("libpciaccess::libpciaccess")
+            component.system_libs = ["pthread"]
+            component.cflags = ["-pthread"]
+            component.cxxflags = ["-pthread"]

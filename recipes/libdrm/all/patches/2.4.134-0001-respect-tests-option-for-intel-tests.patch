@@ -1,0 +1,15 @@
+--- a/intel/meson.build
++++ b/intel/meson.build
+@@ -56,6 +56,7 @@ pkg.generate(
+   description : 'Userspace interface to intel kernel DRM services',
+ )
+ 
++if with_tests
+ test_decode = executable(
+   'test_decode',
+   files('test_decode.c'),
+@@ -105,3 +106,4 @@ test(
+     '--nm', prog_nm.full_path(),
+   ],
+ )
++endif
