@@ -1,0 +1,10 @@
+--- a/h/monty_base.h
++++ b/h/monty_base.h
+@@ -2,6 +2,7 @@
+ #define _MONTY_BASE_H_
+ 
+ #include <stddef.h>
++#include <cstdint>
+ #include <cassert>
+ #include <utility>
+ 

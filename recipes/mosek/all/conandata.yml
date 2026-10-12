@@ -1,36 +1,36 @@
 sources:
-  "11.0.28":
+  "11.2.6":
     Linux:
       x86_64:
-        url: "https://download.mosek.com/stable/11.0.28/mosektoolslinux64x86.tar.bz2"
-        sha256: "bf1ffcc92215969eb78f37f68e6bb5a06b578d17d08cee317d932434b78aa44f"
+        url: "https://download.mosek.com/stable/11.2.6/mosektoolslinux64x86.tar.bz2"
+        sha256: "ec335f46f205457a420c5d84551cb12b7454d6d991f2392b63ba65d4b37e1009"
       armv8:
-        url: "https://download.mosek.com/stable/11.0.28/mosektoolslinuxaarch64.tar.bz2"
-        sha256: "192c8e842776e4aacba389396e955fa1ebec295b4f8858a8a7b9d85b40db236d"
+        url: "https://download.mosek.com/stable/11.2.6/mosektoolslinuxaarch64.tar.bz2"
+        sha256: "6be3f56c01283352cbfe0007aa174421c3232ad584803df6bce90ce9431dd9fd"
     Macos:
       armv8:
-        url: "https://download.mosek.com/stable/11.0.28/mosektoolsosxaarch64.tar.bz2"
-        sha256: "42b12e953d9b0da332fa9dea62732821673bf4afe00454692b6bb3428798e85e"
+        url: "https://download.mosek.com/stable/11.2.6/mosektoolsosxaarch64.tar.bz2"
+        sha256: "327ad2c2bb873f27331cb6ad5640f76cee0f585feaa0dcb12b17adca9170f8cb"
     Windows:
       x86_64:
-        url: "https://download.mosek.com/stable/11.0.28/mosektoolswin64x86.zip"
-        sha256: "d0b1108f002353a03c36b852c7c5426ec295f3b00a6544c13384f0647d6928c7"
-  "10.2.17":
+        url: "https://download.mosek.com/stable/11.2.6/mosektoolswin64x86.zip"
+        sha256: "ed1ed29dec91efc38d590729931918c6c71945d9a9b6943b43e6b46b9f7d3961"
+  "10.2.19":
     Linux:
       x86_64:
-        url: "https://download.mosek.com/stable/10.2.17/mosektoolslinux64x86.tar.bz2"
-        sha256: "20c842636e0b867c3e5938282a66735d9a5fa85f446f27cad230558ffe0b9f40"
+        url: "https://download.mosek.com/stable/10.2.19/mosektoolslinux64x86.tar.bz2"
+        sha256: "5c84de3cfdc81c250b6a7079f558823470091834fe73070b4c5b0db920f7f373"
       armv8:
-        url: "https://download.mosek.com/stable/10.2.17/mosektoolslinuxaarch64.tar.bz2"
-        sha256: "eb706f706327de7e08dd8e2131de3e7972e969563a08bb5bfebd369f05052393"
+        url: "https://download.mosek.com/stable/10.2.19/mosektoolslinuxaarch64.tar.bz2"
+        sha256: "41143d1e9ffc0383122ef3427a80cdeef8dc294d691f99b6bb5f071127f248db"
     Macos:
       armv8:
-        url: "https://download.mosek.com/stable/10.2.17/mosektoolsosxaarch64.tar.bz2"
-        sha256: "d4d004927373a5c0aa6f9a36b52df73e7a60389fb5c142d3155c3f7d0a365a5e"
+        url: "https://download.mosek.com/stable/10.2.19/mosektoolsosxaarch64.tar.bz2"
+        sha256: "6e694327531c937c277a7d8eb1fed8d385e455876140faa898a9228e7e40dbb2"
     Windows:
       x86_64:
-        url: "https://download.mosek.com/stable/10.2.17/mosektoolswin64x86.zip"
-        sha256: "ca03414808bb522af7848bdaf3a14298660fffcf02a0aacbbade2d6e41face9f"
+        url: "https://download.mosek.com/stable/10.2.19/mosektoolswin64x86.zip"
+        sha256: "18f584e1af304f37670b52d2daa9cf2137e3f77e64ec99e4ec0e077a74e83d2d"
   "9.3.22":
     Linux:
       x86_64:
@@ -60,3 +60,8 @@ sources:
       x86_64:
         url: "https://download.mosek.com/stable/8.1.0.83/mosektoolswin64x86.zip"
         sha256: "fad4420a010327912efb178d5d7953dbb5c38e1b9cf0d90a73539de0b35c2508"
+patches:
+  "11.2.6":
+    - patch_file: "patches/include-cstdint.patch"
+      patch_description: "Include cstdint before using fixed-width integer types"
+      patch_type: "portability"

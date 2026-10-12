@@ -25,21 +25,33 @@ class MosekConan(ConanFile):
     settings = "os", "arch", "compiler", "build_type"
     options = {
         "shared": [True, False],
+        "fusion_shared": [True, False],
         "fusion_cxx": [True, False],
         "tools": [True, False],
     }
     default_options = {
         "shared": True,
+        "fusion_shared": True,
         "fusion_cxx": True,
         "tools": False,
     }
 
     def export_sources(self):
+        export_conandata_patches(self)
         copy(self, "CMakeLists.txt", self.recipe_folder, self.export_sources_folder)
+
+    def config_options(self):
+        if Version(self.version) >= "11.2":
+            self.options.rm_safe("shared")
+        else:
+            self.options.rm_safe("fusion_shared")
 
     def configure(self):
         if not self.options.fusion_cxx:
-            del self.options.shared
+            if Version(self.version) >= "11.2":
+                del self.options.fusion_shared
+            else:
+                del self.options.shared
 
     def package_id(self):
         if not self.info.options.fusion_cxx:
@@ -55,7 +67,7 @@ class MosekConan(ConanFile):
 
     @cached_property
     def _download_info(self):
-        if self.settings.os in ["Linux", "FreeBSD"]:
+        if self.settings.os == "Linux":
             os_ = "Linux"
         elif is_apple_os(self):
             os_ = "Macos"
@@ -93,13 +105,17 @@ class MosekConan(ConanFile):
         if self.options.fusion_cxx:
             v = Version(self.version)
             tc = CMakeToolchain(self)
-            tc.cache_variables["BUILD_SHARED_LIBS"] = self.options.shared
+            if Version(self.version) >= "11.2":
+                tc.cache_variables["BUILD_SHARED_LIBS"] = self.options.fusion_shared
+            else:
+                tc.cache_variables["BUILD_SHARED_LIBS"] = self.options.shared
             tc.cache_variables["MOSEK_VERSION"] = f"{v.major}.{v.minor}"
             tc.cache_variables["DLL_SUFFIX"] = self._dll_suffix
             tc.generate()
 
     def build(self):
         self._source()
+        apply_conandata_patches(self)
         if self.options.fusion_cxx:
             cmake = CMake(self)
             cmake.configure(build_script_folder="src/fusion_cxx")
@@ -127,8 +143,12 @@ class MosekConan(ConanFile):
             rm(self, "*mosek64*", os.path.join(self.source_folder, "bin"))
             rm(self, "*mosekjava*", os.path.join(self.source_folder, "bin"))
             rm(self, "*mosekdotnet*", os.path.join(self.source_folder, "bin"))
+            rm(self, "*mosekxx*", os.path.join(self.source_folder, "bin"))
             rm(self, "*tbb*", os.path.join(self.source_folder, "bin"))
             rm(self, "*.jar", os.path.join(self.source_folder, "bin"))
+            rm(self, "*.m", os.path.join(self.source_folder, "bin"))
+            rm(self, "*.mex*", os.path.join(self.source_folder, "bin"))
+            rm(self, "*.py", os.path.join(self.source_folder, "bin"))
             copy(self, "*", os.path.join(self.source_folder, "bin"), os.path.join(self.package_folder, "bin"))
         if self.options.fusion_cxx:
             cmake = CMake(self)
@@ -137,10 +157,11 @@ class MosekConan(ConanFile):
     def package_info(self):
         self.cpp_info.components["mosek64"].set_property("cmake_target_name", "mosek64")
         self.cpp_info.components["mosek64"].libs = [f"mosek64{self._dll_suffix}"]
+        self.cpp_info.components["mosek64"].requires = ["onetbb::libtbb"]
 
         if self.options.fusion_cxx:
             self.cpp_info.components["fusion64"].set_property("cmake_target_name", "fusion64")
             self.cpp_info.components["fusion64"].libs = [f"fusion64{self._dll_suffix}"]
             self.cpp_info.components["fusion64"].requires = ["mosek64"]
-            if self.settings.os in ["Linux", "FreeBSD"]:
+            if self.settings.os == "Linux":
                 self.cpp_info.components["fusion64"].system_libs = ["m"]

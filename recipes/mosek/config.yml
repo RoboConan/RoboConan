@@ -1,7 +1,7 @@
 versions:
-  "11.0.28":
+  "11.2.6":
     folder: all
-  "10.2.17":
+  "10.2.19":
     folder: all
   "9.3.22":
     folder: all
