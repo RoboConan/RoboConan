@@ -1,4 +1,7 @@
 sources:
+  "6.2.1":
+    url: "https://github.com/CGAL/cgal/releases/download/v6.2.1/CGAL-6.2.1-library.tar.xz"
+    sha256: "8e7ce1e30e8ffcb3e69d153c3a561bb1f38bbb4becd8e6544cbaa0fb2889af62"
   "6.0.2":
     url: "https://github.com/CGAL/cgal/releases/download/v6.0.2/CGAL-6.0.2-library.tar.xz"
     sha256: "11eaf69d6d21083c6074c2187267cee28541fc462d6b7cbb3deb599007b64f3a"

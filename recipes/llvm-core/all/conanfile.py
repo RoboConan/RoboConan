@@ -15,7 +15,7 @@ from conan.tools.files import *
 from conan.tools.microsoft import is_msvc, msvc_runtime_flag
 from conan.tools.scm import Version
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.26"
 
 
 # Only the target matching the host-profile architecture is enabled by default in the recipe.
@@ -324,8 +324,7 @@ class LLVMCoreConan(ConanFile):
 
         if self.settings.os == "Linux":
             # Workaround for: https://github.com/conan-io/conan/issues/13560
-            libdirs_host = [l for dependency in self.dependencies.host.values() for l in dependency.cpp_info.aggregated_components().libdirs]
-            tc.variables["CMAKE_BUILD_RPATH"] = ";".join(libdirs_host)
+            tc.add_rpath_link = True
 
         if cross_building(self):
             from conan.tools.gnu import GnuToolchain
