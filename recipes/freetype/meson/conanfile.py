@@ -31,6 +31,7 @@ class FreetypeConan(ConanFile):
         "with_bzip2": [True, False],
         "with_brotli": [True, False],
         "subpixel": [True, False],
+        "error_strings": [True, False],
     }
     default_options = {
         "shared": False,
@@ -40,6 +41,7 @@ class FreetypeConan(ConanFile):
         "with_bzip2": True,
         "with_brotli": True,
         "subpixel": False,
+        "error_strings": False,
     }
     implements = ["auto_shared_fpic"]
     languages = ["C"]
@@ -88,6 +90,7 @@ class FreetypeConan(ConanFile):
         # They both have options to require each other.
         tc.project_options["harfbuzz"] = "disabled"
         tc.project_options["png"] = feature(self.options.with_png)
+        tc.project_options["error_strings"] = self.options.error_strings
         tc.project_options["tests"] = "disabled"
         tc.project_options["zlib"] = "system" if self.options.with_zlib else "disabled"
         tc.generate()
