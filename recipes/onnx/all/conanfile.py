@@ -68,12 +68,19 @@ class OnnxConan(ConanFile):
         if self.options.get_safe("shared"):
             self.options.rm_safe("fPIC")
 
+    def package_id(self):
+        # ONNX generates different protobuf sources and public definitions for
+        # protobuf's lite option, so its binary identity must include protobuf's.
+        self.info.requires["protobuf"].full_package_mode()
+
     def layout(self):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        if Version(self.version) >= "1.15.0":
-            self.requires("protobuf/[>=3.21.12]", transitive_headers=True, transitive_libs=True)
+        if Version(self.version) >= "1.23.0":
+            self.requires("protobuf/[>=6.31.1 <8]", transitive_headers=True, transitive_libs=True)
+        elif Version(self.version) >= "1.15.0":
+            self.requires("protobuf/[>=3.21.12 <7]", transitive_headers=True, transitive_libs=True)
         else:
             self.requires("protobuf/[>3 <3.22]", transitive_headers=True, transitive_libs=True)
 
@@ -107,6 +114,9 @@ class OnnxConan(ConanFile):
         tc.variables["ONNX_WERROR"] = False
         tc.variables["ONNX_COVERAGE"] = False
         tc.variables["ONNX_BUILD_TESTS"] = False
+        if Version(self.version) >= "1.23.0":
+            tc.variables["ONNX_USE_TSAN"] = False
+            tc.variables["ONNX_USE_TYPESAN"] = False
         tc.variables["ONNX_USE_LITE_PROTO"] = self.dependencies.host["protobuf"].options.lite
         tc.variables["ONNX_ML"] = True
         tc.variables["ONNX_VERIFY_PROTO3"] = Version(self.dependencies.host["protobuf"].ref.version).major == "3"
@@ -134,12 +144,23 @@ class OnnxConan(ConanFile):
     def package_info(self):
         self.cpp_info.set_property("cmake_file_name", "ONNX")
 
-        self.cpp_info.components["libonnx"].set_property("cmake_target_name", "onnx")
-        self.cpp_info.components["libonnx"].libs = ["onnx"]
-        self.cpp_info.components["libonnx"].defines = ["ONNX_NAMESPACE=onnx", "ONNX_ML=1", "__STDC_FORMAT_MACROS"]
-        self.cpp_info.components["libonnx"].requires = ["onnx_proto"]
+        protobuf_component = "protobuf::libprotobuf-lite" if self.dependencies["protobuf"].options.lite else "protobuf::libprotobuf"
+        onnx_defines = ["ONNX_NAMESPACE=onnx", "ONNX_ML=1", "__STDC_FORMAT_MACROS"]
+        if self.dependencies["protobuf"].options.lite:
+            onnx_defines.append("ONNX_USE_LITE_PROTO=1")
+        if self.options.disable_static_registration:
+            onnx_defines.append("__ONNX_DISABLE_STATIC_REGISTRATION")
 
-        self.cpp_info.components["onnx_proto"].set_property("cmake_target_name", "onnx_proto")
+        target_namespace = "ONNX::" if Version(self.version) >= "1.16.0" else ""
+        self.cpp_info.components["libonnx"].set_property("cmake_target_name", f"{target_namespace}onnx")
+        self.cpp_info.components["libonnx"].libs = ["onnx"]
+        self.cpp_info.components["libonnx"].defines = onnx_defines
+        if Version(self.version) >= "1.22.0":
+            self.cpp_info.components["libonnx"].requires = [protobuf_component]
+        else:
+            self.cpp_info.components["libonnx"].requires = ["onnx_proto"]
+
+        self.cpp_info.components["onnx_proto"].set_property("cmake_target_name", f"{target_namespace}onnx_proto")
         self.cpp_info.components["onnx_proto"].libs = ["onnx_proto"]
-        self.cpp_info.components["onnx_proto"].defines = ["ONNX_NAMESPACE=onnx", "ONNX_ML=1"]
-        self.cpp_info.components["onnx_proto"].requires = ["protobuf::libprotobuf"]
+        self.cpp_info.components["onnx_proto"].defines = onnx_defines
+        self.cpp_info.components["onnx_proto"].requires = [protobuf_component]

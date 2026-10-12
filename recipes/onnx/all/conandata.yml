@@ -1,10 +1,13 @@
 sources:
+  "1.23.2":
+    url: "https://github.com/onnx/onnx/archive/refs/tags/v1.23.2.tar.gz"
+    sha256: "2f23784e27d210a23b059a847c305e305034fb4a842fface3ff37283f85a2b40"
   "1.22.0":
     url: "https://github.com/onnx/onnx/archive/refs/tags/v1.22.0.tar.gz"
     sha256: "70bb8b25cf31ea9b1d9f94baacfdc8c4fa27a760f9a10f5d93881bc9eede5fbc"
   "1.18.0":
-    url: "https://github.com/onnx/onnx/archive/v1.17.0.tar.gz"
-    sha256: "8d5e983c36037003615e5a02d36b18fc286541bf52de1a78f6cf9f32005a820e"
+    url: "https://github.com/onnx/onnx/archive/refs/tags/v1.18.0.tar.gz"
+    sha256: "b466af96fd8d9f485d1bb14f9bbdd2dfb8421bc5544583f014088fb941a1d21e"
   "1.17.0":
     url: "https://github.com/onnx/onnx/archive/v1.17.0.tar.gz"
     sha256: "8d5e983c36037003615e5a02d36b18fc286541bf52de1a78f6cf9f32005a820e"
