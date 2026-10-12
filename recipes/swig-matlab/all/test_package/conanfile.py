@@ -7,7 +7,9 @@ from pathlib import PurePath
 from conan import ConanFile
 from conan.tools.build import can_run
 from conan.tools.cmake import cmake_layout, CMake, CMakeToolchain, CMakeDeps
+from conan.tools.files import load, mkdir
 from conan.tools.microsoft import is_msvc
+from conan.tools.scm import Version
 
 
 class TestPackageConan(ConanFile):
@@ -46,10 +48,35 @@ class TestPackageConan(ConanFile):
 
     def build(self):
         self.run("swig -swiglib")
+        if Version(self.dependencies.build["swig-matlab"].ref.version).major >= "4":
+            self._test_new_backends()
         if self._can_build:
             cmake = CMake(self)
             cmake.configure()
             cmake.build()
+
+    def _test_new_backends(self):
+        python_dir = os.path.join(self.build_folder, "python-stubs")
+        matlab_dir = os.path.join(self.build_folder, "matlab")
+        wasm_dir = os.path.join(self.build_folder, "wasm-js")
+        for directory in (python_dir, matlab_dir, wasm_dir):
+            mkdir(self, directory)
+
+        python_interface = os.path.join(self.source_folder, "python_stubs.i")
+        test_interface = os.path.join(self.source_folder, "test.i")
+        self.run(f'swig -c++ -python -stubs -outdir "{python_dir}" '
+                 f'-o "{os.path.join(python_dir, "test_wrap.cxx")}" "{python_interface}"')
+        self.run(f'swig -c++ -matlab -outdir "{matlab_dir}" '
+                 f'-o "{os.path.join(matlab_dir, "test_wrap.cxx")}" "{test_interface}"')
+        self.run(f'swig -c++ -wasm-js -outdir "{wasm_dir}" '
+                 f'-o "{os.path.join(wasm_dir, "test_wrap.cxx")}" "{test_interface}"')
+
+        python_wrapper = load(self, os.path.join(python_dir, "test_wrap.cxx"))
+        if "$isvoid" in python_wrapper:
+            raise RuntimeError("SWIG did not expand $isvoid in the Python wrapper")
+        stubs = load(self, os.path.join(python_dir, "python_stubs.pyi"))
+        if "package_smoke" not in stubs:
+            raise RuntimeError("SWIG did not emit %stubcode into the Python stub file")
 
     def _test_swig_module(self):
         sys.path.append(self.build_folder)

@@ -4,15 +4,16 @@ from conan import ConanFile
 from conan.tools.cmake import CMakeToolchain, CMakeDeps, CMake
 from conan.tools.files import *
 from conan.tools.layout import basic_layout
+from conan.tools.scm import Version
 
 required_conan_version = ">=2.1"
 
 
 class SwigMatlabConan(ConanFile):
     name = "swig-matlab"
-    description = "A fork of SWIG with add MATLAB support"
+    description = "A fork of SWIG with added MATLAB support"
     license = "GPL-3.0-or-later"
-    homepage = "https://github.com/jaeandersson/swig/tree/matlab-customdoc"
+    homepage = "https://github.com/jaeandersson/swig"
     topics = ("matlab", "wrapper")
     package_type = "application"
     settings = "os", "arch", "compiler", "build_type"
@@ -24,21 +25,26 @@ class SwigMatlabConan(ConanFile):
         del self.info.settings.compiler
 
     def requirements(self):
-        self.requires("pcre/[*]")
+        if Version(self.version).major >= "4":
+            self.requires("pcre2/[^10]")
+        else:
+            self.requires("pcre/[^8]")
 
     def build_requirements(self):
         self.tool_requires("bison/[^3.8.2]")
 
     def source(self):
-        get(self, **self.conan_data["sources"][self.version]["swig"], strip_root=True)
-        download(self, **self.conan_data["sources"][self.version]["cmakelists"], filename="CMakeLists.txt")
-        download(self, **self.conan_data["sources"][self.version]["swigconfig"], filename="Tools/cmake/swigconfig.h.in")
+        source_data = self.conan_data["sources"][self.version]
+        get(self, **source_data["swig"], strip_root=True)
+        if "cmakelists" in source_data:
+            download(self, **source_data["cmakelists"], filename="CMakeLists.txt")
+            download(self, **source_data["swigconfig"], filename="Tools/cmake/swigconfig.h.in")
 
     def generate(self):
         tc = CMakeToolchain(self)
         tc.generate()
         deps = CMakeDeps(self)
-        deps.set_property("pcre", "cmake_file_name", "PCRE2")
+        deps.set_property("pcre2" if Version(self.version).major >= "4" else "pcre", "cmake_file_name", "PCRE2")
         deps.generate()
 
     def build(self):
@@ -64,5 +70,6 @@ class SwigMatlabConan(ConanFile):
         self.cpp_info.builddirs = ["share/swig"]
         self.cpp_info.set_property("cmake_build_modules", ["share/swig/conan-swig-variables.cmake"])
 
-        version_str = self.version.split("+")[0]
-        self.buildenv_info.define_path("SWIG_LIB", os.path.join(self.package_folder, "share", "swig", version_str))
+        version = Version(self.version)
+        upstream_version = f"{version.major}.{version.minor}.{version.patch}"
+        self.buildenv_info.define_path("SWIG_LIB", os.path.join(self.package_folder, "share", "swig", upstream_version))

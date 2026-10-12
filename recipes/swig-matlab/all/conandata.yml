@@ -1,4 +1,8 @@
 sources:
+  "4.4.0+git.20260913":
+    "swig":
+      url: "https://github.com/jaeandersson/swig/archive/7c2d4345dea501ab6b4ff5d72fcdd962962ba322.tar.gz"
+      sha256: "50b34675f934cecf339476ea37a61a8ec96da7bc10d7bc87ccf14d2a183709ef"
   "3.0.11+git.20250327":
     "swig":
       url: "https://github.com/jaeandersson/swig/archive/49ac0e6134329051abf9f1e92c1e2c3b57475627.tar.gz"
