@@ -45,7 +45,7 @@ class GetDnsConan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[<5]")
         if self.options.with_libev:
             self.requires("libev/[^4.33]")
         if self.options.with_libevent:

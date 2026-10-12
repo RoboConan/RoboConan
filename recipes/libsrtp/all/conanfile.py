@@ -38,7 +38,7 @@ class LibsrtpRecipe(ConanFile):
 
     def requirements(self):
         if self.options.with_openssl:
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[<5]")
 
     def build_requirements(self):
         if Version(self.version) >= "2.6.0":

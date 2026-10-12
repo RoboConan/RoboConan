@@ -58,7 +58,7 @@ class NetSnmpConan(ConanFile):
         basic_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[<5]")
         self.requires("pcre/[^8.45]")
         self.requires("zlib-ng/[^2.0]")
         if self.settings.os == "Linux" and self.options.enable_agent:

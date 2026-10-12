@@ -39,7 +39,7 @@ class ClarabelConan(ConanFile):
     def requirements(self):
         self.requires("eigen/[>=3.3 <6]", transitive_headers=True)
         if self.options.serde:
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[<5]")
 
     def validate(self):
         check_min_cppstd(self, 11)

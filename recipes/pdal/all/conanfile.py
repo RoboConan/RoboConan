@@ -53,7 +53,7 @@ class PdalConan(ConanFile):
         self.requires("libgeotiff/[^1.7.1]")
         self.requires("nanoflann/[^1.6.0]", transitive_headers=True, transitive_libs=True)
         self.requires("nlohmann_json/[^3]", transitive_headers=True, transitive_libs=True)
-        self.requires("openssl/[>=1.1 <4]") # for arbiter
+        self.requires("openssl/[<5]") # for arbiter
         self.requires("proj/[^9.3.1]", transitive_headers=True, transitive_libs=True)
         self.requires("rapidxml/[^1.13]", transitive_headers=True) # for arbiter
         self.requires("utfcpp/[^4.0.5]")

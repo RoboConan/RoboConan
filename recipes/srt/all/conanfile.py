@@ -37,7 +37,7 @@ class SrtConan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[<5]")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)

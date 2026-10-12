@@ -60,7 +60,7 @@ class Perf(ConanFile):
         self.requires("elfutils/[>=0.191 <1]")
         self.requires("libnuma/[^2.0.16]")
         self.requires("libunwind/[^1.8.1]")
-        self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[<5]")
         self.requires("xz_utils/[^5.4.5]")
         self.requires("zstd/[~1.5]")
         # TODO: libtraceevent

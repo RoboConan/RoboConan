@@ -68,7 +68,7 @@ class OusterSdkConan(ConanFile):
     def requirements(self):
         self.requires("eigen/[>=3.3 <6]", transitive_headers=True)
         self.requires("libzip/[^1]")
-        self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[<5]")
         self.requires("jsoncons/[>=0.173 <1]", transitive_headers=True, transitive_libs=True)
         self.requires("spdlog/[^1.14]")
         self.requires("optional-lite/[^3.6.0]", transitive_headers=True)

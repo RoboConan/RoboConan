@@ -264,7 +264,7 @@ class GdalConan(ConanFile):
         if self.options.with_openjpeg:
             self.requires("openjpeg/[^2.5.0]")
         if self.options.with_openssl:
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[<5]")
         if self.options.with_pcre:
             self.requires("pcre/[^8.45]")
         if self.options.with_pcre2:

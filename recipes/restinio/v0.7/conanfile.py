@@ -43,7 +43,7 @@ class RestinioConan(ConanFile):
             self.requires("boost/[^1.71.0 <1.88]", libs=False)
 
         if self.options.with_openssl:
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[<5]")
 
         if self.options.with_zlib:
             self.requires("zlib-ng/[^2.0]")

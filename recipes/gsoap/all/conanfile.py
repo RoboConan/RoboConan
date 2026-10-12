@@ -46,7 +46,7 @@ class GsoapConan(ConanFile):
 
     def requirements(self):
         if self.options.with_openssl:
-            self.requires("openssl/[>=1.1 <4]", transitive_headers=True)
+            self.requires("openssl/[<5]", transitive_headers=True)
             self.requires("zlib-ng/[^2.0]")
 
     def build_requirements(self):

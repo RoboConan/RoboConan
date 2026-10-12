@@ -47,7 +47,7 @@ class GoogleCloudCppConan(ConanFile):
         self.requires("crc32c/[^1.1.2]")
         self.requires("libcurl/[>=7.78.0 <9]")
         self.requires("nlohmann_json/[^3]")
-        self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[<5]")
         # TODO: googleapis is hard to unvendorize, as it creates google-cloud-cpp:: targets
         #  and it's not trivial to replace them with the googleapis:: targets,
         #  there's not clean 1:1 mapping between them either way

@@ -71,7 +71,7 @@ class RubyConan(ConanFile):
     def requirements(self):
         self.requires("zlib-ng/[^2.0]")
         if self.options.with_openssl:
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[<5]")
         if self.options.with_libyaml:
             self.requires("libyaml/0.2.5")
         if self.options.with_libffi:

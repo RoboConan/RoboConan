@@ -85,7 +85,7 @@ class ColmapConan(ConanFile):
         if self.options.download:
             self.requires("libcurl/[>=7.78 <9]")
             if self._crypto_package == "openssl":
-                self.requires("openssl/[>=1.1 <4]")
+                self.requires("openssl/[<5]")
             elif self._crypto_package == "cryptopp":
                 self.requires("cryptopp/[^8.9.0]")
         if self.options.openmp:

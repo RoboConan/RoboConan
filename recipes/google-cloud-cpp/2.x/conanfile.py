@@ -114,7 +114,7 @@ class GoogleCloudCppConan(ConanFile):
         self.requires("nlohmann_json/[^3]")
         self.requires("crc32c/[^1.1.2]")
         self.requires("libcurl/[>=7.78 <9]")
-        self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[<5]")
         self.requires("zlib-ng/[^2.0]")
 
     def build_requirements(self):

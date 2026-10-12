@@ -50,7 +50,7 @@ class TesseractConan(ConanFile):
             self.requires("libtiff/[>=4.5 <5]")
         # libarchive is required for 4.x so default value is true
         if self.options.get_safe("with_libarchive", default=True):
-            self.requires("libarchive/[>=3.7 <3.8]")
+            self.requires("libarchive/[^3.7]")
         # libcurl is not required for 4.x
         if self.options.get_safe("with_libcurl", default=False):
             self.requires("libcurl/[>=7.78.0 <9]")

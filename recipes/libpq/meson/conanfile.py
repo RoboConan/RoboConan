@@ -150,7 +150,7 @@ class LibpqConan(ConanFile):
         if self.options.i18n and self.settings.os != "Linux":
             self.requires("gettext/[>=0.21 <1]")
         if self.options.with_openssl:
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[<5]")
         if self.options.get_safe("with_pam"):
             self.requires("linux-pam/1.6.1")
         if self.options.get_safe("with_readline") == "readline":

@@ -56,7 +56,7 @@ class LibcupsConan(ConanFile):
     def requirements(self):
         self.requires("zlib-ng/[^2.0]")
         self.requires("libiconv/[^1.17]")
-        self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[<5]")
         if self.options.with_dnssd == "avahi":
             self.requires("avahi/[>=0.8 <1]")
         elif self.options.with_dnssd == "mdnsresponder":

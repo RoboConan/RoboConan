@@ -100,7 +100,7 @@ class LibarchiveConan(ConanFile):
         if self.options.with_nettle:
             self.requires("nettle/[^3.9.1]")
         if self.options.with_openssl:
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[<5]")
         if self.options.with_libb2:
             self.requires("libb2/[>=20190723]")
         if self.options.with_lz4:

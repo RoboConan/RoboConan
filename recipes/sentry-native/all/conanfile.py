@@ -90,14 +90,14 @@ class SentryNativeConan(ConanFile):
             else:
                 self.requires("zlib-ng/[^2.0]")
                 if self.options.get_safe("crashpad_with_tls"):
-                    self.requires("openssl/[>=1.1 <4]")
+                    self.requires("openssl/[<5]")
         elif self.options.backend == "breakpad":
             if self.options.with_breakpad == "google":
                 self.requires("breakpad/0.0+git.20210521")
         if self.options.get_safe("qt"):
             self.requires("qt/[>=5.15 <7]")
             if not (self.options.backend == "crashpad" and self.options.get_safe("crashpad_with_tls")):
-                self.requires("openssl/[>=1.1 <4]")
+                self.requires("openssl/[<5]")
 
     def validate(self):
         check_min_cppstd(self, 17)

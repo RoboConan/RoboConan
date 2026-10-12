@@ -33,7 +33,7 @@ class EtcdCppApiv3Conan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[<5]")
         self.requires("grpc/[^1.50.2]")
         self.requires("cpprestsdk/2.10.19", transitive_headers=True, transitive_libs=True)
 

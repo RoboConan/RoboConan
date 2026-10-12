@@ -95,7 +95,7 @@ class GrpcConan(ConanFile):
         self.requires("protobuf/[>=3.27.0]", transitive_headers=True, transitive_libs=True)
         self.requires("re2/[>=20220601]")
         self.requires("c-ares/[>=1.19.1 <2]")
-        self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[<5]")
         self.requires("zlib-ng/[^2.0]")
         if self.options.get_safe("with_libsystemd"):
             self.requires("libsystemd/[^255]")

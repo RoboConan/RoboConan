@@ -217,7 +217,7 @@ class GStPluginsGoodConan(ConanFile):
         if "libxml2" in reqs:
             self.requires("libxml2/[^2.12.5]")
         if "libmp3lame" in reqs:
-            self.requires("libmp3lame/3.100")
+            self.requires("libmp3lame/[>=3 <5]")
         if "mpg123" in reqs:
             self.requires("mpg123/[^1.31.2]")
         if "libpng" in reqs:
@@ -235,7 +235,7 @@ class GStPluginsGoodConan(ConanFile):
         if "libsoup" in reqs:
             self.requires("libsoup/3.6.1")
         if "openssl" in reqs:
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[<5]")
         if "taglib" in reqs:
             self.requires("taglib/2.0")
         if "libv4l" in reqs:

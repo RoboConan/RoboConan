@@ -72,7 +72,7 @@ class CapnprotoConan(ConanFile):
 
     def requirements(self):
         if self.options.with_openssl:
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[<5]")
         if self.options.get_safe("with_zlib"):
             self.requires("zlib-ng/[^2.0]")
 

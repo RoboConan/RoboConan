@@ -51,7 +51,7 @@ class ReductCPPConan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[<5]")
         self.requires("fmt/[^11]")
         self.requires("cpp-httplib/[>=0.19.0 <1]")
         self.requires("nlohmann_json/[^3.11]")

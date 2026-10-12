@@ -37,7 +37,7 @@ class CppServer(ConanFile):
 
     def requirements(self):
         self.requires("asio/[>=1.27.0 <1.34]", transitive_headers=True)
-        self.requires("openssl/[>=1.1 <4]", transitive_headers=True, transitive_libs=True)
+        self.requires("openssl/[<5]", transitive_headers=True, transitive_libs=True)
         self.requires("cppcommon/1.0.3.0", transitive_headers=True)
 
     def validate(self):

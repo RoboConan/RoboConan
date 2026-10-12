@@ -73,7 +73,7 @@ class LibGit2Conan(ConanFile):
         if self.options.with_libssh2:
             self.requires("libssh2/[^1.11.0]")
         if self._need_openssl:
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[<5]")
         if self._need_mbedtls:
             self.requires("mbedtls/[>=2.28 <4]")
         if self.options.get_safe("with_iconv"):

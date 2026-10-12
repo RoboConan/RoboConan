@@ -65,7 +65,7 @@ class LinuxPamConan(ConanFile):
         if self.options.i18n and self.settings.os != "Linux":
             self.requires("gettext/[>=0.21 <1]")
         if self.options.with_openssl:
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[<5]")
         if self.options.with_selinux:
             self.requires("libselinux/3.6")
         if self.options.with_systemd:

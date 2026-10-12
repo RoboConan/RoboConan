@@ -55,7 +55,7 @@ class ClickHouseCppConan(ConanFile):
         self.requires("abseil/[>=20220623.1]", transitive_headers=True, transitive_libs=True)
         self.requires("cityhash/1.0.1")
         if self.options.with_openssl:
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[<5]")
 
     def validate(self):
         check_min_cppstd(self, self._min_cppstd)

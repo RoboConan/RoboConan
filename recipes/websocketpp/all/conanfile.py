@@ -37,7 +37,7 @@ class WebsocketPPConan(ConanFile):
 
     def requirements(self):
         if self.options.with_openssl:
-            self.requires("openssl/[>=1.1 <4]", transitive_headers=True, transitive_libs=True)
+            self.requires("openssl/[<5]", transitive_headers=True, transitive_libs=True)
 
         if self.options.with_zlib:
             self.requires("zlib-ng/[^2.0]", transitive_headers=True, transitive_libs=True)

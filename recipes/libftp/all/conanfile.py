@@ -41,7 +41,7 @@ class LibFTPConan(ConanFile):
     def requirements(self):
         self.requires("boost/[^1.71.0 <1.88]", transitive_headers=True, libs=False)
         if Version(self.version) >= "0.5.0":
-            self.requires("openssl/[>=1.1 <4]", transitive_headers=True, transitive_libs=True)
+            self.requires("openssl/[<5]", transitive_headers=True, transitive_libs=True)
 
     def validate(self):
         check_min_cppstd(self, 17)

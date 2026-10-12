@@ -93,7 +93,7 @@ class DpdkConan(ConanFile):
         if self.options.with_libpcap:
             self.requires("libpcap/[^1.10.4]", options={"enable_dpdk": False})
         if self.options.with_openssl:
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[<5]")
         # missing:
         # - libmusdk
         # - libxdp

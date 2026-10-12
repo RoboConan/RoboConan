@@ -61,7 +61,7 @@ class LlamaCppConan(ConanFile):
             self.requires("cpp-httplib/[<1]")
         if self.options.with_curl:
             self.requires("libcurl/[>=7.78 <9]")
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[<5]")
         if self.options.with_llguidance:
             self.requires("llguidance/[^1]")
         if self.options.tools:

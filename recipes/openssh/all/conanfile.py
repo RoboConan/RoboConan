@@ -54,7 +54,7 @@ class PackageConan(ConanFile):
     def requirements(self):
         self.requires("zlib-ng/[^2.0]")
         if self.options.with_libcrypto == "openssl":
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[<5]")
         elif self.options.with_libcrypto == "libressl":
             self.requires("libressl/[^3.9.1]")
         if self.options.with_pam == "openpam":

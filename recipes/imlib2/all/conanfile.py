@@ -88,13 +88,13 @@ class Imlib2Conan(ConanFile):
         if self.options.with_heif:
             self.requires("libheif/[^1.18.2]")
         if self.options.with_id3:
-            self.requires("libid3tag/0.16.3")
+            self.requires("libid3tag/[>=0.16.3 <1]")
         if self.options.with_jpeg:
             self.requires("libjpeg-meta/latest")
         if self.options.with_j2k:
             self.requires("openjpeg/[^2.5.2]")
         if self.options.with_jxl:
-            self.requires("libjxl/0.10.3")
+            self.requires("libjxl/[>=0.10.3 <1]")
         if self.options.with_lzma:
             self.requires("xz_utils/[^5.4.5]")
         if self.options.with_png:

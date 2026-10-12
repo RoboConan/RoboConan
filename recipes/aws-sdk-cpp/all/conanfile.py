@@ -539,7 +539,7 @@ class AwsSdkCppConan(ConanFile):
         self.requires("aws-checksums/0.2.6")
         if self.settings.os != "Windows":
             # Used transitively in core/utils/crypto/openssl/CryptoImpl.h public header
-            self.requires("openssl/[>=1.1 <4]", transitive_headers=True)
+            self.requires("openssl/[<5]", transitive_headers=True)
             # Used transitively in core/http/curl/CurlHandleContainer.h public header
             self.requires("libcurl/[>=7.78.0 <9]", transitive_headers=True)
         if self.settings.os == "Linux":

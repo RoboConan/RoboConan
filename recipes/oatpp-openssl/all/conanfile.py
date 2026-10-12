@@ -45,7 +45,7 @@ class OatppOpenSSLConan(ConanFile):
         # Used in oatpp-openssl/oatpp-openssl/Config.hpp public header
         self.requires(f"oatpp/{self.version}", transitive_headers=True)
         # Used SSL* and SSL_CTX* used in public headers
-        self.requires("openssl/[>=1.1 <4]", transitive_headers=True)
+        self.requires("openssl/[<5]", transitive_headers=True)
 
     def validate(self):
         check_min_cppstd(self, 11)

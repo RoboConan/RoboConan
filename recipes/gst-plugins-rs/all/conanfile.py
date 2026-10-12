@@ -154,7 +154,7 @@ class GStPluginsRsConan(ConanFile):
         if "gtk" in reqs:
             self.requires("gtk/[^4.15]")
         if "openssl" in reqs:
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[<5]")
         if "pango" in reqs:
             self.requires("pango/[^1.54.0]", options={"with_cairo": True})
         if "libsodium" in reqs:

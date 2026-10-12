@@ -33,7 +33,7 @@ class MailioConan(ConanFile):
             "with_date_time": True,
             "with_regex": True,
         })
-        self.requires("openssl/[>=1.1 <4]", transitive_headers=True, transitive_libs=True)
+        self.requires("openssl/[<5]", transitive_headers=True, transitive_libs=True)
 
     def validate(self):
         check_min_cppstd(self, 17)

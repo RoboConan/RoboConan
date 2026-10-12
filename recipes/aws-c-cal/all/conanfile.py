@@ -39,7 +39,7 @@ class AwsCCal(ConanFile):
     def requirements(self):
         self.requires("aws-c-common/0.12.3", transitive_headers=True, transitive_libs=True)
         if self._needs_openssl:
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[<5]")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)

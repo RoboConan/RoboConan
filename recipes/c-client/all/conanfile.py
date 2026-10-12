@@ -43,7 +43,7 @@ class CclientConan(ConanFile):
 
     def requirements(self):
         if not is_msvc(self):
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[<5]")
             self.requires("libxcrypt/4.4.36")
 
     def validate(self):

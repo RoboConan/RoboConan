@@ -38,7 +38,7 @@ class PackageConan(ConanFile):
         basic_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[<5]")
         if self.options.with_foobar:
             # used in foo/baz.hpp:34
             self.requires("foobar/0.1.0")

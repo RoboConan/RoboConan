@@ -80,7 +80,7 @@ class GlooConan(ConanFile):
         if self.options.with_libuv:
             self.requires("libuv/[^1.45.0]")
         if self.options.get_safe("with_openssl"):
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[<5]")
         if self.options.with_mpi:
             self.requires("openmpi/[>=4 <6]")
         if self.options.with_cuda:

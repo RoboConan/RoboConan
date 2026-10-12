@@ -81,7 +81,7 @@ class UsocketsConan(ConanFile):
 
     def requirements(self):
         if self.options.with_ssl == "openssl":
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[<5]")
         elif self.options.with_ssl == "wolfssl":
             self.requires("wolfssl/[^5.6.3]")
 

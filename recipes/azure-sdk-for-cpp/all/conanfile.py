@@ -50,7 +50,7 @@ class AzureSDKForCppConan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[<5]")
         if self.settings.os in ["Windows", "WindowsStore"]:
             self.requires("wil/[^1.0.240803.1]")
         else:

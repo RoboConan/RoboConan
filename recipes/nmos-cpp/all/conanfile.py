@@ -55,7 +55,7 @@ class NmosCppConan(ConanFile):
         # INFO: details/system_error.h: #include <boost/system/system_error.hpp>
         self.requires("boost/[^1.71.0 <1.88]", transitive_headers=True)
         self.requires("websocketpp/0.8.2")
-        self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[<5]")
         self.requires("json-schema-validator/2.3.0")
         self.requires("nlohmann_json/[^3]")
         if Version(self.version) >= "0.0+git.20240222":

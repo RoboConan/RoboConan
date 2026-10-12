@@ -304,7 +304,7 @@ class GStPluginsBadConan(ConanFile):
         if "svtjpegxs" in reqs:
             self.requires("svtjpegxs/0.9.0")
         if "openssl" in reqs:
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[<5]")
         if "libsvtav1" in reqs:
             self.requires("libsvtav1/[^2.2.1]")
         if "tinyalsa" in reqs:

@@ -40,7 +40,7 @@ class EasyhttpcppConan(ConanFile):
             opt: True for opt in self._required_poco_components
         })
         if self.settings.os != "Windows":
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[<5]")
 
     @property
     def _required_poco_components(self):

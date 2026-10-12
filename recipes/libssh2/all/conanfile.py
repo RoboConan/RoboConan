@@ -96,7 +96,7 @@ class Libssh2Conan(ConanFile):
         if self.options.with_zlib:
             self.requires("zlib-ng/[^2.0]")
         if self.options.crypto_backend == "openssl":
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[<5]")
         elif self.options.crypto_backend == "mbedtls":
             if Version(self.version) >= "1.11":
                 self.requires("mbedtls/[>=2.28 <4]")

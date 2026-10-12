@@ -37,7 +37,7 @@ class ZoeConan(ConanFile):
 
     def requirements(self):
         self.requires("libcurl/[>=7.78.0 <9]")
-        self.requires("openssl/[>=1.1 <4]", transitive_headers=True)
+        self.requires("openssl/[<5]", transitive_headers=True)
 
     def validate(self):
         check_min_cppstd(self, "11")

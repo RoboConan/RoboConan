@@ -32,7 +32,7 @@ class PackageConan(ConanFile):
 
     def requirements(self):
         # Direct dependencies of header only libs are always transitive since they are included in public headers
-        self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[<5]")
 
     # same package ID for any package
     def package_id(self):

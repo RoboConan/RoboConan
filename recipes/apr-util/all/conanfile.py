@@ -76,7 +76,7 @@ class AprUtilConan(ConanFile):
         if self.settings.os in ["Linux", "FreeBSD"]:
             self.requires("libxcrypt/4.4.36", transitive_headers=True, transitive_libs=True)
         if self.options.with_openssl:
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[<5]")
         if self.options.with_mysql:
             self.requires("libmysqlclient/[^8.1.0]")
         if self.options.with_sqlite3:

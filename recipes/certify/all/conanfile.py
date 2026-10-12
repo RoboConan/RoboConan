@@ -27,7 +27,7 @@ class CertifyConan(ConanFile):
             "with_filesystem": True,
             "with_date_time": True,
         })
-        self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[<5]")
 
     def package_id(self):
         self.info.clear()

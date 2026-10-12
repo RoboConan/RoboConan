@@ -37,7 +37,7 @@ class GameNetworkingSocketsConan(ConanFile):
     def requirements(self):
         self.requires("protobuf/[>=3.21.12]")
         if self.options.encryption == "openssl":
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[<5]")
         elif self.options.encryption == "libsodium":
             self.requires("libsodium/[^1.0.20]")
 

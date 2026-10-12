@@ -62,7 +62,7 @@ class CrashpadConan(ConanFile):
         if self.options.http_transport == "libcurl":
             self.requires("libcurl/[>=7.78 <9]")
         if self.options.get_safe("with_tls") == "openssl":
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[<5]")
 
     def validate(self):
         if is_msvc(self) and self.options.http_transport in ("libcurl", "socket"):

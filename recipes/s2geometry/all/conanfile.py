@@ -34,7 +34,7 @@ class S2GeometryConan(ConanFile):
 
     def requirements(self):
         self.requires("abseil/[>=20240116.1]", transitive_headers=True, transitive_libs=True)
-        self.requires("openssl/[>=1.1 <4]", transitive_headers=True)
+        self.requires("openssl/[<5]", transitive_headers=True)
 
     def build_requirements(self):
         if Version(self.version) >= "0.12.0":

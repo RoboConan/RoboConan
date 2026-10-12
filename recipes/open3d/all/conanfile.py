@@ -78,7 +78,7 @@ class Open3dConan(ConanFile):
         self.requires("nanoflann/[^1.5]", transitive_headers=True, transitive_libs=True)
         self.requires("onetbb/[*]", transitive_headers=True, transitive_libs=True)
         self.requires("opengl/system", transitive_headers=True)
-        self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[<5]")
         self.requires("poissonrecon/12.00")
         self.requires("qhull/[^8.0]")
         self.requires("rply/[*]")

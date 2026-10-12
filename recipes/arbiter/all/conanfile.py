@@ -36,7 +36,7 @@ class PackageConan(ConanFile):
 
     def requirements(self):
         self.requires("libcurl/[>=7.78.0 <9]")
-        self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[<5]")
         self.requires("zlib-ng/[^2.0]")
         self.requires("nlohmann_json/[^3]", transitive_headers=True)
         self.requires("rapidxml/1.13", transitive_headers=True)

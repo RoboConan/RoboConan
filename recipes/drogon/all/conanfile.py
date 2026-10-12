@@ -79,7 +79,7 @@ class DrogonConan(ConanFile):
         else:
             self.requires("trantor/[^1.5.21]", transitive_headers=True, transitive_libs=True)
         self.requires("jsoncpp/[^1.9.5]", transitive_headers=True, transitive_libs=True)
-        self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[<5]")
         self.requires("zlib-ng/[^2.0]")
         if self.settings.os == "Linux":
             self.requires("util-linux-libuuid/[^2.41]")

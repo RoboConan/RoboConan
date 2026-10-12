@@ -39,7 +39,7 @@ class libdatachannelConan(ConanFile):
 
     def requirements(self):
         if self.options.with_ssl == "openssl":
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[<5]")
         elif self.options.with_ssl == "mbedtls":
             self.requires("mbedtls/[^3.6.2]")
         elif self.options.with_ssl == "gnutls":

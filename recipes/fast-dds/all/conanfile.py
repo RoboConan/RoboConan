@@ -43,7 +43,7 @@ class FastDDSConan(ConanFile):
         self.requires("fast-cdr/[^2.3.0]", transitive_headers=True, transitive_libs=True)
         self.requires("foonathan-memory/[>=0.7.3 <1]")
         if self.options.with_ssl:
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[<5]")
 
     def validate(self):
         check_min_cppstd(self, 11)

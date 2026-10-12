@@ -44,7 +44,7 @@ class WorkflowConan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("openssl/[>=1.1 <4]", transitive_headers=True)
+        self.requires("openssl/[<5]", transitive_headers=True)
         if self.options.kafka:
             self.requires("snappy/[^1.1]", transitive_headers=True)
             self.requires("lz4/[^1.9]")

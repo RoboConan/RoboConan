@@ -40,7 +40,7 @@ class PackageConan(ConanFile):
 
     def requirements(self):
         if self.options.with_tls:
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[<5]")
         if self.options.with_sodium:
             self.requires("libsodium/[^1.0.20]")
         # FIXME: C3I Jenkins does not have protobuf-c static x shared deps for now

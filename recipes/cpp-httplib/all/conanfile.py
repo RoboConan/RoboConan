@@ -43,7 +43,7 @@ class CpphttplibConan(ConanFile):
     def requirements(self):
         if self.options.with_openssl:
             if Version(self.version) < "0.15":
-                self.requires("openssl/[>=1.1 <4]")
+                self.requires("openssl/[<5]")
             else:
                 # New version of httplib.h requires OpenSSL 3
                 self.requires("openssl/[>=3 <4]")

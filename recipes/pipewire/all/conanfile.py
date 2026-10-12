@@ -75,7 +75,7 @@ class PipeWireConan(ConanFile):
         if self.options.flatpak or self.options.gsettings:
             self.requires("glib/[^2.70.0]")
         if self.options.raop:
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[<5]")
         if self.options.with_avahi:
             self.requires("avahi/0.8")
         if self.options.with_dbus:

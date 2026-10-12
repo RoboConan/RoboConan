@@ -37,7 +37,7 @@ class libjwtRecipe(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[<5]")
         self.requires("jansson/[^2.14]")
         if self.options.with_gnutls:
             self.requires("gnutls/[^3.8]")

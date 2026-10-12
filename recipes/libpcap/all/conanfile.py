@@ -79,7 +79,7 @@ class LibPcapConan(ConanFile):
         if self.options.get_safe("enable_dbus"):
             self.requires("dbus/[^1.15]")
         if self.options.enable_remote:
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[<5]")
 
     def build_requirements(self):
         if self.settings_build.os == "Windows":

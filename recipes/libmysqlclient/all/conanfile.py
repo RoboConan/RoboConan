@@ -52,7 +52,7 @@ class LibMysqlClientCConan(ConanFile):
 
     def requirements(self):
         # Required
-        self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[<5]")
         if self.settings.os == "FreeBSD":
             self.requires("libunwind/[^1.8.1]")
         # Dependencies that would otherwise be bundled

@@ -39,7 +39,7 @@ class LibRHashConan(ConanFile):
 
     def requirements(self):
         if self.options.with_openssl:
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[<5]")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)

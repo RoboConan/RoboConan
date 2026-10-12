@@ -60,7 +60,7 @@ class SentryCrashpadConan(ConanFile):
         if self.settings.os in ("Linux", "FreeBSD"):
             self.requires("libcurl/[>=7.78.0 <9]")
         if self.options.get_safe("with_tls"):
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[<5]")
 
     def validate(self):
         # Set as required in crashpad CMake file.

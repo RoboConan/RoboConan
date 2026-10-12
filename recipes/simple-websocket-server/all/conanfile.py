@@ -32,7 +32,7 @@ class SimpleWebSocketServerConan(ConanFile):
         basic_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[<5]")
         if self.options.use_asio_standalone:
             self.requires("asio/[^1.28.1]")
         else:

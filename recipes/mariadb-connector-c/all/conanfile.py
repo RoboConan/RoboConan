@@ -61,7 +61,7 @@ class MariadbConnectorcConan(ConanFile):
         if self.options.with_curl:
             self.requires("libcurl/[>=7.78.0 <9]")
         if self.options.with_ssl == "openssl":
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[<5]")
         if Version(self.version) >= "3.3":
             # INFO: https://mariadb.com/kb/en/mariadb-connector-c-330-release-notes
             self.requires("zstd/[~1.5]")

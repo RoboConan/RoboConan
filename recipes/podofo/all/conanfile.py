@@ -64,7 +64,7 @@ class PodofoConan(ConanFile):
         self.requires("libxml2/[>=2.12.5 <3]")
         if self.settings.os != "Windows":
             self.requires("fontconfig/[^2.15.0]")
-        self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[<5]")
         if self.options.with_libidn:
             self.requires("libidn/1.36")
         if self.options.with_jpeg:

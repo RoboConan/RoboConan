@@ -44,7 +44,7 @@ class ResiprocateConan(ConanFile):
         if self.options.with_cares:
             self.requires("c-ares/[>=1.27 <2]")
         if self.options.with_ssl:
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[<5]")
 
     def validate(self):
         check_min_cppstd(self, 11)

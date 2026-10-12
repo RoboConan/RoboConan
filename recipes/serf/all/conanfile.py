@@ -43,7 +43,7 @@ class SerfConan(ConanFile):
     def requirements(self):
         self.requires("apr-util/1.6.1", transitive_headers=True, transitive_libs=True)
         self.requires("zlib-ng/[^2.0]")
-        self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[<5]")
 
     def validate(self):
         if self.settings.build_type == "Debug" and self.settings.compiler == "gcc" and Version(self.settings.compiler.version) == 11:

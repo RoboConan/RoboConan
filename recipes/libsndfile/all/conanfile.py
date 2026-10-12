@@ -74,7 +74,7 @@ class LibsndfileConan(ConanFile):
             self.requires("opus/[^1.4]")
         if self.options.get_safe("with_mpeg"):
             self.requires("mpg123/[^1.31.2]")
-            self.requires("libmp3lame/3.100")
+            self.requires("libmp3lame/[>=3 <5]")
 
     def build_requirements(self):
         # https://github.com/libsndfile/libsndfile/blob/1.2.2/cmake/SndFileChecks.cmake#L255

@@ -38,7 +38,7 @@ class TgbotConan(ConanFile):
         self.requires("boost/[^1.71.0 <1.88]", transitive_headers=True, transitive_libs=True)
         # tgbot/net/CurlHttpClient.h:#include <curl/curl.h>
         self.requires("libcurl/[>=7.78 <9]", transitive_headers=True, transitive_libs=True)
-        self.requires("openssl/[>=1.1 <4]")
+        self.requires("openssl/[<5]")
 
     def validate(self):
         check_min_cppstd(self, "14" if Version(self.version) < "1.7.3" else "17")
