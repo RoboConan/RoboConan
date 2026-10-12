@@ -55,6 +55,8 @@ class SVTAV1Conan(ConanFile):
         if Version(self.version) >= "2.1.1":
             # https://gitlab.com/AOMediaCodec/SVT-AV1/-/blob/c949fe4f14fe288a9b2b47aa3e61335422a83645/CHANGELOG.md#211---2024-06-25
             del self.options.build_decoder
+        if Version(self.version) >= "3.1.0":
+            del self.options.build_encoder
         if Version(self.version) < "2.2.1" or self.settings.arch not in ("armv8", "armv8.3"):
             del self.options.with_neon
             del self.options.with_arm_crc32
@@ -71,7 +73,8 @@ class SVTAV1Conan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("cpuinfo/[>=0.0+git.20231129]")
+        if Version(self.version) < "3.1.0":
+            self.requires("cpuinfo/[*]")
 
     def validate(self):
         # https://gitlab.com/AOMediaCodec/SVT-AV1/-/issues/2081
@@ -80,8 +83,7 @@ class SVTAV1Conan(ConanFile):
             raise ConanInvalidConfiguration(f"{self.ref} does not support Android before version 1.9.0.")
 
     def build_requirements(self):
-        if Version(self.version) >= "1.3.0":
-            self.tool_requires("cmake/[>=3.16 <5]")
+        self.tool_requires("cmake/[>=3.16 <5]")
         if self.settings.arch in ("x86", "x86_64"):
             self.tool_requires("nasm/[*]")
 
@@ -94,8 +96,10 @@ class SVTAV1Conan(ConanFile):
         tc.variables["BUILD_APPS"] = False
         if Version(self.version) < "2.1.1":
             tc.variables["BUILD_DEC"] = self.options.build_decoder
-        tc.variables["BUILD_ENC"] = self.options.build_encoder
-        tc.variables["USE_EXTERNAL_CPUINFO"] = True
+        if Version(self.version) < "3.1.0":
+            tc.variables["BUILD_ENC"] = self.options.build_encoder
+        if Version(self.version) < "3.1.0":
+            tc.variables["USE_EXTERNAL_CPUINFO"] = True
         if self.settings.arch in ("x86", "x86_64"):
             tc.variables["ENABLE_NASM"] = True
         tc.variables["MINIMAL_BUILD"] = self.options.get_safe("minimal_build", False)
@@ -107,10 +111,10 @@ class SVTAV1Conan(ConanFile):
             tc.variables["ENABLE_NEON_DOTPROD"] = self.options.with_neon_dotprod
         if "with_neon_i8mm" in self.options:
             tc.variables["ENABLE_NEON_i8MM"] = self.options.with_neon_i8mm
-        if "with_sve" in self.options:
-            tc.variables["ENABLE_SVE"] = self.options.with_sve
-        if "with_sve2" in self.options:
-            tc.variables["ENABLE_SVE2"] = self.options.with_sve2
+        if "with_neon_sve" in self.options:
+            tc.variables["ENABLE_SVE"] = self.options.with_neon_sve
+        if "with_neon_sve2" in self.options:
+            tc.variables["ENABLE_SVE2"] = self.options.with_neon_sve2
 
         tc.generate()
         deps = CMakeDeps(self)
@@ -130,11 +134,16 @@ class SVTAV1Conan(ConanFile):
         rmdir(self, os.path.join(self.package_folder, "lib", "pkgconfig"))
 
     def package_info(self):
-        if self.options.build_encoder:
+        if self.options.get_safe("build_encoder", True):
             self.cpp_info.components["encoder"].libs = ["SvtAv1Enc"]
             self.cpp_info.components["encoder"].includedirs = ["include/svt-av1"]
             self.cpp_info.components["encoder"].set_property("pkg_config_name", "SvtAv1Enc")
-            self.cpp_info.components["encoder"].requires = ["cpuinfo::cpuinfo"]
+            if self.options.shared:
+                self.cpp_info.components["encoder"].defines.append("EB_DLL")
+            if Version(self.version) >= "4.0.0":
+                self.cpp_info.components["encoder"].defines.append("RTC_BUILD=0")
+            if Version(self.version) < "3.1.0":
+                self.cpp_info.components["encoder"].requires = ["cpuinfo::cpuinfo"]
             if self.settings.os in ("FreeBSD", "Linux"):
                 self.cpp_info.components["encoder"].system_libs = ["pthread", "dl", "m"]
             if self.settings.os == "Android":
@@ -143,7 +152,8 @@ class SVTAV1Conan(ConanFile):
             self.cpp_info.components["decoder"].libs = ["SvtAv1Dec"]
             self.cpp_info.components["decoder"].includedirs = ["include/svt-av1"]
             self.cpp_info.components["decoder"].set_property("pkg_config_name", "SvtAv1Dec")
-            self.cpp_info.components["decoder"].requires = ["cpuinfo::cpuinfo"]
+            if Version(self.version) < "3.1.0":
+                self.cpp_info.components["decoder"].requires = ["cpuinfo::cpuinfo"]
             if self.settings.os in ("FreeBSD", "Linux"):
                 self.cpp_info.components["decoder"].system_libs = ["pthread", "dl", "m"]
             if self.settings.os == "Android":
