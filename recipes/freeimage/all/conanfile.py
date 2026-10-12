@@ -114,7 +114,7 @@ class FreeImageConan(ConanFile):
             "openjpeg::openjpeg",
         ]
         if self.options.with_openexr:
-            self.cpp_info.requires.extend(["openexr::openexr_openexr", "imath::imath_lib"])
+            self.cpp_info.requires.extend(["openexr::openexr_", "imath::imath_lib"])
         if self.options.with_webp:
             self.cpp_info.requires.extend(["libwebp::webp", "libwebp::webpdemux", "libwebp::webpmux"])
         if self.options.with_raw:

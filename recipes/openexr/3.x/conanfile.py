@@ -35,29 +35,50 @@ class OpenEXRConan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("zlib-ng/[^2.0]")
         # Note: OpenEXR and Imath are versioned independently.
+        # https://github.com/AcademySoftwareFoundation/openexr/blob/v3.5.2/src/lib/OpenEXR/ImfRgba.h#L18
         self.requires("imath/[^3.1.9]", transitive_headers=True)
         self.requires("libdeflate/[^1.19]")
+        self.requires("openjph/[>=0.32 <1]")
+        self.requires("zstd/[^1.5.0]")
 
     def validate(self):
-        check_min_cppstd(self, 11)
+        check_min_cppstd(self, 17)
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
         apply_conandata_patches(self)
-        # Even with BUILD_WEBSITE, Website target is compiled in 3.2
+        # Even without BUILD_WEBSITE, Website targets are compiled with the libraries.
         save(self, "website/src/CMakeLists.txt", "")
+        rmdir(self, "external/OpenJPH")
+        rmdir(self, "external/deflate")
+        rmdir(self, "external/zstd")
 
     def generate(self):
         tc = CMakeToolchain(self)
-        tc.variables["OPENEXR_INSTALL_EXAMPLES"] = False
+        tc.variables["OPENEXR_INSTALL"] = True
+        tc.variables["OPENEXR_BUILD_LIBS"] = True
+        tc.variables["OPENEXR_BUILD_TOOLS"] = False
+        tc.variables["OPENEXR_INSTALL_TOOLS"] = False
+        tc.variables["OPENEXR_INSTALL_DEVELOPER_TOOLS"] = False
+        tc.variables["OPENEXR_BUILD_EXAMPLES"] = False
+        tc.variables["OPENEXR_BUILD_PYTHON"] = False
+        tc.variables["OPENEXR_BUILD_OSS_FUZZ"] = False
+        tc.variables["OPENEXR_TEST_LIBRARIES"] = False
+        tc.variables["OPENEXR_TEST_TOOLS"] = False
+        tc.variables["OPENEXR_TEST_PYTHON"] = False
+        tc.variables["OPENEXR_USE_CLANG_TIDY"] = False
         tc.variables["BUILD_TESTING"] = False
         tc.variables["BUILD_WEBSITE"] = False
-        tc.variables["DOCS"] = False
+        tc.variables["OPENEXR_INSTALL_DOCS"] = False
+        tc.variables["OPENEXR_INSTALL_PKG_CONFIG"] = False
+        tc.cache_variables["CMAKE_REQUIRE_FIND_PACKAGE_Imath"] = True
+        tc.cache_variables["CMAKE_REQUIRE_FIND_PACKAGE_libdeflate"] = True
+        tc.cache_variables["CMAKE_REQUIRE_FIND_PACKAGE_openjph"] = True
+        tc.cache_variables["CMAKE_REQUIRE_FIND_PACKAGE_zstd"] = True
         tc.generate()
-        cd = CMakeDeps(self)
-        cd.generate()
+        deps = CMakeDeps(self)
+        deps.generate()
 
     def build(self):
         cmake = CMake(self)
@@ -72,12 +93,9 @@ class OpenEXRConan(ConanFile):
         rmdir(self, os.path.join(self.package_folder, "lib", "pkgconfig"))
         rmdir(self, os.path.join(self.package_folder, "lib", "cmake"))
 
-    @staticmethod
-    def _conan_comp(name):
-        return f"openexr_{name.lower()}"
-
     def _add_component(self, name):
-        component = self.cpp_info.components[self._conan_comp(name)]
+        comp_name = "openexr_" if name == "OpenEXR" else name.lower()
+        component = self.cpp_info.components[name.lower()]
         component.set_property("cmake_target_name", f"OpenEXR::{name}")
         return component
 
@@ -94,7 +112,7 @@ class OpenEXRConan(ConanFile):
 
         # OpenEXR::OpenEXRConfig
         OpenEXRConfig = self._add_component("OpenEXRConfig")
-        OpenEXRConfig.includedirs.append(os.path.join("include", "OpenEXR"))
+        OpenEXRConfig.includedirs.append("include/OpenEXR")
 
         # OpenEXR::IexConfig
         IexConfig = self._add_component("IexConfig")
@@ -107,40 +125,51 @@ class OpenEXRConan(ConanFile):
         # OpenEXR::Iex
         Iex = self._add_component("Iex")
         Iex.libs = [f"Iex{lib_suffix}"]
-        Iex.requires = [self._conan_comp("IexConfig")]
-        if self.settings.os in ["Linux", "FreeBSD"]:
-            Iex.system_libs = ["m"]
+        Iex.requires = ["openexrconfig"]
+        if self.settings.os == "Linux":
+            Iex.system_libs = ["dl"]
 
         # OpenEXR::IlmThread
         IlmThread = self._add_component("IlmThread")
         IlmThread.libs = [f"IlmThread{lib_suffix}"]
-        IlmThread.requires = [
-            self._conan_comp("IlmThreadConfig"), self._conan_comp("Iex"),
-        ]
+        IlmThread.requires = ["openexrconfig", "iex"]
         if self.settings.os in ["Linux", "FreeBSD"]:
-            IlmThread.system_libs = ["pthread", "m"]
+            IlmThread.system_libs = ["pthread"]
+        if self.settings.os == "Linux":
+            IlmThread.system_libs.append("dl")
 
         # OpenEXR::OpenEXRCore
         OpenEXRCore = self._add_component("OpenEXRCore")
         OpenEXRCore.libs = [f"OpenEXRCore{lib_suffix}"]
-        OpenEXRCore.requires = [self._conan_comp("OpenEXRConfig"), "zlib-ng::zlib-ng"]
-        OpenEXRCore.requires.append("libdeflate::libdeflate")
-        if self.settings.os in ["Linux", "FreeBSD"]:
+        OpenEXRCore.requires = [
+            "openexrconfig", "imath::imath",
+            "libdeflate::libdeflate", "openjph::openjph", "zstd::zstd",
+        ]
+        if not self.options.shared and self.settings.os in ["Linux", "FreeBSD"]:
             OpenEXRCore.system_libs = ["m"]
+        if self.settings.os == "Linux":
+            OpenEXRCore.system_libs.append("dl")
 
         # OpenEXR::OpenEXR
         OpenEXR = self._add_component("OpenEXR")
         OpenEXR.libs = [f"OpenEXR{lib_suffix}"]
         OpenEXR.requires = [
-            self._conan_comp("OpenEXRCore"), self._conan_comp("IlmThread"),
-            self._conan_comp("Iex"), "imath::imath",
+            "openexrcore",
+            "ilmthread",
+            "iex",
+            "openexrconfig",
+            "imath::imath",
         ]
-        if self.settings.os in ["Linux", "FreeBSD"]:
-            OpenEXR.system_libs = ["m"]
+        if self.settings.os == "Linux":
+            OpenEXR.system_libs = ["dl"]
 
         # OpenEXR::OpenEXRUtil
         OpenEXRUtil = self._add_component("OpenEXRUtil")
         OpenEXRUtil.libs = [f"OpenEXRUtil{lib_suffix}"]
-        OpenEXRUtil.requires = [self._conan_comp("OpenEXR")]
-        if self.settings.os in ["Linux", "FreeBSD"]:
-            OpenEXRUtil.system_libs = ["m"]
+        OpenEXRUtil.requires = ["openexrconfig", "openexr", "openexrcore"]
+        if self.settings.os == "Linux":
+            OpenEXRUtil.system_libs = ["dl"]
+
+        if self.settings.os == "Windows" and self.options.shared:
+            for component in (Iex, IlmThread, OpenEXRCore, OpenEXR, OpenEXRUtil):
+                component.defines.append("OPENEXR_DLL")

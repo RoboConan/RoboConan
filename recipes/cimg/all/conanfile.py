@@ -224,7 +224,7 @@ class CImgConan(ConanFile):
         if self.options.enable_jpeg:
             requires.append("libjpeg-meta::jpeg")
         if self.options.enable_openexr:
-            requires.append("openexr::openexr_openexr")
+            requires.append("openexr::openexr_")
             requires.append("imath::imath_lib")
         if self.options.enable_png:
             requires.append("libpng::libpng")
