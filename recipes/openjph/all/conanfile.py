@@ -41,6 +41,7 @@ class OpenJPH(ConanFile):
             self.options.rm_safe("fPIC")
         if not self.options.with_executables:
             del self.options.with_tiff
+            del self.options.with_stream_expand_tool
 
     def layout(self):
         cmake_layout(self, src_folder="src")
@@ -50,7 +51,7 @@ class OpenJPH(ConanFile):
             self.requires("libtiff/[>=4.5 <5]")
 
     def validate(self):
-        check_min_cppstd(self, 14)
+        check_min_cppstd(self, 11)
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
@@ -63,7 +64,7 @@ class OpenJPH(ConanFile):
         tc.cache_variables["OJPH_BUILD_FUZZER"] = False
         tc.cache_variables["OJPH_ENABLE_TIFF_SUPPORT"] = self.options.get_safe("with_tiff", False)
         tc.cache_variables["OJPH_BUILD_TESTS"] = False
-        tc.cache_variables["OJPH_BUILD_STREAM_EXPAND"] = self.options.with_stream_expand_tool
+        tc.cache_variables["OJPH_BUILD_STREAM_EXPAND"] = self.options.get_safe("with_stream_expand_tool", False)
         tc.cache_variables["OJPH_DISABLE_SIMD"] = self.options.disable_simd
         tc.generate()
         deps = CMakeDeps(self)
@@ -88,6 +89,7 @@ class OpenJPH(ConanFile):
         self.cpp_info.set_property("cmake_file_name", "openjph")
         self.cpp_info.set_property("cmake_target_name", "openjph")
         self.cpp_info.set_property("pkg_config_name", "openjph")
+        self.cpp_info.defines = ["_FILE_OFFSET_BITS=64"]
 
         version_suffix = "_d" if self.settings.build_type == "Debug" else ""
         if is_msvc(self):
