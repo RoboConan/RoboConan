@@ -77,6 +77,8 @@ class CoinClpConan(ConanFile):
             raise ConanInvalidConfiguration("ASL solver requires double precision")
         if self.options.with_spral and (self.options.precision != "double" or self._int_size != 32):
             raise ConanInvalidConfiguration("SPRAL solver requires double precision and 32-bit integers")
+        if self.options.enable_inexact_solver:
+            raise ConanInvalidConfiguration("The inexact solver requires Pardiso from pardiso-project.org, which is not packaged")
 
     def build_requirements(self):
         self.tool_requires("coin-buildtools/[*]")
@@ -104,7 +106,7 @@ class CoinClpConan(ConanFile):
 
     def generate(self):
         deps = PkgConfigDeps(self)
-        deps.set_property("ampl-asl::asl2-mt", "pkg_config_aliases", ["coinasl"])
+        deps.set_property("ampl-asl::asl", "pkg_config_aliases", ["coinasl"])
         deps.generate()
 
         tc = AutotoolsToolchain(self)
@@ -130,8 +132,7 @@ class CoinClpConan(ConanFile):
             tc.configure_args.append(f"--with-spral-cflags={cflags}")
             tc.configure_args.append(f"--with-spral-lflags={ldflags}")
 
-        cflags, ldflags = self._flags_from_pc("lapack")
-        tc.configure_args.append(f"--with-lapack-cflags={cflags}")
+        _, ldflags = self._flags_from_pc("lapack")
         tc.configure_args.append(f"--with-lapack-lflags={ldflags}")
 
         env = tc.environment()
@@ -195,4 +196,4 @@ class CoinClpConan(ConanFile):
             self.cpp_info.components["ipoptamplinterface"].set_property("pkg_config_name", "ipoptamplinterface")
             self.cpp_info.components["ipoptamplinterface"].libs = ["ipoptamplinterface"]
             self.cpp_info.components["ipoptamplinterface"].includedirs.append("include/coin-or")
-            self.cpp_info.components["ipoptamplinterface"].requires = ["ipopt", "ampl-asl::asl2-mt"]
+            self.cpp_info.components["ipoptamplinterface"].requires = ["ipopt", "ampl-asl::asl"]
