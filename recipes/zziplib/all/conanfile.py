@@ -55,10 +55,11 @@ class ZziplibConan(ConanFile):
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
         apply_conandata_patches(self)
-        # CMake v4 support
-        replace_in_file(self, "CMakeLists.txt", "cmake_minimum_required (VERSION 3.1)", "cmake_minimum_required (VERSION 3.5)")
-        replace_in_file(self, "zzip/CMakeLists.txt", "cmake_minimum_required (VERSION 3.1)", "cmake_minimum_required (VERSION 3.5)")
-        replace_in_file(self, "zzipwrap/CMakeLists.txt", "cmake_minimum_required (VERSION 3.1)", "cmake_minimum_required (VERSION 3.5)")
+        if Version(self.version) < "0.13.80":
+            # CMake v4 support
+            replace_in_file(self, "CMakeLists.txt", "cmake_minimum_required (VERSION 3.1)", "cmake_minimum_required (VERSION 3.5)")
+            replace_in_file(self, "zzip/CMakeLists.txt", "cmake_minimum_required (VERSION 3.1)", "cmake_minimum_required (VERSION 3.5)")
+            replace_in_file(self, "zzipwrap/CMakeLists.txt", "cmake_minimum_required (VERSION 3.1)", "cmake_minimum_required (VERSION 3.5)")
 
     def generate(self):
         tc = CMakeToolchain(self)
@@ -97,6 +98,7 @@ class ZziplibConan(ConanFile):
         rmdir(self, os.path.join(self.package_folder, "lib", "cmake"))
 
     def package_info(self):
+        self.cpp_info.set_property("cmake_file_name", "zziplib")
         self.cpp_info.set_property("pkg_config_name", "zziplib-all-do-not-use")
 
         suffix = ""
@@ -105,27 +107,35 @@ class ZziplibConan(ConanFile):
             suffix += f"-{Version(self.version).major}"
 
         # libzzip
-        self.cpp_info.components["zzip"].set_property("pkg_config_name", "zziplib")
-        self.cpp_info.components["zzip"].libs = [f"zzip{suffix}"]
-        self.cpp_info.components["zzip"].requires = ["zlib-ng::zlib-ng"]
+        zzip = self.cpp_info.components["zzip"]
+        zzip.set_property("cmake_target_name", "zziplib::libzzip")
+        zzip.set_property("pkg_config_name", "zziplib")
+        zzip.libs = [f"zzip{suffix}"]
+        zzip.requires = ["zlib-ng::zlib-ng"]
         # libzzipmmapped
         if self.options.zzipmapped:
-            self.cpp_info.components["zzipmmapped"].set_property("pkg_config_name", "zzipmmapped")
+            zzipmmapped = self.cpp_info.components["zzipmmapped"]
+            zzipmmapped.set_property("cmake_target_name", "zziplib::libzzipmmapped")
+            zzipmmapped.set_property("pkg_config_name", "zzipmmapped")
             if Version(self.version) >= "0.13.72" and self.options.shared and is_apple_os(self):
-                self.cpp_info.components["zzipmmapped"].libs = [f"zzipmmapped"]
+                zzipmmapped.libs = ["zzipmmapped"]
             else:
-                self.cpp_info.components["zzipmmapped"].libs = [f"zzipmmapped{suffix}"]
-            self.cpp_info.components["zzipmmapped"].requires = ["zlib-ng::zlib-ng"]
+                zzipmmapped.libs = [f"zzipmmapped{suffix}"]
+            zzipmmapped.requires = ["zlib-ng::zlib-ng"]
         # libzzipfseeko
         if self.options.zzipfseeko:
-            self.cpp_info.components["zzipfseeko"].set_property("pkg_config_name", "zzipfseeko")
+            zzipfseeko = self.cpp_info.components["zzipfseeko"]
+            zzipfseeko.set_property("cmake_target_name", "zziplib::libzzipfseeko")
+            zzipfseeko.set_property("pkg_config_name", "zzipfseeko")
             if Version(self.version) >= "0.13.72" and self.options.shared and is_apple_os(self):
-                self.cpp_info.components["zzipfseeko"].libs = [f"zzipfseeko"]
+                zzipfseeko.libs = ["zzipfseeko"]
             else:
-                self.cpp_info.components["zzipfseeko"].libs = [f"zzipfseeko{suffix}"]
-            self.cpp_info.components["zzipfseeko"].requires = ["zlib-ng::zlib-ng"]
+                zzipfseeko.libs = [f"zzipfseeko{suffix}"]
+            zzipfseeko.requires = ["zlib-ng::zlib-ng"]
         # libzzipwrap
         if self.options.zzipwrap:
-            self.cpp_info.components["zzipwrap"].set_property("pkg_config_name", "zzipwrap")
-            self.cpp_info.components["zzipwrap"].libs = [f"zzipwrap{suffix}"]
-            self.cpp_info.components["zzipwrap"].requires = ["zzip", "zlib-ng::zlib-ng"]
+            zzipwrap = self.cpp_info.components["zzipwrap"]
+            zzipwrap.set_property("cmake_target_name", "zziplib::libzzipwrap")
+            zzipwrap.set_property("pkg_config_name", "zzipwrap")
+            zzipwrap.libs = [f"zzipwrap{suffix}"]
+            zzipwrap.requires = ["zzip", "zlib-ng::zlib-ng"]
