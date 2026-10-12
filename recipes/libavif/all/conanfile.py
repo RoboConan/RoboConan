@@ -19,19 +19,11 @@ class LibAVIFConan(ConanFile):
         "shared": [True, False],
         "fPIC": [True, False],
         "with_decoder": ["aom", "dav1d"],
-        "with_ycgco_r": [True, False],
-        "with_gain_map": [True, False],
-        "with_metav1": [True, False],
-        "with_sample_transform": [True, False],
     }
     default_options = {
         "shared": False,
         "fPIC": True,
         "with_decoder": "dav1d",
-        "with_ycgco_r": False,
-        "with_gain_map": False,
-        "with_metav1": False,
-        "with_sample_transform": False,
     }
     implements = ["auto_shared_fpic"]
     languages = ["C"]
@@ -47,7 +39,7 @@ class LibAVIFConan(ConanFile):
             self.requires("dav1d/[^1.2.1]")
 
     def build_requirements(self):
-        self.tool_requires("cmake/[>=3.19 <5]")
+        self.tool_requires("cmake/[>=3.22 <5]")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
@@ -55,18 +47,31 @@ class LibAVIFConan(ConanFile):
     def generate(self):
         tc = CMakeToolchain(self)
         tc.variables["AVIF_ENABLE_WERROR"] = False
-        tc.variables["AVIF_CODEC_AOM"] = True
-        tc.variables["AVIF_CODEC_DAV1D"] = self.options.with_decoder == "dav1d"
+        tc.variables["AVIF_BUILD_APPS"] = False
+        tc.variables["AVIF_BUILD_EXAMPLES"] = False
+        tc.variables["AVIF_BUILD_MAN_PAGES"] = False
+        tc.variables["AVIF_BUILD_TESTS"] = False
+        tc.variables["AVIF_CODEC_AOM"] = "SYSTEM"
+        tc.variables["AVIF_CODEC_AOM_ENCODE"] = True
+        tc.variables["AVIF_CODEC_DAV1D"] = "SYSTEM" if self.options.with_decoder == "dav1d" else "OFF"
         tc.variables["AVIF_CODEC_AOM_DECODE"] = self.options.with_decoder == "aom"
-        tc.variables["LIBYUV_VERSION"] = self.dependencies["libyuv"].ref.version
-        tc.variables["AVIF_ENABLE_EXPERIMENTAL_YCGCO_R"] = self.options.with_ycgco_r
-        tc.variables["AVIF_ENABLE_EXPERIMENTAL_GAIN_MAP"] = self.options.with_gain_map
-        tc.variables["AVIF_ENABLE_EXPERIMENTAL_METAV1"] = self.options.with_metav1
-        tc.variables["AVIF_ENABLE_EXPERIMENTAL_SAMPLE_TRANSFORM"] = self.options.with_sample_transform
+        tc.variables["AVIF_CODEC_AVM"] = "OFF"
+        tc.variables["AVIF_CODEC_LIBGAV1"] = "OFF"
+        tc.variables["AVIF_CODEC_RAV1E"] = "OFF"
+        tc.variables["AVIF_CODEC_SVT"] = "OFF"
+        tc.variables["AVIF_JPEG"] = "OFF"
+        tc.variables["AVIF_LIBSHARPYUV"] = "SYSTEM"
+        tc.variables["AVIF_LIBYUV"] = "SYSTEM"
+        tc.variables["AVIF_ZLIBPNG"] = "OFF"
+        tc.variables["LIBYUV_VERSION"] = str(self.dependencies["libyuv"].ref.version)
         tc.generate()
 
         deps = CMakeDeps(self)
+        deps.set_property("libaom-av1", "cmake_file_name", "aom")
+        deps.set_property("libaom-av1", "cmake_target_name", "aom")
         deps.set_property("libyuv", "cmake_target_name", "yuv::yuv")
+        deps.set_property("libwebp", "cmake_file_name", "libsharpyuv")
+        deps.set_property("libwebp::sharpyuv", "cmake_target_name", "sharpyuv::sharpyuv")
         deps.generate()
 
     def build(self):
@@ -96,4 +101,3 @@ class LibAVIFConan(ConanFile):
         if self.options.with_decoder == "dav1d":
             self.cpp_info.requires.append("dav1d::dav1d")
         self.cpp_info.requires.append("libwebp::sharpyuv")
-
