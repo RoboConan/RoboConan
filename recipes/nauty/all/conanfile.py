@@ -83,7 +83,10 @@ class NautyConan(ConanFile):
 
     def generate(self):
         tc = AutotoolsToolchain(self)
-        tc.configure_args.append("--enable-tls")
+        if self.options.tls:
+            tc.configure_args.append("--enable-tls")
+        else:
+            tc.configure_args.append("--disable-tls")
         tc.generate()
 
         if is_msvc(self):
