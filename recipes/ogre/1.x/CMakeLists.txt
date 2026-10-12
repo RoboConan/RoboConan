@@ -31,7 +31,7 @@ add_subdirectory(src)
 
 
 if(TARGET Codec_FreeImage)
-    target_link_libraries(Codec_FreeImage PUBLIC freeimage::freeimage)
+    target_link_libraries(Codec_FreeImage PUBLIC FreeImage::FreeImage)
 endif()
 if(TARGET Codec_EXR)
     target_link_libraries(Codec_EXR openexr::openexr)

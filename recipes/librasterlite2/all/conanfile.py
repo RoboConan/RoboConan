@@ -54,7 +54,7 @@ class Librasterlite2Conan(ConanFile):
     def requirements(self):
         self.requires("cairo/[^1.18.0]")
         self.requires("freetype/[^2.13.2]")
-        self.requires("giflib/[^5.2.1]")
+        self.requires("giflib/[>=5.2 <7]")
         self.requires("libcurl/[>=7.78 <9]")
         self.requires("libgeotiff/[^1.7.1]")
         self.requires("libjpeg-meta/latest")

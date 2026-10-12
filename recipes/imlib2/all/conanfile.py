@@ -84,7 +84,7 @@ class Imlib2Conan(ConanFile):
         if self.options.with_bz2:
             self.requires("bzip2/[^1.0.8]")
         if self.options.with_gif:
-            self.requires("giflib/[^5.2.1]")
+            self.requires("giflib/[>=5.2 <7]")
         if self.options.with_heif:
             self.requires("libheif/[^1.18.2]")
         if self.options.with_id3:

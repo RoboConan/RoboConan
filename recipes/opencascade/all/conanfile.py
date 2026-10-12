@@ -106,7 +106,7 @@ class OpenCascadeConan(ConanFile):
         if self.options.with_ffmpeg:
             self.requires("ffmpeg/[>=6]")
         if self.options.with_freeimage:
-            self.requires("freeimage/3.18.0")
+            self.requires("freeimage/[^3.19.21]")
         if self.options.with_openvr:
             self.requires("openvr/[^1.16.8]")
         if self.options.with_rapidjson:
@@ -310,8 +310,8 @@ class OpenCascadeConan(ConanFile):
             )
         ## freeimage
         if self.options.with_freeimage:
-            deps_targets.append("freeimage::freeimage")
-            _replace_find_package(cmakelists, "freeimage", "freeimage")
+            deps_targets.append("FreeImage::FreeImage")
+            _replace_find_package(cmakelists, "freeimage", "FreeImage")
             freeimage_libs = " ".join(self.dependencies["freeimage"].cpp_info.aggregated_components().libs)
             replace_in_file(
                 self,

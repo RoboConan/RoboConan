@@ -217,7 +217,7 @@ class GdalConan(ConanFile):
         if self.options.with_geos:
             self.requires("geos/[^3.12.0]")
         if self.options.with_gif:
-            self.requires("giflib/[^5.2.1]")
+            self.requires("giflib/[>=5.2 <7]")
         if self.options.with_gta:
             self.requires("libgta/1.2.1")
         if self.options.with_hdf4:

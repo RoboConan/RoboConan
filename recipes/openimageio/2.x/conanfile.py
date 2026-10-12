@@ -112,7 +112,7 @@ class OpenImageIOConan(ConanFile):
             self.requires("ffmpeg/[>=6]")
         # TODO: Field3D dependency
         if self.options.with_giflib:
-            self.requires("giflib/[^5.2.1]")
+            self.requires("giflib/[>=5.2 <7]")
         if self.options.with_libheif:
             self.requires("libheif/[^1.16.2]")
         if self.options.with_raw:

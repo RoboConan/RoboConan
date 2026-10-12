@@ -50,7 +50,7 @@ class SAILConan(ConanFile):
 
     def requirements(self):
         if self.options.with_highest_priority_codecs:
-            self.requires("giflib/[^5.2.1]")
+            self.requires("giflib/[>=5.2 <7]")
             self.requires("libjpeg-meta/latest")
             self.requires("libpng/[~1.6]")
             self.requires("libtiff/[>=4.5 <5]")

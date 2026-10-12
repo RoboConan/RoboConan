@@ -118,7 +118,7 @@ class OpenImageIOConan(ConanFile):
         if self.options.with_ffmpeg:
             self.requires("ffmpeg/[>=6]")
         if self.options.with_giflib:
-            self.requires("giflib/[^5.2.1]")
+            self.requires("giflib/[>=5.2 <7]")
         if self.options.with_libheif:
             self.requires("libheif/[^1.19.5]")
         if self.options.with_raw:

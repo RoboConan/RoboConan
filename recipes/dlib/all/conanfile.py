@@ -70,7 +70,7 @@ class DlibConan(ConanFile):
 
     def requirements(self):
         if self.options.with_gif:
-            self.requires("giflib/[^5.2.1]")
+            self.requires("giflib/[>=5.2 <7]")
         if self.options.with_jpeg:
             self.requires("libjpeg-meta/latest")
         if self.options.with_png:

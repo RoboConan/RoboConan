@@ -92,7 +92,7 @@ class ImageMagicConan(ConanFile):
         if self.options.with_heic:
             self.requires("libheif/[^1.18.2]")
         if self.options.with_jbig:
-            self.requires("jbig/20160605")
+            self.requires("jbig/[>=20250929]")
         if self.options.with_jpeg:
             self.requires("libjpeg-meta/latest")
         if self.options.with_openjp2:

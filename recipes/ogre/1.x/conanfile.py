@@ -261,7 +261,7 @@ class OgreConanFile(ConanFile):
     def requirements(self):
         self.requires("pugixml/[^1.14]")
         self.requires("zlib-ng/[^2.0]")
-        self.requires("zziplib/0.13.72")
+        self.requires("zziplib/[^0.13.72]")
         if self.options.get_safe("build_component_bites") or self.options.get_safe("build_rendersystem_tiny"):
             self.requires("sdl/[^2.30.9]")
         if self.options.get_safe("build_rendersystem_tiny") and self.options.with_openmp:
@@ -291,7 +291,7 @@ class OgreConanFile(ConanFile):
             # OpenEXR 3.x is not compatible
             self.requires("openexr/[^2.5.7]")
         if self.options.build_plugin_freeimage:
-            self.requires("freeimage/3.18.0")
+            self.requires("freeimage/[^3.19.21]")
         if self.options.build_plugin_glslang:
             self.requires("glslang/[^1.3.239.0]")
             self.requires("spirv-tools/[^1.3.239.0]")

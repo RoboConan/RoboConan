@@ -118,7 +118,7 @@ class DirectfbConan(ConanFile):
         if self.options.with_gstreamer:
             self.requires("gst-plugins-base/[^1.24]")
         if self.options.with_gif:
-            self.requires("giflib/[^5.2.1]")
+            self.requires("giflib/[>=5.2 <7]")
         if self.options.with_tiff:
             self.requires("libtiff/[>=4.5 <5]")
         if self.options.with_imlib2:

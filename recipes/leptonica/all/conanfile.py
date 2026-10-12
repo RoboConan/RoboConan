@@ -55,7 +55,7 @@ class LeptonicaConan(ConanFile):
         if self.options.with_zlib:
             self.requires("zlib-ng/[^2.0]")
         if self.options.with_gif:
-            self.requires("giflib/[^5.2.1]")
+            self.requires("giflib/[>=5.2 <7]")
         if self.options.with_jpeg:
             self.requires("libjpeg-meta/latest")
         if self.options.with_png:
@@ -93,6 +93,8 @@ class LeptonicaConan(ConanFile):
             tc.variables["OPENJPEG_SUPPORT"] = self.options.with_openjpeg
         tc.generate()
         deps = CMakeDeps(self)
+        # Leptonica consumes CMake's FindTIFF variables and TIFF::TIFF target.
+        deps.set_property("libtiff", "cmake_find_mode", "module")
         deps.generate()
         if self.options.with_webp or self.options.with_openjpeg:
             pc = PkgConfigDeps(self)

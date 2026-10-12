@@ -60,7 +60,7 @@ class NetpbmConan(ConanFile):
     def requirements(self):
         if self.options.tools:
             self.requires("jasper/[^4.2]")
-            self.requires("jbig/20160605")
+            self.requires("jbig/[>=20250929]")
             self.requires("libpng/[~1.6]")
             self.requires("libtiff/[>=4.5 <5]")
             self.requires("libxml2/[^2.12.5]")
