@@ -135,9 +135,13 @@ class CudaToolchain:
             # There's a weird edge case where CMAKE_CUDA_FLAGS is not yet initialized from CUDAFLAGS,
             # but CUDA CompilerID detection looks for '-cudart shared` in CMAKE_CUDA_FLAGS.
             # Set CMAKE_CUDA_FLAGS via the toolchain as well to work around this.
-            extra = textwrap.dedent("""
+            architectures = ";".join(self.architectures)
+            extra = textwrap.dedent(f"""
                 # Injected by CudaToolchain
-                set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} $ENV{CUDAFLAGS}")
+                set(CMAKE_CUDA_FLAGS "${{CMAKE_CUDA_FLAGS}} $ENV{{CUDAFLAGS}}")
+                if (NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
+                    set(CMAKE_CUDA_ARCHITECTURES "{architectures}" CACHE STRING "CUDA architectures")
+                endif()
             """)
             if "cudart" in self._conanfile.dependencies.host:
                 cudart = "Shared" if self._conanfile.dependencies.host["cudart"].options.shared else "Static"
