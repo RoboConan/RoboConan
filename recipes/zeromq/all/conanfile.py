@@ -27,6 +27,7 @@ class ZeroMQConan(ConanFile):
         "with_draft_api": [True, False],
         "with_websocket": [True, False],
         "with_radix_tree": [True, False],
+        "with_tls": [True, False],
     }
     default_options = {
         "shared": False,
@@ -37,6 +38,7 @@ class ZeroMQConan(ConanFile):
         "with_draft_api": False,
         "with_websocket": False,
         "with_radix_tree": False,
+        "with_tls": False,
     }
 
     def export_sources(self):
@@ -62,12 +64,16 @@ class ZeroMQConan(ConanFile):
             self.requires("libsodium/[^1.0.20]")
         if self.options.with_norm:
             self.requires("norm/1.5.9")
+        if self.options.with_tls:
+            self.requires("gnutls/[>=3.8.7 <4]")
 
     def validate(self):
         if self.settings.os == "Windows" and self.options.with_norm:
             raise ConanInvalidConfiguration(
                 "Norm and ZeroMQ are not compatible on Windows yet"
             )
+        if self.options.with_tls and not self.options.with_websocket:
+            raise ConanInvalidConfiguration("with_tls=True requires with_websocket=True")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
@@ -89,6 +95,9 @@ class ZeroMQConan(ConanFile):
         tc.variables["ENABLE_DRAFTS"] = self.options.with_draft_api
         tc.variables["ENABLE_WS"] = self.options.with_websocket
         tc.variables["ENABLE_RADIX_TREE"] = self.options.with_radix_tree
+        tc.cache_variables["WITH_LIBBSD"] = False
+        tc.cache_variables["WITH_TLS"] = self.options.with_tls
+        tc.cache_variables["CMAKE_REQUIRE_FIND_PACKAGE_GnuTLS"] = self.options.with_tls
         if self.options.poller:
             tc.variables["POLLER"] = self.options.poller
         if is_msvc(self):
@@ -116,6 +125,16 @@ class ZeroMQConan(ConanFile):
             replace_in_file(self, cmakelists, "SODIUM_FOUND", f"{sodium_config}_FOUND")
             replace_in_file(self, cmakelists, "SODIUM_INCLUDE_DIRS", f"{sodium_config}_INCLUDE_DIRS")
             replace_in_file(self, cmakelists, "${SODIUM_LIBRARIES}", sodium_target)
+        if self.options.with_norm:
+            # libzmq's CMake build links NORM only to the final archive, but its object target
+            # compiles norm_engine.cpp and therefore also needs NORM's usage requirements.
+            replace_in_file(
+                self,
+                os.path.join(self.source_folder, "CMakeLists.txt"),
+                "set_property(TARGET objects PROPERTY POSITION_INDEPENDENT_CODE ON)",
+                "set_property(TARGET objects PROPERTY POSITION_INDEPENDENT_CODE ON)\n"
+                "    target_link_libraries(objects PRIVATE norm::norm)",
+            )
 
     def build(self):
         self._patch_sources()
@@ -154,5 +173,9 @@ class ZeroMQConan(ConanFile):
             self.cpp_info.defines.append("ZMQ_STATIC")
         if self.options.with_draft_api:
             self.cpp_info.defines.append("ZMQ_BUILD_DRAFT_API")
-        if self.options.with_websocket and self.settings.os != "Windows":
-            self.cpp_info.system_libs.append("bsd")
+        if self.options.encryption == "libsodium":
+            self.cpp_info.requires.append("libsodium::libsodium")
+        if self.options.with_norm:
+            self.cpp_info.requires.append("norm::norm")
+        if self.options.with_tls:
+            self.cpp_info.requires.append("gnutls::gnutls")
