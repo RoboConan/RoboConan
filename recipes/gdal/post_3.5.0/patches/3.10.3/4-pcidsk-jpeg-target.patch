@@ -1,0 +1,11 @@
+--- a/frmts/pcidsk/sdk/CMakeLists.txt
++++ b/frmts/pcidsk/sdk/CMakeLists.txt
+@@ -77,7 +77,7 @@ if (GDAL_USE_JPEG OR GDAL_USE_JPEG_INTERNAL)
+     if (GDAL_USE_JPEG_INTERNAL)
+       gdal_add_vendored_lib(pcidsk_sdk libjpeg)
+     else ()
+-      target_include_directories(pcidsk_sdk PRIVATE ${JPEG_INCLUDE_DIRS})
++      target_link_libraries(pcidsk_sdk PRIVATE JPEG::JPEG)
+     endif ()
+ endif()
+ 

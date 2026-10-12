@@ -22,6 +22,13 @@ patches:
     - patch_file: "patches/3.10.0/2-allow-cycles-in-cmake-targets.patch"
       patch_description: "Fix CMake failure due to cyclical dependencies in CMakeDeps targets"
       patch_type: "conan"
+    - patch_file: "patches/3.10.3/4-pcidsk-jpeg-target.patch"
+      patch_description: "Propagate JPEG usage requirements to the PCIDSK SDK target"
+      patch_type: "conan"
+    - patch_file: "patches/3.10.3/5-arrow-20-new-row-group.patch"
+      patch_description: "Fix Parquet writer compatibility with Arrow 20 and newer"
+      patch_type: "backport"
+      patch_source: "https://github.com/OSGeo/gdal/commit/222e1c111437f9fd6e43eb384f0903684735750b"
   "3.8.3":
     - patch_file: "patches/3.8.1/0-replace-find-package.patch"
       patch_description: "Use custom version of find_package() for Conan deps"
