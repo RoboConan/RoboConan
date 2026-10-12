@@ -5,6 +5,7 @@ from conan.errors import ConanInvalidConfiguration
 from conan.tools.build import check_min_cppstd
 from conan.tools.cmake import CMake, CMakeToolchain, CMakeDeps, cmake_layout
 from conan.tools.files import *
+from conan.tools.scm import Version
 
 required_conan_version = ">=2.1"
 
@@ -21,11 +22,19 @@ class LibultrahdrConan(ConanFile):
         "shared": [True, False],
         "fPIC": [True, False],
         "enable_gles": [True, False],
+        "enable_intrinsics": [True, False],
+        "enable_logs": [True, False],
+        "write_iso": [True, False],
+        "write_xmp": [True, False],
     }
     default_options = {
         "shared": False,
         "fPIC": True,
         "enable_gles": False,
+        "enable_intrinsics": True,
+        "enable_logs": False,
+        "write_iso": True,
+        "write_xmp": False,
     }
     implements = ["auto_shared_fpic"]
 
@@ -35,6 +44,10 @@ class LibultrahdrConan(ConanFile):
     def requirements(self):
         self.requires("libjpeg-meta/latest")
         # TODO: might want to unvendor Google's image_io library as well
+
+    def configure(self):
+        if Version(self.version) >= "1.5":
+            self.license = "Apache-2.0 OR MIT"
 
     def validate(self):
         check_min_cppstd(self, 17)
@@ -52,8 +65,9 @@ class LibultrahdrConan(ConanFile):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
         # Don't disable installation when cross-compiling
         replace_in_file(self, "CMakeLists.txt", "if(CMAKE_CROSSCOMPILING AND UHDR_ENABLE_INSTALL)", "if(FALSE)")
-        # Conan expects CMP0091=NEW
-        replace_in_file(self, "CMakeLists.txt", "cmake_policy(SET CMP0091 OLD)", "cmake_policy(SET CMP0091 NEW)")
+        if Version(self.version) < "1.5":
+            # Conan expects CMP0091=NEW
+            replace_in_file(self, "CMakeLists.txt", "cmake_policy(SET CMP0091 OLD)", "cmake_policy(SET CMP0091 NEW)")
         # Let Conan set cppstd
         replace_in_file(self, "CMakeLists.txt", "set(CMAKE_CXX_STANDARD 17)", "")
         # Must find libjpeg provided by Conan
@@ -63,8 +77,20 @@ class LibultrahdrConan(ConanFile):
         tc = CMakeToolchain(self)
         tc.cache_variables["UHDR_BUILD_DEPS"] = False
         tc.cache_variables["UHDR_BUILD_EXAMPLES"] = False
+        tc.cache_variables["UHDR_BUILD_TESTS"] = False
+        tc.cache_variables["UHDR_BUILD_BENCHMARK"] = False
+        tc.cache_variables["UHDR_BUILD_FUZZERS"] = False
+        tc.cache_variables["UHDR_BUILD_JAVA"] = False
+        tc.cache_variables["UHDR_BUILD_PACKAGING"] = False
+        tc.cache_variables["UHDR_ENABLE_INSTALL"] = True
+        tc.cache_variables["UHDR_ENABLE_INTRINSICS"] = self.options.enable_intrinsics
         tc.cache_variables["CMAKE_REQUIRE_FIND_PACKAGE_JPEG"] = True
         tc.cache_variables["UHDR_ENABLE_GLES"] = self.options.enable_gles
+        tc.cache_variables["UHDR_ENABLE_LOGS"] = self.options.enable_logs
+        tc.cache_variables["UHDR_ENABLE_SMPTE2094_50"] = False
+        tc.cache_variables["UHDR_ENABLE_WERROR"] = False
+        tc.cache_variables["UHDR_WRITE_ISO"] = self.options.write_iso
+        tc.cache_variables["UHDR_WRITE_XMP"] = self.options.write_xmp
         tc.generate()
         deps = CMakeDeps(self)
         deps.generate()
@@ -83,7 +109,7 @@ class LibultrahdrConan(ConanFile):
         cmake.build()
 
     def package(self):
-        copy(self, "LICENSE", self.source_folder, os.path.join(self.package_folder, "licenses"))
+        copy(self, "LICENSE*", self.source_folder, os.path.join(self.package_folder, "licenses"))
         cmake = CMake(self)
         cmake.install()
         rmdir(self, os.path.join(self.package_folder, "lib", "pkgconfig"))
