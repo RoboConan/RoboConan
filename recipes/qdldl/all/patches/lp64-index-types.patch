@@ -1,0 +1,28 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 3a207bb..29aff6d 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -116,8 +116,8 @@ else()
+ endif()
+ 
+ if(QDLDL_LONG)
+-  set(QDLDL_INT_TYPE "long long")
+-	set(QDLDL_INT_TYPE_MAX "LLONG_MAX")
++  set(QDLDL_INT_TYPE "int64_t")
++  set(QDLDL_INT_TYPE_MAX "INT64_MAX")
+   set(QDLDL_LONG 1)
+ else()
+ 	set(QDLDL_INT_TYPE "int")
+diff --git a/configure/qdldl_types.h.in b/configure/qdldl_types.h.in
+index 8869821..b2bef78 100644
+--- a/configure/qdldl_types.h.in
++++ b/configure/qdldl_types.h.in
+@@ -30,6 +30,7 @@ extern "C" {
+ 
+ // For the QDLDL_INT_TYPE_MAX
+ #include <limits.h>
++#include <stdint.h>
+ 
+ // QDLDL integer and float types
+ 
+ typedef @QDLDL_INT_TYPE@    QDLDL_int;   /* for indices */

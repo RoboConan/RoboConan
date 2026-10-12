@@ -1,4 +1,7 @@
 sources:
   "0.1.9":
-    url: "https://github.com/osqp/qdldl/archive/refs/tags/v0.1.9.tar.gz"
+    url: "https://github.com/osqp/qdldl/archive/v0.1.9.tar.gz"
     sha256: "7d1285b2db15cf2730dc83b3d16ed28412f558591108cca4f28d4438bf72ceed"
+patches:
+  "0.1.9":
+    - patch_file: "patches/lp64-index-types.patch"
