@@ -18,14 +18,19 @@ class LibsndioConan(ConanFile):
     license = "ISC"
     homepage = "https://sndio.org/"
     topics = ("sndio", "sound", "audio", "midi")
-    package_type = "shared-library"
+    package_type = "library"
     settings = "os", "arch", "compiler", "build_type"
     options = {
+        "shared": [True, False],
+        "fPIC": [True, False],
         "with_alsa": [True, False],
     }
     default_options = {
+        "shared": False,
+        "fPIC": True,
         "with_alsa": False,
     }
+    implements = ["auto_shared_fpic"]
     languages = ["C"]
 
     def layout(self):
@@ -34,15 +39,10 @@ class LibsndioConan(ConanFile):
     def validate(self):
         if self.settings.os not in ["Linux", "FreeBSD"]:
             raise ConanInvalidConfiguration(f"Unsupported OS for {self.ref}")
-        if self.options.with_alsa and not self.dependencies["libalsa"].options.get_safe("shared", False):
-            raise ConanInvalidConfiguration(f"{self.ref} requires libalsa to be built as a shared library")
 
     def requirements(self):
         if self.options.get_safe("with_alsa"):
-            self.requires("libalsa/[^1.2.10]", options={"shared": True})
-
-    def build_requirements(self):
-        self.tool_requires("libtool/[^2.4.7]")
+            self.requires("libalsa/[^1.2.10]")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version]["source"], strip_root=True)
@@ -79,6 +79,7 @@ class LibsndioConan(ConanFile):
             tc.configure_args.append("--enable-alsa")
         else:
             tc.configure_args.append("--disable-alsa")
+        tc.configure_args.append("--enable-dynamic" if self.options.shared else "--enable-static")
 
         # The original project source has a hand-written `configure` script that does not expose
         # many hooks for specifying additional build flags and library dependencies. Because the script is
@@ -101,6 +102,8 @@ class LibsndioConan(ConanFile):
                 dep_ldflags.append(f"-l{lib}")
 
         cflags = ' '.join([flag for flag in dep_cflags])
+        if not self.options.shared and self.options.get_safe("fPIC"):
+            cflags = ' '.join(filter(None, [cflags, "-fPIC"]))
         ldflags = ' '.join([flag for flag in dep_ldflags])
         tc.configure_args.extend([
             f"CFLAGS={cflags}",
@@ -133,4 +136,7 @@ class LibsndioConan(ConanFile):
         self.cpp_info.set_property("cmake_target_name", "sndio::sndio")
         self.cpp_info.set_property("pkg_config_name", "sndio")
         self.cpp_info.libs = ["sndio"]
-        self.cpp_info.system_libs = ["dl", "m", "rt"]
+        if self.settings.os == "Linux":
+            self.cpp_info.system_libs = ["m", "rt"]
+        if self.options.with_alsa:
+            self.cpp_info.requires.append("libalsa::libalsa")

@@ -1,8 +1,8 @@
 sources:
-  "1.9.0":
+  "1.10.0":
     "source":
-      url: "https://github.com/ratchov/sndio/archive/refs/tags/v1.9.0.tar.gz"
-      sha256: "4e8d77069b651d7c4bb2a50ba49004bd7fcfdfec1516f88a76457f831c17a546"
+      url: "https://github.com/ratchov/sndio/archive/refs/tags/v1.10.0.tar.gz"
+      sha256: "d66e883d6c89d4c0b7da4ecf562f0d0d0b44666ea8138d0d8c1e20a356850d17"
     "license":
-      url: "https://raw.githubusercontent.com/ratchov/sndio/e10e4f836b88f8d5ea2864845e3712f560e6bed6/LICENSE"
+      url: "https://raw.githubusercontent.com/ratchov/sndio/366b5c84d57c9ce73387c51ca48755d36e3fe3a7/LICENSE"
       sha256: "4ae392ab9cfbf2d6ac8522f5f4b025685d60c824979fad783aaf72d55165730f"
