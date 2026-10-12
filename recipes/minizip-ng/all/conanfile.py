@@ -4,6 +4,7 @@ from conan import ConanFile
 from conan.tools.apple import is_apple_os
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
+from conan.tools.gnu import PkgConfigDeps
 
 required_conan_version = ">=2.1"
 
@@ -80,6 +81,8 @@ class MinizipNgConan(ConanFile):
         if self.settings.os != "Windows":
             if self.options.get_safe("with_iconv"):
                 self.requires("libiconv/[^1.17]")
+            if self.options.get_safe("with_libbsd") and not self.options.with_openssl:
+                self.requires("libbsd/[>=0.12 <1]")
 
     def build_requirements(self):
         self.tool_requires("cmake/[>=3.19 <5]")
@@ -90,22 +93,48 @@ class MinizipNgConan(ConanFile):
     def generate(self):
         tc = CMakeToolchain(self)
         tc.cache_variables["MZ_FETCH_LIBS"] = False
+        tc.cache_variables["MZ_FORCE_FETCH_LIBS"] = False
         tc.cache_variables["MZ_COMPAT"] = self.options.mz_compatibility
         tc.cache_variables["MZ_ZLIB"] = self.options.get_safe("with_zlib", False)
+        tc.cache_variables["MZ_ZLIB_FLAVOR"] = "zlib-ng"
         tc.cache_variables["MZ_BZIP2"] = self.options.with_bzip2
         tc.cache_variables["MZ_LZMA"] = self.options.with_lzma
+        # PPMd is fetched from the 7-Zip source tree instead of being found as a library.
+        tc.cache_variables["MZ_PPMD"] = False
         tc.cache_variables["MZ_ZSTD"] = self.options.with_zstd
+        tc.cache_variables["MZ_PKCRYPT"] = True
+        tc.cache_variables["MZ_WZAES"] = True
         tc.cache_variables["MZ_OPENSSL"] = self.options.with_openssl
         tc.cache_variables["MZ_LIBCOMP"] = self.options.get_safe("with_libcomp", False)
+        tc.cache_variables["MZ_COMPRESS_ONLY"] = False
+        tc.cache_variables["MZ_DECOMPRESS_ONLY"] = False
+        tc.cache_variables["MZ_FILE32_API"] = False
+        tc.cache_variables["MZ_BUILD_TESTS"] = False
+        tc.cache_variables["MZ_BUILD_UNIT_TESTS"] = False
+        tc.cache_variables["MZ_BUILD_FUZZ_TESTS"] = False
+        tc.cache_variables["MZ_CODE_COVERAGE"] = False
+        tc.cache_variables["MZ_SANITIZER"] = "OFF"
         if self.settings.os != "Windows":
             tc.cache_variables["MZ_ICONV"] = self.options.with_iconv
             tc.cache_variables["MZ_LIBBSD"] = self.options.with_libbsd
         tc.cache_variables["CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS"] = True
-        tc.cache_variables["CMAKE_DISABLE_FIND_PACKAGE_PkgConfig"] = True
+        if self.settings.os == "Windows" or self.options.with_openssl or not self.options.with_libbsd:
+            tc.cache_variables["CMAKE_DISABLE_FIND_PACKAGE_PkgConfig"] = True
         tc.generate()
 
         deps = CMakeDeps(self)
+        if self.options.with_lzma:
+            deps.set_property("xz_utils", "cmake_file_name", "LibLZMA")
+            deps.set_property("xz_utils", "cmake_target_name", "LibLZMA::LibLZMA")
+        if self.options.get_safe("with_zlib"):
+            zlib_ng = self.dependencies["zlib-ng"]
+            zlib_ng_target = "zlib-ng::zlib" if zlib_ng.options.shared else "zlib-ng::zlibstatic"
+            deps.set_property("zlib-ng", "cmake_file_name", "ZLIB-NG")
+            deps.set_property("zlib-ng", "cmake_target_name", zlib_ng_target)
         deps.generate()
+
+        if self.settings.os != "Windows" and self.options.with_libbsd and not self.options.with_openssl:
+            PkgConfigDeps(self).generate()
 
     def build(self):
         cmake = CMake(self)
@@ -120,12 +149,12 @@ class MinizipNgConan(ConanFile):
         rmdir(self, os.path.join(self.package_folder, "lib", "pkgconfig"))
 
     def package_info(self):
-        self.cpp_info.set_property("cmake_file_name", "minizip")
-        self.cpp_info.set_property("cmake_target_name", "MINIZIP::minizip")
-        self.cpp_info.set_property("pkg_config_name", "minizip")
-
         suffix = "" if self.options.mz_compatibility else "-ng"
-        self.cpp_info.libs = [f"minizip{suffix}"]
+        target = f"minizip{suffix}"
+        self.cpp_info.set_property("cmake_file_name", target)
+        self.cpp_info.set_property("cmake_target_name", f"MINIZIP::{target}")
+        self.cpp_info.set_property("pkg_config_name", target)
+        self.cpp_info.libs = [target]
         if self.options.with_lzma:
             self.cpp_info.defines.append("HAVE_LZMA")
         if is_apple_os(self) and self.options.get_safe("with_libcomp"):
@@ -135,7 +164,7 @@ class MinizipNgConan(ConanFile):
             self.cpp_info.defines.append("HAVE_BZIP2")
 
         minizip_dir = "minizip" if self.options.mz_compatibility else "minizip-ng"
-        self.cpp_info.includedirs.append(os.path.join(self.package_folder, "include", minizip_dir))
+        self.cpp_info.includedirs.append(os.path.join("include", minizip_dir))
 
         if not self.options.with_openssl:
             if is_apple_os(self):
