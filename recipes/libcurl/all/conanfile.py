@@ -6,9 +6,9 @@ from conan.errors import ConanInvalidConfiguration
 from conan.tools.apple import is_apple_os, fix_apple_shared_install_name
 from conan.tools.build import cross_building
 from conan.tools.cmake import CMake, CMakeToolchain, CMakeDeps, cmake_layout
-from conan.tools.env import VirtualBuildEnv
-from conan.tools.files import apply_conandata_patches, copy, download, export_conandata_patches, get, load, replace_in_file, rm, rmdir, save
-from conan.tools.gnu import Autotools, AutotoolsToolchain, PkgConfigDeps
+from conan.tools.env import VirtualBuildEnv, VirtualRunEnv
+from conan.tools.files import *
+from conan.tools.gnu import Autotools, AutotoolsToolchain, AutotoolsDeps, PkgConfigDeps
 from conan.tools.layout import basic_layout
 from conan.tools.microsoft import is_msvc, unix_path
 
@@ -22,7 +22,7 @@ class LibcurlConan(ConanFile):
     license = "curl"
     homepage = "https://curl.se"
     topics = ("curl", "data-transfer",
-            "ftp", "gopher", "http", "imap", "ldap", "mqtt", "pop3", "rtmp", "rtsp",
+            "ftp", "gopher", "http", "imap", "ldap", "mqtt", "pop3", "rtsp",
             "scp", "sftp", "smb", "smtp", "telnet", "tftp")
     package_type = "library"
     settings = "os", "arch", "compiler", "build_type"
@@ -89,7 +89,7 @@ class LibcurlConan(ConanFile):
         "with_mqtt": True,
         "with_pop3": True,
         "with_rtsp": True,
-        "with_smb": False,
+        "with_smb": True,
         "with_smtp": True,
         "with_telnet": True,
         "with_tftp": True,
@@ -106,7 +106,7 @@ class LibcurlConan(ConanFile):
         "with_threaded_resolver": True,
         "with_proxy": True,
         "with_crypto_auth": True,
-        "with_ntlm": False,
+        "with_ntlm": True,
         "with_cookies": True,
         "with_ipv6": True,
         "with_docs": False,
@@ -161,7 +161,7 @@ class LibcurlConan(ConanFile):
 
     def requirements(self):
         if self.options.with_ssl == "openssl":
-            self.requires(f"openssl/[>=3 <4]")
+            self.requires("openssl/[>=1.1 <5]")
         elif self.options.with_ssl == "libressl":
             self.requires("libressl/[>=3.5 <4]")
         elif self.options.with_ssl == "wolfssl":
@@ -169,7 +169,7 @@ class LibcurlConan(ConanFile):
         elif self.options.with_ssl == "mbedtls":
             self.requires("mbedtls/[>=2.28 <4]")
         if self.settings.os == "Linux" and self.options.with_ldap:
-            self.requires("openldap/[>=2.6 <3]")
+            self.requires("openldap/[^2.6.7]")
         if self.options.with_nghttp2:
             self.requires("libnghttp2/[^1.59.0]")
         if self.options.with_libssh2:
@@ -198,11 +198,10 @@ class LibcurlConan(ConanFile):
         if self.options.with_ssl == "wolfssl" and not self.dependencies["wolfssl"].options.with_curl:
             raise ConanInvalidConfiguration("option with_ssl=wolfssl requires wolfssl/*:with_curl=True")
         if self.options.get_safe("with_apple_sectrust") and self.options.with_ssl != "openssl":
-            raise ConanInvalidConfiguration("Apple SecTrust is only supported for OpenSSL/GnuTLS builds")
+            raise ConanInvalidConfiguration("Apple SecTrust is only supported with OpenSSL")
 
     def build_requirements(self):
         if self._is_using_cmake_build:
-            self.tool_requires("cmake/[>=3.18]")
             if self._is_win_x_android:
                 self.tool_requires("ninja/[^1.10]")
         else:
@@ -224,10 +223,10 @@ class LibcurlConan(ConanFile):
         download(self, cert_url, "cacert.pem", verify=True, sha256=cert_sha256)
         replace_in_file(self, "CMakeLists.txt", "find_package(NGHTTP2 MODULE)", "find_package(NGHTTP2 CONFIG REQUIRED)")
         replace_in_file(self, "CMakeLists.txt", "find_package(Cares MODULE REQUIRED)", "find_package(Cares CONFIG REQUIRED)")
-        replace_in_file(self, os.path.join("CMake", "Macros.cmake"), "find_package(${_find_name})", "find_package(${_find_name} CONFIG REQUIRED)")
-        replace_in_file(self, os.path.join("CMake", "Macros.cmake"), "find_package(${_find_name} MODULE)", "find_package(${_find_name} CONFIG REQUIRED)")
-        replace_in_file(self, os.path.join("CMake", "Macros.cmake"), "find_package(${_find_name} REQUIRED)", "find_package(${_find_name} CONFIG REQUIRED)")
-        replace_in_file(self, os.path.join("CMake", "Macros.cmake"), "find_package(${_find_name} MODULE REQUIRED)", "find_package(${_find_name} CONFIG REQUIRED)")
+        replace_in_file(self, "CMake/Macros.cmake", "find_package(${_find_name})", "find_package(${_find_name} CONFIG REQUIRED)")
+        replace_in_file(self, "CMake/Macros.cmake", "find_package(${_find_name} MODULE)", "find_package(${_find_name} CONFIG REQUIRED)")
+        replace_in_file(self, "CMake/Macros.cmake", "find_package(${_find_name} REQUIRED)", "find_package(${_find_name} CONFIG REQUIRED)")
+        replace_in_file(self, "CMake/Macros.cmake", "find_package(${_find_name} MODULE REQUIRED)", "find_package(${_find_name} CONFIG REQUIRED)")
 
 
     def generate(self):
@@ -450,13 +449,6 @@ class LibcurlConan(ConanFile):
             elif self.settings.os == "Android":
                 pass # this just works, conan is great!
 
-        if self.settings.os == "Macos":
-            # Configure rpath for ./configure script runtime checks when not crossbuilding.
-            for dep in self.dependencies.host.values():
-                if dep.package_type == "shared-library":
-                    tc.extra_ldflags.extend(f"-Wl,-rpath,{libdir}" for libdir in
-                                             dep.cpp_info.aggregated_components().libdirs)
-
         env = tc.environment()
 
         # tweaks for mingw
@@ -477,6 +469,8 @@ class LibcurlConan(ConanFile):
 
         tc.generate(env)
         tc = PkgConfigDeps(self)
+        tc.generate()
+        tc = AutotoolsDeps(self)
         tc.generate()
 
     def _get_linux_arm_host(self):
@@ -543,7 +537,6 @@ class LibcurlConan(ConanFile):
         if "with_websockets" in self.options:
             tc.variables["CURL_DISABLE_WEBSOCKETS"] = not self.options.with_websockets
 
-        # Also disables NTLM_WB if set to false
         tc.variables["CURL_ENABLE_NTLM"] = self.options.with_ntlm
 
         if self.options.with_ca_bundle:
