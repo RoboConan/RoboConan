@@ -127,14 +127,16 @@ class LibX264Conan(ConanFile):
         tc.generate()
 
     def build(self):
-        autotools = Autotools(self)
-        autotools.configure()
-        autotools.make()
+        with chdir(self, self.source_folder):
+            autotools = Autotools(self)
+            autotools.configure()
+            autotools.make()
 
     def package(self):
         copy(self, pattern="COPYING", src=self.source_folder, dst=os.path.join(self.package_folder, "licenses"))
-        autotools = Autotools(self)
-        autotools.install()
+        with chdir(self, self.source_folder):
+            autotools = Autotools(self)
+            autotools.install()
         rmdir(self, os.path.join(self.package_folder, "lib", "pkgconfig"))
         if is_msvc(self):
             ext = ".dll.lib" if self.options.shared else ".lib"
