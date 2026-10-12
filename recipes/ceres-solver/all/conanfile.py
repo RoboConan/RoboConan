@@ -25,6 +25,7 @@ class CeresSolverConan(ConanFile):
         "shared": [True, False],
         "fPIC": [True, False],
         "use_cuda": [True, False],
+        "use_cudss": [True, False],
         "use_eigen_metis": [True, False],
         "use_lapack": [True, False],
         "use_eigen_sparse": [True, False],
@@ -42,6 +43,7 @@ class CeresSolverConan(ConanFile):
         "shared": False,
         "fPIC": True,
         "use_cuda": False,
+        "use_cudss": True,
         "use_eigen_metis": True,
         "use_lapack": True,
         "use_eigen_sparse": True,  # uses LGPL-licensed parts of Eigen
@@ -58,6 +60,7 @@ class CeresSolverConan(ConanFile):
     }
     options_description = {
         "use_cuda": "Enable CUDA support.",
+        "use_cudss": "Enable cuDSS support for CUDA sparse linear solvers.",
         "use_lapack": "Enable use of LAPACK directly within Ceres.",
         "use_eigen_sparse": "Enable Eigen as a sparse linear algebra library.",
         "use_suitesparse": "Enable SuiteSparse support.",
@@ -87,6 +90,43 @@ class CeresSolverConan(ConanFile):
         # https://github.com/ceres-solver/ceres-solver/blob/2.2.0/CMakeLists.txt#L168-L175
         return Version(self.version, qualifier=True) < "2.3.0" and self.settings.os == "iOS"
 
+    @property
+    def _uses_with_cmake_options(self):
+        return Version(self.version, qualifier=True) >= "2.3.0-git.20261010"
+
+    @property
+    def _upstream_version(self):
+        version = Version(self.version)
+        return f"{version.major}.{version.minor}.{version.patch}"
+
+    @property
+    def _cmake_components(self):
+        components = []
+        has_sparse_linear_algebra = False
+        if self.options.use_eigen_sparse:
+            components.append("EigenSparse")
+            has_sparse_linear_algebra = True
+        if self.options.use_lapack:
+            components.append("LAPACK")
+        if self.options.use_suitesparse:
+            components.append("SuiteSparse")
+            has_sparse_linear_algebra = True
+        if self.options.get_safe("use_accelerate"):
+            components.append("AccelerateSparse")
+            has_sparse_linear_algebra = True
+        if self.options.get_safe("use_cuda"):
+            components.append("CUDA")
+            if self.options.get_safe("use_cudss"):
+                components.append("cuDSS")
+                has_sparse_linear_algebra = True
+        if self.options.use_schur_specializations:
+            components.append("SchurSpecializations")
+        if self._uses_with_cmake_options:
+            components.append("Multithreading")
+        if has_sparse_linear_algebra:
+            components.append("SparseLinearAlgebraLibrary")
+        return components
+
     def export_sources(self):
         export_conandata_patches(self)
         copy(self, "FindSuiteSparse.cmake", self.recipe_folder, self.export_sources_folder)
@@ -103,6 +143,8 @@ class CeresSolverConan(ConanFile):
             del self.options.use_eigen_metis
         if Version(self.version) < "2.1.0":
             del self.options.use_cuda
+        if Version(self.version, qualifier=True) < "2.3.0":
+            del self.options.use_cudss
 
         if not is_apple_os(self) or self.version < "2.0.0":
             del self.options.use_accelerate
@@ -114,6 +156,7 @@ class CeresSolverConan(ConanFile):
             self.options.use_eigen_sparse.value = True
         if not self.options.get_safe("use_cuda"):
             del self.settings.cuda
+            self.options.rm_safe("use_cudss")
         # https://github.com/ceres-solver/ceres-solver/blob/2.2.0/CMakeLists.txt#L168-L175
         if self.settings.os == "iOS":
             self.options.use_lapack.value = False
@@ -145,7 +188,7 @@ class CeresSolverConan(ConanFile):
         if self.options.use_lapack:
             self.requires("lapack/latest")
         if self._require_metis:
-            self.requires("metis/5.2.1")
+            self.requires("metis/[^5.1]")
         if self.options.get_safe("use_TBB"):
             self.requires("onetbb/[^2020.3]")
         if self.options.get_safe("use_OpenMP"):
@@ -155,7 +198,7 @@ class CeresSolverConan(ConanFile):
             self.cuda.requires("cublas")
             self.cuda.requires("cusparse")
             self.cuda.requires("cusolver")
-            if Version(self.version, qualifier=True) >= "2.3.0":
+            if self.options.get_safe("use_cudss"):
                 self.cuda.requires("cudss")
 
     def validate(self):
@@ -168,7 +211,7 @@ class CeresSolverConan(ConanFile):
                 raise ConanInvalidConfiguration("use_eigen_sparse=True requires eigen with MPL2_only=False")
 
     def build_requirements(self):
-        self.tool_requires("cmake/[>=3.18]")
+        self.tool_requires("cmake/[>=3.22 <5]")
         if Version(self.version) >= "2.2.0" and self.options.use_cuda:
             self.cuda.tool_requires("nvcc")
 
@@ -195,16 +238,37 @@ class CeresSolverConan(ConanFile):
         tc.variables["BUILD_DOCUMENTATION"] = False
         tc.variables["BUILD_EXAMPLES"] = False
         tc.variables["BUILD_BENCHMARKS"] = False
-        tc.variables["PROVIDE_UNINSTALL_TARGET"] = False
-
-        tc.variables["CUSTOM_BLAS"] = self.options.use_custom_blas
-        tc.variables["EIGENSPARSE"] = self.options.use_eigen_sparse
+        if self._uses_with_cmake_options:
+            tc.variables["WITH_UNINSTALL_TARGET"] = False
+            tc.variables["WITH_BITCODE"] = self.conf.get("tools.apple:enable_bitcode", default=False, check_type=bool)
+            tc.variables["WITH_CUSTOM_BLAS"] = self.options.use_custom_blas
+            tc.variables["WITH_EIGENSPARSE"] = self.options.use_eigen_sparse
+            tc.variables["WITH_LAPACK"] = self.options.use_lapack
+            tc.variables["WITH_SANITIZERS"] = ""
+            tc.variables["WITH_SCHUR_SPECIALIZATIONS"] = self.options.use_schur_specializations
+            tc.variables["WITH_STRIPPED_DEBUG_SYMBOLS"] = True
+            tc.variables["WITH_SUITESPARSE"] = self.options.use_suitesparse
+            tc.variables["CMAKE_DISABLE_FIND_PACKAGE_AccelerateSparse"] = not self.options.get_safe("use_accelerate")
+            tc.variables["CMAKE_DISABLE_FIND_PACKAGE_benchmark"] = True
+            tc.variables["CMAKE_DISABLE_FIND_PACKAGE_BLAS"] = not self.options.use_lapack
+            tc.variables["CMAKE_DISABLE_FIND_PACKAGE_CUDAToolkit"] = not self.options.get_safe("use_cuda")
+            tc.variables["CMAKE_DISABLE_FIND_PACKAGE_GTest"] = True
+            tc.variables["CMAKE_DISABLE_FIND_PACKAGE_LAPACK"] = not self.options.use_lapack
+            tc.variables["CMAKE_DISABLE_FIND_PACKAGE_METIS"] = not self._require_metis
+            tc.variables["CMAKE_DISABLE_FIND_PACKAGE_Sphinx"] = True
+            tc.variables["CMAKE_DISABLE_FIND_PACKAGE_SuiteSparse"] = not self.options.use_suitesparse
+        else:
+            tc.variables["PROVIDE_UNINSTALL_TARGET"] = False
+            tc.variables["CUSTOM_BLAS"] = self.options.use_custom_blas
+            tc.variables["EIGENSPARSE"] = self.options.use_eigen_sparse
+            tc.variables["LAPACK"] = self.options.use_lapack
+            tc.variables["SCHUR_SPECIALIZATIONS"] = self.options.use_schur_specializations
+            tc.variables["SUITESPARSE"] = self.options.use_suitesparse
         if Version(self.version, qualifier=True) < "2.3.0":
             tc.variables["GFLAGS"] = False # useless for the lib itself, gflags is not a direct dependency
-        tc.variables["LAPACK"] = self.options.use_lapack
         tc.variables["MINIGLOG"] = self._use_miniglog
-        tc.variables["SCHUR_SPECIALIZATIONS"] = self.options.use_schur_specializations
-        tc.variables["SUITESPARSE"] = self.options.use_suitesparse
+        if Version(self.version, qualifier=True) >= "2.3.0":
+            tc.variables["CMAKE_DISABLE_FIND_PACKAGE_cudss"] = not self.options.get_safe("use_cudss")
         if self.options.use_suitesparse:
             tc.variables["SuiteSparse_VERSION"] = str(self.dependencies["suitesparse-config"].ref.version)
             tc.variables["SuiteSparse_Partition_FOUND"] = self.dependencies["suitesparse-cholmod"].options.build_partition
@@ -215,13 +279,16 @@ class CeresSolverConan(ConanFile):
 
         ceres_version = Version(self.version)
         if ceres_version >= "2.2.0":
-            tc.variables["USE_CUDA"] = self.options.get_safe("use_cuda", False)
+            cuda_variable = "WITH_CUDA" if self._uses_with_cmake_options else "USE_CUDA"
+            tc.variables[cuda_variable] = self.options.get_safe("use_cuda", False)
         elif ceres_version >= "2.1.0":
             tc.variables["CUDA"] = self.options.get_safe("use_cuda", False)
         if ceres_version >= "2.2.0":
-            tc.variables["EIGENMETIS"] = self.options.use_eigen_metis
+            eigen_metis_variable = "WITH_EIGENMETIS" if self._uses_with_cmake_options else "EIGENMETIS"
+            tc.variables[eigen_metis_variable] = self.options.use_eigen_metis
         if ceres_version >= "2.0.0":
-            tc.variables["ACCELERATESPARSE"] = self.options.get_safe("use_accelerate", False)
+            accelerate_variable = "WITH_ACCELERATESPARSE" if self._uses_with_cmake_options else "ACCELERATESPARSE"
+            tc.variables[accelerate_variable] = self.options.get_safe("use_accelerate", False)
 
         if ceres_version < "2.2.0":
             tc.variables["CXSPARSE"] = self.options.get_safe("use_suitesparse", False)
@@ -261,15 +328,32 @@ class CeresSolverConan(ConanFile):
         self._create_cmake_module_variables(os.path.join(self.package_folder, self._module_variables_file_rel_path))
 
     def _create_cmake_module_variables(self, module_file):
+        # TODO: Simplify this compatibility module after RoboConan switches to CMakeConfigDeps.
         # Define several variables of upstream CMake config file which are not
         # defined out of the box by CMakeDeps.
         # See https://github.com/ceres-solver/ceres-solver/blob/master/cmake/CeresConfig.cmake.in
+        components = ";".join(self._cmake_components)
         content = textwrap.dedent(f"""\
-            set(CERES_FOUND TRUE)
-            set(CERES_VERSION {self.version})
+            set(CERES_VERSION {self._upstream_version})
+            set(CERES_COMPILED_COMPONENTS "{components}")
             if(NOT DEFINED CERES_LIBRARIES)
                 set(CERES_LIBRARIES Ceres::ceres)
             endif()
+            foreach(_Ceres_component IN LISTS Ceres_FIND_COMPONENTS)
+                set(Ceres_${{_Ceres_component}}_FOUND FALSE)
+            endforeach()
+            foreach(_Ceres_component IN LISTS CERES_COMPILED_COMPONENTS)
+                set(Ceres_${{_Ceres_component}}_FOUND TRUE)
+            endforeach()
+            set(Ceres_FOUND TRUE)
+            foreach(_Ceres_component IN LISTS Ceres_FIND_COMPONENTS)
+                if(Ceres_FIND_REQUIRED_${{_Ceres_component}} AND
+                   NOT Ceres_${{_Ceres_component}}_FOUND)
+                    set(Ceres_FOUND FALSE)
+                    set(Ceres_NOT_FOUND_MESSAGE "Missing required Ceres component: ${{_Ceres_component}}")
+                endif()
+            endforeach()
+            set(CERES_FOUND ${{Ceres_FOUND}})
         """)
         save(self, module_file, content)
 
@@ -302,9 +386,9 @@ class CeresSolverConan(ConanFile):
                 "abseil::flat_hash_map",
                 "abseil::flat_hash_set",
                 "abseil::log",
+                "abseil::log_flags",
                 "abseil::strings",
                 "abseil::time",
-                "abseil::vlog_is_on",
             ])
         elif not self._use_miniglog:
             requires.append("glog::glog")
@@ -335,7 +419,7 @@ class CeresSolverConan(ConanFile):
                 "cusolver::cusolver_",
                 "cusparse::cusparse",
             ])
-            if Version(self.version, qualifier=True) >= "2.3.0":
+            if self.options.get_safe("use_cudss"):
                 self.cpp_info.components["ceres"].requires.append("cudss::cudss_")
             if Version(self.version) >= "2.2.0":
                 self.cpp_info.components["ceres_cuda_kernels"].set_property("cmake_target_name", "Ceres::ceres_cuda_kernels")
