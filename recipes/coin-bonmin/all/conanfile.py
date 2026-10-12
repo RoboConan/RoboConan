@@ -38,9 +38,13 @@ class BonminConan(ConanFile):
     def layout(self):
         basic_layout(self, src_folder="src")
 
+    def configure(self):
+        self.options["coin-ipopt"].with_asl = self.options.with_asl
+
     def requirements(self):
         self.requires("coin-cbc/[^2.10.12]")
         self.requires("coin-clp/[^1.17.9]")
+        self.requires("coin-osi/[>=0.108.10 <1]")
         self.requires("coin-ipopt/[^3.14.19]", transitive_headers=True, transitive_libs=True)
         if self.options.with_asl:
             self.requires("ampl-asl/[^1]")
@@ -70,7 +74,7 @@ class BonminConan(ConanFile):
 
     def generate(self):
         deps = PkgConfigDeps(self)
-        deps.set_property("ampl-asl", "pkg_config_name", "coinasl")
+        deps.set_property("ampl-asl::asl", "pkg_config_aliases", ["coinasl"])
         deps.generate()
 
         tc = AutotoolsToolchain(self)
@@ -78,8 +82,8 @@ class BonminConan(ConanFile):
         osi = self.dependencies["coin-osi"]
         tc.configure_args += [
             f"--with-asl={yes_no(self.options.with_asl)}",
-            f"--with-osicplex={yes_no(osi.options.with_cplex)}",
-            "--with-coinfiltersqp=no",
+            f"--with-osicpx={yes_no(osi.options.with_cplex)}",
+            "--with-filtersqp=no",
             "F77=unavailable",
         ]
 
@@ -95,6 +99,9 @@ class BonminConan(ConanFile):
 
         env = tc.environment()
         env.define("PKG_CONFIG_PATH", self.generators_folder)
+        if str(self.settings.compiler) in ["gcc", "clang", "apple-clang"]:
+            # The old configure script probes GNU C before initializing the object suffix.
+            env.define("ac_cv_c_compiler_gnu", "yes")
         if is_msvc(self):
             compile_wrapper = unix_path(self, self.conf.get("user.automake:compile-wrapper"))
             ar_wrapper = unix_path(self, self.conf.get("user.automake:lib-wrapper"))
@@ -137,13 +144,20 @@ class BonminConan(ConanFile):
         if self.settings.os in ["Linux", "FreeBSD"]:
             self.cpp_info.components["libbonmin"].system_libs = ["m", "pthread", "rt", "dl"]
         self.cpp_info.components["libbonmin"].requires = [
-            "coin-cbc::coin-cbc",
-            "coin-clp::coin-clp",
-            "coin-ipopt::coin-ipopt",
+            "coin-cbc::libcbc",
+            "coin-clp::osi-clp",
+            "coin-osi::libosi",
+            "coin-ipopt::ipopt",
         ]
+        if self.dependencies["coin-osi"].options.with_cplex:
+            self.cpp_info.components["libbonmin"].requires.append("coin-osi::osi-cplex")
 
         if self.options.with_asl:
             self.cpp_info.components["bonminamplinterface"].set_property("pkg_config_name", "bonminamplinterface")
             self.cpp_info.components["bonminamplinterface"].libs = ["bonminampl"]
             self.cpp_info.components["bonminamplinterface"].includedirs.append("include/coin")
-            self.cpp_info.components["bonminamplinterface"].requires = ["libbonmin", "ampl-asl::asl"]
+            self.cpp_info.components["bonminamplinterface"].requires = [
+                "libbonmin",
+                "coin-ipopt::ipoptamplinterface",
+                "ampl-asl::asl",
+            ]
