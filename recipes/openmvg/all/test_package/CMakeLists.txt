@@ -11,3 +11,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     OpenMVG::openMVG_numeric
 )
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_14)
+
+add_executable(test_sift test_sift.cpp)
+target_link_libraries(test_sift PRIVATE OpenMVG::vlsift)
+target_compile_features(test_sift PRIVATE cxx_std_14)

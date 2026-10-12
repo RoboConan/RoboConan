@@ -79,19 +79,19 @@ class OpenmvgConan(ConanFile):
     def requirements(self):
         self.requires("cereal/[^1.3.2]", transitive_headers=True)
         if Version(self.version) >= "2.1":
-            self.requires("ceres-solver/[^2.2.0]")
+            self.requires("ceres-solver/[^2.2.0, include_prerelease]", transitive_headers=True)
             self.requires("spectra/[^1.0]")
         else:
-            self.requires("ceres-solver/2.1.0")
+            self.requires("ceres-solver/[~2.1]", transitive_headers=True)
         self.requires("coin-clp/[^1.17.9]")
         self.requires("coin-osi/[>=0.108.10 <1]")
         self.requires("coin-utils/[^2.11.11]")
-        self.requires("coin-lemon/1.3.1", transitive_headers=True, transitive_libs=True)
+        self.requires("coin-lemon/[^1.3.1]", transitive_headers=True, transitive_libs=True)
         self.requires("eigen/[>=3.3 <6]", transitive_headers=True)
         self.requires("flann/[^1]", transitive_headers=True, transitive_libs=True)
-        self.requires("hnswlib/[<1]")
+        self.requires("hnswlib/[<1]", transitive_headers=True)
         self.requires("easyexif/[1.0+openmvg.*]")
-        self.requires("vlfeat/[*]")
+        self.requires("vlfeat/[>=0.9.21 <1]", transitive_headers=True, transitive_libs=True)
         self.requires("libjpeg-meta/latest")
         self.requires("libpng/[~1.6]")
         self.requires("libtiff/[>=4.5 <5]")
@@ -133,7 +133,13 @@ class OpenmvgConan(ConanFile):
         if Version(self.version) >= "2.1":
             replace_in_file(self, "src/openMVG/multiview/LiGT/LiGT_algorithm.cpp", "third_party/spectra/include/Spectra", "Spectra")
         rmdir(self, "src/nonFree/sift/vl")
-        save(self, "src/nonFree/sift/CMakeLists.txt", "")
+        save(self, "src/nonFree/sift/CMakeLists.txt", textwrap.dedent("""\
+            install(
+              FILES SIFT_describer.hpp SIFT_describer_io.hpp
+              DESTINATION include/openMVG_dependencies/nonFree/sift
+              COMPONENT headers
+            )
+        """))
         replace_in_file(self, "src/nonFree/sift/SIFT_describer.hpp", "nonFree/sift/vl/sift.h", "vl/sift.h")
         # Bypass a check for submodules
         mkdir(self, "src/dependencies/cereal/include")
@@ -167,11 +173,6 @@ class OpenmvgConan(ConanFile):
         tc.variables["USE_AVX"] = self.options.get_safe("avx", False) in ["avx", "avx2"]
         tc.variables["USE_AVX2"] = self.options.get_safe("avx", False) == "avx2"
 
-        if self.settings.os == "Linux":
-            # Workaround for: https://github.com/conan-io/conan/issues/13560
-            libdirs_host = [l for dependency in self.dependencies.host.values() for l in dependency.cpp_info.aggregated_components().libdirs]
-            tc.variables["CMAKE_BUILD_RPATH"] = ";".join(libdirs_host)
-
         tc.cache_variables["CMAKE_POLICY_DEFAULT_CMP0077"] = "NEW"
         tc.cache_variables["CMAKE_POLICY_DEFAULT_CMP0177"] = "NEW"
 
@@ -198,6 +199,7 @@ class OpenmvgConan(ConanFile):
         deps.set_property("flann", "cmake_file_name", "Flann")
         deps.set_property("flann::flann_c", "cmake_target_name", "flann::flann")
         deps.set_property("flann::flann_cpp", "cmake_target_name", "flann::flann_cpp")
+        deps.set_property("libtiff", "cmake_file_name", "TIFF")
         deps.set_property("vlfeat", "cmake_target_name", "vlsift")
         deps.generate()
 
@@ -213,6 +215,7 @@ class OpenmvgConan(ConanFile):
         for dll_file in glob.glob(os.path.join(self.package_folder, "lib", "*.dll")):
             rename(self, dll_file, os.path.join(self.package_folder, "bin", os.path.basename(dll_file)))
         rm(self, "*.cmake", os.path.join(self.package_folder, "lib"))
+        rmdir(self, os.path.join(self.package_folder, "lib", "openMVG", "cmake"))
         rmdir(self, os.path.join(self.package_folder, "share", "cmake"))
 
     @property
@@ -235,6 +238,10 @@ class OpenmvgConan(ConanFile):
             "openmvg_exif": {
                 "target": "openMVG_exif",
                 "libs": ["openMVG_exif"],
+                "requires": ["openmvg_easyexif"],
+            },
+            "openmvg_easyexif": {
+                "target": "openMVG_easyexif",
                 "requires": ["easyexif::easyexif"],
             },
             "openmvg_features": {
@@ -292,7 +299,7 @@ class OpenmvgConan(ConanFile):
             "openmvg_multiview": {
                 "target": "openMVG_multiview",
                 "libs": ["openMVG_multiview"],
-                "requires": ["openmvg_numeric", "openmvg_graph", "ceres-solver::ceres-solver"] + spectra(),
+                "requires": ["openmvg_numeric", "openmvg_system", "openmvg_graph", "ceres-solver::ceres-solver"] + spectra(),
             },
             "openmvg_numeric": {
                 "target": "openMVG_numeric",
@@ -313,14 +320,12 @@ class OpenmvgConan(ConanFile):
                     "openmvg_geometry", "openmvg_features", "openmvg_graph", "openmvg_matching",
                     "openmvg_multiview", "openmvg_image", "openmvg_linftycomputervision",
                     "openmvg_system", "openmvg_stlplus", "cereal::cereal", "ceres-solver::ceres-solver",
-                    "vlfeat::vlfeat",
                 ],
                 "add_library_name_prefix_to_include_dirs": True,
             },
             "openmvg_system": {
                 "target": "openMVG_system",
                 "libs": ["openMVG_system"],
-                "requires": ["openmvg_numeric"],
             },
             "openmvg_fast": {
                 "target": "openMVG_fast",
@@ -332,6 +337,10 @@ class OpenmvgConan(ConanFile):
             },
             "openmvg_svg": {
                 "target": "openMVG_svg",
+            },
+            "openmvg_vlsift": {
+                "target": "vlsift",
+                "requires": ["openmvg_features", "openmvg_image", "vlfeat::vlfeat"],
             },
         }
 
@@ -358,5 +367,8 @@ class OpenmvgConan(ConanFile):
             self.cpp_info.components[component].resdirs = ["lib/openMVG" if Version(self.version) >= "2.1" else  "share/openMVG"]
 
         if self.options.with_openmp:
-            for component_name in ["cameras", "features", "image", "matching", "matching_image_collection", "robust_estimation", "sfm"]:
+            for component_name in [
+                "camera", "features", "image", "matching", "kvld", "matching_image_collection",
+                "multiview", "robust_estimation", "sfm", "vlsift",
+            ]:
                 self.cpp_info.components[f"openmvg_{component_name}"].requires.append("openmp::openmp")

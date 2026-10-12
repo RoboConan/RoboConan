@@ -7,3 +7,36 @@
      openMVG_system
      openMVG_features
      openMVG_sfm
+--- a/src/openMVG/linearProgramming/CMakeLists.txt
++++ b/src/openMVG/linearProgramming/CMakeLists.txt
+@@ -15,6 +15,5 @@ target_link_libraries(openMVG_linearProgramming
+   PUBLIC
+     openMVG_numeric
+-  PRIVATE
+     ${CLP_LIBRARIES}     # clp + solver wrapper
+     ${COINUTILS_LIBRARY} # container tools
+     ${OSI_LIBRARY}       # generic LP
+--- a/src/openMVG/multiview/CMakeLists.txt
++++ b/src/openMVG/multiview/CMakeLists.txt
+@@ -43,9 +43,6 @@ target_link_libraries(openMVG_multiview
+   PUBLIC
+     openMVG_numeric
+     openMVG_system
+-)
+-target_link_libraries(openMVG_multiview
+-  LINK_PRIVATE
+     openMVG_graph
+     ${CERES_LIBRARIES}
+     ${OPENMVG_LIBRARY_DEPENDENCIES}
+--- a/src/openMVG/sfm/CMakeLists.txt
++++ b/src/openMVG/sfm/CMakeLists.txt
+@@ -28,9 +28,5 @@ target_link_libraries(openMVG_sfm
+     ${cereal_TARGET}
+     ${OPENMVG_LIBRARY_DEPENDENCIES}
+-)
+-
+-target_link_libraries(openMVG_sfm
+-  LINK_PRIVATE
+     openMVG_image
+     openMVG_lInftyComputerVision
+     openMVG_system
