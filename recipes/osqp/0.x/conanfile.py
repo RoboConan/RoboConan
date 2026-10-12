@@ -2,6 +2,7 @@ import os
 import textwrap
 
 from conan import ConanFile
+from conan.errors import ConanInvalidConfiguration
 from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout, CMakeDeps
 from conan.tools.files import *
 
@@ -34,12 +35,20 @@ class OsqpConan(ConanFile):
     implements = ["auto_shared_fpic"]
     languages = ["C"]
 
+    def export_sources(self):
+        export_conandata_patches(self)
+
     def layout(self):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("qdldl/[>=0.1 <1]", options={"float32": self.options.float32, "int32": self.options.int32})
-        self.requires("suitesparse-amd/[*]")
+        self.requires("qdldl/[>=0.1.9 <1]")
+        self.requires("suitesparse-amd/[^3.3.4]")
+
+    def validate(self):
+        qdldl_options = self.dependencies["qdldl"].options
+        if qdldl_options.float32 != self.options.float32 or qdldl_options.int32 != self.options.int32:
+            raise ConanInvalidConfiguration("OSQP and QDLDL must use the same float32 and int32 options")
 
     @property
     def _for_casadi(self):
@@ -47,6 +56,7 @@ class OsqpConan(ConanFile):
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
+        apply_conandata_patches(self)
         # CMake v4 support
         replace_in_file(self, "CMakeLists.txt",
                         "cmake_minimum_required (VERSION 3.2)",

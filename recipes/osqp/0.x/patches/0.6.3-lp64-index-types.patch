@@ -1,0 +1,17 @@
+diff --git a/include/glob_opts.h b/include/glob_opts.h
+index fe158ea..62bef40 100644
+--- a/include/glob_opts.h
++++ b/include/glob_opts.h
+@@ -1,3 +1,4 @@
+ #ifndef GLOB_OPTS_H
+ # define GLOB_OPTS_H
++# include <stdint.h>
+ 
+@@ -78,6 +79,6 @@ extern "C" {
+ /* Use customized number representation -----------------------------------   */
+ # ifdef DLONG            // long integers
+-typedef long long c_int; /* for indices */
++typedef int64_t c_int;   /* for indices */
+ # else // standard integers
+ typedef int c_int;       /* for indices */
+ # endif /* ifdef DLONG */

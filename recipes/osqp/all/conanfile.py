@@ -1,6 +1,7 @@
 import os
 
 from conan import ConanFile
+from conan.errors import ConanInvalidConfiguration
 from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout, CMakeDeps
 from conan.tools.files import *
 
@@ -52,9 +53,10 @@ class OsqpConan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("qdldl/[>=0.1 <1]", options={"float32": self.options.float32, "int32": self.options.int32})
-        self.requires("suitesparse-amd/[*]")
-        if self.options.backend == "cuda":
+        if self.options.backend == "builtin":
+            self.requires("qdldl/[>=0.1.9 <1]")
+            self.requires("suitesparse-amd/[^3.3.4]")
+        elif self.options.backend == "cuda":
             self.cuda.requires("cudart")
             self.cuda.requires("cublas")
             self.cuda.requires("cusparse")
@@ -64,6 +66,18 @@ class OsqpConan(ConanFile):
     def validate(self):
         if self.options.backend == "cuda":
             self.cuda.validate_settings()
+        elif self.options.backend == "mkl":
+            if self.options.float32:
+                raise ConanInvalidConfiguration("The MKL backend does not support float32")
+            mkl_int32 = str(self.dependencies["onemkl"].options.interface) == "lp64"
+            if self.options.int32 != mkl_int32:
+                raise ConanInvalidConfiguration(
+                    "OSQP's int32 option must match the oneMKL interface (int32=True for lp64, False for ilp64)"
+                )
+        elif self.options.backend == "builtin":
+            qdldl_options = self.dependencies["qdldl"].options
+            if qdldl_options.float32 != self.options.float32 or qdldl_options.int32 != self.options.int32:
+                raise ConanInvalidConfiguration("OSQP and QDLDL must use the same float32 and int32 options")
 
     def build_requirements(self):
         self.tool_requires("cmake/[>=3.18]")
@@ -80,7 +94,8 @@ class OsqpConan(ConanFile):
 
     def generate(self):
         tc = CMakeToolchain(self)
-        tc.variables["CMAKE_PROJECT_osqp_INCLUDE"] = "conan_deps.cmake"
+        if self.options.backend == "builtin":
+            tc.variables["CMAKE_PROJECT_osqp_INCLUDE"] = "conan_deps.cmake"
         tc.variables["OSQP_BUILD_SHARED_LIB"] = self.options.shared
         tc.variables["OSQP_BUILD_STATIC_LIB"] = not self.options.shared
         tc.variables["OSQP_ALGEBRA_BACKEND"] = self.options.backend
@@ -113,7 +128,13 @@ class OsqpConan(ConanFile):
         self.cpp_info.set_property("cmake_file_name", "osqp")
         self.cpp_info.set_property("cmake_target_name", "osqp::osqp")
         self.cpp_info.libs = ["osqp" if self.options.shared else "osqpstatic"]
+        if self.options.shared:
+            self.cpp_info.defines = ["OSQP_SHARED_LIB"]
         self.cpp_info.includedirs.append("include/osqp")
         self.cpp_info.resdirs = ["share"]
+        if self.options.backend == "cuda":
+            self.cpp_info.requires = ["cudart::cudart_", "cublas::cublas_"]
+        elif self.options.backend == "mkl":
+            self.cpp_info.requires = ["onemkl::mkl"]
         if self.settings.os in ["Linux", "FreeBSD"]:
             self.cpp_info.system_libs = ["m"]

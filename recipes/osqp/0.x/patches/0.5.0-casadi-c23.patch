@@ -1,0 +1,12 @@
+diff --git a/lin_sys/lib_handler.c b/lin_sys/lib_handler.c
+index be7cf07..4b52628 100644
+--- a/lin_sys/lib_handler.c
++++ b/lin_sys/lib_handler.c
+@@ -2,6 +2,7 @@
+ #include <ctype.h> // Needed for tolower functions
+ 
+ #include "constants.h"
++#include <string.h>
+ 
+ soHandle_t lh_load_lib(const char *libName) {
+     soHandle_t h = OSQP_NULL;

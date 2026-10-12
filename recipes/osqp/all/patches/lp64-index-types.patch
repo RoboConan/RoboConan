@@ -1,0 +1,83 @@
+diff --git a/include/public/osqp_api_types.h b/include/public/osqp_api_types.h
+index c678bca..b49c86a 100644
+--- a/include/public/osqp_api_types.h
++++ b/include/public/osqp_api_types.h
+@@ -2,6 +2,7 @@
+ #define OSQP_API_TYPES_H
+ 
+ 
++# include <stdint.h>
+ # include "osqp_api_constants.h"
+ 
+ /*****************************
+@@ -10,7 +11,11 @@
+ 
+ /* OSQP custom float definitions */
+ # ifdef OSQP_USE_LONG            // long integers
+-typedef long long OSQPInt; /* for indices */
++#  ifdef OSQP_ALGEBRA_MKL
++typedef long long OSQPInt; /* for indices */
++#  else
++typedef int64_t OSQPInt;   /* for indices */
++#  endif
+ # else // standard integers
+ typedef int OSQPInt;       /* for indices */
+ # endif /* ifdef OSQP_USE_LONG */
+diff --git a/include/private/printing.h b/include/private/printing.h
+index f7cf38d..11c3bbd 100644
+--- a/include/private/printing.h
++++ b/include/private/printing.h
+@@ -12,6 +12,11 @@ extern "C" {
++#include <inttypes.h>
+ /* Format specifier to use for the OSQP integers */
+ # ifdef OSQP_USE_LONG            /* Long integers */
++#  ifdef OSQP_ALGEBRA_MKL
+ #define OSQP_INT_FMT "lld"
++#  else
++#define OSQP_INT_FMT PRId64
++#  endif
+ # else                           /* Standard integers */
+ #define OSQP_INT_FMT "d"
+ # endif
+diff --git a/algebra/_common/lin_sys/qdldl/qdldl_interface.c b/algebra/_common/lin_sys/qdldl/qdldl_interface.c
+index 5e7b753..c52ea52 100644
+--- a/algebra/_common/lin_sys/qdldl/qdldl_interface.c
++++ b/algebra/_common/lin_sys/qdldl/qdldl_interface.c
+@@ -142,7 +142,7 @@ static OSQPInt permute_KKT(OSQPCscMatrix** KKT,
+                            OSQPInt*        PtoKKT,
+                            OSQPInt*        AtoKKT,
+                            OSQPInt*        rhotoKKT) {
+-    OSQPFloat* info;
++    double*    info;
+     OSQPInt    amd_status;
+     OSQPInt*   Pinv;
+     OSQPInt*   KtoPKPt;
+@@ -150,13 +150,13 @@ static OSQPInt permute_KKT(OSQPCscMatrix** KKT,
+ 
+     OSQPCscMatrix* KKT_temp;
+ 
+-    info = (OSQPFloat *)c_malloc(AMD_INFO * sizeof(OSQPFloat));
++    info = (double *)c_malloc(AMD_INFO * sizeof(double));
+ 
+     // Compute permutation matrix P using AMD
+ #ifdef OSQP_USE_LONG
+-    amd_status = amd_l_order((*KKT)->n, (*KKT)->p, (*KKT)->i, p->P, (OSQPFloat *)OSQP_NULL, info);
++    amd_status = amd_l_order((*KKT)->n, (*KKT)->p, (*KKT)->i, p->P, OSQP_NULL, info);
+ #else
+-    amd_status = amd_order((*KKT)->n, (*KKT)->p, (*KKT)->i, p->P, (OSQPFloat *)OSQP_NULL, info);
++    amd_status = amd_order((*KKT)->n, (*KKT)->p, (*KKT)->i, p->P, OSQP_NULL, info);
+ #endif
+     if (amd_status < 0) {
+         // Free Amd info and return an error
+@@ -780,9 +780,9 @@ OSQPInt adjoint_derivative_qdldl(qdldl_solver* self,
+ 
+     OSQPInt amd_status;
+ #ifdef OSQP_USE_LONG
+-    amd_status = amd_l_order(An, adj->p, adj->i, P, (OSQPFloat *)OSQP_NULL, (OSQPFloat *)OSQP_NULL);
++    amd_status = amd_l_order(An, adj->p, adj->i, P, OSQP_NULL, OSQP_NULL);
+ #else
+-    amd_status = amd_order(An, adj->p, adj->i, P, (OSQPFloat *)OSQP_NULL, (OSQPFloat *)OSQP_NULL);
++    amd_status = amd_order(An, adj->p, adj->i, P, OSQP_NULL, OSQP_NULL);
+ #endif
+     if (amd_status < 0) {
+         retval = amd_status;

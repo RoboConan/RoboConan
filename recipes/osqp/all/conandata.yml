@@ -1,7 +1,9 @@
 sources:
   "1.0.0":
-    url: "https://github.com/osqp/osqp/archive/refs/tags/v1.0.0.tar.gz"
+    url: "https://github.com/osqp/osqp/archive/v1.0.0.tar.gz"
     sha256: "dd6a1c2e7e921485697d5e7cdeeb043c712526c395b3700601f51d472a7d8e48"
 patches:
   "1.0.0":
     - patch_file: "patches/unvendor-qdldl.patch"
+    - patch_file: "patches/lp64-index-types.patch"
+    - patch_file: "patches/cuda-thrust-pair.patch"

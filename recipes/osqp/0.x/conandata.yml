@@ -1,7 +1,13 @@
 sources:
   "0.6.3":
-    url: "https://github.com/osqp/osqp/archive/refs/tags/v0.6.3.tar.gz"
+    url: "https://github.com/osqp/osqp/archive/v0.6.3.tar.gz"
     sha256: "a6b4148019001f87489c27232e2bdbac37c94f38fa37c1b4ee11eaa5654756d2"
   "0.5.0-casadi.20211016":
     url: "https://github.com/jgillis/osqp/archive/b52161c69d799d3c8dd75872fe726d65ff1a1227.tar.gz"
     sha256: "de9bad81d0925aab29cfb9b75f91ca424e50cb5fcd42bdf02766ac7f536e242b"
+patches:
+  "0.6.3":
+    - patch_file: "patches/0.6.3-lp64-index-types.patch"
+  "0.5.0-casadi.20211016":
+    - patch_file: "patches/0.5.0-casadi-lp64-index-types.patch"
+    - patch_file: "patches/0.5.0-casadi-c23.patch"

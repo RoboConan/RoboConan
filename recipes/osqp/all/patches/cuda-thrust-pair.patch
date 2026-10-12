@@ -1,0 +1,10 @@
+--- a/algebra/cuda/src/cuda_lin_alg.cu
++++ b/algebra/cuda/src/cuda_lin_alg.cu
+@@ -26,6 +26,7 @@
+ #include "glob_opts.h"
+ 
+ #include <thrust/gather.h>
++#include <thrust/pair.h>
+ #include <thrust/reduce.h>
+ #include <thrust/execution_policy.h>
+ 
