@@ -1,4 +1,4 @@
 sources:
-  "25.01":
-    url: "https://github.com/ip7z/7zip/releases/download/25.01/7z2501-x64.msi"
-    sha256: "e7eb0b7ed5efa4e087b7b17f191797f7af5b7f442d1290c66f3a21777005ef57"
+  "26.04":
+    url: "https://github.com/ip7z/7zip/releases/download/26.04/7z2604-x64.msi"
+    sha256: "0b01334a418654293513449f61d6bfc99e5196ca371e3c3dc961eda57cd535c6"
