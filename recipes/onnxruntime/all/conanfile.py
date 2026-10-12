@@ -3,7 +3,7 @@ import os
 from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
 from conan.tools.apple import is_apple_os
-from conan.tools.build import check_min_cppstd
+from conan.tools.build import check_min_cppstd, stdcpp_library
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
 from conan.tools.scm import Version
@@ -67,7 +67,8 @@ class OnnxRuntimeConan(ConanFile):
         self.requires(f"abseil/[>=20220623.1 {absl_max}]")
         required_onnx_version = self.conan_data["onnx_version_map"][self.version]
         self.requires(f"onnx/[~{required_onnx_version}]")
-        self.requires("date/[^3.0]")
+        date_options = {"header_only": True} if Version(self.version) >= "1.31.0" else {}
+        self.requires("date/[^3.0]", options=date_options)
         self.requires("re2/[>=20220601]")
         self.requires("flatbuffers/[~23.5]")
         self.requires("boost/[^1.71.0]", headers=True, libs=False)  # for mp11, header only, no need for libraries
@@ -86,7 +87,8 @@ class OnnxRuntimeConan(ConanFile):
         if self.options.with_cuda:
             # Included in the public onnxruntime/core/providers/cuda/cuda_context.h header
             self.cuda.requires("cudart", transitive_headers=True, transitive_libs=True)
-            self.requires("cutlass/[^3.9.2]", options={"install_examples_headers": True})
+            cutlass_version = "[^4.7]" if Version(self.version) >= "1.31.0" else "[^3.9.2]"
+            self.requires(f"cutlass/{cutlass_version}", options={"install_examples_headers": True})
             if self.options.with_cuda == "full":
                 self.requires("cudnn-frontend/[^1]")
                 self.requires("cudnn/[^9]", transitive_headers=True)
@@ -102,28 +104,38 @@ class OnnxRuntimeConan(ConanFile):
 
     def validate(self):
         # https://github.com/microsoft/onnxruntime/blob/8f5c79cb63f09ef1302e85081093a3fe4da1bc7d/cmake/CMakeLists.txt#L43-L47
-        check_min_cppstd(self, 20 if is_apple_os(self) else 17)
+        min_cppstd = 20 if Version(self.version) >= "1.31.0" or is_apple_os(self) else 17
+        check_min_cppstd(self, min_cppstd)
         if not self.dependencies["onnx"].options.disable_static_registration:
             raise ConanInvalidConfiguration("ONNX must be built with `-o onnx/*:disable_static_registration=True`.")
 
     def build_requirements(self):
-        self.tool_requires("cmake/[>=3.27 <5]")
+        self.tool_requires("cmake/[>=3.28 <5]")
         if self.options.with_cuda:
             self.cuda.tool_requires("nvcc")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
         apply_conandata_patches(self)
-        copy(self, "onnxruntime_external_deps.cmake",
+        external_deps = "onnxruntime_external_deps_1.31.cmake" if Version(self.version) >= "1.31.0" else "onnxruntime_external_deps.cmake"
+        copy(self, external_deps,
              src=os.path.join(self.export_sources_folder, "cmake"),
              dst=os.path.join(self.source_folder, "cmake", "external"))
+        if external_deps != "onnxruntime_external_deps.cmake":
+            rm(self, "onnxruntime_external_deps.cmake",
+               folder=os.path.join(self.source_folder, "cmake", "external"))
+            rename(self,
+                   os.path.join(self.source_folder, "cmake", "external", external_deps),
+                   os.path.join(self.source_folder, "cmake", "external", "onnxruntime_external_deps.cmake"))
         save(self, "cmake/external/cudnn_frontend.cmake", "")
         # Let Conan manage the C++ standard
-        replace_in_file(self, "cmake/CMakeLists.txt", "set(CMAKE_CXX_STANDARD ", "# set(CMAKE_CXX_STANDARD ")
+        if Version(self.version) < "1.31.0":
+            replace_in_file(self, "cmake/CMakeLists.txt", "set(CMAKE_CXX_STANDARD ", "# set(CMAKE_CXX_STANDARD ")
         # Don't try to parse Git info
         replace_in_file(self, "cmake/CMakeLists.txt", "if (Git_FOUND)", "if (0)")
         # Remove an unused cuSPARSE include
-        replace_in_file(self, "onnxruntime/core/providers/cuda/cuda_pch.h", "#include <cusparse.h>", "")
+        if Version(self.version) < "1.31.0":
+            replace_in_file(self, "onnxruntime/core/providers/cuda/cuda_pch.h", "#include <cusparse.h>", "")
         if "1.17" <= Version(self.version) < "1.19":
             # https://github.com/microsoft/onnxruntime/commit/5bfca1dc576720627f3af8f65e25af408271079b
             replace_in_file(self, "cmake/onnxruntime_providers_cuda.cmake",
@@ -202,12 +214,21 @@ class OnnxRuntimeConan(ConanFile):
         if self.options.shared:
             self.cpp_info.libs = ["onnxruntime"]
         else:
-            onnxruntime_libs = ["session", "optimizer", "providers", "framework", "graph", "util", "mlas", "common", "flatbuffers"]
+            onnxruntime_libs = ["session", "optimizer", "providers"]
+            if Version(self.version) >= "1.23.0":
+                onnxruntime_libs.append("lora")
+            onnxruntime_libs.extend(["framework", "graph", "util", "mlas", "common", "flatbuffers"])
             if self.options.with_xnnpack:
                 onnxruntime_libs.append("providers_xnnpack")
             if self.options.with_cuda:
                 onnxruntime_libs.append("providers_cuda")
             self.cpp_info.libs = [f"onnxruntime_{lib}" for lib in onnxruntime_libs]
+            if Version(self.version) >= "1.31.0":
+                self.cpp_info.libs.insert(1, "model_package")
+
+            libcxx = stdcpp_library(self)
+            if libcxx:
+                self.cpp_info.system_libs.append(libcxx)
 
         if self.options.shared:
             self.cpp_info.includedirs.append("include/onnxruntime")

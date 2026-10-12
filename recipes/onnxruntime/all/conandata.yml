@@ -1,4 +1,7 @@
 sources:
+  "1.31.0":
+    url: "https://github.com/microsoft/onnxruntime/archive/refs/tags/v1.31.0.tar.gz"
+    sha256: "a7e84230b5d509e48fbd6b73c2453a56345ccb22da34a46dac1f0cb4a2d6507b"
   "1.22.2":
     url: "https://github.com/microsoft/onnxruntime/archive/refs/tags/v1.22.2.tar.gz"
     sha256: "6f82b949636df0c964cc6f1ef4f1b39b397dce456f92b204d87b46d258687b41"
@@ -6,6 +9,13 @@ sources:
     url: "https://github.com/microsoft/onnxruntime/archive/refs/tags/v1.18.2.tar.gz"
     sha256: "f489a1febd9096b5d5ff54503b029aa1735489cb0308c6a7e1d0040c92a1d923"
 patches:
+  "1.31.0":
+    - patch_file: "patches/1.31.0-fix-cutlass-cuda-provider.patch"
+      patch_description: "use cutlass from Conan"
+      patch_type: "portability"
+    - patch_file: "patches/1.31.0-gcc15-ranges-iterator.patch"
+      patch_description: "avoid passing a C++20 ranges iterator to the legacy vector assign overload"
+      patch_type: "portability"
   "1.22.2":
     - patch_file: "patches/1.22.2-0005-fix-cutlass-cuda-provider.patch"
       patch_description: "use cutlass from Conan"
@@ -28,5 +38,6 @@ patches:
 # ONNX versions are based on the minor version used at
 # https://github.com/microsoft/onnxruntime/tree/main/cmake/external
 onnx_version_map:
+  "1.31.0": "1.22.0"
   "1.22.2": "1.17.0"
   "1.18.2": "1.16.2"

@@ -1,0 +1,10 @@
+--- a/cmake/onnxruntime_providers_cuda.cmake
++++ b/cmake/onnxruntime_providers_cuda.cmake
+@@ -404,5 +404,5 @@ function(onnxruntime_add_cuda_srcs)
+     endif()
+ 
+-    include(cutlass)
+-    target_include_directories(${target} PRIVATE ${cutlass_SOURCE_DIR}/include ${cutlass_SOURCE_DIR}/examples ${cutlass_SOURCE_DIR}/tools/util/include)
++    find_package(NvidiaCutlass REQUIRED)
++    target_link_libraries(${target} PRIVATE nvidia::cutlass::cutlass)
+     if(ORT_HAS_SM90_OR_LATER AND NOT WIN32 AND NOT onnxruntime_CUDA_MINIMAL AND NOT onnxruntime_DISABLE_CONTRIB_OPS)

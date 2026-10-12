@@ -1,0 +1,13 @@
+--- a/onnxruntime/core/session/environment.cc
++++ b/onnxruntime/core/session/environment.cc
+@@ -1043,7 +1043,9 @@ Status Environment::EpInfo::Create(std::unique_ptr<EpLibrary> library_in, std::u
+ 
+   {
+     auto factories = instance.library->GetFactories();
+-    instance.factories.assign(factories.begin(), factories.end());
++    for (OrtEpFactory* factory : factories) {
++      instance.factories.push_back(factory);
++    }
+   }
+ 
+   // OrtHardwareDevice instances to pass to GetSupportedDevices.
