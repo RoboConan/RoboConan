@@ -143,9 +143,11 @@ class CBlosc2Conan(ConanFile):
     def package_info(self):
         self.cpp_info.set_property("cmake_file_name", "Blosc2")
         self.cpp_info.set_property("cmake_target_name", "Blosc2::blosc2")
+        linkage_target = "blosc2_shared" if self.options.shared else "blosc2_static"
+        self.cpp_info.set_property("cmake_target_aliases", [f"Blosc2::{linkage_target}"])
         self.cpp_info.set_property("pkg_config_name", "blosc2")
 
-        prefix = "lib" if is_msvc(self) and not self.options.shared else ""
+        prefix = "lib" if is_msvc(self) else ""
         self.cpp_info.libs = [f"{prefix}blosc2"]
         self.cpp_info.requires.append("lz4::lz4")
         if self.options.with_zlib:
