@@ -2,6 +2,7 @@ import os
 import shutil
 
 from conan import ConanFile
+from conan.errors import ConanInvalidConfiguration
 from conan.tools.build import stdcpp_library
 from conan.tools.files import *
 from conan.tools.gnu import Autotools, AutotoolsToolchain, PkgConfigDeps
@@ -64,6 +65,20 @@ class SymphonyConan(ConanFile):
         if self.options.with_openmp:
             self.requires("openmp/system")
 
+    def validate(self):
+        solver = str(self.options.default_lp_solver)
+        osi = self.dependencies["coin-osi"].options
+        if solver == "clp" and not self.options.with_clp:
+            raise ConanInvalidConfiguration("The clp default solver requires with_clp=True")
+        if solver == "cplex" and not osi.with_cplex:
+            raise ConanInvalidConfiguration("The cplex default solver requires coin-osi:with_cplex=True")
+        if solver == "glpk" and not osi.with_glpk:
+            raise ConanInvalidConfiguration("The glpk default solver requires coin-osi:with_glpk=True")
+        if solver == "soplex":
+            raise ConanInvalidConfiguration("SYMPHONY 5.7.3 does not enable its upstream OsiSpx integration")
+        if solver == "xpress" and not osi.with_xpress:
+            raise ConanInvalidConfiguration("The xpress default solver requires coin-osi:with_xpress=True")
+
     def build_requirements(self):
         self.tool_requires("coin-buildtools/[*]")
         self.tool_requires("gnu-config/[*]")
@@ -85,17 +100,12 @@ class SymphonyConan(ConanFile):
             f"--with-lp-solver={self.options.default_lp_solver}",
             "--with-cgl=yes",  # can't be disabled
             f"--with-clp={yes_no(self.options.with_clp)}",
-            f"--with-osiclp={yes_no(self.options.with_clp)}",
             f"--with-dylp={yes_no(self.options.with_dylp)}",
-            f"--with-osidylp={yes_no(self.options.with_dylp)}",
             f"--with-vol={yes_no(self.options.with_vol)}",
-            f"--with-osivol={yes_no(self.options.with_vol)}",
-            f"--with-osicplex={yes_no(osi.options.with_cplex)}",
-            f"--with-osiglpk={yes_no(osi.options.with_glpk)}",
-            f"--with-osigurobi={yes_no(osi.options.with_gurobi)}",
-            f"--with-osimosek={yes_no(osi.options.with_mosek)}",
-            f"--with-osisoplex={yes_no(osi.options.with_soplex)}",
-            f"--with-osixpress={yes_no(osi.options.with_xpress)}",
+            f"--with-cpx={yes_no(osi.options.with_cplex)}",
+            f"--with-glpk={yes_no(osi.options.with_glpk)}",
+            f"--with-msk={yes_no(osi.options.with_mosek)}",
+            f"--with-xpr={yes_no(osi.options.with_xpress)}",
             f"--with-gmpl={yes_no(osi.options.with_glpk)}",
             f"--enable-openmp={yes_no(self.options.with_openmp)}",
             f"--with-application={yes_no(self.options.application_library)}",
@@ -116,6 +126,9 @@ class SymphonyConan(ConanFile):
 
         env = tc.environment()
         env.define("PKG_CONFIG_PATH", self.generators_folder)
+        if str(self.settings.compiler) in ["gcc", "clang", "apple-clang"]:
+            # The old configure script probes GNU C before initializing the object suffix.
+            env.define("ac_cv_c_compiler_gnu", "yes")
         if is_msvc(self):
             compile_wrapper = unix_path(self, self.conf.get("user.automake:compile-wrapper"))
             ar_wrapper = unix_path(self, self.conf.get("user.automake:lib-wrapper"))
@@ -166,25 +179,38 @@ class SymphonyConan(ConanFile):
             self.cpp_info.components["libsym"].system_libs.append(stdcpp_library(self))
         requires = [
             "coin-utils::coin-utils",
-            "coin-osi::coin-osi",
+            "coin-osi::libosi",
             "coin-cgl::coin-cgl",
         ]
         if self.options.with_clp:
-            requires.append("coin-clp::coin-clp")
+            requires.append("coin-clp::osi-clp")
         if self.options.with_dylp:
-            requires.append("coin-dylp::coin-dylp")
+            requires.append("coin-dylp::osi-dylp")
         if self.options.with_vol:
-            requires.append("coin-vol::coin-vol")
+            requires.append("coin-vol::osi-vol")
+        if self.dependencies["coin-osi"].options.with_cplex:
+            requires.append("coin-osi::osi-cplex")
+        if self.dependencies["coin-osi"].options.with_glpk:
+            requires.append("coin-osi::osi-glpk")
+        if self.dependencies["coin-osi"].options.with_mosek:
+            requires.append("coin-osi::osi-mosek")
+        if self.dependencies["coin-osi"].options.with_xpress:
+            requires.append("coin-osi::osi-xpress")
         if self.options.with_openmp:
             requires.append("openmp::openmp")
         self.cpp_info.components["libsym"].requires = requires
 
         self.cpp_info.components["osi-sym"].set_property("pkg_config_name", "osi-sym")
         self.cpp_info.components["osi-sym"].libs = ["OsiSym"]
-        self.cpp_info.components["osi-sym"].requires = ["libsym", "coin-osi::coin-osi"]
+        self.cpp_info.components["osi-sym"].requires = ["libsym", "coin-osi::libosi"]
 
         if self.options.application_library:
-            self.cpp_info.components["symphony-app"].set_property("pkg_config_name", "symphony-app")
-            self.cpp_info.components["symphony-app"].libs = ["SymAppl"]
-            self.cpp_info.components["symphony-app"].includedirs.append("include/coin")
-            self.cpp_info.components["symphony-app"].requires = requires
+            app = self.cpp_info.components["symphony-app"]
+            app.set_property("pkg_config_name", "symphony-app")
+            app.libs = ["SymAppl"]
+            app.includedirs.append("include/coin")
+            app.requires = requires
+            if self.settings.os in ["Linux", "FreeBSD"]:
+                app.system_libs = ["m", "pthread", "rt", "dl"]
+            if stdcpp_library(self):
+                app.system_libs.append(stdcpp_library(self))

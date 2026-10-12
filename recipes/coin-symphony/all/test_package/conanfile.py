@@ -2,12 +2,12 @@ import os
 
 from conan import ConanFile
 from conan.tools.build import can_run
-from conan.tools.cmake import CMake, cmake_layout
+from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
 
 
 class TestPackageConan(ConanFile):
     settings = "os", "arch", "compiler", "build_type"
-    generators = "CMakeToolchain", "PkgConfigDeps"
+    generators = "PkgConfigDeps"
 
     def layout(self):
         cmake_layout(self)
@@ -18,6 +18,11 @@ class TestPackageConan(ConanFile):
     def build_requirements(self):
         if not self.conf.get("tools.gnu:pkg_config", check_type=str):
             self.tool_requires("pkgconf/[<4]")
+
+    def generate(self):
+        tc = CMakeToolchain(self)
+        tc.cache_variables["TEST_APPLICATION_LIBRARY"] = self.dependencies["coin-symphony"].options.application_library
+        tc.generate()
 
     def build(self):
         cmake = CMake(self)

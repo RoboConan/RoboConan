@@ -1,4 +1,4 @@
 sources:
-  "5.7.2":
-    url: "https://github.com/coin-or/SYMPHONY/archive/refs/tags/releases/5.7.2.tar.gz"
-    sha256: "0807187a907027590fb860454b20cfde29dd61a2ce21b8af6be2ece4327955da"
+  "5.7.3":
+    url: "https://github.com/coin-or/SYMPHONY/archive/refs/tags/releases/5.7.3.tar.gz"
+    sha256: "a42edebce10321b299fabd2ae3487c8e55f8b69e074b18c2976c1165d552be89"
