@@ -63,8 +63,17 @@ class CpuFeaturesConan(ConanFile):
 
     def package_info(self):
         self.cpp_info.set_property("cmake_file_name", "CpuFeatures")
-        self.cpp_info.set_property("cmake_target_name", "CpuFeatures::cpu_features")
-        self.cpp_info.libs = ["cpu_features"]
-        self.cpp_info.includedirs = [os.path.join("include", "cpu_features")]
-        if self.settings.os in ["Linux", "FreeBSD"]:
-            self.cpp_info.system_libs = ["dl"]
+
+        cpu_features = self.cpp_info.components["libcpu_features"]
+        cpu_features.set_property("cmake_target_name", "CpuFeatures::cpu_features")
+        cpu_features.libs = ["cpu_features"]
+        cpu_features.includedirs = ["include/cpu_features"]
+        if self.settings.os in ["Linux", "FreeBSD", "Android"]:
+            cpu_features.system_libs = ["dl"]
+
+        if self.settings.os == "Android":
+            ndk_compat = self.cpp_info.components["ndk_compat"]
+            ndk_compat.set_property("cmake_target_name", "CpuFeatures::ndk_compat")
+            ndk_compat.libs = ["ndk_compat"]
+            ndk_compat.includedirs = ["include/ndk_compat"]
+            ndk_compat.system_libs = ["dl"]
