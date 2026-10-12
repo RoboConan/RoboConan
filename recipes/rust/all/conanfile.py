@@ -154,7 +154,7 @@ class RustConan(ConanFile):
             linker = "link"
         else:
             gnu_vars = GnuToolchain(self).extra_env.vars(self)
-            linker = gnu_vars["CC"].replace("\\", "/")
+            linker = gnu_vars.get("CC", "cc").replace("\\", "/")
         target_upper = host_target.upper().replace("-", "_")
         self.buildenv_info.define_path(f"CARGO_TARGET_{target_upper}_LINKER", linker)
 
