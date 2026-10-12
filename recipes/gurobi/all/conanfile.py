@@ -19,7 +19,7 @@ class GurobiConan(ConanFile):
     license = "DocumentRef-EULA.pdf:LicenseRef-GUROBI-EULA"
     homepage = "https://www.gurobi.com/"
     topics = ("optimization", "linear-programming", "mixed-integer-programming", "quadratic-programming")
-    package_type = "shared-library"
+    package_type = "library"
     settings = "os", "arch", "compiler", "build_type"
     options = {
         "shared": [True, False],
@@ -39,6 +39,7 @@ class GurobiConan(ConanFile):
         if not self.options.shared:
             self.options.rm_safe("fPIC")
         if not self.options.cxx:
+            self.package_type = "shared-library"
             self.languages = ["C"]
             self.options.rm_safe("shared")
 
