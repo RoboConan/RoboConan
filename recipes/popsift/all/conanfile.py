@@ -29,6 +29,9 @@ class PopSiftConan(ConanFile):
     python_requires = "conan-cuda/latest"
     python_requires_extend = "conan-cuda.Cuda"
 
+    def export_sources(self):
+        export_conandata_patches(self)
+
     def layout(self):
         cmake_layout(self, src_folder="src")
 
@@ -44,6 +47,7 @@ class PopSiftConan(ConanFile):
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
+        apply_conandata_patches(self)
         # Don't override the architecture versions set by CudaToolchain
         replace_in_file(self, "CMakeLists.txt",
                         "set(CMAKE_CUDA_ARCHITECTURES",
@@ -84,4 +88,4 @@ class PopSiftConan(ConanFile):
         self.cpp_info.libs = ["popsift"]
         self.cpp_info.requires = ["cudart::cudart_"]
         if self.settings.os in ["Linux", "FreeBSD"]:
-            self.cpp_info.system_libs = ["m", "pthread", "dl"]
+            self.cpp_info.system_libs = ["m", "pthread"]

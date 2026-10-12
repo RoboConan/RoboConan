@@ -1,6 +1,7 @@
 #include <popsift/popsift.h>
 
-int main() {
-    popsift::Config config;
-    PopSift popsift(config, popsift::Config::ExtractingMode, PopSift::ByteImages);
+void test_package(PopSift& popsift) {
+    popsift.uninit();
 }
+
+int main(void) {}

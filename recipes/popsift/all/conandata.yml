@@ -1,4 +1,10 @@
 sources:
-  "0.10.0-git.20250829":
-    url: "https://github.com/alicevision/popsift/archive/a19d394d280593f4f8a0692fa12f9a3e837a3df3.tar.gz"
-    sha256: "ced923b1db037d95eea13ab9e3db8a7667136141d9dd91d060725fe8ad40c6f3"
+  "0.10.0":
+    url: "https://github.com/alicevision/popsift/archive/refs/tags/v0.10.0.tar.gz"
+    sha256: "f108caaaf33ea29a3a87e107bf91533a852a46107236daf2299e4b312c83f2e2"
+patches:
+  "0.10.0":
+    - patch_file: "patches/0001-fix-cuda-13.3-thrust-includes.patch"
+      patch_description: "Include the Thrust tuple and zip iterator headers used by s_filtergrid.cu"
+      patch_type: "backport"
+      patch_source: "https://github.com/alicevision/popsift/commit/3d05ad0fc880c6048c9429dba37809c28873e40b"
