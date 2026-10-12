@@ -194,7 +194,7 @@ class wxWidgetsConan(ConanFile):
         self.tool_requires("cmake/[>=3.27 <5]")
         self.tool_requires("ninja/[^1.10]")
         if not self.conf.get("tools.gnu:pkg_config", default=False, check_type=str):
-            self.tool_requires("pkgconf/[>=2.2 <3]")
+            self.tool_requires("pkgconf/[<4]")
         if self._toolkit == "qt":
             self.tool_requires("qt/<host_version>")
         if self.options.i18n:

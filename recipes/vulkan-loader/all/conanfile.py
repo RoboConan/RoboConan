@@ -73,7 +73,7 @@ class VulkanLoaderConan(ConanFile):
         self.tool_requires("cmake/[>=3.17.2 <5]")
         if self._is_pkgconf_needed:
             if not self.conf.get("tools.gnu:pkg_config", check_type=str):
-                self.tool_requires("pkgconf/[>=2.2 <3]")
+                self.tool_requires("pkgconf/[<4]")
         if self._is_mingw:
             self.tool_requires("jwasm/2.13")
 

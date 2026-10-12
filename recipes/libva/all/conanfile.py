@@ -75,9 +75,9 @@ class PackageConan(ConanFile):
     def build_requirements(self):
         if self.options.get_safe("with_wayland"):
             self.tool_requires("wayland/<host_version>")
-        self.tool_requires("meson/[>=1.2.3 <2]")
+        self.tool_requires("meson/[^1]")
         if not self.conf.get("tools.gnu:pkg_config", default=False, check_type=str):
-            self.tool_requires("pkgconf/[>=2.2 <3]")
+            self.tool_requires("pkgconf/[<4]")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)

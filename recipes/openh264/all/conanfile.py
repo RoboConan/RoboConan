@@ -39,7 +39,7 @@ class OpenH264Conan(ConanFile):
         basic_layout(self, src_folder="src")
 
     def build_requirements(self):
-        self.tool_requires("meson/[>=1.2.3 <2]")
+        self.tool_requires("meson/[^1]")
         if self.settings.arch in ["x86", "x86_64"]:
             self.tool_requires("nasm/[*]")
         if is_msvc(self) and self.settings.arch == "armv8":

@@ -55,7 +55,7 @@ class Krb5Conan(ConanFile):
         if self.options.i18n:
             self.tool_requires("gettext/[>=0.21 <1]", options={"tools": True})
         if not self.conf.get("tools.gnu:pkg_config", check_type=str):
-            self.tool_requires("pkgconf/[>=2.2 <3]")
+            self.tool_requires("pkgconf/[<4]")
         self.tool_requires("bison/[^3.8.2]")
 
     def source(self):

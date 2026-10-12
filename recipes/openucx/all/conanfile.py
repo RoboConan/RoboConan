@@ -136,7 +136,7 @@ class OpenUCXConan(ConanFile):
 
     def build_requirements(self):
         if not self.conf.get("tools.gnu:pkg_config", check_type=str):
-            self.tool_requires("pkgconf/[^2.2]")
+            self.tool_requires("pkgconf/[<4]")
         self.tool_requires("libtool/[^2.4.7]")
         if self.options.cuda:
             self.cuda.tool_requires("nvcc")

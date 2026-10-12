@@ -57,7 +57,7 @@ class AvahiConan(ConanFile):
     def build_requirements(self):
         self.tool_requires("glib/<host_version>")
         if not self.conf.get("tools.gnu:pkg_config", default=False, check_type=str):
-            self.tool_requires("pkgconf/[>=2.2 <3]")
+            self.tool_requires("pkgconf/[<4]")
         if self.options.i18n:
             self.tool_requires("gettext/[>=0.21 <1]", options={"tools": True})
 

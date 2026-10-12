@@ -90,7 +90,7 @@ class GlfwConan(ConanFile):
         if self.options.get_safe("with_wayland"):
             self.tool_requires("wayland/<host_version>")
             if not self.conf.get("tools.gnu:pkg_config", check_type=str):
-                self.tool_requires("pkgconf/[>=2.2 <3]")
+                self.tool_requires("pkgconf/[<4]")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)

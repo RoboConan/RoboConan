@@ -33,7 +33,7 @@ class BoxfortConan(ConanFile):
         basic_layout(self, src_folder="src")
 
     def build_requirements(self):
-        self.tool_requires("meson/[>=1.2.3 <2]")
+        self.tool_requires("meson/[^1]")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)

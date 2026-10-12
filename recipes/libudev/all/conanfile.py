@@ -37,11 +37,11 @@ class LibUdevConan(ConanFile):
             raise ConanInvalidConfiguration("libudev is only supported on Linux.")
 
     def build_requirements(self):
-        self.tool_requires("meson/[>=1.2.3 <2]")
+        self.tool_requires("meson/[^1]")
         self.tool_requires("m4/[^1.4.20]")
         self.tool_requires("gperf/3.1")
         if not self.conf.get("tools.gnu:pkg_config", check_type=str):
-            self.tool_requires("pkgconf/[>=2.2 <3]")
+            self.tool_requires("pkgconf/[<4]")
 
     def source(self):
         # Extract using standard Python tools due to Conan's unzip() not handling backslashes in

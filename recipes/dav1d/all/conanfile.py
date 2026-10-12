@@ -58,7 +58,7 @@ class Dav1dConan(ConanFile):
             self.requires("xxhash/[>=0.8.1 <0.9]", libs=False)
 
     def build_requirements(self):
-        self.tool_requires("meson/[>=1.2.3 <2]")
+        self.tool_requires("meson/[^1]")
         if self.options.assembly and self.settings.arch in ["x86", "x86_64"]:
             self.tool_requires("nasm/[*]")
         if is_msvc(self) and self.settings.arch == "armv8":

@@ -843,7 +843,7 @@ class OpenCVConan(ConanFile):
         if self.options.get_safe("with_wayland"):
             self.tool_requires("wayland/<host_version>")
         if self._build_depends_on_pkgconfig and not self.conf.get("tools.gnu:pkg_config", check_type=str):
-            self.tool_requires("pkgconf/[>=2.2 <3]")
+            self.tool_requires("pkgconf/[<4]")
         if self.options.get_safe("with_qt"):
             self.tool_requires("qt/<host_version>")
         if self.options.get_safe("with_cuda"):

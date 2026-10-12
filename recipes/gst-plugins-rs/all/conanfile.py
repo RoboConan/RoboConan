@@ -171,9 +171,9 @@ class GStPluginsRsConan(ConanFile):
             raise ConanInvalidConfiguration("GStreamer and GstPlugins must be either all shared, or all static")
 
     def build_requirements(self):
-        self.tool_requires("meson/[>=1.2.3 <2]")
+        self.tool_requires("meson/[^1]")
         if not self.conf.get("tools.gnu:pkg_config", check_type=str):
-            self.tool_requires("pkgconf/[>=2.2 <3]")
+            self.tool_requires("pkgconf/[<4]")
         self.tool_requires("glib/<host_version>")
         self.tool_requires("rust/[^1.72]")
         self.tool_requires("cargo-c/[^0.10]")

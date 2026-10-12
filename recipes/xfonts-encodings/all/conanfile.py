@@ -25,7 +25,7 @@ class XFontsEncodingsConan(ConanFile):
         self.info.clear()
 
     def build_requirements(self):
-        self.tool_requires("meson/[>=1.2.3 <2]")
+        self.tool_requires("meson/[^1]")
         self.tool_requires("mkfontscale/[*]")
         # Also requires gzip, assumed to be available on the system
 

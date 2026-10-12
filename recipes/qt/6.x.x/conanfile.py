@@ -523,7 +523,7 @@ class QtConan(ConanFile):
         self.tool_requires("cmake/[>=3.21.1 <5]")
         self.tool_requires("ninja/[^1.10]")
         if not self.conf.get("tools.gnu:pkg_config", check_type=str):
-            self.tool_requires("pkgconf/[>=2.2 <3]")
+            self.tool_requires("pkgconf/[<4]")
         if self.options.get_safe("qtwebengine"):
             self.tool_requires(f"gn/qt-{self.version}")
             self.tool_requires("nodejs/[>=20]")

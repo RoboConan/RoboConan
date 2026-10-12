@@ -61,9 +61,9 @@ class Libv4lConan(ConanFile):
         check_min_cppstd(self, 11)
 
     def build_requirements(self):
-        self.tool_requires("meson/[>=1.2.3 <2]")
+        self.tool_requires("meson/[^1]")
         if not self.conf.get("tools.gnu:pkg_config", default=False, check_type=str):
-            self.tool_requires("pkgconf/[>=2.2 <3]")
+            self.tool_requires("pkgconf/[<4]")
         if self.options.get_safe("i18n"):
             self.tool_requires("gettext/[>=0.21 <1]", options={"tools": True})
 

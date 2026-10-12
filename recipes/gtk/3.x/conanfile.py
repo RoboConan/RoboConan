@@ -146,9 +146,9 @@ class GtkConan(ConanFile):
                 raise ConanInvalidConfiguration(f"pango must be built with '-o pango/*:with_freetype=True' on {self.settings.os}")
 
     def build_requirements(self):
-        self.tool_requires("meson/[>=1.2.3 <2]")
+        self.tool_requires("meson/[^1]")
         if not self.conf.get("tools.gnu:pkg_config", default=False, check_type=str):
-            self.tool_requires("pkgconf/[>=2.2 <3]")
+            self.tool_requires("pkgconf/[<4]")
         self.tool_requires("glib/<host_version>")
         self.tool_requires("gdk-pixbuf/<host_version>")
         if self.options.i18n:

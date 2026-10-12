@@ -71,7 +71,7 @@ class PackageConan(ConanFile):
         self.tool_requires("libtool/[^2.4.7]")
         # Only if upstream configure.ac relies on PKG_CHECK_MODULES macro.
         if not self.conf.get("tools.gnu:pkg_config", check_type=str):
-            self.tool_requires("pkgconf/[^2.2]")
+            self.tool_requires("pkgconf/[<4]")
         if self.settings_build.os == "Windows":
             self.win_bash = True
             if not self.conf.get("tools.microsoft.bash:path", check_type=str):

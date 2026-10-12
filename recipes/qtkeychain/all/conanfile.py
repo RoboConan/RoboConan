@@ -73,7 +73,7 @@ class QtKeychainConan(ConanFile):
         self.tool_requires("cmake/[>=3.27 <5]")
         self.tool_requires("qt/<host_version>", options=self._qt_options)
         if not self.conf.get("tools.gnu:pkg_config", default=False, check_type=str):
-            self.tool_requires("pkgconf/[>=2.2 <3]")
+            self.tool_requires("pkgconf/[<4]")
 
     def validate_build(self):
         qt_options = self.dependencies["qt"].options

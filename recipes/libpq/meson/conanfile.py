@@ -169,9 +169,9 @@ class LibpqConan(ConanFile):
             self.requires("zstd/[~1.5]")
 
     def build_requirements(self):
-        self.tool_requires("meson/[>=1.2.3 <2]")
+        self.tool_requires("meson/[^1]")
         if not self.conf.get("tools.gnu:pkg_config", default=False, check_type=str):
-            self.tool_requires("pkgconf/[>=2.2 <3]")
+            self.tool_requires("pkgconf/[<4]")
         if self.settings_build.os == "Windows":
             self.tool_requires("winflexbison/[^2.5.24]")
             self.tool_requires("strawberryperl/[^5.32.1.1]")

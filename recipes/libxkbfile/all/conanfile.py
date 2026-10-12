@@ -43,9 +43,9 @@ class LibXkbfileConan(ConanFile):
             raise ConanInvalidConfiguration("MSVC is not supported.")
 
     def build_requirements(self):
-        self.tool_requires("meson/[>=0.57.0 <2]")
+        self.tool_requires("meson/[^1]")
         if not self.conf.get("tools.gnu:pkg_config", check_type=str):
-            self.tool_requires("pkgconf/[>=2.2 <3]")
+            self.tool_requires("pkgconf/[<4]")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)

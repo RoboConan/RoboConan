@@ -90,7 +90,7 @@ class CoalConan(ConanFile):
     def build_requirements(self):
         self.tool_requires("jrl-cmakemodules/[*]")
         if not self.conf.get("tools.gnu:pkg_config", check_type=str):
-            self.tool_requires("pkgconf/[>=2.2 <3]")
+            self.tool_requires("pkgconf/[<4]")
         if self.options.python_bindings:
             self.tool_requires("eigenpy/[^3.11.0]")
 

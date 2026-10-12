@@ -71,9 +71,9 @@ class SpralConan(ConanFile):
             check_min_cstd(self, 99)
 
     def build_requirements(self):
-        self.tool_requires("meson/[>=1.2.3 <2]")
+        self.tool_requires("meson/[^1]")
         if not self.conf.get("tools.gnu:pkg_config", check_type=str):
-            self.tool_requires("pkgconf/[^2.2]")
+            self.tool_requires("pkgconf/[<4]")
         if self.options.with_cuda:
             self.cuda.tool_requires("nvcc")
 

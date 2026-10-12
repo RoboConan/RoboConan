@@ -29,7 +29,7 @@ class BearConan(ConanFile):
 
     def build_requirements(self):
         if not self.conf.get("tools.gnu:pkg_config", default=False, check_type=str):
-            self.tool_requires("pkgconf/[>=2.2 <3]")
+            self.tool_requires("pkgconf/[<4]")
         self.tool_requires("grpc/<host_version>")
         # Older versions of CMake fail to build object libraries in the correct order
         self.tool_requires("cmake/[>=3.20 <5]")

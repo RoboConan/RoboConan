@@ -58,7 +58,7 @@ class SQLiteCppConan(ConanFile):
     def build_requirements(self):
         if self.options.get_safe("with_sqlcipher"):
             if not self.conf.get("tools.gnu:pkg_config", default=False, check_type=str):
-                self.tool_requires("pkgconf/[>=2.2 <3]")
+                self.tool_requires("pkgconf/[<4]")
 
     def layout(self):
         cmake_layout(self, src_folder="src")

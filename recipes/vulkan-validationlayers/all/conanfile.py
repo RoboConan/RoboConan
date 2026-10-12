@@ -94,7 +94,7 @@ class VulkanValidationLayersConan(ConanFile):
 
     def build_requirements(self):
         if self._needs_pkg_config and not self.conf.get("tools.gnu:pkg_config", check_type=str):
-            self.tool_requires("pkgconf/[>=2.2 <3]")
+            self.tool_requires("pkgconf/[<4]")
         self.tool_requires("cmake/[>=3.22.1 <5]")
 
     def source(self):

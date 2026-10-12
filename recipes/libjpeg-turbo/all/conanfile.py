@@ -31,6 +31,7 @@ class LibjpegTurboConan(ConanFile):
         "libjpeg8_compatibility": [True, False],
         "mem_src_dst": [True, False],
         "turbojpeg": [True, False],
+        "with_simde": [True, False],
         "java": [True, False],
         "enable12bit": [True, False],
     }
@@ -44,6 +45,7 @@ class LibjpegTurboConan(ConanFile):
         "libjpeg8_compatibility": True,
         "mem_src_dst": True,
         "turbojpeg": True,
+        "with_simde": False,
         "java": False,
         "enable12bit": False,
     }
@@ -56,6 +58,8 @@ class LibjpegTurboConan(ConanFile):
             del self.options.mem_src_dst
         if Version(self.version) >= "3.2.0":
             del self.options.java
+        else:
+            del self.options.with_simde
 
     def configure(self):
         if self.options.shared:
@@ -68,6 +72,8 @@ class LibjpegTurboConan(ConanFile):
             del self.options.turbojpeg
         if self.options.get_safe("enable12bit") or self.settings.os == "Emscripten":
             del self.options.SIMD
+        if self.options.get_safe("with_simde"):
+            self.options.SIMD.value = True
         if self.options.get_safe("enable12bit") or self.options.libjpeg7_compatibility or self.options.libjpeg8_compatibility:
             del self.options.arithmetic_encoder
             del self.options.arithmetic_decoder
@@ -89,6 +95,11 @@ class LibjpegTurboConan(ConanFile):
         if Version(self.version) >= "3.2.0" and self.options.get_safe("turbojpeg"):
             self.requires("libspng/[^0.7.4]")
             self.requires("zlib-ng/[^2.0]")
+        if self.options.get_safe("with_simde"):
+            self.requires("simde/[>=0.8.2 <1]", headers=True, libs=False, visible=False)
+
+    def export_sources(self):
+        export_conandata_patches(self)
 
     def build_requirements(self):
         if self.options.get_safe("SIMD") and self.settings.arch in ["x86", "x86_64"]:
@@ -96,6 +107,7 @@ class LibjpegTurboConan(ConanFile):
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
+        apply_conandata_patches(self)
         # use standard GNUInstallDirs.cmake - custom one is broken
         replace_in_file(self, "CMakeLists.txt",
                         "include(cmakescripts/GNUInstallDirs.cmake)",
@@ -125,6 +137,7 @@ class LibjpegTurboConan(ConanFile):
         tc.variables["ENABLE_STATIC"] = not self.options.shared
         tc.variables["ENABLE_SHARED"] = self.options.shared
         tc.variables["WITH_SIMD"] = self.options.get_safe("SIMD", False)
+        tc.variables["WITH_SIMDE"] = self.options.get_safe("with_simde", False)
         tc.variables["WITH_ARITH_ENC"] = self._is_arithmetic_encoding_enabled
         tc.variables["WITH_ARITH_DEC"] = self._is_arithmetic_decoding_enabled
         tc.variables["WITH_JPEG7"] = self.options.libjpeg7_compatibility
@@ -151,8 +164,11 @@ class LibjpegTurboConan(ConanFile):
             tc.cache_variables["CMAKE_POLICY_VERSION_MINIMUM"] = "3.5" # CMake 4 support
         tc.generate()
 
-        if Version(self.version) >= "3.2.0" and self.options.get_safe("turbojpeg"):
+        if Version(self.version) >= "3.2.0" and (
+            self.options.get_safe("turbojpeg") or self.options.get_safe("with_simde")
+        ):
             CMakeDeps(self).generate()
+        if Version(self.version) >= "3.2.0" and self.options.get_safe("turbojpeg"):
             deps = PkgConfigDeps(self)
             deps.set_property("libspng", "pkg_config_name", "spng")
             deps.generate()

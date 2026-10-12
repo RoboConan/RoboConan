@@ -488,7 +488,7 @@ class PclConan(ConanFile):
 
     def build_requirements(self):
         if not self.conf.get("tools.gnu:pkg_config", default=False, check_type=str):
-            self.tool_requires("pkgconf/[>=2.2 <3]")
+            self.tool_requires("pkgconf/[<4]")
         if self.options.with_cuda:
             self.cuda.tool_requires("nvcc")
             self.tool_requires("cmake/[>=3.18]")

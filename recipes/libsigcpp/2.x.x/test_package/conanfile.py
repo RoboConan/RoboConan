@@ -18,7 +18,7 @@ class TestPackageConan(ConanFile):
 
     def build_requirements(self):
         if not self.conf.get("tools.gnu:pkg_config", check_type=str):
-            self.tool_requires("pkgconf/[>=2.2 <3]")
+            self.tool_requires("pkgconf/[<4]")
 
     def generate(self):
         # TODO: to remove once conan 1.55.0 deployed in c3i (see https://github.com/conan-io/conan/pull/12513)
