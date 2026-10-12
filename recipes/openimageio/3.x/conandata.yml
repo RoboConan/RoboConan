@@ -1,9 +1,9 @@
 sources:
-  "3.1.12.0":
-    url: "https://github.com/AcademySoftwareFoundation/OpenImageIO/archive/refs/tags/v3.1.12.0.tar.gz"
-    sha256: "24aa5a7af5c7a98887a8f495e18079d82ef73913370e906fa5d73016d37964c7"
+  "3.2.1.1":
+    url: "https://github.com/AcademySoftwareFoundation/OpenImageIO/archive/refs/tags/v3.2.1.1.tar.gz"
+    sha256: "3a959f90e80b866580e77c1c8577d12e54c8988264941eb5bbb1f3a7221020f0"
 patches:
-  "3.1.12.0":
+  "3.2.1.1":
     - patch_file: "patches/cmake-targets.patch"
       patch_description: "Fix some incompatibilities with Conan-generated CMake targets"
       patch_type: "conan"

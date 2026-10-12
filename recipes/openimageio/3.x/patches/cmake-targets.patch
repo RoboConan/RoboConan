@@ -34,7 +34,7 @@ index 3ab45a570..9b6511b78 100644
 +if (0)
      set (fmt_headers_base_names)
      foreach (header_name core.h format-inl.h format.h ostream.h printf.h
-              std.h base.h chrono.h)
+              std.h base.h chrono.h args.h)
 diff --git src/ptex.imageio/CMakeLists.txt src/ptex.imageio/CMakeLists.txt
 index 73e3ad843..da45e8c5f 100644
 --- src/ptex.imageio/CMakeLists.txt

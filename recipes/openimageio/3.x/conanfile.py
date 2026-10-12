@@ -4,6 +4,7 @@ from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
 from conan.tools.build import check_min_cppstd
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
+from conan.tools.env import VirtualRunEnv
 from conan.tools.files import *
 from conan.tools.microsoft import is_msvc_static_runtime
 
@@ -32,6 +33,7 @@ class OpenImageIOConan(ConanFile):
         "with_freetype": [True, False],
         "with_giflib": [True, False],
         "with_hdf5": [True, False],
+        "with_highway": [True, False],
         "with_libheif": [True, False],
         "with_libjxl": [True, False],
         "with_libpng": [True, False],
@@ -54,6 +56,7 @@ class OpenImageIOConan(ConanFile):
         "with_freetype": False,
         "with_giflib": True,
         "with_hdf5": False,
+        "with_highway": False,
         "with_libheif": False,
         "with_libjxl": False,
         "with_libpng": True,
@@ -97,7 +100,7 @@ class OpenImageIOConan(ConanFile):
         self.requires("libjpeg-meta/latest")
         self.requires("pugixml/[^1.15]")
         self.requires("tsl-robin-map/[^1.3.0]")
-        self.requires("fmt/[>=7]", transitive_headers=True)
+        self.requires("fmt/[>=9]", transitive_headers=True)
         self.requires("opencolorio/[^2.4.2]")
 
         # Optional libraries
@@ -109,6 +112,8 @@ class OpenImageIOConan(ConanFile):
             self.requires("freetype/[^2.13.2]")
         if self.options.with_hdf5:
             self.requires("hdf5/[^1.8]")
+        if self.options.with_highway:
+            self.requires("highway/[^1.2.0]")
         if self.options.with_opencv:
             self.requires("opencv/[^4.5]")
         if self.options.with_tbb:
@@ -152,17 +157,13 @@ class OpenImageIOConan(ConanFile):
             self.cuda.validate_settings()
 
     def build_requirements(self):
-        self.build_requires("cmake/[>=3.18.2 <5]")
+        self.tool_requires("cmake/[>=3.18.2 <5]")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
         apply_conandata_patches(self)
         rmdir(self, "src/cmake/modules")
         save(self, "src/testtex/CMakeLists.txt", "")
-        # Inject fmt and tsl-robin-map dependencies
-        replace_in_file(self, "src/libutil/CMakeLists.txt",
-                        "$<TARGET_NAME_IF_EXISTS:Threads::Threads>",
-                        "$<TARGET_NAME_IF_EXISTS:Threads::Threads> fmt::fmt tsl::robin_map")
 
     def generate(self):
         tc = CMakeToolchain(self)
@@ -182,6 +183,8 @@ class OpenImageIOConan(ConanFile):
         tc.cache_variables["BUILD_MISSING_FMT"] = False
         tc.cache_variables["OIIO_INTERNALIZE_FMT"] = False
         tc.cache_variables["OIIO_USE_CUDA"] = self.options.with_cuda
+        tc.cache_variables["OIIO_USE_HWY"] = self.options.with_highway
+        tc.cache_variables["OIIO_USE_COMPILED_FMT"] = not self.dependencies["fmt"].options.header_only
 
         # OIIO CMake files are patched to check USE_* flags to require or not use dependencies
         tc.cache_variables["USE_JPEGTURBO"] = "libjpeg-turbo" in self.dependencies
@@ -237,12 +240,6 @@ class OpenImageIOConan(ConanFile):
         tc.cache_variables["CMAKE_DISABLE_FIND_PACKAGE_Nuke"] = True
         tc.cache_variables["CMAKE_DISABLE_FIND_PACKAGE_JXL"] = not self.options.with_libjxl
 
-        if self.settings.os == "Linux":
-            # Workaround for: https://github.com/conan-io/conan/issues/13560
-            # note: should not be needed if CMakeConfigDeps is used
-            libdirs_host = [l for dependency in self.dependencies.host.values() for l in dependency.cpp_info.aggregated_components().libdirs]
-            tc.cache_variables["CMAKE_BUILD_RPATH"] = ";".join(libdirs_host)
-
         if self.options.with_libultrahdr:
             tc.cache_variables["LIBUHDR_INCLUDE_DIR"] = self.dependencies["libultrahdr"].cpp_info.includedir.replace("\\", "/")
 
@@ -253,12 +250,15 @@ class OpenImageIOConan(ConanFile):
 
         deps = CMakeDeps(self)
         deps.set_property("fmt", "cmake_additional_variables_prefixes", ["FMT"])
+        if self.options.with_highway:
+            deps.set_property("highway", "cmake_file_name", "hwy")
         deps.set_property("ffmpeg", "cmake_additional_variables_prefixes", ["FFMPEG"])
         deps.set_property("ffmpeg", "cmake_file_name", "FFmpeg")
-        deps.set_property("ffmpeg", "cmake_additional_variables_prefixes", ["FFMPEG"])
         deps.set_property("libheif", "cmake_target_name", "heif")
         deps.set_property("libheif", "cmake_additional_variables_prefixes", ["LIBHEIF"])
         deps.set_property("libjxl", "cmake_file_name", "JXL")
+        if "libjpeg-turbo" in self.dependencies and not self.dependencies["libjpeg-turbo"].options.shared:
+            deps.set_property("libjpeg-turbo::jpeg", "cmake_target_aliases", ["libjpeg-turbo::jpeg"])
         deps.set_property("openexr", "cmake_target_name", "OpenEXR::OpenEXR")
         deps.set_property("openjpeg", "cmake_target_name", "OpenJPEG")
         deps.set_property("openjpeg", "cmake_additional_variables_prefixes", ["OPENJPEG"])
@@ -266,13 +266,15 @@ class OpenImageIOConan(ConanFile):
         deps.set_property("openvdb", "cmake_additional_variables_prefixes", ["OPENVDB"])
         deps.set_property("libultrahdr", "cmake_file_name", "libuhdr")
         deps.set_property("libultrahdr", "cmake_target_name", "libuhdr::libuhdr")
-        deps.set_property("tsl-robin-map", "cmake_file_name", "Robinmap")
+        deps.set_property("tsl-robin-map", "cmake_file_name", "tsl-robin-map")
         deps.set_property("tsl-robin-map", "cmake_additional_variables_prefixes", ["ROBINMAP"])
         if self.dependencies["fmt"].options.header_only:
             deps.set_property("fmt", "cmake_target_name", "fmt::fmt")
         else:
             deps.set_property("fmt", "cmake_target_aliases", ["fmt::fmt-header-only"])
         deps.generate()
+
+        VirtualRunEnv(self).generate(scope="build")
 
     def build(self):
         cmake = CMake(self)
@@ -307,13 +309,14 @@ class OpenImageIOConan(ConanFile):
         open_image_io_util = self._add_component("OpenImageIO_Util")
         open_image_io_util.libs = ["OpenImageIO_Util"]
         open_image_io_util.requires = [
-            "imath::imath",
-            "openexr::openexr",
+            "fmt::fmt",
+            "imath::imath_lib",
+            "tsl-robin-map::tsl-robin-map",
         ]
         if self.settings.os in ["Linux", "FreeBSD"]:
             open_image_io_util.system_libs.extend(["dl", "m", "pthread"])
         if self.options.with_tbb:
-            open_image_io_util.requires.append("onetbb::onetbb")
+            open_image_io_util.requires.append("onetbb::libtbb")
 
         # OpenImageIO::OpenImageIO
         open_image_io = self._add_component("OpenImageIO")
@@ -321,26 +324,26 @@ class OpenImageIOConan(ConanFile):
         open_image_io.requires = [
             "openimageio_openimageio_util",
             "zlib-ng::zlib-ng",
-            "libtiff::libtiff",
+            "libtiff::tiff",
             "pugixml::pugixml",
-            "tsl-robin-map::tsl-robin-map",
-            "fmt::fmt",
-            "imath::imath",
+            "imath::imath_lib",
             "openexr::openexr",
             "opencolorio::opencolorio",
         ]
 
         open_image_io.requires.append("libjpeg-meta::jpeg")
         if self.options.with_libjxl:
-            open_image_io.requires += ["libjxl::libjxl", "libjxl::jxl_cms"]
+            open_image_io.requires += ["libjxl::jxl", "libjxl::jxl_cms", "libjxl::jxl_threads"]
         if self.options.with_libpng:
             open_image_io.requires.append("libpng::libpng")
         if self.options.with_freetype:
             open_image_io.requires.append("freetype::freetype")
         if self.options.with_hdf5:
-            open_image_io.requires.append("hdf5::hdf5")
+            open_image_io.requires.append("hdf5::hdf5_c")
+        if self.options.with_highway:
+            open_image_io.requires.extend(["highway::hwy", "highway::hwy_contrib"])
         if self.options.with_opencv:
-            open_image_io.requires.append("opencv::opencv")
+            open_image_io.requires.extend(["opencv::opencv_core", "opencv::opencv_imgproc", "opencv::opencv_videoio"])
         if self.options.with_dicom:
             open_image_io.requires.append("dcmtk::dcmtk")
         if self.options.with_ffmpeg:
@@ -350,7 +353,7 @@ class OpenImageIOConan(ConanFile):
         if self.options.with_libheif:
             open_image_io.requires.append("libheif::libheif")
         if self.options.with_raw:
-            open_image_io.requires.append("libraw::libraw")
+            open_image_io.requires.append("libraw::libraw_r")
         if self.options.with_openjpeg:
             open_image_io.requires.append("openjpeg::openjpeg")
         if self.options.with_openjph:
@@ -360,11 +363,9 @@ class OpenImageIOConan(ConanFile):
         if self.options.with_ptex:
             open_image_io.requires.append("ptex::ptex")
         if self.options.with_libwebp:
-            open_image_io.requires.append("libwebp::libwebp")
+            open_image_io.requires.extend(["libwebp::webp", "libwebp::webpdemux", "libwebp::webpmux"])
         if self.options.with_libultrahdr:
             open_image_io.requires.append("libultrahdr::libultrahdr")
-        if self.options.with_libjxl:
-            open_image_io.requires.extend(["libjxl::libjxl", "libjxl::jxl_threads"])
         if self.options.with_cuda:
             open_image_io.requires.append("cudart::cudart_")
         if self.settings.os in ["Linux", "FreeBSD"]:
