@@ -7,7 +7,7 @@ from conan.tools.cmake import CMake, cmake_layout
 
 class TestPackageConan(ConanFile):
     settings = "os", "arch", "compiler", "build_type"
-    generators = "CMakeToolchain", "PkgConfigDeps"
+    generators = "CMakeToolchain", "CMakeDeps", "PkgConfigDeps"
 
     def layout(self):
         cmake_layout(self)
@@ -26,6 +26,7 @@ class TestPackageConan(ConanFile):
 
     def test(self):
         if can_run(self):
-            bin_path = os.path.join(self.cpp.build.bindir, "test_package")
             mps = os.path.join(self.source_folder, "sample.mps")
-            self.run(f"{bin_path} {mps}", env="conanrun")
+            for executable in ("pkg_config_test", "libclp_test", "solver_test", "osi_clp_test"):
+                bin_path = os.path.join(self.cpp.build.bindir, executable)
+                self.run(f"{bin_path} {mps}", env="conanrun")

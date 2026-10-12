@@ -1,4 +1,12 @@
 sources:
-  "1.17.10":
-    url: "https://github.com/coin-or/Clp/archive/refs/tags/releases/1.17.10.tar.gz"
-    sha256: "0d79ece896cdaa4a3855c37f1c28e6c26285f74d45f635046ca0b6d68a509885"
+  "1.17.11":
+    url: "https://github.com/coin-or/Clp/archive/refs/tags/releases/1.17.11.tar.gz"
+    sha256: "2c078e174dc1a7a308e091b6256fb34b4017897fc140ea707ba207b2913ea46d"
+patches:
+  "1.17.11":
+    - patch_file: "patches/1.17.11-suitesparse-cxx-headers.patch"
+      patch_description: "Do not wrap C++-aware SuiteSparse headers in extern C"
+    - patch_file: "patches/1.17.11-ampl-openmp-cxx-header.patch"
+      patch_description: "Include GCC OpenMP declarations before ASL's C linkage block"
+    - patch_file: "patches/1.17.11-aboca-serial-state.patch"
+      patch_description: "Fix the serial and inherited Aboca build paths"

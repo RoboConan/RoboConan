@@ -1,0 +1,69 @@
+--- a/Clp/src/ClpSimplex.hpp
++++ b/Clp/src/ClpSimplex.hpp
+@@ -1988,9 +1988,6 @@
+ // For Devex stuff
+ #define DEVEX_TRY_NORM 1.0e-4
+ #define DEVEX_ADD_ONE 1.0
+-#if defined(ABC_INHERIT) || defined(THREADS_IN_ANALYZE)
+-// Use pthreads
+-#include <pthread.h>
+ typedef struct {
+   double result;
+   //const CoinIndexedVector * constVector; // can get rid of
+@@ -2000,6 +1997,9 @@
+   int status;
+   int stuff[4];
+ } CoinThreadInfo;
++#if defined(ABC_INHERIT) || defined(THREADS_IN_ANALYZE)
++// Use pthreads
++#include <pthread.h>
+ class CoinPthreadStuff {
+ public:
+   /**@name Constructors and destructor and copy */
+@@ -2094,6 +2094,8 @@
+ #ifndef ABC_INHERIT
+ #if ABOCA_LITE
+ void moveAndZero(clpTempInfo *info, int type, void *extra);
++#endif
++#if ABOCA_LITE || defined(CLP_HAS_ABC)
+ // 2 is owner of abcState_
+ #ifdef ABCSTATE_LITE
+ #if ABCSTATE_LITE == 2
+ int abcState_ = 0;
+--- a/Clp/src/ClpSimplexDual.cpp
++++ b/Clp/src/ClpSimplexDual.cpp
+@@ -97,10 +97,8 @@
+ 
+ #include "CoinHelperFunctions.hpp"
+ #include "ClpHelperFunctions.hpp"
+-#if ABOCA_LITE
+ // 2 is owner of abcState_
+ #define ABCSTATE_LITE 2
+-#endif
+ //#define FAKE_CILK
+ #include "ClpSimplexDual.hpp"
+ #include "ClpEventHandler.hpp"
+--- a/Clp/src/ClpSolver.cpp
++++ b/Clp/src/ClpSolver.cpp
+@@ -958,9 +958,9 @@
+ #ifndef ABC_INHERIT
+                   model2 = thisModel;
+ #else
+-                  int abcState = model2->abcState();
++                  int savedAbcState = model2->abcState();
+                   model2 = new AbcSimplex(*thisModel);
+-                  model2->setAbcState(abcState);
++                  model2->setAbcState(savedAbcState);
+                   delete thisModel;
+ #endif
+                 } else {
+@@ -2890,7 +2890,8 @@
+         case CLP_PARAM_ACTION_GUESS:
+           if (goodModels[iModel]) {
+             delete[] alternativeEnvironment;
+-            ClpSimplexOther *model2 = static_cast< ClpSimplexOther * >(models + iModel);
++            ClpSimplex *simplexModel = models + iModel;
++            ClpSimplexOther *model2 = static_cast< ClpSimplexOther * >(simplexModel);
+             alternativeEnvironment = model2->guess(0);
+             if (alternativeEnvironment)
+               CbcOrClpEnvironmentIndex = 0;

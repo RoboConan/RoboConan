@@ -39,9 +39,6 @@ class CoinMumpsConan(ConanFile):
         executables = self.conf.get("tools.build:compiler_executables", default={}, check_type=dict)
         return executables.get("fortran")
 
-    def export_sources(self):
-        export_conandata_patches(self)
-
     def layout(self):
         basic_layout(self, src_folder="src")
 
@@ -66,13 +63,15 @@ class CoinMumpsConan(ConanFile):
     def source(self):
         get(self, **self.conan_data["sources"][self.version]["build_scripts"], strip_root=True)
         get(self, **self.conan_data["sources"][self.version]["source"], destination="MUMPS", strip_root=True)
-        # https://github.com/coin-or-tools/ThirdParty-Mumps/blob/releases/3.0.10/get.Mumps#L65-L66
-        apply_conandata_patches(self)
+        # Mirror get.Mumps, but use the source archive already downloaded by Conan.
+        for patch_file in ("mumps_mpi.patch", "mumps_call.patch", "mumps_stdalign.patch"):
+            patch(self, patch_file=os.path.join(self.source_folder, patch_file))
         os.rename("MUMPS/libseq/mpi.h", "MUMPS/libseq/mumps_mpi.h")
 
     def _flags_from_pc(self, name):
         pc = PkgConfig(self, name, self.generators_folder)
         cflags = list(pc.cflags)
+        cflags += [f"-D{define}" for define in pc.defines]
         cflags += [f"-I{unix_path(self, inc)}" for inc in pc.includedirs]
         ldflags = list(pc.linkflags)
         ldflags += [f"-L{unix_path(self, libdir)}" for libdir in pc.libdirs]
@@ -97,11 +96,13 @@ class CoinMumpsConan(ConanFile):
             f"--enable-openmp={yes_no(self.options.with_openmp)}",
             f"--with-precision={self.options.precision}",
             f"--with-intsize={int_size}",
-            f"F77={self._fortran_compiler}",
+            f"FC={self._fortran_compiler}",
         ])
-        cflags, ldflags = self._flags_from_pc("lapack")
-        tc.configure_args.append(f"--with-lapack-cflags={cflags}")
+        _, ldflags = self._flags_from_pc("lapack")
         tc.configure_args.append(f"--with-lapack-lflags={ldflags}")
+        cflags, ldflags = self._flags_from_pc("metis")
+        tc.configure_args.append(f"--with-metis-cflags={cflags}")
+        tc.configure_args.append(f"--with-metis-lflags={ldflags}")
         tc.generate()
 
     def build(self):

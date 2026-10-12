@@ -136,6 +136,9 @@ class CoinOsiConan(ConanFile):
     def build(self):
         buildtools = self.dependencies.build["coin-buildtools"].cpp_info.resdirs[0]
         copy(self, "*", buildtools, os.path.join(self.source_folder, "Osi", "BuildTools"))
+        replace_in_file(self, os.path.join(self.source_folder, "Osi", "configure.ac"),
+                        "AC_CANONICAL_BUILD",
+                        "AC_CANONICAL_BUILD\nAC_CANONICAL_HOST")
         for gnu_config in ["config_guess", "config_sub"]:
             gnu_config = self.conf.get(f"user.gnu-config:{gnu_config}", check_type=str)
             shutil.copy(gnu_config, os.path.join(self.source_folder, "Osi"))

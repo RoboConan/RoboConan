@@ -31,6 +31,7 @@ class CoinClpConan(ConanFile):
         "with_glpk": [True, False],
         "with_asl": [True, False],
         "with_mumps": [True, False],
+        "with_readline": [True, False],
     }
     default_options = {
         "shared": False,
@@ -42,6 +43,7 @@ class CoinClpConan(ConanFile):
         "with_glpk": False,    # GPL
         "with_asl": False,     # BSD
         "with_mumps": False,   # CeCILL
+        "with_readline": False,
     }
     implements = ["auto_shared_fpic"]
 
@@ -63,6 +65,9 @@ class CoinClpConan(ConanFile):
             # AMD is a transitive dep of CHOLMOD
             self.options.with_amd.value = True
 
+    def export_sources(self):
+        export_conandata_patches(self)
+
     def layout(self):
         basic_layout(self, src_folder="src")
 
@@ -73,9 +78,11 @@ class CoinClpConan(ConanFile):
         if self.options.with_asl:
             self.requires("ampl-asl/[^1]")
         if self.options.with_glpk:
-            self.requires("glpk/[<=4.48]")
+            self.requires("glpk/[>=4 <6]")
         if self.options.with_mumps:
             self.requires("coin-mumps/[^3.0.5]")
+        if self.options.with_readline:
+            self.requires("readline/[^8.3.1]")
         if self.options.with_amd:
             self.requires("suitesparse-amd/[^3.3.2]")
         if self.options.with_cholmod:
@@ -95,6 +102,7 @@ class CoinClpConan(ConanFile):
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
+        apply_conandata_patches(self)
 
     def generate(self):
         yes_no = lambda v: "yes" if v else "no"
@@ -104,8 +112,9 @@ class CoinClpConan(ConanFile):
             f"--with-glpk={yes_no(self.options.with_glpk)}",
             f"--with-mumps={yes_no(self.options.with_mumps)}",
             f"--with-mumps={yes_no(self.options.with_mumps)}",
-            f"--enable-amd-libcheck={yes_no(self.options.with_amd)}",
-            f"--enable-cholmod-libcheck={yes_no(self.options.with_cholmod)}",
+            f"--enable-gnu-packages={yes_no(self.options.with_readline)}",
+            "--disable-amd-libcheck",
+            "--disable-cholmod-libcheck",
             "--without-wsmp",
             # These are only used for sample datasets
             "--without-netlib",
@@ -183,6 +192,9 @@ class CoinClpConan(ConanFile):
     def build(self):
         buildtools = self.dependencies.build["coin-buildtools"].cpp_info.resdirs[0]
         copy(self, "*", buildtools, os.path.join(self.source_folder, "Clp", "BuildTools"))
+        replace_in_file(self, os.path.join(self.source_folder, "Clp", "configure.ac"),
+                        "AC_CANONICAL_BUILD",
+                        "AC_CANONICAL_BUILD\nAC_CANONICAL_HOST")
         for gnu_config in ["config_guess", "config_sub"]:
             gnu_config = self.conf.get(f"user.gnu-config:{gnu_config}", check_type=str)
             shutil.copy(gnu_config, os.path.join(self.source_folder, "Clp"))
@@ -205,28 +217,31 @@ class CoinClpConan(ConanFile):
         fix_apple_shared_install_name(self)
 
     def package_info(self):
-        self.cpp_info.components["clp"].set_property("pkg_config_name", "clp")
-        self.cpp_info.components["clp"].libs = ["Clp"]
-        self.cpp_info.components["clp"].includedirs.append("include/coin")
-        self.cpp_info.components["clp"].requires = [
-            "solver",
-            "coin-utils::coin-utils",
-        ]
-        if self.options.with_mumps:
-            self.cpp_info.components["clp"].requires.append("coin-mumps::coin-mumps")
-        if self.options.with_amd:
-            self.cpp_info.components["clp"].requires.append("suitesparse-amd::suitesparse-amd")
-        if self.options.with_cholmod:
-            self.cpp_info.components["clp"].requires.append("suitesparse-cholmod::suitesparse-cholmod")
-
-        self.cpp_info.components["solver"].set_property("pkg_config_name", "clp-solver")
-        self.cpp_info.components["solver"].libs = ["Clp"]
-        self.cpp_info.components["solver"].includedirs.append("include/coin")
-        self.cpp_info.components["solver"].requires = ["coin-utils::coin-utils"]
-        if self.options.with_asl:
-            self.cpp_info.components["solver"].requires.append("ampl-asl::asl2-mt")
+        libclp = self.cpp_info.components["libclp"]
+        libclp.libs = ["Clp"]
+        libclp.includedirs.append("include/coin")
+        libclp.requires = ["coin-utils::coin-utils"]
         if self.options.with_glpk:
-            self.cpp_info.components["solver"].requires.append("glpk::glpk")
+            libclp.requires.append("glpk::glpk")
+        if self.options.with_mumps:
+            libclp.requires.append("coin-mumps::coin-mumps")
+        if self.options.with_amd:
+            libclp.requires.append("suitesparse-amd::suitesparse-amd")
+        if self.options.with_cholmod:
+            libclp.requires.append("suitesparse-cholmod::suitesparse-cholmod")
+
+        solver = self.cpp_info.components["solver"]
+        solver.libs = ["ClpSolver"]
+        solver.includedirs.append("include/coin")
+        solver.requires = ["libclp"]
+        if self.options.with_asl:
+            solver.requires.append("ampl-asl::asl2-mt")
+        if self.options.with_readline:
+            solver.requires.append("readline::readline")
+
+        self.cpp_info.components["clp"].set_property("pkg_config_name", "clp")
+        self.cpp_info.components["clp"].includedirs.append("include/coin")
+        self.cpp_info.components["clp"].requires = ["solver"]
 
         self.cpp_info.components["osi-clp"].set_property("pkg_config_name", "osi-clp")
         self.cpp_info.components["osi-clp"].libs = ["OsiClp"]

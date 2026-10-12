@@ -26,5 +26,7 @@ class TestPackageConan(ConanFile):
 
     def test(self):
         if can_run(self):
-            bin_path = os.path.join(self.cpp.build.bindir, "test_package")
-            self.run(bin_path, env="conanrun")
+            for executable in ["test_package", "glpk_test"]:
+                bin_path = os.path.join(self.cpp.build.bindir, executable)
+                if os.path.isfile(bin_path):
+                    self.run(bin_path, env="conanrun")

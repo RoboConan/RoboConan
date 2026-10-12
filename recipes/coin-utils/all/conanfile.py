@@ -29,14 +29,17 @@ class CoinUtilsConan(ConanFile):
         "shared": [True, False],
         "fPIC": [True, False],
         "with_glpk": [True, False],
+        "with_readline": [True, False],
     }
     default_options = {
         "shared": False,
         "fPIC": True,
         "with_glpk": False,
+        "with_readline": False,
     }
     options_description = {
         "with_glpk": "Build with GLPK to add support for the GMPL file format",
+        "with_readline": "Build with GNU Readline support",
     }
     implements = ["auto_shared_fpic"]
 
@@ -54,7 +57,9 @@ class CoinUtilsConan(ConanFile):
         self.requires("zlib-ng/[^2.0]")
         self.requires("lapack/latest", transitive_headers=True, transitive_libs=True)
         if self.options.with_glpk:
-            self.requires("glpk/[<=4.48]")
+            self.requires("glpk/[>=4 <6]")
+        if self.options.with_readline:
+            self.requires("readline/[^8.3.1]")
 
     def build_requirements(self):
         self.tool_requires("coin-buildtools/[*]")
@@ -87,7 +92,8 @@ class CoinUtilsConan(ConanFile):
         yes_no = lambda v: "yes" if v else "no"
         tc = AutotoolsToolchain(self)
         tc.configure_args.extend([
-            f"--with-glpk={yes_no(self.options.with_glpk)}"
+            f"--with-glpk={yes_no(self.options.with_glpk)}",
+            f"--enable-gnu-packages={yes_no(self.options.with_readline)}",
             "F77=unavailable",
             "ac_cv_f77_mangling=lower case, underscore, no extra underscore",
             # These are only used for sample datasets
@@ -128,14 +134,17 @@ class CoinUtilsConan(ConanFile):
             deps.generate()
 
         deps = PkgConfigDeps(self)
-        deps.set_property("blas", "pkg_config_name", ["coinblas"])
-        deps.set_property("lapack", "pkg_config_name", ["coinlapack"])
+        deps.set_property("blas", "pkg_config_name", "coinblas")
+        deps.set_property("lapack", "pkg_config_name", "coinlapack")
         deps.set_property("glpk", "pkg_config_aliases", ["coinglpk"])
         deps.generate()
 
     def build(self):
         copy(self, "*", self.dependencies.build["coin-buildtools"].cpp_info.resdirs[0],
              os.path.join(self.source_folder, "CoinUtils", "BuildTools"))
+        replace_in_file(self, os.path.join(self.source_folder, "CoinUtils", "configure.ac"),
+                        "AC_CANONICAL_BUILD",
+                        "AC_CANONICAL_BUILD\nAC_CANONICAL_HOST")
         for gnu_config in ["config_guess", "config_sub"]:
             gnu_config = self.conf.get(f"user.gnu-config:{gnu_config}", check_type=str)
             shutil.copy(gnu_config, os.path.join(self.source_folder, "CoinUtils"))
@@ -164,5 +173,14 @@ class CoinUtilsConan(ConanFile):
         self.cpp_info.set_property("pkg_config_name", "coinutils")
         self.cpp_info.libs = ["CoinUtils" if self.settings.os != "Windows" else "libCoinUtils"]
         self.cpp_info.includedirs.append("include/coin")
+        self.cpp_info.requires = [
+            "bzip2::bzip2",
+            "zlib-ng::zlib-ng",
+            "lapack::lapack",
+        ]
+        if self.options.with_glpk:
+            self.cpp_info.requires.append("glpk::glpk")
+        if self.options.with_readline:
+            self.cpp_info.requires.append("readline::readline")
         if self.settings.os in ["FreeBSD", "Linux"]:
             self.cpp_info.system_libs = ["m", "pthread", "rt"]

@@ -1,0 +1,12 @@
+--- a/Clp/src/Clp_ampl.cpp
++++ b/Clp/src/Clp_ampl.cpp
+@@ -44,6 +44,9 @@
+ #include "CoinMpsIO.hpp"
+ #include "CoinFloatEqual.hpp"
+ #include "Clp_ampl.h"
++#ifdef _OPENMP
++#include <omp.h>
++#endif
+ extern "C" {
+ #include "getstub.h"
+ #include "asl_pfgh.h"
