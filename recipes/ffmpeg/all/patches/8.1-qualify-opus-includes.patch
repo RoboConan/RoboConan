@@ -1,0 +1,130 @@
+diff --git a/libavcodec/opus/Makefile b/libavcodec/opus/Makefile
+index 6f0a1ab2cc3f2..49ce7fb7673fe 100644
+--- a/libavcodec/opus/Makefile
++++ b/libavcodec/opus/Makefile
+@@ -30,5 +30,3 @@ OBJS-$(CONFIG_OPUS_ENCODER) +=  \
+ 
+ STLIBOBJS-$(CONFIG_MATROSKA_MUXER)   += opus/frame_duration_tab.o
+ STLIBOBJS-$(CONFIG_WEBM_MUXER)       += opus/frame_duration_tab.o
+-
+-libavcodec/opus/%.o: CPPFLAGS += -I$(SRC_PATH)/libavcodec/
+diff --git a/libavcodec/opus/dec.c b/libavcodec/opus/dec.c
+index 29c490ae37ddf..c353e6623d473 100644
+--- a/libavcodec/opus/dec.c
++++ b/libavcodec/opus/dec.c
+@@ -47,9 +47,10 @@
+ 
+ #include "libswresample/swresample.h"
+ 
+-#include "avcodec.h"
+-#include "codec_internal.h"
+-#include "decode.h"
++#include "libavcodec/avcodec.h"
++#include "libavcodec/codec_internal.h"
++#include "libavcodec/decode.h"
++
+ #include "opus.h"
+ #include "tab.h"
+ #include "celt.h"
+diff --git a/libavcodec/opus/enc.c b/libavcodec/opus/enc.c
+index 433cf066bc286..74531f914240a 100644
+--- a/libavcodec/opus/enc.c
++++ b/libavcodec/opus/enc.c
+@@ -21,7 +21,6 @@
+ 
+ #include <float.h>
+ 
+-#include "encode.h"
+ #include "enc.h"
+ #include "pvq.h"
+ #include "enc_psy.h"
+@@ -32,9 +31,11 @@
+ #include "libavutil/mem.h"
+ #include "libavutil/mem_internal.h"
+ #include "libavutil/opt.h"
+-#include "bytestream.h"
+-#include "audio_frame_queue.h"
+-#include "codec_internal.h"
++
++#include "libavcodec/audio_frame_queue.h"
++#include "libavcodec/bytestream.h"
++#include "libavcodec/codec_internal.h"
++#include "libavcodec/encode.h"
+ 
+ typedef struct OpusEncContext {
+     AVClass *av_class;
+diff --git a/libavcodec/opus/parse.c b/libavcodec/opus/parse.c
+index 1c7876e37e502..78442031ff080 100644
+--- a/libavcodec/opus/parse.c
++++ b/libavcodec/opus/parse.c
+@@ -31,13 +31,14 @@
+ #include "libavutil/log.h"
+ #include "libavutil/mem.h"
+ 
+-#include "avcodec.h"
+-#include "internal.h"
+-#include "mathops.h"
++#include "libavcodec/avcodec.h"
++#include "libavcodec/internal.h"
++#include "libavcodec/mathops.h"
++#include "libavcodec/vorbis_data.h"
++
+ #include "opus.h"
+ #include "parse.h"
+ #include "tab.h"
+-#include "vorbis_data.h"
+ 
+ /**
+  * Read a 1- or 2-byte frame length
+diff --git a/libavcodec/opus/parser.c b/libavcodec/opus/parser.c
+index bab0e504121ca..7cecac88578b0 100644
+--- a/libavcodec/opus/parser.c
++++ b/libavcodec/opus/parser.c
+@@ -26,12 +26,14 @@
+  */
+ 
+ #include "libavutil/mem.h"
+-#include "avcodec.h"
+-#include "bytestream.h"
++
++#include "libavcodec/avcodec.h"
++#include "libavcodec/bytestream.h"
++#include "libavcodec/parser.h"
++#include "libavcodec/parser_internal.h"
++
+ #include "opus.h"
+ #include "parse.h"
+-#include "parser.h"
+-#include "parser_internal.h"
+ 
+ typedef struct OpusParserContext {
+     ParseContext pc;
+diff --git a/libavcodec/opus/pvq.c b/libavcodec/opus/pvq.c
+index 3dea7c19f2093..edd3e9674180a 100644
+--- a/libavcodec/opus/pvq.c
++++ b/libavcodec/opus/pvq.c
+@@ -28,7 +28,7 @@
+ #include "config_components.h"
+ 
+ #include "libavutil/mem.h"
+-#include "mathops.h"
++#include "libavcodec/mathops.h"
+ #include "tab.h"
+ #include "pvq.h"
+ 
+diff --git a/libavcodec/opus/silk.c b/libavcodec/opus/silk.c
+index 3e07877a7c144..f7b79fff45d81 100644
+--- a/libavcodec/opus/silk.c
++++ b/libavcodec/opus/silk.c
+@@ -27,7 +27,9 @@
+ #include <stdint.h>
+ 
+ #include "libavutil/mem.h"
+-#include "mathops.h"
++
++#include "libavcodec/mathops.h"
++
+ #include "opus.h"
+ #include "rc.h"
+ #include "silk.h"
+

@@ -8,7 +8,7 @@ from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration, ConanException
 from conan.tools import CppInfo
 from conan.tools.apple import is_apple_os
-from conan.tools.build import cross_building
+from conan.tools.build import cross_building, stdcpp_library
 from conan.tools.env import Environment, VirtualBuildEnv, VirtualRunEnv
 from conan.tools.files import *
 from conan.tools.gnu import Autotools, AutotoolsDeps, AutotoolsToolchain, PkgConfigDeps
@@ -70,6 +70,7 @@ class FFMpegConan(ConanFile):
         "with_vaapi": [True, False],
         "with_vdpau": [True, False],
         "with_vulkan": [True, False],
+        "with_vulkan_shaders": ["glslang", "shaderc", False],
         "with_xcb": [True, False],
         "with_soxr": [True, False],
         "with_appkit": [True, False],
@@ -87,6 +88,8 @@ class FFMpegConan(ConanFile):
         "with_xlib": [True, False],
         "with_ffnvcodec": [True, False],
         "with_cuda": [True, False],
+        "with_npp": [True, False],
+        "with_onnxruntime": [True, False],
         "with_whisper": [True, False],
         "disable_everything": [True, False],
         "disable_all_encoders": [True, False],
@@ -165,6 +168,7 @@ class FFMpegConan(ConanFile):
         "with_vaapi": True,
         "with_vdpau": True,
         "with_vulkan": False,
+        "with_vulkan_shaders": "glslang",
         "with_xcb": True,
         "with_soxr": False,
         "with_appkit": True,
@@ -182,6 +186,8 @@ class FFMpegConan(ConanFile):
         "with_xlib": True,
         "with_ffnvcodec": True,
         "with_cuda": False,
+        "with_npp": False,
+        "with_onnxruntime": False,
         "with_whisper": False,
         "disable_everything": False,
         "disable_all_encoders": False,
@@ -227,11 +233,9 @@ class FFMpegConan(ConanFile):
             "avdevice": ["avcodec", "avformat"],
             "avfilter": ["avformat"],
             "with_bzip2": ["avformat"],
-            "with_ssl": ["avformat"],
-            "with_zlib": ["avcodec"],
             "with_lzma": ["avcodec"],
-            "with_libiconv": ["avcodec"],
-            "with_libxml2": ["avcodec"],
+            "with_libiconv": ["avcodec", "avformat"],
+            "with_libxml2": ["avformat"],
             "with_libjxl": ["avcodec"],
             "with_openjpeg": ["avcodec"],
             "with_openh264": ["avcodec"],
@@ -244,7 +248,7 @@ class FFMpegConan(ConanFile):
             "with_liboapv": ["avcodec"],
             "with_libfdk_aac": ["avcodec"],
             "with_libwebp": ["avcodec"],
-            "with_cuda": ["avfilter", "with_ffnvcodec"],
+            "with_cuda": ["avfilter"],
             "with_freetype": ["avfilter"],
             "with_fontconfig": ["avfilter"],
             "with_fribidi": ["avfilter"],
@@ -261,6 +265,10 @@ class FFMpegConan(ConanFile):
             "with_libdav1d": ["avcodec"],
             "with_mediacodec": ["with_jni"],
             "with_xlib": ["avdevice"],
+            "with_ffnvcodec": ["avcodec", "avfilter"],
+            "with_npp": ["avfilter"],
+            "with_vulkan_shaders": ["with_vulkan", "avfilter"],
+            "with_onnxruntime": ["avfilter"],
             "with_whisper": ["avfilter"],
         }
 
@@ -268,6 +276,17 @@ class FFMpegConan(ConanFile):
 
     python_requires = "conan-cuda/latest"
     python_requires_extend = "conan-cuda.Cuda"
+
+    @property
+    def _supports_ffnvcodec(self):
+        arch = str(self.settings.arch)
+        if arch in ["x86", "x86_64"]:
+            return self.settings.os in ["Linux", "FreeBSD", "Windows"]
+        if arch.startswith("armv8") or arch == "ppc64le":
+            return self.settings.os == "Linux" or (
+                Version(self.version) >= "9.0" and self.settings.os == "Windows"
+            )
+        return False
 
     def export_sources(self):
         export_conandata_patches(self)
@@ -297,6 +316,10 @@ class FFMpegConan(ConanFile):
         if not self.settings.os == "Android":
             del self.options.with_jni
             del self.options.with_mediacodec
+        if not self._supports_ffnvcodec:
+            del self.options.with_ffnvcodec
+            del self.options.with_cuda
+            del self.options.with_npp
         if self.settings.os == "Android":
             del self.options.with_libfdk_aac
         if Version(self.version) < "5.1.0":
@@ -309,11 +332,17 @@ class FFMpegConan(ConanFile):
             self.options.rm_safe("with_whisper")
         else:
             del self.options.postproc
+        if Version(self.version) < "9.0":
+            self.options.rm_safe("with_onnxruntime")
+        else:
+            self.options.rm_safe("with_npp")
 
     def configure(self):
         if self.options.shared:
             self.options.rm_safe("fPIC")
-        if not self.options.with_cuda:
+        if not self.options.get_safe("with_vulkan"):
+            self.options.rm_safe("with_vulkan_shaders")
+        if not self.options.get_safe("with_cuda", False) and not self.options.get_safe("with_npp", False):
             del self.settings.cuda
 
     def layout(self):
@@ -359,15 +388,15 @@ class FFMpegConan(ConanFile):
         if self.options.with_libvpx:
             self.requires("libvpx/[^1.14.1]")
         if self.options.with_libmp3lame:
-            self.requires("libmp3lame/3.100")
+            self.requires("libmp3lame/[>=3 <5]")
         if self.options.get_safe("with_liboapv"):
-            self.requires("openapv/[>=0.2.0]")
+            self.requires("openapv/[>=0.2.0 <2]")
         if self.options.get_safe("with_libfdk_aac"):
-            self.requires("libfdk_aac/2.0.3")
+            self.requires("libfdk_aac/[>=2.0.3 <4]")
         if self.options.with_libwebp:
             self.requires("libwebp/[^1.3.2]")
         if self.options.with_ssl == "openssl":
-            self.requires("openssl/[>=1.1 <4]")
+            self.requires("openssl/[>=1.1.1 <4]")
         if self.options.get_safe("with_libalsa"):
             self.requires("libalsa/[^1.2.10]")
         if self.options.get_safe("with_xcb") or self.options.get_safe("with_xlib"):
@@ -384,25 +413,57 @@ class FFMpegConan(ConanFile):
             self.requires("libvdpau/[^1.5]")
         if self.options.get_safe("with_vulkan"):
             self.requires("vulkan-loader/[^1.3.277]")
+            if Version(self.version) >= "9.0" and self.options.swscale:
+                self.requires("spirv-headers/[^1.3.239.0]")
+        if Version(self.version) < "9.0":
+            if self.options.get_safe("with_vulkan_shaders") == "glslang":
+                self.requires("glslang/[^1.3.239.0]")
+            elif self.options.get_safe("with_vulkan_shaders") == "shaderc":
+                self.requires("shaderc/[>=2025.2 <2030]")
         if self.options.get_safe("with_libsvtav1"):
-            self.requires("libsvtav1/[^2.1.0]")
+            if Version(self.version) >= "8.0":
+                self.requires("libsvtav1/[>=0.9 <5]")
+            else:
+                self.requires("libsvtav1/[^2.1.0]")
         if self.options.with_libaom:
             self.requires("libaom-av1/[^3.6.1]")
         if self.options.get_safe("with_libdav1d"):
             self.requires("dav1d/[^1.4]")
         if self.options.get_safe("with_libdrm"):
             self.requires("libdrm/[~2.4.119]")
-        if self.options.with_cuda:
+        if self.options.get_safe("with_cuda"):
+            self.cuda.requires("cudart", headers=True, libs=False, visible=False)
+        if self.options.get_safe("with_npp"):
             self.cuda.requires("npp")
-            self.requires(f"ffnvcodec/[^{self.cuda.major}]")
-        elif self.options.with_ffnvcodec:
-            self.requires("ffnvcodec/[*]")
+        if self.options.get_safe("with_ffnvcodec"):
+            if Version(self.version) >= "9.0":
+                minimum_ffnvcodec = "11.1.5.3"
+            elif Version(self.version) >= "6.0":
+                minimum_ffnvcodec = "11.0.10.3"
+            else:
+                minimum_ffnvcodec = "9.1.23.1"
+            self.requires(f"ffnvcodec/[>={minimum_ffnvcodec}]")
         if self.options.get_safe("with_whisper"):
             self.requires("whisper-cpp/[^1.7.5]")
+        if self.options.get_safe("with_onnxruntime"):
+            self.requires("onnxruntime/[>=1.18.2 <2]")
 
     def validate(self):
         if self.options.with_ssl == "securetransport" and not is_apple_os(self):
             raise ConanInvalidConfiguration("securetransport is only available on Apple")
+        if Version(self.version) < "5.0" and self.options.get_safe("with_vulkan_shaders") == "shaderc":
+            raise ConanInvalidConfiguration("FFmpeg 4.x does not support Shaderc")
+        if Version(self.version) >= "9.0" and self.options.get_safe("with_cuda") and self.cuda.major < 11:
+            raise ConanInvalidConfiguration("FFmpeg requires CUDA 11 or newer")
+        if self.options.get_safe("with_cuda") and not self.options.get_safe("with_ffnvcodec"):
+            raise ConanInvalidConfiguration("FFmpeg's CUDA filters require the ffnvcodec headers")
+        if self.options.get_safe("with_npp"):
+            if not self.options.get_safe("with_ffnvcodec"):
+                raise ConanInvalidConfiguration("FFmpeg's NPP filters require the ffnvcodec headers")
+            if self.cuda.major >= 13:
+                raise ConanInvalidConfiguration("FFmpeg 8.x does not support NPP 13 or newer")
+            if not self.dependencies["npp"].options.get_safe("shared", True):
+                raise ConanInvalidConfiguration("FFmpeg's NPP support requires shared NPP libraries")
 
         for dependency, features in self._dependencies.items():
             if not self.options.get_safe(dependency):
@@ -430,8 +491,13 @@ class FFMpegConan(ConanFile):
                 self.tool_requires("msys2/latest")
             if self.settings.arch == "armv8" and is_msvc(self):
                 self.tool_requires("gas-preprocessor/[*]")
-        if self.options.with_cuda:
+        if self.options.get_safe("with_cuda"):
             self.cuda.tool_requires("nvcc")
+        if Version(self.version) >= "8.0":
+            if self.options.get_safe("with_vulkan_shaders") == "glslang":
+                self.tool_requires("glslang/[^1.3.239.0]")
+            elif self.options.get_safe("with_vulkan_shaders") == "shaderc":
+                self.tool_requires("shaderc/[>=2025.2 <2030]")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
@@ -537,6 +603,9 @@ class FFMpegConan(ConanFile):
                 args.append(f"--disable-{what}")
 
         tc = self._create_toolchain()
+        with_cuda = self.options.get_safe("with_cuda", False)
+        with_ffnvcodec = self.options.get_safe("with_ffnvcodec", False)
+        with_npp = self.options.get_safe("with_npp", False)
 
         args = [
             "--disable-autodetect",
@@ -601,12 +670,13 @@ class FFMpegConan(ConanFile):
             opt_enable_disable("jni", self.options.get_safe("with_jni")),
             opt_enable_disable("mediacodec", self.options.get_safe("with_mediacodec")),
             opt_enable_disable("xlib", self.options.get_safe("with_xlib")),
-            opt_enable_disable("cuda-nvcc", self.options.with_cuda),
-            opt_enable_disable("libnpp", self.options.with_cuda),
-            opt_enable_disable("cuvid", self.options.with_cuda),
-            opt_enable_disable("ffnvcodec", self.options.with_cuda),
+            opt_enable_disable("cuda-nvcc", with_cuda),
+            opt_enable_disable("cuvid", with_ffnvcodec),
+            opt_enable_disable("ffnvcodec", with_ffnvcodec),
+            opt_enable_disable("nvdec", with_ffnvcodec),
+            opt_enable_disable("nvenc", with_ffnvcodec),
             # Licenses
-            opt_enable_disable("nonfree", self.options.get_safe("with_libfdk_aac") or self.options.with_cuda or
+            opt_enable_disable("nonfree", self.options.get_safe("with_libfdk_aac") or with_cuda or with_npp or
                                (self.options.with_ssl and (self.options.with_libx264 or self.options.with_libx265 or self.options.get_safe("postproc")))),
             opt_enable_disable("gpl", self.options.with_libx264 or self.options.with_libx265)
         ]
@@ -627,7 +697,10 @@ class FFMpegConan(ConanFile):
         opt_append_disable_if_set(args, "filters", self.options.disable_all_filters)
 
         def _split_and_format_options_string(flag_name, options_list):
-            return [f"--{flag_name}={item}" for item in str(options_list).replace(",", " ").split() if item]
+            value = str(options_list)
+            if value == "None":
+                return []
+            return [f"--{flag_name}={item}" for item in value.replace(",", " ").split() if item]
 
         args += _split_and_format_options_string("enable-encoder", self.options.enable_encoders)
         args += _split_and_format_options_string("disable-encoder", self.options.disable_encoders)
@@ -654,6 +727,10 @@ class FFMpegConan(ConanFile):
 
         if Version(self.version) < "8.0":
             args.append(opt_enable_disable("postproc", self.options.postproc))
+        if Version(self.version) < "9.0":
+            args.append(opt_enable_disable("libnpp", with_npp))
+        else:
+            args.append("--disable-checkasm")
         if "with_libsvtav1" in self.options:
             args.append(opt_enable_disable("libsvtav1", self.options.with_libsvtav1))
         if "with_libjxl" in self.options:
@@ -664,6 +741,30 @@ class FFMpegConan(ConanFile):
             args.append(opt_enable_disable("liboapv", self.options.with_liboapv))
         if "with_whisper" in self.options:
             args.append(opt_enable_disable("whisper", self.options.with_whisper))
+        if Version(self.version) < "9.0" and "with_vulkan_shaders" in self.options:
+            args.append(opt_enable_disable("libglslang", self.options.with_vulkan_shaders == "glslang"))
+            if Version(self.version) >= "5.0":
+                args.append(opt_enable_disable("libshaderc", self.options.with_vulkan_shaders == "shaderc"))
+        if Version(self.version) >= "8.0":
+            if self.options.get_safe("with_vulkan_shaders") == "glslang":
+                args.append("--glslc=glslangValidator")
+            elif self.options.get_safe("with_vulkan_shaders") == "shaderc":
+                args.append("--glslc=glslc")
+            else:
+                # Upstream otherwise probes ambient PATH, even with --disable-autodetect.
+                args.append("--glslc=none")
+        if "with_onnxruntime" in self.options:
+            args.append(opt_enable_disable("libonnxruntime", self.options.with_onnxruntime))
+        extra_libs = []
+        if self.options.get_safe("with_soxr"):
+            extra_libs.extend(self.dependencies["soxr"].cpp_info.aggregated_components().system_libs)
+        if (self.options.get_safe("with_zeromq") and
+                str(self.dependencies["zeromq"].options.get_safe("shared")) == "False"):
+            libcxx = stdcpp_library(self.dependencies["zeromq"])
+            if libcxx:
+                extra_libs.append(libcxx)
+        if extra_libs:
+            args.append("--extra-libs={}".format(" ".join(f"-l{lib}" for lib in extra_libs)))
 
         if is_apple_os(self):
             # relocatable shared libs
@@ -709,7 +810,7 @@ class FFMpegConan(ConanFile):
         if cross_building(self):
             build_cc = AutotoolsToolchain(self).vars()["CC_FOR_BUILD"]
             args.append(f"--host-cc={unix_path(self, build_cc)}")
-        if self.options.with_cuda:
+        if with_cuda:
             args.append("--nvcc=nvcc")
         pkg_config = self.conf.get("tools.gnu:pkg_config", default=buildenv_vars.get("PKG_CONFIG", "pkgconf"), check_type=str)
         if pkg_config:
@@ -762,13 +863,17 @@ class FFMpegConan(ConanFile):
                 env.vars(self).save_script("system_pkg_config_path")
 
         deps = PkgConfigDeps(self)
+        if self.options.get_safe("with_vulkan_shaders") == "shaderc":
+            # FFmpeg always probes shaderc.pc, while upstream calls the static
+            # library's pkg-config file shaderc_static.pc.
+            deps.set_property("shaderc", "pkg_config_name", "shaderc")
         deps.generate()
 
         if self.options.with_ssl == "openssl":
             openssl_libs = " ".join(f"-l{lib}" for lib in self.dependencies["openssl"].cpp_info.aggregated_components().libs)
             save(self, os.path.join(self.build_folder, "openssl_libs.list"), openssl_libs)
 
-        if self.options.with_cuda:
+        if with_cuda:
             # FFMpeg embeds a handwritten .ptx as a C array and JIT-s it at runtime
             # instead of building for specific architectures.
             cuda_tc = self.cuda.CudaToolchain(skip_arch_flags=True)
@@ -837,11 +942,13 @@ class FFMpegConan(ConanFile):
         if self.options.avfilter:
             avfilter = _add_component("avfilter", ["swscale", "avformat", "avcodec", "swresample", "postproc"])
         if self.options.avformat:
-            avformat = _add_component("avformat", ["avcodec", "swscale"])
+            avformat = _add_component("avformat", ["avcodec", "swresample"])
         if self.options.avcodec:
             avcodec = _add_component("avcodec", ["swresample"])
         if self.options.swscale:
-            _add_component("swscale", [])
+            swscale = _add_component("swscale", [])
+            if self.options.get_safe("with_vulkan") and Version(self.version) >= "9.0":
+                swscale.requires.append("spirv-headers::spirv-headers")
         if self.options.swresample:
             swresample = _add_component("swresample", [])
             if self.options.get_safe("with_soxr"):
@@ -850,8 +957,8 @@ class FFMpegConan(ConanFile):
             _add_component("postproc", [])
 
         if self.settings.os in ("FreeBSD", "Linux"):
-            avutil.system_libs.extend(["pthread", "dl"])
-            if self.options.get_safe("fPIC"):
+            avutil.system_libs.extend(["pthread", "dl", "atomic"])
+            if self.options.avcodec and self.options.get_safe("fPIC"):
                 if self.settings.compiler in ("gcc", "clang"):
                     # https://trac.ffmpeg.org/ticket/1713
                     # https://ffmpeg.org/platform.html#Advanced-linking-configuration
@@ -866,9 +973,10 @@ class FFMpegConan(ConanFile):
             if self.options.avdevice:
                 avdevice.system_libs = ["ole32", "psapi", "strmiids", "uuid", "oleaut32", "shlwapi", "gdi32", "vfw32"]
             avutil.system_libs = ["user32", "bcrypt"]
-            avformat.system_libs = ["secur32"]
-            if Version(self.version) >= "8.0":
-                avformat.system_libs.extend(["ncrypt", "crypt32"])
+            if self.options.avformat:
+                avformat.system_libs = ["secur32"]
+                if Version(self.version) >= "8.0":
+                    avformat.system_libs.extend(["ncrypt", "crypt32"])
         elif is_apple_os(self):
             if self.options.avdevice:
                 avdevice.frameworks = ["CoreFoundation", "Foundation", "CoreGraphics"]
@@ -893,6 +1001,8 @@ class FFMpegConan(ConanFile):
                 avdevice.requires.append("pulseaudio::pulseaudio")
             if self.options.get_safe("with_sndio"):
                 avdevice.requires.append("libsndio::libsndio")
+            if self.options.get_safe("with_libdrm"):
+                avdevice.requires.append("libdrm::libdrm_libdrm")
             if self.options.get_safe("with_appkit"):
                 avdevice.frameworks.append("AppKit")
             if self.options.get_safe("with_avfoundation"):
@@ -909,8 +1019,6 @@ class FFMpegConan(ConanFile):
                 avcodec.requires.append("xz_utils::xz_utils")
             if self.options.with_libiconv:
                 avcodec.requires.append("libiconv::libiconv")
-            if self.options.with_libxml2:
-                avcodec.requires.append("libxml2::libxml2")
             if self.options.with_openjpeg:
                 avcodec.requires.append("openjpeg::openjpeg")
             if self.options.with_openh264:
@@ -943,25 +1051,38 @@ class FFMpegConan(ConanFile):
                 avcodec.requires.append("libaom-av1::libaom-av1")
             if self.options.get_safe("with_libdav1d"):
                 avcodec.requires.append("dav1d::dav1d")
-            if self.options.with_ffnvcodec:
+            if self.options.get_safe("with_ffnvcodec"):
                 avcodec.requires.append("ffnvcodec::ffnvcodec")
             if self.options.get_safe("with_libjxl"):
                 avcodec.requires.append("libjxl::libjxl")
+            if self.options.get_safe("with_vaapi"):
+                avcodec.requires.append("libva::va")
+            if self.options.get_safe("with_vdpau"):
+                avcodec.requires.append("libvdpau::libvdpau")
 
         if self.options.avformat:
             if self.options.with_bzip2:
                 avformat.requires.append("bzip2::bzip2")
+            if self.options.with_zlib:
+                avformat.requires.append("zlib-ng::zlib-ng")
+            if self.options.with_libiconv:
+                avformat.requires.append("libiconv::libiconv")
+            if self.options.with_libxml2:
+                avformat.requires.append("libxml2::libxml2")
             if self.options.with_zeromq:
-                avformat.requires.append("zeromq::libzmq")
+                avformat.requires.append("zeromq::zeromq")
             if self.options.with_ssl == "openssl":
                 avformat.requires.append("openssl::ssl")
             elif self.options.with_ssl == "securetransport":
                 avformat.frameworks.append("Security")
 
         if self.options.avfilter:
-            if self.options.with_cuda:
+            if self.options.get_safe("with_ffnvcodec"):
                 avfilter.requires.append("ffnvcodec::ffnvcodec")
+            if self.options.get_safe("with_npp"):
                 avfilter.requires.append("npp::nppi")
+            if self.options.get_safe("with_cuda") and self.options.with_zlib:
+                avfilter.requires.append("zlib-ng::zlib-ng")
             if self.options.get_safe("with_freetype"):
                 avfilter.requires.append("freetype::freetype")
             if self.options.get_safe("with_fontconfig"):
@@ -971,7 +1092,7 @@ class FFMpegConan(ConanFile):
             if self.options.get_safe("with_harfbuzz"):
                 avfilter.requires.append("harfbuzz::harfbuzz")
             if self.options.with_zeromq:
-                avfilter.requires.append("zeromq::libzmq")
+                avfilter.requires.append("zeromq::zeromq")
             if self.options.get_safe("with_appkit"):
                 avfilter.frameworks.append("AppKit")
             if self.options.get_safe("with_coreimage"):
@@ -980,11 +1101,26 @@ class FFMpegConan(ConanFile):
                 avfilter.frameworks.append("Metal")
             if self.options.get_safe("with_whisper"):
                 avfilter.requires.append("whisper-cpp::whisper-cpp")
+            if self.options.get_safe("with_onnxruntime"):
+                avfilter.requires.append("onnxruntime::onnxruntime")
+            if Version(self.version) < "9.0":
+                if self.options.get_safe("with_vulkan_shaders") == "glslang":
+                    avfilter.requires.append("glslang::spirv")
+                elif self.options.get_safe("with_vulkan_shaders") == "shaderc":
+                    avfilter.requires.append("shaderc::shaderc")
+            if self.options.get_safe("with_vaapi"):
+                avfilter.requires.append("libva::va")
 
+        if self.options.with_zlib:
+            avutil.requires.append("zlib-ng::zlib-ng")
         if self.options.get_safe("with_libdrm"):
             avutil.requires.append("libdrm::libdrm_libdrm")
         if self.options.get_safe("with_vaapi"):
-            avutil.requires.append("libva::libva")
+            avutil.requires.append("libva::va")
+            if self.dependencies["libva"].options.get_safe("with_drm"):
+                avutil.requires.append("libva::drm")
+            if self.dependencies["libva"].options.get_safe("with_x11"):
+                avutil.requires.append("libva::x11")
         if self.options.get_safe("with_xcb"):
             avutil.requires.append("xorg::x11")
         if self.options.get_safe("with_vdpau"):
@@ -993,5 +1129,5 @@ class FFMpegConan(ConanFile):
             avutil.requires.append("openssl::ssl")
         if self.options.get_safe("with_vulkan"):
             avutil.requires.append("vulkan-loader::vulkan-loader")
-            if Version(self.version) >= "8.0":
+            if Version(self.version) >= "8.0" and self.options.avfilter:
                 avfilter.requires.append("vulkan-loader::vulkan-loader")

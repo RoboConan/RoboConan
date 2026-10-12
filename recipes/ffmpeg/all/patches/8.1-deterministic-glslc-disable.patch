@@ -1,0 +1,12 @@
+--- a/configure
++++ b/configure
+@@ -7755,5 +7755,9 @@
+ probe_glslc(){
+     glslc_probe=$1
++    if test "$glslc_probe" = none; then
++        disable spirv_compiler
++        return 0
++    fi
+     if test_cmd $glslc_probe -v; then
+         # glslang/glslangValidator
+         glslc=$glslc_probe

@@ -1,0 +1,11 @@
+diff --git a/configure b/configure
+--- a/configure
++++ b/configure
+@@ -7400,6 +7400,6 @@ enabled libmpeghdec       && require_pkg_config libmpeghdec "mpeghdec >= 3.0.0" mpeghdec/mpeghdecoder.h mpeghdecoder_init
+ enabled libmysofa         && { check_pkg_config libmysofa libmysofa mysofa.h mysofa_neighborhood_init_withstepdefine ||
+                                require libmysofa mysofa.h mysofa_neighborhood_init_withstepdefine -lmysofa $zlib_extralibs; }
+-enabled libonnxruntime    && require libonnxruntime onnxruntime_c_api.h OrtGetApiBase -lonnxruntime
++enabled libonnxruntime    && require_pkg_config libonnxruntime libonnxruntime onnxruntime_c_api.h OrtGetApiBase
+ enabled libopencore_amrnb && { check_pkg_config libopencore_amrnb opencore-amrnb opencore-amrnb/interf_dec.h Decoder_Interface_init ||
+                                require libopencore_amrnb opencore-amrnb/interf_dec.h Decoder_Interface_init -lopencore-amrnb; }
+ enabled libopencore_amrwb && { check_pkg_config libopencore_amrwb opencore-amrwb opencore-amrwb/dec_if.h D_IF_init ||

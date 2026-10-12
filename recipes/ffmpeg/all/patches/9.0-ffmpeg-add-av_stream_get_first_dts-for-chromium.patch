@@ -1,0 +1,31 @@
+diff --git a/libavformat/avformat.h b/libavformat/avformat.h
+--- a/libavformat/avformat.h
++++ b/libavformat/avformat.h
+@@ -1229,6 +1229,10 @@
+ 
+ struct AVCodecParserContext *av_stream_get_parser(const AVStream *s);
+ 
++// Chromium: We use the internal field first_dts vvv
++int64_t    av_stream_get_first_dts(const AVStream *st);
++// Chromium: We use the internal field first_dts ^^^
++
+ #define AV_PROGRAM_RUNNING 1
+ 
+ /**
+diff --git a/libavformat/mux_utils.c b/libavformat/mux_utils.c
+--- a/libavformat/mux_utils.c
++++ b/libavformat/mux_utils.c
+@@ -28,6 +28,13 @@
+ #include "avio.h"
+ #include "internal.h"
+ #include "mux.h"
++
++// Chromium: We use the internal field first_dts vvv
++int64_t av_stream_get_first_dts(const AVStream *st)
++{
++  return cffstream(st)->first_dts;
++}
++// Chromium: We use the internal field first_dts ^^^
+ 
+ int avformat_query_codec(const AVOutputFormat *ofmt, enum AVCodecID codec_id,
+                          int std_compliance)

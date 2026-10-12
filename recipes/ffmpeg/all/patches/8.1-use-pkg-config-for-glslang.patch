@@ -1,0 +1,16 @@
+--- a/configure
++++ b/configure
+@@ -7275,12 +7275,3 @@ enabled libfribidi        && require_pkg_config libfribidi fribidi fribidi.h fribidi_version_info
+ enabled libharfbuzz       && require_pkg_config libharfbuzz harfbuzz hb.h hb_buffer_create
+-if enabled libglslang; then
+-    spvremap="-lSPVRemapper"
+-    require_headers "glslang/build_info.h" && { test_cpp_condition glslang/build_info.h "GLSLANG_VERSION_MAJOR >= 16" && spvremap="" ; }
+-    check_lib spirv_library glslang/Include/glslang_c_interface.h glslang_initialize_process \
+-                            -lglslang -lMachineIndependent -lGenericCodeGen \
+-                            ${spvremap} -lSPIRV -lSPIRV-Tools-opt -lSPIRV-Tools -lstdc++ $libm_extralibs $pthreads_extralibs ||
+-                        require spirv_library glslang/Include/glslang_c_interface.h glslang_initialize_process \
+-                            -lglslang -lMachineIndependent -lOSDependent -lHLSL -lOGLCompiler -lGenericCodeGen \
+-                            ${spvremap} -lSPIRV -lSPIRV-Tools-opt -lSPIRV-Tools -lstdc++ $libm_extralibs $pthreads_extralibs ;
+-fi
++enabled libglslang        && require_pkg_config spirv_library glslang glslang/Include/glslang_c_interface.h glslang_initialize_process
+ enabled libgme            && { check_pkg_config libgme libgme gme/gme.h gme_new_emu ||
