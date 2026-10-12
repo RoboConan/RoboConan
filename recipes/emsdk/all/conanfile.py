@@ -1,11 +1,11 @@
-import json
 import os
 
 from conan import ConanFile
-from conan.tools.build import cross_building
+from conan.tools.build import build_jobs, cross_building
 from conan.tools.env import Environment
 from conan.tools.files import *
 from conan.tools.layout import basic_layout
+from conan.tools.scm import Version
 
 required_conan_version = ">=2.1"
 
@@ -16,6 +16,7 @@ class EmSDKConan(ConanFile):
     homepage = "https://github.com/kripken/emscripten"
     topics = ("emsdk", "emscripten", "sdk")
     license = "MIT"
+    package_type = "application"
     settings = "os", "arch", "compiler", "build_type"
 
     def layout(self):
@@ -59,6 +60,8 @@ class EmSDKConan(ConanFile):
         env.define_path("EMSCRIPTEN", self._emscripten)
         env.define_path("EM_CONFIG", self._em_config)
         env.define_path("EM_CACHE", self._em_cache)
+        env.define("EMCC_CORES", str(build_jobs(self)))
+        env.define("EMSDK_NUM_CORES", str(build_jobs(self)))
         env.vars(self, scope="emsdk").save_script("emsdk_env_file")
 
     @staticmethod
@@ -66,33 +69,12 @@ class EmSDKConan(ConanFile):
         if os.name == "posix":
             os.chmod(filename, os.stat(filename).st_mode | 0o111)
 
-    def _tools_for_version(self):
-        ret = {}
-        # Select release-upstream from version (wasm-binaries)
-        with open(os.path.join(self.source_folder, "emscripten-releases-tags.json"), "r") as f:
-            data = json.load(f)
-            ret["wasm"] = f"releases-upstream-{data['releases'][self.version]}-64bit"
-        # Select python and node versions
-        with open(os.path.join(self.source_folder, "emsdk_manifest.json"), "r") as f:
-            data = json.load(f)
-            tools = data["tools"]
-            if self.settings.os == "Windows":
-                python = next((it for it in tools if (it["id"] == "python" and not it.get("is_old", False))), None)
-                ret["python"] = f"python-{python['version']}-64bit"
-            node = next((it for it in tools if (it["id"] == "node" and not it.get("is_old", False))), None)
-            ret["nodejs"] = f"node-{node['version']}-64bit"
-        return ret
-
     def build(self):
         with chdir(self, self.source_folder):
             emsdk = "emsdk.bat" if self.settings_build.os == "Windows" else "./emsdk"
             self._chmod_plus_x("emsdk")
-
-            # Install required tools
-            required_tools = self._tools_for_version()
-            for key, value in required_tools.items():
-                self.run(f"{emsdk} install {value}")
-                self.run(f"{emsdk} activate {value}")
+            self.run(f"{emsdk} install {self.version}")
+            self.run(f"{emsdk} activate {self.version}")
 
     def package(self):
         copy(self, "LICENSE", src=self.source_folder, dst=os.path.join(self.package_folder, "licenses"))
@@ -117,13 +99,22 @@ class EmSDKConan(ConanFile):
             os.remove(os.path.join(self._em_cache, "sanity.txt"))
 
     def _define_tool_var(self, value):
-        suffix = ".bat" if self.settings.os == "Windows" else ""
+        suffix = ".exe" if self.settings.os == "Windows" and Version(self.version) >= "6" else \
+                 ".bat" if self.settings.os == "Windows" else ""
         path = os.path.join(self._emscripten, f"{value}{suffix}")
         self._chmod_plus_x(path)
         return path
 
+    @property
+    def _node_bindirs(self):
+        node_root = os.path.join(self.package_folder, "bin", "node")
+        if not os.path.isdir(node_root):
+            return []
+        return [os.path.join("bin", "node", version, "bin")
+                for version in sorted(os.listdir(node_root))]
+
     def package_info(self):
-        self.cpp_info.bindirs = self._relative_paths
+        self.cpp_info.bindirs = self._relative_paths + self._node_bindirs
         self.cpp_info.includedirs = []
         self.cpp_info.libdirs = []
 
@@ -157,11 +148,11 @@ class EmSDKConan(ConanFile):
         self.buildenv_info.define_path("STRIP", self._define_tool_var("emstrip"))
 
         self.cpp_info.builddirs = [
-            os.path.join("bin", "releases", "src"),
-            os.path.join("bin", "upstream", "emscripten", "cmake", "Modules"),
-            os.path.join("bin", "upstream", "emscripten", "cmake", "Modules", "Platform"),
-            os.path.join("bin", "upstream", "emscripten", "system", "lib", "libunwind", "cmake", "Modules"),
-            os.path.join("bin", "upstream", "emscripten", "system", "lib", "libunwind", "cmake"),
-            os.path.join("bin", "upstream", "emscripten", "tests", "cmake", "target_library"),
-            os.path.join("bin", "upstream", "lib", "cmake", "llvm"),
+            "bin/releases/src",
+            "bin/upstream/emscripten/cmake/Modules",
+            "bin/upstream/emscripten/cmake/Modules/Platform",
+            "bin/upstream/emscripten/system/lib/libunwind/cmake/Modules",
+            "bin/upstream/emscripten/system/lib/libunwind/cmake",
+            "bin/upstream/emscripten/tests/cmake/target_library",
+            "bin/upstream/lib/cmake/llvm",
         ]

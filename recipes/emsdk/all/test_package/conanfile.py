@@ -33,6 +33,7 @@ class TestPackageConan(ConanFile):
         # Check the package provides working binaries
         self.run("emcc -v")
         self.run("em++ -v")
+        self.run("node --version")
 
         # Run the project that was built using emsdk
         if self.settings.os == "Emscripten":

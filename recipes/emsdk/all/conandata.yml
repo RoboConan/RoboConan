@@ -1,10 +1,16 @@
 sources:
-  "4.0.6":
-    url: "https://github.com/emscripten-core/emsdk/archive/4.0.6.tar.gz"
-    sha256: "2d3292d508b4f5477f490b080b38a34aaefed43e85258a1de72cb8dde3f8f3af"
-  "3.1.73":
-    url: "https://github.com/emscripten-core/emsdk/archive/3.1.73.tar.gz"
-    sha256: "01e5e57a1f4ad74bff88134f00f4827aeb3b72b3bf91de9c8ad8bfa12ab9479a"
+  "6.0.12":
+    url: "https://github.com/emscripten-core/emsdk/archive/6.0.12.tar.gz"
+    sha256: "4dd39842a0e2cbe3b829879575fbb3fa702b224a5fd4b898c4768c00354224f9"
+  "5.0.7":
+    url: "https://github.com/emscripten-core/emsdk/archive/5.0.7.tar.gz"
+    sha256: "266df4b9644dde18303af05dce7d04854273b0bb527246cb7fb6a09591774ccf"
+  "4.0.23":
+    url: "https://github.com/emscripten-core/emsdk/archive/4.0.23.tar.gz"
+    sha256: "a91a4c1f42dbb0345faac093161e27d43e9b6964840d8c8d80976ab8d3eaf2d3"
+  "3.1.74":
+    url: "https://github.com/emscripten-core/emsdk/archive/3.1.74.tar.gz"
+    sha256: "4f4ba50bd09e2fa5eebbfa12d0626cb7f875174ffda88b6484a1277769a07189"
   "2.0.34":
     url: "https://github.com/emscripten-core/emsdk/archive/2.0.34.tar.gz"
     sha256: "a96ddf34de8de779c78be2785df04ae63c9a557da9e83e85332cda3d01bca250"
