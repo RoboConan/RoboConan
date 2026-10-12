@@ -2,7 +2,6 @@ import os
 import shutil
 
 from conan import ConanFile
-from conan.errors import ConanInvalidConfiguration
 from conan.tools.files import *
 from conan.tools.gnu import Autotools, AutotoolsToolchain, PkgConfigDeps
 from conan.tools.layout import basic_layout
@@ -25,8 +24,6 @@ class CoinCbcConan(ConanFile):
         "parallel": [True, False],
         "with_asl": [True, False],
         "with_nauty": [True, False],
-        "with_dylp": [True, False],
-        "with_vol": [True, False],
     }
     default_options = {
         "shared": False,
@@ -34,8 +31,6 @@ class CoinCbcConan(ConanFile):
         "parallel": True,
         "with_asl": False,
         "with_nauty": True,
-        "with_dylp": False,
-        "with_vol": False,
     }
     implements = ["auto_shared_fpic"]
 
@@ -60,17 +55,8 @@ class CoinCbcConan(ConanFile):
             self.requires("ampl-asl/[^1]")
         if self.options.with_nauty:
             self.requires("nauty/[^2.9.1]")
-        if self.options.with_dylp:
-            self.requires("coin-dylp/[^1.10.4]")
-        if self.options.with_vol:
-            self.requires("coin-vol/[^1.5.4]")
         if is_msvc(self) and self.options.parallel:
             self.requires("pthreads4w/[^3.0.0]")
-
-    def validate(self):
-        if self.dependencies["coin-osi"].options.with_glpk and not self.dependencies["coin-clp"].options.with_glpk:
-            # Cbc tries to use some GLPK features from Clp if GLPK is enabled in Osi, even if it's not correct.
-            raise ConanInvalidConfiguration("-o coin-clp/*:with_glpk must be True if -o coin-osi/*:with_glpk=True")
 
     def build_requirements(self):
         self.tool_requires("coin-buildtools/[*]")
@@ -96,17 +82,8 @@ class CoinCbcConan(ConanFile):
         tc.configure_args += [
             f"--enable-cbc-parallel={yes_no(self.options.parallel)}",
             f"--with-asl={yes_no(self.options.with_asl)}",
-            f"--enable-nauty-libcheck={yes_no(self.options.with_nauty)}",
-            f"--with-osidylp={yes_no(self.options.with_dylp)}",
-            f"--with-osivol={yes_no(self.options.with_vol)}",
-            f"--with-osicplex={yes_no(osi.options.with_cplex)}",
-            f"--with-osiglpk={yes_no(osi.options.with_glpk)}",
-            f"--with-osigurobi={yes_no(osi.options.with_gurobi)}",
-            f"--with-osimosek={yes_no(osi.options.with_mosek)}",
-            f"--with-osisoplex={yes_no(osi.options.with_soplex)}",
-            f"--with-osixpress={yes_no(osi.options.with_xpress)}",
+            f"--with-cpx={yes_no(osi.options.with_cplex)}",
             "--with-mumps=no",  # not really used
-            "--with-osihighs=no",  # still under development
             # Only used for sample data
             "--without-netlib",
             "--without-sample",
@@ -115,6 +92,9 @@ class CoinCbcConan(ConanFile):
         ]
         if self.options.with_nauty:
             nauty_info = self.dependencies["nauty"].cpp_info
+            # The legacy symbol probe calls nauty() without a declaration,
+            # which is invalid in C23. Conan already supplies the exact library.
+            tc.configure_args.append("--disable-nauty-libcheck")
             tc.configure_args.append(f"--with-nauty-lib=-l{nauty_info.libs[0]} -L{unix_path(self, nauty_info.libdir)}")
             tc.configure_args.append(f"--with-nauty-incdir={unix_path(self, nauty_info.includedir)}")
         if is_msvc(self):
@@ -141,7 +121,7 @@ class CoinCbcConan(ConanFile):
         tc.generate(env)
 
         deps = PkgConfigDeps(self)
-        deps.set_property("ampl-asl", "pkg_config_aliases", ["coinasl"])
+        deps.set_property("ampl-asl::asl", "pkg_config_aliases", ["coinasl"])
         deps.generate()
 
     def build(self):
@@ -163,31 +143,30 @@ class CoinCbcConan(ConanFile):
         mkdir(self, os.path.join(self.package_folder, "include", "coin"))
         autotools = Autotools(self)
         autotools.install()
+        rm(self, "*.la", os.path.join(self.package_folder, "lib"))
         rmdir(self, os.path.join(self.package_folder, "lib", "pkgconfig"))
         rmdir(self, os.path.join(self.package_folder, "share"))
 
     def package_info(self):
-        self.cpp_info.components["libcbc"].set_property("pkg_config_name", "cbc")
+        self.cpp_info.components["libcbc"].set_property("pkg_config_name", "coin-cbc-libcbc")
         self.cpp_info.components["libcbc"].libs = ["Cbc"]
         self.cpp_info.components["libcbc"].includedirs.append("include/coin")
         if self.settings.os in ["Linux", "FreeBSD"]:
             self.cpp_info.components["libcbc"].system_libs = ["m", "pthread", "rt", "dl"]
         self.cpp_info.components["libcbc"].requires = [
             "coin-utils::coin-utils",
-            "coin-osi::coin-osi",
+            "coin-osi::libosi",
             "coin-cgl::coin-cgl",
             "coin-clp::osi-clp",
         ]
         if self.options.with_nauty:
             self.cpp_info.components["libcbc"].requires.append("nauty::nauty")
-        if self.options.with_dylp:
-            self.cpp_info.components["libcbc"].requires.append("coin-dylp::coin-dylp")
-        if self.options.with_vol:
-            self.cpp_info.components["libcbc"].requires.append("coin-vol::coin-vol")
+        if self.dependencies["coin-osi"].options.with_cplex:
+            self.cpp_info.components["libcbc"].requires.append("coin-osi::osi-cplex")
         if self.options.parallel and self.settings.os == "Windows":
             self.cpp_info.components["libcbc"].requires.append("pthreads4w::pthreads4w")
 
-        self.cpp_info.components["solver"].set_property("pkg_config_name", "cbcsolver")  # unofficial
+        self.cpp_info.components["solver"].set_property("pkg_config_name", "cbc")
         self.cpp_info.components["solver"].libs = ["CbcSolver"]
         self.cpp_info.components["solver"].requires = ["libcbc"]
         if self.options.with_asl:
@@ -195,4 +174,4 @@ class CoinCbcConan(ConanFile):
 
         self.cpp_info.components["osi-cbc"].set_property("pkg_config_name", "osi-cbc")
         self.cpp_info.components["osi-cbc"].libs = ["OsiCbc"]
-        self.cpp_info.components["osi-cbc"].requires = ["libcbc", "coin-osi::coin-osi"]
+        self.cpp_info.components["osi-cbc"].requires = ["libcbc", "coin-osi::libosi"]
