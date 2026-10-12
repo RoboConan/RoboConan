@@ -43,6 +43,13 @@ class ImathConan(ConanFile):
     def generate(self):
         tc = CMakeToolchain(self)
         tc.cache_variables["BUILD_TESTING"] = False
+        tc.cache_variables["BUILD_WEBSITE"] = False
+        tc.cache_variables["IMATH_BUILD_APPLE_FRAMEWORKS"] = False
+        tc.cache_variables["IMATH_INSTALL"] = True
+        tc.cache_variables["IMATH_INSTALL_PKG_CONFIG"] = False
+        tc.cache_variables["IMATH_USE_CLANG_TIDY"] = False
+        tc.cache_variables["PYBIND11"] = False
+        tc.cache_variables["PYTHON"] = False
         if is_msvc(self):
             # when msvc is working with a C++ standard level higher
             # than the default, we need the __cplusplus macro to be correct
@@ -64,7 +71,6 @@ class ImathConan(ConanFile):
 
     def package_info(self):
         self.cpp_info.set_property("cmake_file_name", "Imath")
-        self.cpp_info.set_property("cmake_target_name", "Imath::Imath")
         self.cpp_info.set_property("pkg_config_name", "Imath")
 
         # Imath::ImathConfig - header only library
