@@ -44,7 +44,7 @@ class ZlibRsConan(ConanFile):
         basic_layout(self, src_folder="src")
 
     def build_requirements(self):
-        self.tool_requires("rust/[^1.72]")
+        self.tool_requires("rust/[>=1.75 <2]")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version]["zlib-rs"], strip_root=True)
@@ -80,9 +80,8 @@ class ZlibRsConan(ConanFile):
         return "--release"
 
     def build(self):
-        target = "libz-rs-sys-cdylib" if self.options.get_safe("shared", True) else "libz-rs-sys"
-        self.run(f"cargo rustc {self._build_type_flag} --target-dir {self.build_folder}",
-                 cwd=os.path.join(self.source_folder, target))
+        self.run(f"cargo rustc {self._build_type_flag} --features gz --target-dir {self.build_folder}",
+                 cwd=os.path.join(self.source_folder, "libz-rs-sys-cdylib"))
 
     @property
     def _dist_dir(self):
@@ -96,9 +95,10 @@ class ZlibRsConan(ConanFile):
         copy(self, "LICENSE*", self.source_folder, os.path.join(self.package_folder, "licenses"))
         copy(self, "zlib.h", self.source_folder, os.path.join(self.package_folder, "include"))
         copy(self, "zconf.h", self.source_folder, os.path.join(self.package_folder, "include"))
+        library_suffixes = {".dll", ".dylib", ".lib", ".so"} if self.options.get_safe("shared", True) else {".a", ".lib"}
         # Using shutil since copy() copies unrelated junk
         for path in self._dist_dir.glob("*z_rs*.*"):
-            if path.suffix in {".d", ".pdb", ".exp"}:
+            if path.suffix not in library_suffixes:
                 continue
             dest = Path(self.package_folder, "bin" if path.suffix == ".dll" else "lib")
             dest.mkdir(exist_ok=True)
@@ -109,6 +109,6 @@ class ZlibRsConan(ConanFile):
         self.cpp_info.set_property("cmake_file_name", "ZLIB")
         self.cpp_info.set_property("cmake_target_name", "ZLIB::ZLIB")
         self.cpp_info.set_property("pkg_config_name", "zlib")
-        self.cpp_info.set_property("system_package_version", "1.3.0")
+        self.cpp_info.set_property("system_package_version", "1.3.2")
 
-        self.cpp_info.libs = ["z_rs" if self.options.get_safe("shared", True) else "libz_rs_sys"]
+        self.cpp_info.libs = ["z_rs"]

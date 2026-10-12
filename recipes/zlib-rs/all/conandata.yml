@@ -1,14 +1,14 @@
 sources:
-  "0.5.0":
+  "0.6.8":
     "zlib-rs":
-      url: "https://github.com/trifectatechfoundation/zlib-rs/archive/refs/tags/v0.5.0.tar.gz"
-      sha256: "a5ef58c30220173b44c1304a9e367ec8fd6ac03c6c93ca41fc24b4837754ed1a"
+      url: "https://github.com/trifectatechfoundation/zlib-rs/archive/refs/tags/v0.6.8.tar.gz"
+      sha256: "10c2faddc8f0f150a4917c9641f49e350cb4c1ce187962bc88e7f7ce1411837e"
     "zlib.h":
-      url: "https://raw.githubusercontent.com/madler/zlib/refs/tags/v1.3.1/zlib.h"
-      sha256: "8a5579af72ea4f427ff00a4150f0ccb3fc5c1e4379f726e101133b1ab9fc600c"
+      url: "https://raw.githubusercontent.com/madler/zlib/refs/tags/v1.3.2/zlib.h"
+      sha256: "818667d6ab6a37fe7469cb06a7f0cb2c2cb2f2c948a03e5accf1a4a74bf3020a"
     "zconf.h":
-      url: "https://raw.githubusercontent.com/madler/zlib/refs/tags/v1.3.1/zconf.h"
-      sha256: "f5134250a67d57459234b63858f0d9d3ef8dcc48e9e1028d3f4fdcf6eae677ae"
+      url: "https://raw.githubusercontent.com/madler/zlib/refs/tags/v1.3.2/zconf.h"
+      sha256: "cb7c2c84211473b4699223edd363d3207b43b9578e739b5bf638f42204ea6e0f"
     "LICENSE-zlib":
-      url: "https://raw.githubusercontent.com/madler/zlib/refs/tags/v1.3.1/LICENSE"
-      sha256: "845efc77857d485d91fb3e0b884aaa929368c717ae8186b66fe1ed2495753243"
+      url: "https://raw.githubusercontent.com/madler/zlib/refs/tags/v1.3.2/LICENSE"
+      sha256: "e32ff4e00d9d94930537635291da39e7e612703334bf6fde8c7f1686fe8a45a2"
