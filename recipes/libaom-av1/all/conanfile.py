@@ -4,6 +4,7 @@ from conan import ConanFile
 from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
 from conan.tools.env import VirtualBuildEnv
 from conan.tools.files import *
+from conan.tools.scm import Version
 
 required_conan_version = ">=2.1"
 
@@ -26,6 +27,8 @@ class LibaomAv1Conan(ConanFile):
         "fPIC": True,
         "assembly": False,
     }
+    implements = ["auto_shared_fpic"]
+    languages = ["C"]
 
     def export_sources(self):
         export_conandata_patches(self)
@@ -36,13 +39,8 @@ class LibaomAv1Conan(ConanFile):
         if self.settings.arch not in ("x86", "x86_64"):
             del self.options.assembly
 
-    def configure(self):
-        if self.options.shared:
-            self.options.rm_safe("fPIC")
-        self.settings.rm_safe("compiler.cppstd")
-        self.settings.rm_safe("compiler.libcxx")
-
     def build_requirements(self):
+        self.tool_requires("cmake/[>=3.16 <5]")
         if self.options.get_safe("assembly", False):
             self.tool_requires("nasm/[*]")
         if self.settings_build.os == "Windows":
@@ -63,6 +61,7 @@ class LibaomAv1Conan(ConanFile):
         tc.variables["ENABLE_TESTS"] = False
         tc.variables["ENABLE_DOCS"] = False
         tc.variables["ENABLE_TOOLS"] = False
+        tc.variables["ENABLE_APPS"] = False
         if not self.options.get_safe("assembly", False):
             # make non-assembly build
             tc.variables["AOM_TARGET_CPU"] = "generic"
@@ -71,8 +70,10 @@ class LibaomAv1Conan(ConanFile):
         tc.variables["CONFIG_LIBYUV"] = 0
         # webm is not yet packaged
         tc.variables["CONFIG_WEBM_IO"] = 0
-        # Requires C99 or higher
-        tc.variables["CMAKE_C_STANDARD"] = "99"
+        if self.settings.get_safe("compiler.cstd"):
+            tc.variables["CMAKE_C_STANDARD"] = str(self.settings.compiler.cstd)
+        else:
+            tc.variables["CMAKE_C_STANDARD"] = "11" if Version(self.version) >= "3.15.0" else "99"
         tc.generate()
 
     def build(self):

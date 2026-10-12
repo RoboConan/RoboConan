@@ -1,4 +1,7 @@
 sources:
+  "3.15.2":
+    url: "https://storage.googleapis.com/aom-releases/libaom-3.15.2.tar.gz"
+    sha256: "67bb54b245f33ed98600e08269e6139986e48114e14042474ddd8885801dfddc"
   "3.13.3":
     url: "https://storage.googleapis.com/aom-releases/libaom-3.13.3.tar.gz"
     sha256: "446a4ae9741cb8f3eeb98c949d25f91b48cb2b8569cae975c4b737392e9024fc"
@@ -6,6 +9,8 @@ sources:
     url: "https://storage.googleapis.com/aom-releases/libaom-3.8.0.tar.gz"
     sha256: "a768d3e54c7f00cd38b01208d1ae52d671be410cfc387ff7881ea71c855f3600"
 patches:
+  "3.15.2":
+    - patch_file: "patches/0001-3.15.2-fix-install.patch"
   "3.13.3":
     - patch_file: "patches/0001-3.8.0-fix-install.patch"
   "3.8.0":

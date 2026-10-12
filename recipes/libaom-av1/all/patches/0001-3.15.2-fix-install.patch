@@ -1,0 +1,9 @@
+--- cmake/aom_install.cmake
++++ cmake/aom_install.cmake
+@@ -32 +32 @@
+-  if(NOT XCODE)
++  if(1)
+@@ -84 +84,2 @@
+-      set(AOM_INSTALL_LIBS aom aom_static)
++      set_target_properties(aom_static PROPERTIES OUTPUT_NAME aom_static)
++      set(AOM_INSTALL_LIBS aom)
