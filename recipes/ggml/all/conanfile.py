@@ -43,6 +43,9 @@ class GgmlConan(ConanFile):
         "with_openmp": [True, False],
         "with_rpc": [True, False],
 
+        # RPC
+        "rpc_rdma": [True, False],
+
         # CPU
         "cpu_repack": [True, False],
         "sse42": [True, False],
@@ -63,6 +66,8 @@ class GgmlConan(ConanFile):
         "lsx": [True, False],
         "rvv": [True, False],
         "rv_zfh": [True, False],
+        "rv_zihintpause": [True, False],
+        "rv_zvfbfwma": [True, False],
         "xtheadvector": [True, False],
         "vxe": [True, False],
         "nnpa": [True, False],
@@ -70,7 +75,7 @@ class GgmlConan(ConanFile):
         # CUDA
         "cuda_force_mmq": [True, False],
         "cuda_force_cublas": [True, False],
-        "cuda_f16": [True, False],
+        "cuda_nccl": [True, False],
         "cuda_no_peer_copy": [True, False],
         "cuda_no_vmm": [True, False],
         "cuda_fa": [True, False],
@@ -80,8 +85,6 @@ class GgmlConan(ConanFile):
         # HIP
         "hip_graphs": [True, False],
         "hip_no_vmm": [True, False],
-        "hip_rocwmma_fattn": [True, False],
-        "hip_force_rocwmma_fattn_gfx12": [True, False],
         "hip_mmq_mfma": [True, False],
         "hip_export_metrics": [True, False],
 
@@ -96,7 +99,6 @@ class GgmlConan(ConanFile):
         "vulkan_run_tests": [True, False],
 
         # Metal
-        "metal_use_bf16": [True, False],
         "metal_ndebug": [True, False],
         "metal_shader_debug": [True, False],
         "metal_embed_library": [True, False],
@@ -106,6 +108,8 @@ class GgmlConan(ConanFile):
         "sycl_f16": [True, False],
         "sycl_graph": [True, False],
         "sycl_dnn": [True, False],
+        "sycl_host_mem_fallback": [True, False],
+        "sycl_level_zero_api": [True, False],
 
         # OpenCL
         "opencl_profiling": [True, False],
@@ -136,6 +140,9 @@ class GgmlConan(ConanFile):
         "with_openmp": True,
         "with_rpc": False,
 
+        # RPC defaults
+        "rpc_rdma": False,
+
         # CPU instruction defaults
         "cpu_repack": True,
         "sse42": True,
@@ -156,14 +163,16 @@ class GgmlConan(ConanFile):
         "lsx": True,
         "rvv": True,
         "rv_zfh": False,
+        "rv_zihintpause": True,
+        "rv_zvfbfwma": False,
         "xtheadvector": False,
-        "vxe": True,
+        "vxe": False,
         "nnpa": False,
 
         # CUDA defaults
         "cuda_force_mmq": False,
         "cuda_force_cublas": False,
-        "cuda_f16": False,
+        "cuda_nccl": False,
         "cuda_no_peer_copy": False,
         "cuda_no_vmm": False,
         "cuda_fa": True,
@@ -171,10 +180,8 @@ class GgmlConan(ConanFile):
         "cuda_graphs": False,
 
         # HIP defaults
-        "hip_graphs": False,
+        "hip_graphs": True,
         "hip_no_vmm": True,
-        "hip_rocwmma_fattn": False,
-        "hip_force_rocwmma_fattn_gfx12": False,
         "hip_mmq_mfma": True,
         "hip_export_metrics": False,
 
@@ -189,7 +196,6 @@ class GgmlConan(ConanFile):
         "vulkan_run_tests": False,
 
         # Metal defaults
-        "metal_use_bf16": False,
         "metal_ndebug": False,
         "metal_shader_debug": False,
         "metal_embed_library": True,
@@ -199,6 +205,8 @@ class GgmlConan(ConanFile):
         "sycl_f16": False,
         "sycl_graph": True,
         "sycl_dnn": True,
+        "sycl_host_mem_fallback": True,
+        "sycl_level_zero_api": True,
 
         # OpenCL defaults
         "opencl_profiling": False,
@@ -236,6 +244,8 @@ class GgmlConan(ConanFile):
         if not arch.startswith("riscv"):
             del self.options.rvv
             del self.options.rv_zfh
+            del self.options.rv_zihintpause
+            del self.options.rv_zvfbfwma
             del self.options.xtheadvector
         if arch != "s390x":
             del self.options.vxe
@@ -277,6 +287,8 @@ class GgmlConan(ConanFile):
             self.options.rm_safe("lsx")
             self.options.rm_safe("rvv")
             self.options.rm_safe("rv_zfh")
+            self.options.rm_safe("rv_zihintpause")
+            self.options.rm_safe("rv_zvfbfwma")
             self.options.rm_safe("xtheadvector")
             self.options.rm_safe("vxe")
             self.options.rm_safe("nnpa")
@@ -285,7 +297,7 @@ class GgmlConan(ConanFile):
             del self.settings.cuda
             del self.options.cuda_force_mmq
             del self.options.cuda_force_cublas
-            del self.options.cuda_f16
+            del self.options.cuda_nccl
             del self.options.cuda_no_peer_copy
             del self.options.cuda_no_vmm
             del self.options.cuda_fa
@@ -295,8 +307,6 @@ class GgmlConan(ConanFile):
         if not self.options.with_hip:
             del self.options.hip_graphs
             del self.options.hip_no_vmm
-            del self.options.hip_rocwmma_fattn
-            del self.options.hip_force_rocwmma_fattn_gfx12
             del self.options.hip_mmq_mfma
             del self.options.hip_export_metrics
 
@@ -311,7 +321,6 @@ class GgmlConan(ConanFile):
             del self.options.vulkan_run_tests
 
         if not self.options.get_safe("with_metal"):
-            del self.options.metal_use_bf16
             del self.options.metal_ndebug
             del self.options.metal_shader_debug
             del self.options.metal_embed_library
@@ -321,6 +330,8 @@ class GgmlConan(ConanFile):
             del self.options.sycl_f16
             del self.options.sycl_graph
             del self.options.sycl_dnn
+            del self.options.sycl_host_mem_fallback
+            del self.options.sycl_level_zero_api
         else:
             if self.options.sycl_target == "nvidia":
                 self.options["onemath"].cublas = True
@@ -333,6 +344,9 @@ class GgmlConan(ConanFile):
             del self.options.opencl_profiling
             del self.options.opencl_embed_kernels
             del self.options.opencl_use_adreno_kernels
+
+        if not self.options.with_rpc:
+            del self.options.rpc_rdma
 
     def layout(self):
         cmake_layout(self, src_folder="src")
@@ -354,11 +368,15 @@ class GgmlConan(ConanFile):
         if self.options.with_cuda:
             self.cuda.requires("cudart")
             self.cuda.requires("cublas")
+            if self.options.cuda_nccl:
+                self.requires("nccl/[^2]")
         if self.options.with_sycl:
             self.requires("onemath/[>=0.7 <1]")
         if self.options.with_hip:
             self.requires("hip/[^5]")
             self.requires("rocblas/[^2.45]")
+        if self.options.get_safe("rpc_rdma"):
+            self.requires("rdma-core/[*]")
 
     def validate(self):
         check_min_cppstd(self, 17)
@@ -371,9 +389,11 @@ class GgmlConan(ConanFile):
             raise ConanInvalidConfiguration("with_musa=True is not yet supported")
         if self.options.with_webgpu:
             raise ConanInvalidConfiguration("with_webgpu=True is not yet supported")
+        if self.options.get_safe("rpc_rdma") and self.settings.os != "Linux":
+            raise ConanInvalidConfiguration("rpc_rdma=True is currently supported only on Linux")
 
     def build_requirements(self):
-        self.tool_requires("cmake/[>=3.14]")
+        self.tool_requires("cmake/[>=3.22 <5]")
         if self.options.with_cuda:
             self.cuda.tool_requires("nvcc")
         if self.options.with_vulkan:
@@ -441,6 +461,8 @@ class GgmlConan(ConanFile):
             tc.cache_variables["GGML_LSX"] = self.options.get_safe("lsx", False)
             tc.cache_variables["GGML_RVV"] = self.options.get_safe("rvv", False)
             tc.cache_variables["GGML_RV_ZFH"] = self.options.get_safe("rv_zfh", False)
+            tc.cache_variables["GGML_RV_ZIHINTPAUSE"] = self.options.get_safe("rv_zihintpause", False)
+            tc.cache_variables["GGML_RV_ZVFBFWMA"] = self.options.get_safe("rv_zvfbfwma", False)
             tc.cache_variables["GGML_XTHEADVECTOR"] = self.options.get_safe("xtheadvector", False)
             tc.cache_variables["GGML_VXE"] = self.options.get_safe("vxe", False)
             tc.cache_variables["GGML_NNPA"] = self.options.get_safe("nnpa", False)
@@ -449,7 +471,7 @@ class GgmlConan(ConanFile):
         if self.options.with_cuda:
             tc.cache_variables["GGML_CUDA_FORCE_MMQ"] = self.options.cuda_force_mmq
             tc.cache_variables["GGML_CUDA_FORCE_CUBLAS"] = self.options.cuda_force_cublas
-            tc.cache_variables["GGML_CUDA_F16"] = self.options.cuda_f16
+            tc.cache_variables["GGML_CUDA_NCCL"] = self.options.cuda_nccl
             tc.cache_variables["GGML_CUDA_NO_PEER_COPY"] = self.options.cuda_no_peer_copy
             tc.cache_variables["GGML_CUDA_NO_VMM"] = self.options.cuda_no_vmm
             tc.cache_variables["GGML_CUDA_FA"] = self.options.cuda_fa
@@ -460,8 +482,6 @@ class GgmlConan(ConanFile):
         if self.options.with_hip:
             tc.cache_variables["GGML_HIP_GRAPHS"] = self.options.hip_graphs
             tc.cache_variables["GGML_HIP_NO_VMM"] = self.options.hip_no_vmm
-            tc.cache_variables["GGML_HIP_ROCWMMA_FATTN"] = self.options.hip_rocwmma_fattn
-            tc.cache_variables["GGML_HIP_FORCE_ROCWMMA_FATTN_GFX12"] = self.options.hip_force_rocwmma_fattn_gfx12
             tc.cache_variables["GGML_HIP_MMQ_MFMA"] = self.options.hip_mmq_mfma
             tc.cache_variables["GGML_HIP_EXPORT_METRICS"] = self.options.hip_export_metrics
 
@@ -479,7 +499,6 @@ class GgmlConan(ConanFile):
 
         # Metal options
         if self.options.get_safe("with_metal", False):
-            tc.cache_variables["GGML_METAL_USE_BF16"] = self.options.metal_use_bf16
             tc.cache_variables["GGML_METAL_NDEBUG"] = self.options.metal_ndebug
             tc.cache_variables["GGML_METAL_SHADER_DEBUG"] = self.options.metal_shader_debug
             tc.cache_variables["GGML_METAL_EMBED_LIBRARY"] = self.options.metal_embed_library
@@ -491,12 +510,28 @@ class GgmlConan(ConanFile):
             tc.cache_variables["GGML_SYCL_F16"] = self.options.sycl_f16
             tc.cache_variables["GGML_SYCL_GRAPH"] = self.options.sycl_graph
             tc.cache_variables["GGML_SYCL_DNN"] = self.options.sycl_dnn
+            tc.cache_variables["GGML_SYCL_HOST_MEM_FALLBACK"] = self.options.sycl_host_mem_fallback
+            tc.cache_variables["GGML_SYCL_SUPPORT_LEVEL_ZERO_API"] = self.options.sycl_level_zero_api
 
         # OpenCL options
         if self.options.with_opencl:
             tc.cache_variables["GGML_OPENCL_PROFILING"] = self.options.opencl_profiling
             tc.cache_variables["GGML_OPENCL_EMBED_KERNELS"] = self.options.opencl_embed_kernels
             tc.cache_variables["GGML_OPENCL_USE_ADRENO_KERNELS"] = self.options.opencl_use_adreno_kernels
+
+        if self.options.with_rpc:
+            tc.cache_variables["GGML_RPC_RDMA"] = self.options.rpc_rdma
+
+        # Backends not exposed by this recipe.
+        tc.cache_variables["GGML_ET"] = False
+        tc.cache_variables["GGML_HEXAGON"] = False
+        tc.cache_variables["GGML_OPENVINO"] = False
+        tc.cache_variables["GGML_VIRTGPU"] = False
+        tc.cache_variables["GGML_VIRTGPU_BACKEND"] = False
+        tc.cache_variables["GGML_ZENDNN"] = False
+        tc.cache_variables["GGML_HIP_RCCL"] = False
+        tc.cache_variables["GGML_OPENMP_FETCH"] = False
+        tc.cache_variables["GGML_SCHED_NO_REALLOC"] = False
 
         # Backend loading
         tc.cache_variables["GGML_BACKEND_DL"] = False
@@ -545,8 +580,9 @@ class GgmlConan(ConanFile):
             if stdcpp_library(self):
                 self.cpp_info.components["ggml-base"].system_libs.append(stdcpp_library(self))
 
-        self.cpp_info.components["ggml_"].libs = ["ggml"]
-        self.cpp_info.components["ggml_"].requires = ["ggml-base"]
+        ggml = self.cpp_info.components["ggml_"]
+        ggml.libs = ["ggml"]
+        ggml.requires = ["ggml-base"]
 
         # CPU backend
         if self.options.cpu:
@@ -559,27 +595,34 @@ class GgmlConan(ConanFile):
                 self.cpp_info.components["ggml-cpu"].requires.append("memkind::memkind")
             if self._use_accelerate:
                 self.cpp_info.components["ggml-cpu"].frameworks = ["Accelerate"]
+            ggml.requires.append("ggml-cpu")
 
         # Backend components
         if self.options.with_cuda:
             self.cpp_info.components["ggml-cuda"].set_property("cmake_target_name", "ggml::ggml-cuda")
             self.cpp_info.components["ggml-cuda"].libs = ["ggml-cuda"]
             self.cpp_info.components["ggml-cuda"].requires = ["ggml-base", "cudart::cudart_", "cublas::cublas_"]
+            if self.options.cuda_nccl:
+                self.cpp_info.components["ggml-cuda"].requires.append("nccl::nccl")
+            ggml.requires.append("ggml-cuda")
 
         if self.options.with_vulkan:
             self.cpp_info.components["ggml-vulkan"].set_property("cmake_target_name", "ggml::ggml-vulkan")
             self.cpp_info.components["ggml-vulkan"].libs = ["ggml-vulkan"]
             self.cpp_info.components["ggml-vulkan"].requires = ["ggml-base", "vulkan-loader::vulkan-loader"]
+            ggml.requires.append("ggml-vulkan")
 
         if self.options.with_opencl:
             self.cpp_info.components["ggml-opencl"].set_property("cmake_target_name", "ggml::ggml-opencl")
             self.cpp_info.components["ggml-opencl"].libs = ["ggml-opencl"]
             self.cpp_info.components["ggml-opencl"].requires = ["ggml-base", "opencl-icd-loader::opencl-icd-loader"]
+            ggml.requires.append("ggml-opencl")
 
         if self.options.with_hip:
             self.cpp_info.components["ggml-hip"].set_property("cmake_target_name", "ggml::ggml-hip")
             self.cpp_info.components["ggml-hip"].libs = ["ggml-hip"]
             self.cpp_info.components["ggml-hip"].requires = ["ggml-base", "hip::hip", "rocblas::rocblas"]
+            ggml.requires.append("ggml-hip")
 
         if self.options.get_safe("with_metal", False):
             self.cpp_info.components["ggml-metal"].set_property("cmake_target_name", "ggml::ggml-metal")
@@ -587,20 +630,33 @@ class GgmlConan(ConanFile):
             self.cpp_info.components["ggml-metal"].requires = ["ggml-base"]
             if self.settings.os == "Macos":
                 self.cpp_info.components["ggml-metal"].frameworks = ["Foundation", "Metal", "MetalKit"]
+            ggml.requires.append("ggml-metal")
 
         if self.options.with_blas:
             self.cpp_info.components["ggml-blas"].set_property("cmake_target_name", "ggml::ggml-blas")
             self.cpp_info.components["ggml-blas"].libs = ["ggml-blas"]
             self.cpp_info.components["ggml-blas"].requires = ["ggml-base", "blas::blas"]
-            self.cpp_info.components["ggml"].requires.append("ggml-blas")
+            ggml.requires.append("ggml-blas")
 
         if self.options.with_sycl:
             self.cpp_info.components["ggml-sycl"].set_property("cmake_target_name", "ggml::ggml-sycl")
             self.cpp_info.components["ggml-sycl"].libs = ["ggml-sycl"]
             self.cpp_info.components["ggml-sycl"].requires = ["ggml-base"]
             self.cpp_info.components["ggml-sycl"].requires.append("onemath::onemath")
+            ggml.requires.append("ggml-sycl")
 
         if self.options.with_musa:
             self.cpp_info.components["ggml-musa"].set_property("cmake_target_name", "ggml::ggml-musa")
             self.cpp_info.components["ggml-musa"].libs = ["ggml-musa"]
             self.cpp_info.components["ggml-musa"].requires = ["ggml-base"]
+            ggml.requires.append("ggml-musa")
+
+        if self.options.with_rpc:
+            self.cpp_info.components["ggml-rpc"].set_property("cmake_target_name", "ggml::ggml-rpc")
+            self.cpp_info.components["ggml-rpc"].libs = ["ggml-rpc"]
+            self.cpp_info.components["ggml-rpc"].requires = ["ggml-base"]
+            if self.settings.os == "Windows":
+                self.cpp_info.components["ggml-rpc"].system_libs = ["ws2_32"]
+            if self.options.get_safe("rpc_rdma"):
+                self.cpp_info.components["ggml-rpc"].requires.append("rdma-core::libibverbs")
+            ggml.requires.append("ggml-rpc")
