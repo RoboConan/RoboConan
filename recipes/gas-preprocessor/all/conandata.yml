@@ -1,4 +1,7 @@
 sources:
+  "0.0+git.20260326":
+    url: "https://raw.githubusercontent.com/FFmpeg/gas-preprocessor/ac1836309c2e77023c228b7184485597286289d3/gas-preprocessor.pl"
+    sha256: "7124d70cdecba7c5612f9a71fbf3f28514dd9c2ca3022f58ad793f88bb925fcf"
   "0.0+git.20250710":
     url: "https://raw.githubusercontent.com/FFmpeg/gas-preprocessor/a120373ba30de06675d8c47617b315beef16c88e/gas-preprocessor.pl"
     sha256: "0c56e6f495bf49b58c71bf755837ebcac7b537d9489c2bab49255d4d7f4448ae"

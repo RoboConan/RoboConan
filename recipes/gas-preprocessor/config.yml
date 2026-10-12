@@ -1,3 +1,5 @@
 versions:
+  "0.0+git.20260326":
+    folder: all
   "0.0+git.20250710":
     folder: all
