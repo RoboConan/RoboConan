@@ -111,7 +111,6 @@ class CoinClpConan(ConanFile):
             f"--with-asl={yes_no(self.options.with_asl)}",
             f"--with-glpk={yes_no(self.options.with_glpk)}",
             f"--with-mumps={yes_no(self.options.with_mumps)}",
-            f"--with-mumps={yes_no(self.options.with_mumps)}",
             f"--enable-gnu-packages={yes_no(self.options.with_readline)}",
             "--disable-amd-libcheck",
             "--disable-cholmod-libcheck",
@@ -245,4 +244,4 @@ class CoinClpConan(ConanFile):
 
         self.cpp_info.components["osi-clp"].set_property("pkg_config_name", "osi-clp")
         self.cpp_info.components["osi-clp"].libs = ["OsiClp"]
-        self.cpp_info.components["osi-clp"].requires = ["clp", "coin-osi::coin-osi"]
+        self.cpp_info.components["osi-clp"].requires = ["clp", "coin-osi::libosi"]
