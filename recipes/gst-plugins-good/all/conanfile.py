@@ -196,7 +196,7 @@ class GStPluginsGoodConan(ConanFile):
         if "gst-orc" in reqs:
             self.requires("gst-orc/0.4.41")
 
-        if "zlib" in reqs:
+        if "zlib-ng" in reqs:
             self.requires("zlib-ng/[^2.0]")
         if "bzip2" in reqs:
             self.requires("bzip2/[^1.0.8]")
@@ -209,7 +209,7 @@ class GStPluginsGoodConan(ConanFile):
         if "gtk" in reqs:
             # Only GTK 3 is supported
             self.requires("gtk/[^3.24]")
-        if "libjpeg" in reqs:
+        if "libjpeg-meta" in reqs:
             if self.options.with_jpeg:
                 self.requires("libjpeg-meta/latest")
         if "libcaca" in reqs:
@@ -297,6 +297,10 @@ class GStPluginsGoodConan(ConanFile):
 
         for opt in self._all_options:
             tc.project_options[opt] = feature(self.options.get_safe(opt))
+
+        tc.project_options["bz2"] = feature(self._is_enabled("matroska"))
+        tc.project_options["v4l2-libv4l2"] = feature(self.options.get_safe("v4l2"))
+        tc.project_options["v4l2-gudev"] = "disabled"
 
         # Feature options for plugins with external deps
         tc.project_options["aalib"] = "disabled"  # TODO: libaa1

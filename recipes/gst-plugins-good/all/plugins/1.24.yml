@@ -290,7 +290,7 @@ video4linux2:
   requires:
     - gstreamer-video-1.0
     - gstreamer-allocators-1.0
-    - libv4l::libv4l
+    - libv4l::libv4l2
 videobox:
   requires:
     - gstreamer-video-1.0
