@@ -77,6 +77,9 @@ class CoinCsdpConan(ConanFile):
     def package_info(self):
         self.cpp_info.set_property("cmake_target_aliases", ["csdp"])
         self.cpp_info.libs = ["csdp"]
+        self.cpp_info.requires = ["lapack::lapack"]
+        if self.options.with_openmp:
+            self.cpp_info.requires.append("openmp::openmp")
         if self.settings.os in ["Linux", "FreeBSD"]:
             self.cpp_info.system_libs = ["m"]
 
