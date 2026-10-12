@@ -79,7 +79,7 @@ class CplexConan(ConanFile):
     def validate_build(self):
         if not self._archive_dir:
             raise ConanInvalidConfiguration(f"user.tools:offline_archives_folder config variable must be set"
-                                            f" to a location containing a {self._file_name} archive file.")
+                                            f" to a location containing a file matching {self._file_pattern}.")
         matching = list(Path(self._archive_dir).glob(self._file_pattern))
         if not matching:
             raise ConanInvalidConfiguration(f"No file matching {self._file_pattern} found in {self._archive_dir}.")
