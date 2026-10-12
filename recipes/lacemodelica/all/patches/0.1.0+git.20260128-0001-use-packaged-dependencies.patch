@@ -1,0 +1,141 @@
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -8,4 +8,0 @@
+-set(CMAKE_CXX_STANDARD 17)
+-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+-set(CMAKE_CXX_EXTENSIONS OFF)
+-
+@@ -20,7 +16,6 @@ else()
+ endif()
+ 
+ # Dependencies
+-include(FetchContent)
+ include(ExternalProject)
+ 
+ # ANTLR4 runtime
+@@ -31,31 +26,9 @@ set(ANTLR4_INSTALL ON)
+ # Install targets
+ include(GNUInstallDirs)
+ 
+-FetchContent_Declare(
+-    antlr4_runtime
+-    GIT_REPOSITORY https://github.com/antlr/antlr4.git
+-    GIT_TAG ${ANTLR_TAG}
+-    SOURCE_SUBDIR runtime/Cpp
+-)
++find_package(antlr4-runtime REQUIRED CONFIG)
+ 
+-# TinyXML-2 - prefer system, fallback to FetchContent
+-# Use CONFIG mode to require modern CMake config (not FindTinyXML2.cmake modules)
+-# Temporarily disabled: system tinyxml2 may not be built with -fPIC for shared library use
+-#find_package(tinyxml2 CONFIG QUIET)
+-if(FALSE AND tinyxml2_FOUND AND TARGET tinyxml2::tinyxml2)
+-    message(STATUS "Found system TinyXML-2: ${tinyxml2_VERSION}")
+-    set(USE_SYSTEM_TINYXML2 TRUE)
+-    # Alias to match FetchContent target name
+-    add_library(tinyxml2 ALIAS tinyxml2::tinyxml2)
+-else()
+-    message(STATUS "TinyXML-2 not found, building from source")
+-    set(USE_SYSTEM_TINYXML2 FALSE)
+-    FetchContent_Declare(
+-        tinyxml2
+-        GIT_REPOSITORY https://github.com/leethomason/tinyxml2.git
+-        GIT_TAG 10.0.0
+-    )
+-endif()
++find_package(tinyxml2 REQUIRED CONFIG)
+ 
+ # Set policy defaults for FetchContent dependencies
+ # This ensures dependencies like googletest (pulled by antlr4) work with newer CMake
+@@ -71,39 +44,12 @@ set(ANTLR_BUILD_CPP_TESTS OFF CACHE BOOL "" FORCE)
+ # Enable position independent code for tinyxml2 (required for shared library linking)
+ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+ 
+-if(USE_SYSTEM_TINYXML2)
+-    FetchContent_MakeAvailable(antlr4_runtime)
+-else()
+-    FetchContent_MakeAvailable(antlr4_runtime tinyxml2)
+-endif()
++find_package(Protobuf REQUIRED CONFIG)
++find_package(ONNX REQUIRED CONFIG)
++set(USE_SYSTEM_ONNX TRUE)
++set(USE_SYSTEM_PROTOBUF TRUE)
+ 
+-# Try to find system dependencies
+-# Dependency chain: ONNX -> Protobuf -> (absl, utf8_range)
+-find_package(absl QUIET)
+-find_package(utf8_range QUIET)
+-find_package(Protobuf QUIET)
+-find_package(ONNX QUIET)
+-
+-# Check what we can use from the system
+-if(ONNX_FOUND AND Protobuf_FOUND AND absl_FOUND AND utf8_range_FOUND)
+-    # Case 1: Use everything from system
+-    message(STATUS "Found system ONNX: ${ONNX_VERSION}")
+-    message(STATUS "Found system Protobuf: ${Protobuf_VERSION}")
+-    set(USE_SYSTEM_ONNX TRUE)
+-    set(USE_SYSTEM_PROTOBUF TRUE)
+-elseif(Protobuf_FOUND AND absl_FOUND AND utf8_range_FOUND)
+-    # Case 2: Use system Protobuf, build ONNX from source
+-    message(STATUS "Found system Protobuf: ${Protobuf_VERSION}")
+-    message(STATUS "ONNX not found, building from source")
+-    set(USE_SYSTEM_ONNX FALSE)
+-    set(USE_SYSTEM_PROTOBUF TRUE)
+-    set(ONNX_PREFIX_PATH "${CMAKE_PREFIX_PATH}")
+-else()
+-    # Case 3: Build everything from source
+-    message(STATUS "System ONNX and Protobuf not found, building from source")
+-    set(USE_SYSTEM_ONNX FALSE)
+-    set(USE_SYSTEM_PROTOBUF FALSE)
+-    set(ONNX_PREFIX_PATH "${CMAKE_BINARY_DIR}/external_projects")
++if(NOT USE_SYSTEM_PROTOBUF)
+ 
+     # Protobuf (required for ONNX)
+     ExternalProject_Add(protobuf-external
+@@ -220,7 +166,7 @@ if(NOT USE_SYSTEM_ONNX)
+ endif()
+ 
+ # Shared library (core functionality)
+-add_library(lacemodelica SHARED
++add_library(lacemodelica
+     src/lacemodelica_c.cpp
+     src/ModelInfoExtractor.cpp
+     src/FMUGenerator.cpp
+@@ -234,8 +180,13 @@ add_library(lacemodelica SHARED
+     ${GENERATED_SOURCES}
+ )
+ 
+-# Export macro and visibility settings for shared library
+-target_compile_definitions(lacemodelica PRIVATE LACEMODELICA_BUILDING)
++target_compile_features(lacemodelica PRIVATE cxx_std_17)
++
++# Export macro and visibility settings
++target_compile_definitions(lacemodelica
++    PRIVATE $<$<BOOL:${BUILD_SHARED_LIBS}>:LACEMODELICA_BUILDING>
++    PUBLIC $<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:LACEMODELICA_STATIC>
++)
+ set_target_properties(lacemodelica PROPERTIES
+     CXX_VISIBILITY_PRESET hidden
+     VISIBILITY_INLINES_HIDDEN ON
+@@ -296,9 +247,8 @@ if(WIN32)
+     )
+ endif()
+ 
+-install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/
++install(FILES ${CMAKE_SOURCE_DIR}/include/lacemodelica.h
+     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/lacemodelica
+-    FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
+ )
+ 
+ # Testing
+--- a/include/lacemodelica.h
++++ b/include/lacemodelica.h
+@@ -5,7 +5,7 @@
+ #define LACEMODELICA_H
+ 
+ /* Export macro for shared library */
+-#ifdef _WIN32
++#if defined(_WIN32) && !defined(LACEMODELICA_STATIC)
+     #ifdef LACEMODELICA_BUILDING
+         #define LACEMODELICA_EXPORT __declspec(dllexport)
+     #else

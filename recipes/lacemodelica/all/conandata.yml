@@ -1,0 +1,9 @@
+sources:
+  "0.1.0+git.20260128":
+    url: "https://github.com/yacoda/lacemodelica/archive/5da9bfe5d6d6fb8ad8b06adc4918a0038938a3ba.tar.gz"
+    sha256: "31a434c12f132c84afddfcee37b41afe344baf5c8f75fa33d79214a05bfd0123"
+patches:
+  "0.1.0+git.20260128":
+    - patch_file: "patches/0.1.0+git.20260128-0001-use-packaged-dependencies.patch"
+      patch_description: "Use packaged dependencies and honor the shared library and C++ standard options"
+      patch_type: "conan"
