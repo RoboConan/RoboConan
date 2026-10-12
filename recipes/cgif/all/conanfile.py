@@ -48,6 +48,9 @@ class CgifConan(ConanFile):
     def generate(self):
         tc = MesonToolchain(self)
         tc.project_options["auto_features"] = "enabled"
+        tc.project_options["examples"] = "false"
+        tc.project_options["fuzzer"] = "false"
+        tc.project_options["install_examples"] = "false"
         tc.project_options["tests"] = "false"
         tc.generate()
 
