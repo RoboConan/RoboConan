@@ -1,17 +1,9 @@
 sources:
-  "3.100":
-    url: "https://downloads.sourceforge.net/lame/lame-3.100.tar.gz"
-    sha256: "ddfe36cab873794038ae2c1210557ad34857a4b6bdc515785d1da9e175b1da1e"
+  "4.0":
+    url: "https://downloads.sourceforge.net/lame/lame-4.0.tar.gz"
+    sha256: "3df5124d5ad3a98312ffd7ba6a9b36230e4f8a3e66d3ce0f425e336c32d216eb"
 patches:
-  "3.100":
-    - patch_file: "patches/6410.patch"
-      patch_type: "backport"
-      patch_description: "bug tracker item #487: v3.100 breaks Windows compatibility"
-      patch_source: "https://sourceforge.net/p/lame/svn/commit_browser -- [r6410]"
-    - patch_file: "patches/6416.patch"
-      patch_type: "backport"
-      patch_description: "lame patches ticket #75: Fix for completing svn-r6410"
-      patch_source: "https://sourceforge.net/p/lame/svn/commit_browser -- [r6410]"
-    - patch_file: "patches/android.patch"
+  "4.0":
+    - patch_file: "patches/4.0-android.patch"
+      patch_description: "Do not use glibc-specific FPU controls on Android"
       patch_type: "portability"
-      patch_description: "Add __ANDROID__ test to one bit"

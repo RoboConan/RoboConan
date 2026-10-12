@@ -62,6 +62,7 @@ class LibMP3LameConan(ConanFile):
             env.generate()
             tc = AutotoolsToolchain(self)
             tc.configure_args.append("--disable-frontend")
+            tc.configure_args.append("--disable-decoder")
             if self.settings.compiler == "clang" and self.settings.arch in ["x86", "x86_64"]:
                 tc.extra_cxxflags.extend(["-mmmx", "-msse"])
             tc.generate()
@@ -110,8 +111,6 @@ class LibMP3LameConan(ConanFile):
         autotools.make()
 
     def build(self):
-        replace_in_file(self, os.path.join(self.source_folder, "include", "libmp3lame.sym"), "lame_init_old\n", "")
-
         if is_msvc(self) or self._is_clang_cl:
             self._build_vs()
         else:
@@ -135,6 +134,7 @@ class LibMP3LameConan(ConanFile):
             fix_apple_shared_install_name(self)
 
     def package_info(self):
+        self.cpp_info.set_property("pkg_config_name", "lame")
         self.cpp_info.libs = ["mp3lame"]
         if self.settings.os in ["Linux", "FreeBSD"]:
             self.cpp_info.system_libs = ["m"]
