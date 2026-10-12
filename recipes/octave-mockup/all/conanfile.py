@@ -24,6 +24,8 @@ class OctaveMockupConan(ConanFile):
 
     def generate(self):
         tc = CMakeToolchain(self)
+        # The mockup declares its own bool type, which is not valid in C23.
+        tc.cache_variables["CMAKE_C_STANDARD"] = 17
         tc.generate()
 
     def build(self):
