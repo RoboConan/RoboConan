@@ -62,7 +62,7 @@ class Libxml2Conan(ConanFile):
             self.requires("icu/[*]")
 
     def build_requirements(self):
-        self.tool_requires("cmake/[>=3.18]")
+        self.tool_requires("cmake/[>=3.18 <5]")
 
     def generate(self):
         tc = CMakeToolchain(self)
@@ -165,4 +165,5 @@ class Libxml2Conan(ConanFile):
             self.cpp_info.requires.append("zlib-ng::zlib-ng")
         if self.settings.os == "Windows":
             self.cpp_info.system_libs.append("Bcrypt")
-            self.cpp_info.system_libs.append("ws2_32") # http
+            if Version(self.version) < "2.15.0":
+                self.cpp_info.system_libs.append("ws2_32")  # HTTP transport removed in 2.15
