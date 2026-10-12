@@ -1,0 +1,297 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 3a550c3a9..db23bce33 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1228,6 +1228,14 @@ macro(eager_update DEP_NAME)
+     endif()
+ endmacro()
+
++if((WITH_MADNLP AND NOT WITH_BUILD_MADNLP AND NOT WITH_MOCKUP_MADNLP) OR
++   (WITH_CCOPT AND NOT WITH_BUILD_CCOPT AND NOT WITH_MOCKUP_CCOPT))
++  find_package(libmad REQUIRED CONFIG)
++  if(WITH_MADNLP)
++    set(MADNLP_FOUND TRUE)
++  endif()
++endif()
++
+ set(WITH_BUILD_MOCKUPS OFF)
+ # Packages must be sorted from high to low in the dependency graph
+ foreach(PKG CPLEX SNOPT KNITRO GUROBI XPRESS MOSEK WORHP HSL MADNLP CONOPT)
+@@ -1234,6 +1242,6 @@ foreach(PKG CPLEX SNOPT KNITRO GUROBI XPRESS MOSEK WORHP HSL MADNLP CONOPT)
+   string(TOLOWER ${PKG} PKG_LOWER)
+   if(WITH_${PKG} AND NOT WITH_BUILD_${PKG})
+-    if(NOT WITH_MOCKUP_${PKG})
++    if(NOT WITH_MOCKUP_${PKG} AND NOT ${PKG}_FOUND)
+       get_property(PACKAGES_NOT_FOUND_BACKUP GLOBAL PROPERTY PACKAGES_NOT_FOUND)
+       get_property(PACKAGES_FOUND_BACKUP GLOBAL PROPERTY PACKAGES_FOUND)
+       find_package(${PKG})
+@@ -2225,14 +2233,10 @@ if(WITH_UNO)
+       "${CMAKE_BINARY_DIR}/external_projects/include/uno"
+       DESTINATION "${INCLUDE_PREFIX}")
+   else()
+-    # try to find system csparse
+-    find_package(uno REQUIRED)
+-    add_library(uno SHARED IMPORTED GLOBAL)
+-    set_target_properties(uno PROPERTIES
+-      IMPORTED_LOCATION "${UNO_LIBRARY}"
+-      INTERFACE_INCLUDE_DIRECTORIES "${UNO_INCLUDE_DIRS}"
+-    )
+-target_compile_features(uno INTERFACE cxx_std_17)
++    find_package(uno REQUIRED CONFIG)
++    add_library(uno INTERFACE)
++    target_link_libraries(uno INTERFACE uno::uno)
++    target_compile_features(uno INTERFACE cxx_std_17)
+   endif()
+ endif()
+ add_feature_info(uno-interface WITH_UNO "Interface to the NLP solver UNO.")
+@@ -2847,6 +2851,10 @@ if(WITH_ONNX_RUNTIME)
+     set(WITH_ONNX ON CACHE BOOL "Enabled by WITH_ONNX_RUNTIME" FORCE)
+   endif()
+
++  if(NOT WITH_BUILD_ONNX_RUNTIME AND NOT WITH_MOCKUP_ONNX_RUNTIME)
++    find_package(onnxruntime REQUIRED CONFIG)
++  endif()
++
+   # Optionally fetch a prebuilt ONNX Runtime release (sets ONNX_RUNTIME_DIR for the find below)
+   if(WITH_BUILD_ONNX_RUNTIME)
+     set(ORT_VER "${BUILD_ONNX_RUNTIME_VERSION}")
+@@ -2890,10 +2898,15 @@ if(WITH_ONNX_RUNTIME)
+   endif()
+
+   # Headers always come from a real distribution (the plugin dereferences OrtApi)
+-  find_path(ONNX_RUNTIME_INCLUDE_DIR
+-    NAMES onnxruntime_c_api.h
+-    HINTS ${ONNX_RUNTIME_DIR}/include ${ONNX_RUNTIME_DIR}
+-    PATH_SUFFIXES onnxruntime)
++  if(TARGET onnxruntime::onnxruntime)
++    get_target_property(ONNX_RUNTIME_INCLUDE_DIR onnxruntime::onnxruntime
++      INTERFACE_INCLUDE_DIRECTORIES)
++  else()
++    find_path(ONNX_RUNTIME_INCLUDE_DIR
++      NAMES onnxruntime_c_api.h
++      HINTS ${ONNX_RUNTIME_DIR}/include ${ONNX_RUNTIME_DIR}
++      PATH_SUFFIXES onnxruntime)
++  endif()
+ 
+   if(WITH_MOCKUP_ONNX_RUNTIME)
+     # Self-contained mockup (built by mockups-external): an adaptor that opens the ONNX Runtime
+@@ -2916,20 +2929,22 @@ if(WITH_ONNX_RUNTIME)
+     install(FILES ${ONNX_RUNTIME_ADAPTOR_LIB} DESTINATION "${LIB_PREFIX}")
+     message(STATUS "Using mockup ONNX Runtime adaptor: ${ONNX_RUNTIME_ADAPTOR_LIB}")
+   else()
+-    find_library(ONNX_RUNTIME_LIBRARY
+-      NAMES onnxruntime
+-      HINTS ${ONNX_RUNTIME_DIR}/lib ${ONNX_RUNTIME_DIR})
+-    if(ONNX_RUNTIME_INCLUDE_DIR AND ONNX_RUNTIME_LIBRARY)
+-      if(NOT TARGET onnxruntime::onnxruntime)
++    if(TARGET onnxruntime::onnxruntime)
++      message(STATUS "Found ONNX Runtime target: onnxruntime::onnxruntime")
++    else()
++      find_library(ONNX_RUNTIME_LIBRARY
++        NAMES onnxruntime
++        HINTS ${ONNX_RUNTIME_DIR}/lib ${ONNX_RUNTIME_DIR})
++      if(ONNX_RUNTIME_INCLUDE_DIR AND ONNX_RUNTIME_LIBRARY)
+         add_library(onnxruntime::onnxruntime UNKNOWN IMPORTED)
+         set_target_properties(onnxruntime::onnxruntime PROPERTIES
+           IMPORTED_LOCATION "${ONNX_RUNTIME_LIBRARY}"
+           INTERFACE_INCLUDE_DIRECTORIES "${ONNX_RUNTIME_INCLUDE_DIR}")
++        message(STATUS "Found ONNX Runtime: ${ONNX_RUNTIME_LIBRARY}")
++      else()
++        message(WARNING "ONNX Runtime not found; set ONNX_RUNTIME_DIR. Disabling WITH_ONNX_RUNTIME.")
++        set(WITH_ONNX_RUNTIME OFF CACHE BOOL "ONNX Runtime not found" FORCE)
+       endif()
+-      message(STATUS "Found ONNX Runtime: ${ONNX_RUNTIME_LIBRARY}")
+-    else()
+-      message(WARNING "ONNX Runtime not found; set ONNX_RUNTIME_DIR. Disabling WITH_ONNX_RUNTIME.")
+-      set(WITH_ONNX_RUNTIME OFF CACHE BOOL "ONNX Runtime not found" FORCE)
+     endif()
+   endif()
+ endif()
+@@ -3077,5 +3092,7 @@ if(WITH_LACEMODELICA)
+       "${CMAKE_BINARY_DIR}/external_projects/include/lacemodelica"
+       DESTINATION "${INCLUDE_PREFIX}")
++  else()
++    find_package(LACEMODELICA REQUIRED CONFIG)
+   endif()
+ endif()
+ add_feature_info(lacemodelica-sourcebuild WITH_BUILD_LACEMODELICA "Build LaceModelica (BUILD_LACEMODELICA_VERSION=${BUILD_LACEMODELICA_VERSION}) from downloaded source (BUILD_LACEMODELICA_GIT_REPO=${BUILD_LACEMODELICA_GIT_REPO}).")
+diff --git a/casadi/core/CMakeLists.txt b/casadi/core/CMakeLists.txt
+index 4c28ee5c1..cfe8615b9 100644
+--- a/casadi/core/CMakeLists.txt
++++ b/casadi/core/CMakeLists.txt
+@@ -7,6 +7,7 @@ add_subdirectory(runtime)
+ if(WITH_FMI2)
+   # FMI C API, version 2
+   add_definitions(-DWITH_FMI2)
++  find_package(FMI2 REQUIRED)
+   include_directories(${FMI2_INCLUDE_DIR})
+   set(FMU2_SRC fmu2.hpp fmu2.cpp)
+ else()
+@@ -18,6 +19,7 @@ endif()
+ if(WITH_FMI3)
+   # FMI C API, version 2
+   add_definitions(-DWITH_FMI3)
++  find_package(FMI3 REQUIRED)
+   include_directories(${FMI3_INCLUDE_DIR})
+   set(FMU3_SRC fmu3.hpp fmu3.cpp)
+ else()
+diff --git a/casadi/interfaces/blocksqp/CMakeLists.txt b/casadi/interfaces/blocksqp/CMakeLists.txt
+index 21d308552..1994307e1 100644
+--- a/casadi/interfaces/blocksqp/CMakeLists.txt
++++ b/casadi/interfaces/blocksqp/CMakeLists.txt
+@@ -1,4 +1,5 @@
+ cmake_minimum_required(VERSION 3.16.3)
++find_package(QPOASES REQUIRED)
+ include_directories(${QPOASES_INCLUDE_DIR})
+ 
+ casadi_plugin(Nlpsol blocksqp
+diff --git a/casadi/interfaces/clang/CMakeLists.txt b/casadi/interfaces/clang/CMakeLists.txt
+index 586365f03..c2d05bfbd 100644
+--- a/casadi/interfaces/clang/CMakeLists.txt
++++ b/casadi/interfaces/clang/CMakeLists.txt
+@@ -11,7 +11,7 @@ casadi_plugin(Importer clang
+ casadi_plugin_link_libraries(Importer clang ${CLANG_LIBRARIES})
+ 
+ # Get resource directory
+-file(COPY ${CLANG_LLVM_LIB_DIR}/clang DESTINATION ${LIBRARY_OUTPUT_PATH}/casadi/jit)
++# file(COPY ${CLANG_LLVM_LIB_DIR}/clang DESTINATION ${LIBRARY_OUTPUT_PATH}/casadi/jit)
+ 
+ # Create text files containing system paths
+ set(SYSTEM_FILE ${CMAKE_CURRENT_BINARY_DIR}/system_includes.txt)
+diff --git a/casadi/interfaces/clang/clang_compiler.hpp b/casadi/interfaces/clang/clang_compiler.hpp
+index 7f54853a2..02f88f3a2 100644
+--- a/casadi/interfaces/clang/clang_compiler.hpp
++++ b/casadi/interfaces/clang/clang_compiler.hpp
+@@ -52,7 +52,6 @@
+ #include "llvm/IR/LLVMContext.h"
+ //#include "llvm/IR/Verifier.h"
+ #include <llvm/Support/FileSystem.h>
+-#include <llvm/Support/Host.h>
+ #include <llvm/Support/ManagedStatic.h>
+ #include <llvm/Support/Path.h>
+ #include <llvm/Support/TargetSelect.h>
+diff --git a/casadi/interfaces/clarabel/clarabel_interface.hpp b/casadi/interfaces/clarabel/clarabel_interface.hpp
+index 5582889ac..ff96a614d 100644
+--- a/casadi/interfaces/clarabel/clarabel_interface.hpp
++++ b/casadi/interfaces/clarabel/clarabel_interface.hpp
+@@ -27,7 +27,7 @@
+ 
+ #include "casadi/core/conic_impl.hpp"
+ #include <casadi/interfaces/clarabel/casadi_conic_clarabel_export.h>
+-#include <Clarabel.h>
++#include <clarabel.h>
+ #include <string>
+ 
+ namespace casadi {
+diff --git a/casadi/interfaces/daqp/daqp_interface.hpp b/casadi/interfaces/daqp/daqp_interface.hpp
+index 2ac4b618b..bdfdde4fa 100644
+--- a/casadi/interfaces/daqp/daqp_interface.hpp
++++ b/casadi/interfaces/daqp/daqp_interface.hpp
+@@ -28,7 +28,7 @@
+ #include "casadi/core/conic_impl.hpp"
+ #include <casadi/interfaces/daqp/casadi_conic_daqp_export.h>
+ 
+-#include <api.h>
++#include <daqp/api.h>
+ #include <string>
+ 
+ namespace casadi {
+diff --git a/casadi/interfaces/hpmpc/CMakeLists.txt b/casadi/interfaces/hpmpc/CMakeLists.txt
+index e850faaec..b814d42e5 100644
+--- a/casadi/interfaces/hpmpc/CMakeLists.txt
++++ b/casadi/interfaces/hpmpc/CMakeLists.txt
+@@ -1,4 +1,5 @@
+ cmake_minimum_required(VERSION 3.16.3)
++find_package(HPMPC REQUIRED)
+ include_directories(${HPMPC_INCLUDE_DIR})
+ 
+ casadi_plugin(Conic hpmpc
+diff --git a/casadi/interfaces/ooqp/ooqp_interface.cpp b/casadi/interfaces/ooqp/ooqp_interface.cpp
+index 47704aef8..ff0b5d69e 100644
+--- a/casadi/interfaces/ooqp/ooqp_interface.cpp
++++ b/casadi/interfaces/ooqp/ooqp_interface.cpp
+@@ -27,9 +27,9 @@
+ #include "casadi/core/casadi_misc.hpp"
+ 
+ // OOQP headers
+-#include <cQpGenSparse.h>
+-#include <Status.h>
+-#include <GondzioSolver.h>
++#include <ooqp/cQpGenSparse.h>
++#include <ooqp/Status.h>
++#include <ooqp/GondzioSolver.h>
+ 
+ // A variable that controls the printlevel of OOQP
+ // This is the only possible way to access it using the C++ interface
+diff --git a/casadi/interfaces/onnx/CMakeLists.txt b/casadi/interfaces/onnx/CMakeLists.txt
+index 1e63432c3..72a1c248c 100644
+--- a/casadi/interfaces/onnx/CMakeLists.txt
++++ b/casadi/interfaces/onnx/CMakeLists.txt
+@@ -15,8 +15,3 @@ if(WITH_ONNX)
+   casadi_plugin_link_libraries(GraphModel onnx ONNX::onnx ONNX::onnx_proto)
+-
+-  # Force C++17 for ONNX compatibility
+-  set_target_properties(casadi_graphmodel_onnx PROPERTIES
+-    CXX_STANDARD 17
+-    CXX_STANDARD_REQUIRED ON
+-  )
++  target_compile_features(casadi_graphmodel_onnx PRIVATE cxx_std_17)
+ endif()
+diff --git a/casadi/interfaces/qpoases/CMakeLists.txt b/casadi/interfaces/qpoases/CMakeLists.txt
+index 2248236eb..11ffd4e35 100644
+--- a/casadi/interfaces/qpoases/CMakeLists.txt
++++ b/casadi/interfaces/qpoases/CMakeLists.txt
+@@ -1,4 +1,5 @@
+ cmake_minimum_required(VERSION 3.16.3)
++find_package(QPOASES REQUIRED)
+ include_directories(${QPOASES_INCLUDE_DIR})
+ 
+ casadi_plugin(Conic qpoases
+diff --git a/casadi/interfaces/uno/uno_interface.cpp b/casadi/interfaces/uno/uno_interface.cpp
+index 5dcc01c8d..bb04dbf91 100644
+--- a/casadi/interfaces/uno/uno_interface.cpp
++++ b/casadi/interfaces/uno/uno_interface.cpp
+@@ -266,7 +266,10 @@ namespace casadi {
+     case UNO_INFEASIBLE_STATIONARY_POINT: return "Converged with infeasible stationary point";
+     case UNO_FEASIBLE_SMALL_STEP:         return "Terminated with feasible small step";
+     case UNO_INFEASIBLE_SMALL_STEP:       return "Terminated with infeasible small step";
+-    case UNO_UNBOUNDED:                   return "Terminated with unbounded problem";
++    case 6:
++      return UNO_VERSION_MINOR >= 9
++        ? "Terminated with diverging iterate" : "Terminated with unbounded problem";
++    case 7:                               return "Terminated with unbounded objective";
+     case UNO_NOT_OPTIMAL:                 return "Terminated with not optimal point";
+     default:                              return "Terminated with an unknown status";
+     }
+diff --git a/casadi/interfaces/piqp/CMakeLists.txt b/casadi/interfaces/piqp/CMakeLists.txt
+index 8730f6b7e..3e361133d 100644
+--- a/casadi/interfaces/piqp/CMakeLists.txt
++++ b/casadi/interfaces/piqp/CMakeLists.txt
+@@ -3,2 +3,0 @@
+-set(CMAKE_CXX_STANDARD 14)
+-
+@@ -10 +8,2 @@
+-  piqp_interface_meta.cpp)
++  piqp_interface_meta.cpp)
++target_compile_features(casadi_conic_piqp PRIVATE cxx_std_17)
+diff --git a/casadi/interfaces/proxqp/CMakeLists.txt b/casadi/interfaces/proxqp/CMakeLists.txt
+index a302364c4..78565637f 100644
+--- a/casadi/interfaces/proxqp/CMakeLists.txt
++++ b/casadi/interfaces/proxqp/CMakeLists.txt
+@@ -3,2 +3,0 @@
+-set(CMAKE_CXX_STANDARD 17)
+-
+@@ -8 +6,2 @@
+-  proxqp_interface_meta.cpp)
++  proxqp_interface_meta.cpp)
++target_compile_features(casadi_conic_proxqp PRIVATE cxx_std_17)
+diff --git a/casadi/interfaces/daqp/daqp_runtime.hpp b/casadi/interfaces/daqp/daqp_runtime.hpp
+--- a/casadi/interfaces/daqp/daqp_runtime.hpp
++++ b/casadi/interfaces/daqp/daqp_runtime.hpp
+@@ -191 +191,5 @@ int casadi_daqp_solve(casadi_daqp_data<T1>* d, const double** arg, double** res,
+-  d_qp->success = d->res.exitflag==EXIT_OPTIMAL;
++#ifdef DAQP_EXIT_OPTIMAL
++  d_qp->success = d->res.exitflag==DAQP_EXIT_OPTIMAL;
++#else
++  d_qp->success = d->res.exitflag==EXIT_OPTIMAL;
++#endif

@@ -5,3 +5,5 @@ find_package(casadi REQUIRED CONFIG)
 
 add_executable(${PROJECT_NAME} test_package.cpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE casadi::casadi)
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+    TEST_BMO_PATH="${CMAKE_CURRENT_SOURCE_DIR}/DerVariable.bmo")

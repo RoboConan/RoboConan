@@ -1,8 +1,8 @@
-Fix try_compile() failing due to OpenMP_CXX_FLAGS flags being added to CMAKE_CXX_FLAGS and libomp not being found.
+Use OpenMP imported targets instead of injecting compiler flags globally.
 
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -300,10 +300,7 @@
+@@ -300,10 +300,8 @@
  option(WITH_OPENMP "Compile with parallelization support using OpenMP" OFF)
  if(WITH_OPENMP)
    find_package(OpenMP REQUIRED)
@@ -10,7 +10,8 @@ Fix try_compile() failing due to OpenMP_CXX_FLAGS flags being added to CMAKE_CXX
 -    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS} -DWITH_OPENMP")
 -    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS} -DWITH_OPENMP")
 -  endif()
-+  link_libraries(OpenMP::OpenMP_C)
++  add_definitions(-DWITH_OPENMP)
++  link_libraries(OpenMP::OpenMP_C OpenMP::OpenMP_CXX)
  endif()
  
  # enabling Threads support if requested

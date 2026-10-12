@@ -1,8 +1,14 @@
 sources:
+  "3.8.1":
+    url: "https://github.com/casadi/casadi/archive/3.8.1.tar.gz"
+    sha256: "99c14f3c50dbc8393f449844cb600c5151acff5f74ed53c97d444fcaaf6b5a13"
   "3.7.2":
-    url: "https://github.com/casadi/casadi/archive/refs/tags/3.7.2.tar.gz"
+    url: "https://github.com/casadi/casadi/archive/3.7.2.tar.gz"
     sha256: "5995d915ae97d3ef0f3f8e785797ba0131e1ceea14e1246a063dcf3c46b37b2c"
 patches:
+  "3.8.1":
+    - patch_file: "patches/3.8.1-fix-deps.patch"
+    - patch_file: "patches/3.8.1-fix-openmp-linking.patch"
   "3.7.2":
     - patch_file: "patches/3.7.2-fix-deps.patch"
     - patch_file: "patches/3.7.2-fix-openmp-linking.patch"
