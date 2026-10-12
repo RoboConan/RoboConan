@@ -101,7 +101,7 @@ class CoinAlpsConan(ConanFile):
         self.cpp_info.includedirs.append("include/coin")
         self.cpp_info.requires = [
             "coin-utils::coin-utils",
-            "coin-osi::coin-osi",
+            "coin-osi::libosi",
         ]
         if Version(self.version) >= "2.0":
             self.cpp_info.requires.append("openmpi::ompi-c")
