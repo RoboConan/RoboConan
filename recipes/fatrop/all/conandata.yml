@@ -1,4 +1,4 @@
 sources:
-  "0.0.4+git.20250805":
-    url: "https://github.com/meco-group/fatrop/archive/54818e4b39789e4a8c94942cded8265a595581ac.tar.gz"
-    sha256: "184cdcd0e1e1fc7e45bc82c5052638cab7e42e254077c8bc3fe482895278fa51"
+  "1.2.0":
+    url: "https://github.com/meco-group/fatrop/archive/v1.2.0.tar.gz"
+    sha256: "f3635fa5c4296b174c494d778be00c554101c97095cf11f7525903ff2233e863"

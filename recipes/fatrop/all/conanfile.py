@@ -13,7 +13,7 @@ class FatropConan(ConanFile):
     name = "fatrop"
     description = ("Fatrop is a nonlinear optimal control problem solver that aims to be fast, "
                    "support a broad class of optimal control problems and achieve a high numerical robustness.")
-    license = "LGPL-3.0"
+    license = "BSD-2-Clause AND EPL-2.0"
     homepage = "https://github.com/meco-group/fatrop"
     topics = ("optimization", "optimal-control", "interior-point", "nonlinear-optimization")
     package_type = "library"
@@ -21,12 +21,12 @@ class FatropConan(ConanFile):
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
-        "enable_legacy": [True, False],
+        "with_c_interface": [True, False],
     }
     default_options = {
         "shared": False,
         "fPIC": True,
-        "enable_legacy": True,
+        "with_c_interface": True,
     }
     implements = ["auto_shared_fpic"]
 
@@ -34,7 +34,7 @@ class FatropConan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("blasfeo/[>=0.1 <1]", transitive_headers=True, transitive_libs=True)
+        self.requires("blasfeo/[>=0.1.4.3 <1]", transitive_headers=True, transitive_libs=True)
 
     def validate(self):
         check_min_cppstd(self, 17)
@@ -47,14 +47,14 @@ class FatropConan(ConanFile):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
         replace_in_file(self, "CMakeLists.txt", "set(CMAKE_POSITION_INDEPENDENT_CODE ON)", "")
         replace_in_file(self, "CMakeLists.txt", "set(CMAKE_CXX_STANDARD 17)", "")
-        replace_in_file(self, "CMakeLists.txt", "-march=native", "")
 
     def generate(self):
         tc = CMakeToolchain(self)
         tc.cache_variables["BUILD_TESTS"] = False
         tc.cache_variables["BUILD_EXAMPLES"] = False
         tc.cache_variables["WITH_BUILD_BLASFEO"] = False
-        tc.cache_variables["BUILD_WITH_LEGACY"] = self.options.enable_legacy
+        tc.cache_variables["BUILD_WITH_C_INTERFACE"] = self.options.with_c_interface
+        tc.cache_variables["FATROP_ENABLE_ASAN"] = False
         tc.preprocessor_definitions["NOMINMAX"] = None
         tc.generate()
 
@@ -71,6 +71,7 @@ class FatropConan(ConanFile):
         cmake = CMake(self)
         cmake.install()
         rmdir(self, os.path.join(self.package_folder, "cmake"))
+        rmdir(self, os.path.join(self.package_folder, "lib", "cmake"))
 
     def package_info(self):
         self.cpp_info.set_property("cmake_file_name", "fatrop")
