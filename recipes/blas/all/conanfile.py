@@ -1,13 +1,10 @@
-import os
-import textwrap
 from functools import cached_property
 
 from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
 from conan.tools.apple import is_apple_os
-from conan.tools.files import *
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.21"
 
 
 class BlasConan(ConanFile):
@@ -85,8 +82,9 @@ class BlasConan(ConanFile):
             if self._dependency.options.shared != self.options.shared:
                 raise ConanInvalidConfiguration(f"-o {self._dependency.ref}:shared != {self.options.shared} value from -o {self.ref}:shared")
 
-    def package(self):
-        bla_vendor = {
+    @property
+    def _bla_vendor(self):
+        return {
             "openblas": "OpenBLAS",
             "mkl": "Intel10",
             "blis": "FLAME",
@@ -96,14 +94,12 @@ class BlasConan(ConanFile):
             "libblastrampoline": "libblastrampoline",
             "flexiblas": "FlexiBLAS",
         }[str(self.options.provider)]
-        save(self, os.path.join(self.package_folder, "share", "conan", "blas-wrapper.cmake"), textwrap.dedent(f"""\
-            set(CONAN_BLA_VENDOR {bla_vendor})
-        """))
 
     def package_info(self):
         self.cpp_info.set_property("cmake_find_mode", "both")
         self.cpp_info.set_property("cmake_file_name", "BLAS")
         self.cpp_info.set_property("cmake_target_name", "BLAS::BLAS")
+        self.cpp_info.set_property("cmake_extra_variables", {"CONAN_BLA_VENDOR": self._bla_vendor})
         self.cpp_info.set_property("pkg_config_name", "blas")
 
         self.cpp_info.bindirs = []
@@ -112,6 +108,3 @@ class BlasConan(ConanFile):
 
         if self.options.provider == "accelerate":
             self.cpp_info.frameworks = ["Accelerate"]
-
-        self.cpp_info.builddirs = ["share/conan"]
-        self.cpp_info.set_property("cmake_build_modules", ["share/conan/blas-wrapper.cmake"])
