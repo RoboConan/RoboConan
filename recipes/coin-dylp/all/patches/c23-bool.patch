@@ -1,0 +1,20 @@
+--- a/DyLP/src/DylpStdLib/dylib_std.h
++++ b/DyLP/src/DylpStdLib/dylib_std.h
+@@ -64,1 +64,9 @@
+ #ifndef	__cplusplus
++#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L
++#ifndef FALSE
++#define FALSE false
++#endif
++#ifndef TRUE
++#define TRUE true
++#endif
++#else
+ #define FALSE 0
+ #define TRUE 1
+ # ifdef BOOL
+@@ -77,3 +85,4 @@
+   typedef int bool ;
+ # endif
+ #endif
++#endif

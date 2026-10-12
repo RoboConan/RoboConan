@@ -31,6 +31,9 @@ class CoinDyLPConan(ConanFile):
     }
     implements = ["auto_shared_fpic"]
 
+    def export_sources(self):
+        export_conandata_patches(self)
+
     def layout(self):
         basic_layout(self, src_folder="src")
 
@@ -50,6 +53,7 @@ class CoinDyLPConan(ConanFile):
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
+        apply_conandata_patches(self)
 
     def generate(self):
         tc = AutotoolsToolchain(self)
@@ -58,6 +62,9 @@ class CoinDyLPConan(ConanFile):
             tc.configure_args.append(f"--enable-msvc={msvc_runtime_flag(self)}")
         env = tc.environment()
         env.define("PKG_CONFIG_PATH", self.generators_folder)
+        if str(self.settings.compiler) in ["gcc", "clang", "apple-clang"]:
+            # The old configure script probes GNU C before initializing the object suffix.
+            env.define("ac_cv_c_compiler_gnu", "yes")
         if is_msvc(self):
             ar_wrapper = unix_path(self, self.dependencies.build["automake"].conf_info.get("user.automake:lib-wrapper"))
             env.define("CC", "cl -nologo")
@@ -102,5 +109,4 @@ class CoinDyLPConan(ConanFile):
         if self.options.with_osi:
             self.cpp_info.components["osi-dylp"].set_property("pkg_config_name", "osi-dylp")
             self.cpp_info.components["osi-dylp"].libs = ["OsiDylp"]
-            self.cpp_info.components["osi-dylp"].requires = ["dylp", "coin-osi::coin-osi"]
-
+            self.cpp_info.components["osi-dylp"].requires = ["dylp", "coin-osi::libosi"]
