@@ -108,6 +108,7 @@ class LibwebpConan(ConanFile):
         # sharpyuv
         self.cpp_info.components["sharpyuv"].set_property("cmake_target_name", "WebP::sharpyuv")
         self.cpp_info.components["sharpyuv"].set_property("pkg_config_name", "libsharpyuv")
+        self.cpp_info.components["sharpyuv"].includedirs = ["include/webp"]
         self.cpp_info.components["sharpyuv"].libs = ["sharpyuv"]
         if self.settings.os in ["Linux", "FreeBSD"]:
             self.cpp_info.components["sharpyuv"].system_libs = ["m", "pthread"]
