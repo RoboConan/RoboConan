@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 
 from conan import ConanFile
 from conan.tools.build import check_min_cppstd
@@ -12,7 +11,7 @@ required_conan_version = ">=2.1"
 class TinyEXIFConan(ConanFile):
     name = "tinyexif"
     description = "Tiny ISO-compliant C++ EXIF and XMP parsing library for JPEG"
-    license = "BSD 2-Clause"
+    license = "MIT"
     homepage = "https://github.com/cdcseacave/TinyEXIF/"
     topics = ("exif", "exif-metadata", "exif-ata-extraction", "exif-reader", "xmp", "xmp-parsing-library")
     package_type = "library"
@@ -31,7 +30,7 @@ class TinyEXIFConan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("tinyxml2/[^9.0.0]")
+        self.requires("tinyxml2/[>=9 <12]")
 
     def validate(self):
         check_min_cppstd(self, 11)
@@ -41,40 +40,30 @@ class TinyEXIFConan(ConanFile):
 
     def generate(self):
         tc = CMakeToolchain(self)
-        tc.variables["BUILD_STATIC_LIBS"] = not self.options.shared
         tc.variables["LINK_CRT_STATIC_LIBS"] = is_msvc_static_runtime(self)
         tc.variables["BUILD_DEMO"] = False
+        tc.variables["BUILD_FUZZER"] = False
         tc.cache_variables["CMAKE_POLICY_DEFAULT_CMP0077"] = "NEW"
         tc.generate()
 
         tc = CMakeDeps(self)
         tc.generate()
 
-    def _patch_sources(self):
-        path = Path(self.source_folder, "TinyEXIF.h")
-        path.write_text("#include <cstdint>\n" + path.read_text())
-
     def build(self):
-        self._patch_sources()
         cmake = CMake(self)
         cmake.configure()
         cmake.build()
 
     def package(self):
-        filename = os.path.join(self.source_folder, self.source_folder, "TinyEXIF.h")
-        file_content = load(save, filename)
-        license_start = "/*"
-        license_end = "*/"
-        license_contents = file_content[file_content.find(license_start)+len(license_start):file_content.find(license_end)]
-        save(self, os.path.join(self.package_folder, "licenses", "LICENSE"), license_contents)
+        copy(self, "LICENSE", src=self.source_folder, dst=os.path.join(self.package_folder, "licenses"))
         cmake = CMake(self)
         cmake.install()
 
         rmdir(self, os.path.join(self.package_folder, "lib", "cmake"))
 
     def package_info(self):
-        libpostfix = "d" if self.settings.build_type == "Debug" else ""
-        self.cpp_info.libs = [f"TinyEXIF{libpostfix}"]
+        suffix = "-2" if self.settings.os == "Windows" and self.options.shared else ""
+        self.cpp_info.libs = [f"TinyEXIF{suffix}"]
 
         self.cpp_info.set_property("cmake_file_name", "TinyEXIF")
         self.cpp_info.set_property("cmake_target_name", "TinyEXIF::TinyEXIF")
