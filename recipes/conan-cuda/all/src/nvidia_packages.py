@@ -30,6 +30,7 @@ def get_platform_id(_: ConanFile, settings):
             raise ConanInvalidConfiguration(f"Invalid architecture for cuda.platform=sbsa: {settings.arch}")
         return "linux-sbsa"
     return {
+        ("Windows", "armv8"): "windows-arm64",
         ("Windows", "x86_64"): "windows-x86_64",
         ("Linux", "x86_64"): "linux-x86_64",
         ("Linux", "armv8"): "linux-aarch64",

@@ -20,6 +20,7 @@ packages_following_ctk_minor_version = {
     "cuda-opencl",
     "cuda-profiler-api",
     "cuda-sanitizer-api",
+    "cuda-tileiras",
     "cudart",
     "cudla",
     "culibos",
