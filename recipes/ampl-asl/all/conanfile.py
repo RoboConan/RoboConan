@@ -32,6 +32,9 @@ class AmplAslConan(ConanFile):
     }
     implements = ["auto_shared_fpic"]
 
+    def export_sources(self):
+        export_conandata_patches(self)
+
     def configure(self):
         if self.settings.os == "Windows":
             self.options.shared.value = False
@@ -53,6 +56,7 @@ class AmplAslConan(ConanFile):
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
+        apply_conandata_patches(self)
 
     def generate(self):
         tc = CMakeToolchain(self)

@@ -24,3 +24,5 @@ class TestPackageConan(ConanFile):
         if can_run(self):
             bin_path = os.path.join(self.cpp.build.bindir, "test_package")
             self.run(bin_path, env="conanrun")
+            openmp_cxx_path = os.path.join(self.cpp.build.bindir, "test_openmp_cxx")
+            self.run(openmp_cxx_path, env="conanrun")

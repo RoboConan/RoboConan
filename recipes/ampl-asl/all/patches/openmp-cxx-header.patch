@@ -1,0 +1,17 @@
+--- a/src/solvers2/asl.h
++++ b/src/solvers2/asl.h
+@@ -32,2 +32,6 @@
+ #define Const const	/* for remnants of KR_headers */
+ #define VOID void	/* ditto */
++
++#ifdef ALLOW_OPENMP
++#include "omp.h"
++#endif
+@@ -382,7 +386,6 @@ Exitcall {
+ #ifdef ALLOW_OPENMP
+ #undef MULTIPLE_THREADS
+ #define MULTIPLE_THREADS
+-#include "omp.h"
+ #undef MBLK_LOCK
+ #define MBLK_LOCK omp_lock_t
+ #define ACQUIRE_MBLK_LOCK(I,L) if ((I)->rd_M1z_bytes) omp_set_lock(&((I)->L))
