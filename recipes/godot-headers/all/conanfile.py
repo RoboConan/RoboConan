@@ -8,20 +8,16 @@ required_conan_version = ">=2.1"
 
 
 class GodotHeadersConan(ConanFile):
-    name = "godot_headers"
+    name = "godot-headers"
+    description = "C interface headers for Godot extension APIs"
     license = "MIT"
-    homepage = "https://github.com/godotengine/godot_headers"
-    description = "Godot Native interface headers"
+    homepage = "https://github.com/godotengine/godot-headers"
     topics = ("game-engine", "game-development")
     package_type = "header-library"
-    settings = "os", "arch", "compiler", "build_type"
     no_copy_source = True
 
     def layout(self):
         basic_layout(self, src_folder="src")
-
-    def package_id(self):
-        self.info.clear()
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
@@ -32,7 +28,7 @@ class GodotHeadersConan(ConanFile):
     def package(self):
         copy(self, "LICENSE*", src=self.source_folder, dst=os.path.join(self.package_folder, "licenses"))
         copy(self, "*.h", src=self.source_folder, dst=os.path.join(self.package_folder, "include"))
-        copy(self, "api.json", src=self.source_folder, dst=os.path.join(self.package_folder, "share"))
+        copy(self, "*.json", src=self.source_folder, dst=os.path.join(self.package_folder, "share"))
 
     def package_info(self):
         self.cpp_info.bindirs = []

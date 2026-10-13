@@ -3,7 +3,7 @@ import os
 from conan import ConanFile
 from conan.tools.build import check_min_cppstd
 from conan.tools.cmake import CMakeToolchain, CMake, cmake_layout
-from conan.tools.files import *
+from conan.tools.files import copy, get
 from conan.tools.microsoft import is_msvc
 
 required_conan_version = ">=2.1"
@@ -32,7 +32,7 @@ class GodotCppConan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires(f"godot_headers/{self.version}", transitive_headers=True)
+        self.requires(f"godot-headers/[~{self.version}]", transitive_headers=True)
 
     def validate(self):
         check_min_cppstd(self, 14)
@@ -42,7 +42,7 @@ class GodotCppConan(ConanFile):
 
     @property
     def _godot_headers(self):
-        return self.dependencies["godot_headers"].cpp_info
+        return self.dependencies["godot-headers"].cpp_info
 
     @property
     def _custom_api_file(self):
@@ -78,8 +78,8 @@ class GodotCppConan(ConanFile):
 
     def generate(self):
         tc = CMakeToolchain(self)
-        tc.variables["GODOT_HEADERS_DIR"] = self._headers_dir.replace("\\", "/")
-        tc.variables["GODOT_CUSTOM_API_FILE"] = self._custom_api_file.replace("\\", "/")
+        tc.cache_variables["GODOT_HEADERS_DIR"] = self._headers_dir.replace("\\", "/")
+        tc.cache_variables["GODOT_CUSTOM_API_FILE"] = self._custom_api_file.replace("\\", "/")
         tc.generate()
 
     def build(self):
@@ -108,7 +108,7 @@ class GodotCppConan(ConanFile):
             self.cpp_info.libs = [self._libname]
 
         self.cpp_info.includedirs = [
-            os.path.join("include", "godot-cpp"),
-            os.path.join("include", "godot-cpp", "core"),
-            os.path.join("include", "godot-cpp", "gen"),
+            "include/godot-cpp",
+            "include/godot-cpp/core",
+            "include/godot-cpp/gen",
         ]
