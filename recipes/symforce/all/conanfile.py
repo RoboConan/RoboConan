@@ -6,6 +6,7 @@ from conan.tools.build import check_min_cppstd, can_run
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.env import VirtualRunEnv
 from conan.tools.files import *
+from conan.tools.scm import Version
 from conan.tools.system import PyEnv
 
 required_conan_version = ">=2.25"
@@ -49,12 +50,12 @@ class SymforceConan(ConanFile):
 
     def requirements(self):
         self.requires("eigen/[>=3.4 <6]", transitive_headers=True, transitive_libs=True)
-        self.requires("fmt/[*]", transitive_headers=True, transitive_libs=True)
+        self.requires("fmt/[>=8]", transitive_headers=True, transitive_libs=True)
         if self.options.build_opt:
-            self.requires("spdlog/[*]", transitive_headers=True, transitive_libs=True)
-            self.requires("metis/[^5]", transitive_headers=True)
+            self.requires("spdlog/[^1.9]", transitive_headers=True, transitive_libs=True)
+            self.requires("metis/[^5]", transitive_headers=True, transitive_libs=True)
         if self.options.build_python:
-            self.requires("pybind11/[*]")
+            self.requires("pybind11/[>=2.13.6]")
             self.requires("symengine/0.10.1-symforce.20260517")
 
     def build_requirements(self):
@@ -121,6 +122,8 @@ class SymforceConan(ConanFile):
                 copy(self, "*", os.path.join(self.source_folder, "symforce"), "symforce")
                 copy(self, "*", os.path.join(self.source_folder, "gen/python/sym"), "sym")
                 copy(self, "*", os.path.join(self.source_folder, "third_party/skymarshal/skymarshal"), "skymarshal")
+                if Version(self.version) >= "0.12":
+                    copy(self, "*.lcm", os.path.join(self.source_folder, "third_party/eigen_lcm/lcmtypes"), "third_party/eigen_lcm/lcmtypes")
                 rm(self, "pyproject.toml", ".", recursive=True)
                 save(self, "symforce_requirements.txt", textwrap.dedent("""\
                     ruff
@@ -129,6 +132,7 @@ class SymforceConan(ConanFile):
                     jinja2
                     numpy
                     numba
+                    ply
                     scipy
                     sympy>=1.11
                     sortedcontainers

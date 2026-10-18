@@ -1,8 +1,16 @@
 sources:
+  "0.12.0":
+    url: "https://github.com/symforce-org/symforce/archive/v0.12.0.tar.gz"
+    sha256: "084b3823b41b81bc4f793caa6bc21ed3df5c4a3070538877a13f151cff711c01"
   "0.11.0":
-    url: "https://github.com/symforce-org/symforce/archive/refs/tags/v0.11.0.tar.gz"
+    url: "https://github.com/symforce-org/symforce/archive/v0.11.0.tar.gz"
     sha256: "7565bb6fe62a23ae5e7720509139352781e878e0715d41be18102d583c2ba824"
 patches:
+  "0.12.0":
+    - patch_file: "patches/0.11-update-fmt.patch"
+      patch_source: "https://github.com/symforce-org/symforce/pull/454"
+    - patch_file: "patches/0.12-python-binding-fixes.patch"
+    - patch_file: "patches/0.11-symenginepy.patch"
   "0.11.0":
     - patch_file: "patches/0.11-update-fmt.patch"
       patch_source: "https://github.com/symforce-org/symforce/pull/454"

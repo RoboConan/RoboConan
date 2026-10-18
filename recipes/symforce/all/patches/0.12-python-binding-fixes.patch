@@ -1,0 +1,195 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -350,23 +350,8 @@ endif()
+ 
+ if(SYMFORCE_BUILD_SYMENGINE)
+ 
+-  # ------------------------------------------------------------------------------
+-  # SymEngine
+-  string(REPLACE ";" "$<SEMICOLON>" EXTERNAL_PREFIX_PATH "${CMAKE_PREFIX_PATH}")
++  find_package(SymEngine REQUIRED)
+   include(ExternalProject)
+-  ExternalProject_Add(symengine
+-    SOURCE_DIR ${PROJECT_SOURCE_DIR}/third_party/symengine
+-    INSTALL_DIR ${SYMFORCE_SYMENGINE_INSTALL_PREFIX}
+-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+-               -DBUILD_TESTS=OFF
+-               -DBUILD_BENCHMARKS=OFF
+-               -DCMAKE_OSX_ARCHITECTURES=${CMAKE_OSX_ARCHITECTURES}
+-               -DCMAKE_LIBRARY_ARCHITECTURE=${CMAKE_LIBRARY_ARCHITECTURE}
+-               -DCMAKE_POLICY_DEFAULT_CMP0074=NEW
+-               -DCMAKE_PREFIX_PATH=${EXTERNAL_PREFIX_PATH}
+-               -DWITH_COTIRE=OFF
+-               -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+-  )
+ 
+   # ------------------------------------------------------------------------------
+   # symenginepy
+@@ -374,24 +359,18 @@ if(SYMFORCE_BUILD_SYMENGINE)
+   ExternalProject_Add(symenginepy
+     DEPENDS symengine
+     SOURCE_DIR ${PROJECT_SOURCE_DIR}/third_party/symenginepy
+-    CONFIGURE_COMMAND ""
+-    # TODO(aaron): This depends on SYMFORCE_PYTHON, which can change between builds (e.g. when
+-    # running `python -m build` multiple times on the same build directory), currently if you're
+-    # doing that you need to clean this manually
+-    BUILD_COMMAND ${SYMFORCE_PYTHON} ${PROJECT_SOURCE_DIR}/third_party/symenginepy/setup.py
+-        --verbose
+-        build_ext
+-        --build-type=Release
+-        --symengine-dir ${SYMFORCE_SYMENGINE_INSTALL_PREFIX}/lib/
+-        --define CMAKE_OSX_ARCHITECTURES=${CMAKE_OSX_ARCHITECTURES}
+-        --define CMAKE_POLICY_VERSION_MINIMUM=3.5
+-    INSTALL_COMMAND env ${SYMENGINEPY_INSTALL_ENV} ${SYMFORCE_PYTHON}
+-        ${PROJECT_SOURCE_DIR}/third_party/symenginepy/setup.py
+-        --verbose
+-        install
+-        --prefix ${SYMFORCE_SYMENGINE_INSTALL_PREFIX}
+-        --define CMAKE_OSX_ARCHITECTURES=${CMAKE_OSX_ARCHITECTURES}
+-        --define CMAKE_POLICY_VERSION_MINIMUM=3.5
++    CONFIGURE_COMMAND ${CMAKE_COMMAND}
++          -S ${PROJECT_SOURCE_DIR}/third_party/symenginepy
++          -B <BINARY_DIR>
++          -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
++          -DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}
++          -DCMAKE_OSX_ARCHITECTURES=${CMAKE_OSX_ARCHITECTURES}
++          -DPYTHON_BIN=${SYMFORCE_PYTHON_OVERRIDE}
++          -DCYTHON_BIN=${CYTHON_BIN}
++          -DPYTHON_INSTALL_PATH=${SYMFORCE_SYMENGINE_INSTALL_PREFIX}
++          -DCMAKE_POLICY_VERSION_MINIMUM=3.10
++    BUILD_COMMAND ${CMAKE_COMMAND} --build <BINARY_DIR>
++    INSTALL_COMMAND ${CMAKE_COMMAND} --install <BINARY_DIR>
+   )
+ 
+   # Rebuild symengine[py] on changed files
+@@ -410,7 +389,4 @@ if(SYMFORCE_BUILD_SYMENGINE)
+     add_dependencies(${project_name} ${git_check_rulename})
+   endfunction()
+ 
+-  add_sourcechanged_dependency(symengine)
+-  add_sourcechanged_dependency(symenginepy)
+-
+ endif(SYMFORCE_BUILD_SYMENGINE)
+diff --git a/symforce/pybind/CMakeLists.txt b/symforce/pybind/CMakeLists.txt
+--- a/symforce/pybind/CMakeLists.txt
++++ b/symforce/pybind/CMakeLists.txt
+@@ -12,7 +12,7 @@ include(FetchContent)
+ # NOTE(aaron): cc_sym builds with pybind 2.13.6 and up, but the stubs are generated using pybind
+ # 3 (and pybind 3.x does produce different stubs from 2.x).  We'll use pybind 2.x if we find it, but
+ # for CI (or for reproducing the stubs locally), pybind 3.x is required.
+-find_package(pybind11 2.13.6 QUIET)
++find_package(pybind11 REQUIRED)
+ if (NOT pybind11_FOUND)
+   message(STATUS "pybind11 not found, adding with FetchContent")
+   # NOTE(brad): Set PYTHON_EXECUTABLE to ensure pybind11 uses the same
+diff --git a/symforce/pybind/cc_factor.cc b/symforce/pybind/cc_factor.cc
+--- a/symforce/pybind/cc_factor.cc
++++ b/symforce/pybind/cc_factor.cc
+@@ -127,7 +127,7 @@ sym::Factord MakeJacobianFactor(PyJacobianFunc jacobian_func, const std::vector<
+ //================================================================================================//
+ 
+ void AddFactorWrapper(pybind11::module_ module) {
+-  py::class_<sym::Factord>(module, "Factor", R"(
++  py::class_<sym::Factord>(module, "Factor", py::module_local(false), R"(
+       A residual term for optimization.
+ 
+       Created from a function and a set of Keys that act as inputs. Given a Values as an evaluation
+@@ -194,7 +194,7 @@ void AddFactorWrapper(pybind11::module_ module) {
+            )")
+       .def(
+           "linearize",
+-          [](const sym::Factord& factor, const sym::Valuesd& values) {
++          [](const sym::Factord& factor, const sym::Valuesd& values) -> py::tuple {
+             if (factor.IsSparse()) {
+               Eigen::VectorXd residual;
+               Eigen::SparseMatrix<double> jacobian;
+diff --git a/symforce/pybind/cc_key.cc b/symforce/pybind/cc_key.cc
+--- a/symforce/pybind/cc_key.cc
++++ b/symforce/pybind/cc_key.cc
+@@ -19,7 +19,7 @@ namespace sym {
+ 
+ void AddKeyWrapper(py::module_ module) {
+   py::class_<sym::Key>(
+-      module, "Key",
++      module, "Key", py::module_local(false),
+       "Key type for Values. Contains a letter plus an integral subscript and superscript. Can "
+       "construct with a letter, a letter + sub, or a letter + sub + super, but not a letter + "
+       "super.")
+diff --git a/symforce/pybind/cc_linearization.cc b/symforce/pybind/cc_linearization.cc
+--- a/symforce/pybind/cc_linearization.cc
++++ b/symforce/pybind/cc_linearization.cc
+@@ -17,7 +17,7 @@ namespace sym {
+ 
+ void AddLinearizationWrapper(pybind11::module_ module) {
+   py::class_<sym::SparseLinearizationd>(
+-      module, "Linearization",
++      module, "Linearization", py::module_local(false),
+       "Class for storing a problem linearization evaluated at a Values "
+       "(i.e. a residual, jacobian, hessian, and rhs).")
+       .def(py::init<>())
+diff --git a/symforce/pybind/cc_optimization_stats.cc b/symforce/pybind/cc_optimization_stats.cc
+--- a/symforce/pybind/cc_optimization_stats.cc
++++ b/symforce/pybind/cc_optimization_stats.cc
+@@ -18,7 +18,7 @@
+ namespace sym {
+ 
+ void AddOptimizationStatsWrapper(pybind11::module_ module) {
+-  py::class_<sym::OptimizationStatsd>(module, "OptimizationStats",
++  py::class_<sym::OptimizationStatsd>(module, "OptimizationStats", py::module_local(false),
+                                       "Debug stats for a full optimization run.")
+       .def(py::init<>())
+       .def_readwrite("iterations", &sym::OptimizationStatsd::iterations)
+diff --git a/symforce/pybind/cc_optimizer.cc b/symforce/pybind/cc_optimizer.cc
+--- a/symforce/pybind/cc_optimizer.cc
++++ b/symforce/pybind/cc_optimizer.cc
+@@ -26,7 +26,7 @@
+ namespace sym {
+ 
+ void AddOptimizerWrapper(pybind11::module_ module) {
+-  py::class_<Optimizerd>(module, "Optimizer",
++  py::class_<Optimizerd>(module, "Optimizer", py::module_local(false),
+                          "Class for optimizing a nonlinear least-squares problem specified as a "
+                          "list of Factors. For efficient use, create once and call Optimize() "
+                          "multiple times with different initial guesses, as long as the factors "
+diff --git a/symforce/pybind/cc_values.cc b/symforce/pybind/cc_values.cc
+--- a/symforce/pybind/cc_values.cc
++++ b/symforce/pybind/cc_values.cc
+@@ -175,7 +175,7 @@ constexpr void RegisterMatrices(py::class_<sym::Valuesd>& cls) {
+ //================================================================================================//
+ 
+ void AddValuesWrapper(pybind11::module_ module) {
+-  auto values_class = py::class_<sym::Valuesd>(module, "Values", R"(
++  auto values_class = py::class_<sym::Valuesd>(module, "Values", py::module_local(false), R"(
+     Efficient polymorphic data structure to store named types with a dict-like interface and
+     support efficient repeated operations using a key index. Supports on-manifold optimization.
+ 
+diff --git a/third_party/symenginepy/CMakeLists.txt b/third_party/symenginepy/CMakeLists.txt
+--- a/third_party/symenginepy/CMakeLists.txt
++++ b/third_party/symenginepy/CMakeLists.txt
+@@ -24,9 +24,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${SYMENGINE_CXX_FLAGS}")
+ include_directories(${SYMENGINE_INCLUDE_DIRS})
+ 
+ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
+-find_package(Python REQUIRED)
++find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
+ find_package(Cython REQUIRED)
+-include_directories(${PYTHON_INCLUDE_PATH})
+ 
+ if (MINGW AND ("${CMAKE_SIZEOF_VOID_P}" STREQUAL "8"))
+     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DMS_WIN64")
+diff --git a/third_party/symenginepy/symengine/lib/CMakeLists.txt b/third_party/symenginepy/symengine/lib/CMakeLists.txt
+--- a/third_party/symenginepy/symengine/lib/CMakeLists.txt
++++ b/third_party/symenginepy/symengine/lib/CMakeLists.txt
+@@ -42,8 +42,9 @@ cython_add_module_pyx(symengine_wrapper.cpp
+     ${CMAKE_CURRENT_BINARY_DIR}/symengine_wrapper.pyx
+     ${CMAKE_CURRENT_BINARY_DIR}/symengine_wrapper.pxd
+     ${CMAKE_CURRENT_SOURCE_DIR}/symengine.pxd)
+-add_python_library(symengine_wrapper ${SRC})
+-target_link_libraries(symengine_wrapper ${SYMENGINE_LIBRARIES})
++find_package(Python REQUIRED)
++Python_add_library(symengine_wrapper ${SRC})
++target_link_libraries(symengine_wrapper PRIVATE ${SYMENGINE_LIBRARIES})
+ if (CMAKE_CXX_COMPILER_ID MATCHES GNU|Clang)
+   # Must suppress strict aliasing for this file
+   set_source_files_properties(
