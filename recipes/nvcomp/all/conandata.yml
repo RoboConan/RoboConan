@@ -1,4 +1,7 @@
 sources:
+  "6.0.0.12":  # CUDA 12, 13
+    url: "https://developer.download.nvidia.com/compute/nvcomp/redist/redistrib_6.0.0.json"
+    sha256: "3a89e574014be694b6e2b22a926bb8a4bd480f2d10a4a3ffe8c3dac7cdb9e4f5"
   "5.3.0.16":  # CUDA 12, 13
     url: "https://developer.download.nvidia.com/compute/nvcomp/redist/redistrib_5.3.0.json"
     sha256: "6865ef6d4f14988f524aeecfd49924a764d753d9e8c3db9a3bf3bb4a7642ce29"
