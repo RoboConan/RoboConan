@@ -2,7 +2,7 @@ import os
 import textwrap
 
 from conan import ConanFile
-from conan.tools.build import check_min_cppstd, can_run
+from conan.tools.build import can_run
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.env import VirtualRunEnv
 from conan.tools.files import *
@@ -24,6 +24,7 @@ class SymforceConan(ConanFile):
         "shared": [True, False],
         "fPIC": [True, False],
         "build_opt": [True, False],
+        "build_slam": [True, False],
         "build_python": [True, False],
         "skymarshal_printing": [True, False],
     }
@@ -31,6 +32,7 @@ class SymforceConan(ConanFile):
         "shared": True,
         "fPIC": True,
         "build_opt": True,
+        "build_slam": True,
         "build_python": False,
         "skymarshal_printing": True,
     }
@@ -42,11 +44,8 @@ class SymforceConan(ConanFile):
     def configure(self):
         if self.options.get_safe("shared"):
             self.options.rm_safe("fPIC")
-        if self.options.build_python:
+        if self.options.build_python or self.options.build_slam:
             self.options.build_opt.value = True
-
-    def validate(self):
-        check_min_cppstd(self, 17)
 
     def requirements(self):
         self.requires("eigen/[>=3.4 <6]", transitive_headers=True, transitive_libs=True)
@@ -91,6 +90,7 @@ class SymforceConan(ConanFile):
         tc = CMakeToolchain(self)
         tc.cache_variables["SYMFORCE_BUILD_STATIC_LIBRARIES"] = not self.options.shared
         tc.cache_variables["SYMFORCE_BUILD_OPT"] = self.options.build_opt
+        tc.cache_variables["SYMFORCE_BUILD_SLAM"] = self.options.build_slam
         tc.cache_variables["SYMFORCE_BUILD_CC_SYM"] = self.options.build_python
         tc.cache_variables["SYMFORCE_BUILD_SYMENGINE"] = self.options.build_python
         tc.cache_variables["SYMFORCE_BUILD_EXAMPLES"] = False
@@ -182,11 +182,15 @@ class SymforceConan(ConanFile):
             self.cpp_info.components["opt"].libs = ["symforce_opt"]
             self.cpp_info.components["opt"].requires = ["gen", "cholesky", "spdlog::spdlog"]
 
+        if self.options.build_slam:
             # symforce_slam: SLAM-specific factors (IMU preintegration, ...)
             self.cpp_info.components["slam"].set_property("cmake_target_name", "symforce::symforce_slam")
             self.cpp_info.components["slam"].libs = ["symforce_slam"]
             self.cpp_info.components["slam"].requires = ["gen", "opt"]
 
         if self.options.build_python:
-            self.cpp_info.components["_python"].requires = ["opt", "slam", "pybind11::pybind11", "symengine::symengine"]
+            python_requires = ["opt", "pybind11::pybind11", "symengine::symengine"]
+            if self.options.build_slam:
+                python_requires.append("slam")
+            self.cpp_info.components["_python"].requires = python_requires
             self.runenv_info.prepend_path("PYTHONPATH", self._python_package_dir)

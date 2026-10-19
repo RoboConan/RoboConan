@@ -1,0 +1,94 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -20,6 +20,7 @@ project(symforce)
+ # Enable/Disable Components
+ 
+ option(SYMFORCE_BUILD_OPT "Build symforce_opt and related targets for optimization" ON)
++option(SYMFORCE_BUILD_SLAM "Build symforce_slam and its IMU preintegration support" ON)
+ option(SYMFORCE_BUILD_CC_SYM "Build cc_sym and related targets for python wrapping" ON)
+ option(SYMFORCE_BUILD_EXAMPLES "Build the examples" ON)
+ option(SYMFORCE_BUILD_TESTS "Build and run the tests" ON)
+diff --git a/symforce/slam/CMakeLists.txt b/symforce/slam/CMakeLists.txt
+--- a/symforce/slam/CMakeLists.txt
++++ b/symforce/slam/CMakeLists.txt
+@@ -4,7 +4,11 @@
+ # ----------------------------------------------------------------------------
+ 
++if(NOT SYMFORCE_BUILD_SLAM)
++  return()
++endif()
++
+ # ==============================================================================
+ # SymForce Targets
+ # ==============================================================================
+ 
+ file(GLOB_RECURSE SYMFORCE_SLAM_SOURCES CONFIGURE_DEPENDS *.cc **/*.cc)
+diff --git a/symforce/pybind/CMakeLists.txt b/symforce/pybind/CMakeLists.txt
+--- a/symforce/pybind/CMakeLists.txt
++++ b/symforce/pybind/CMakeLists.txt
+@@ -43,21 +43,24 @@
+ # ------------------------------------------------------------------------------
+ # cc_sym
+ 
+-pybind11_add_module(
+-  cc_sym
+-  SHARED
++set(SYMFORCE_PYBIND_SOURCES
+   cc_factor.cc
+   cc_key.cc
+   cc_linearization.cc
+   cc_logger.cc
+   cc_optimization_stats.cc
+   cc_optimizer.cc
+-  cc_slam.cc
+   cc_sym.cc
+   cc_values.cc
+   sym_type_casters.cc
+ )
+ 
++if(SYMFORCE_BUILD_SLAM)
++  list(APPEND SYMFORCE_PYBIND_SOURCES cc_slam.cc)
++endif()
++
++pybind11_add_module(cc_sym SHARED ${SYMFORCE_PYBIND_SOURCES})
++
+ target_compile_options(cc_sym PRIVATE ${SYMFORCE_COMPILE_OPTIONS})
+ 
+ if(SYMFORCE_PY_EXTENSION_MODULE_OUTPUT_PATH)
+@@ -71,8 +74,12 @@
+   PRIVATE
+   symforce_opt
+   symforce_gen
+-  symforce_slam
+ )
+ 
++if(SYMFORCE_BUILD_SLAM)
++  target_link_libraries(cc_sym PRIVATE symforce_slam)
++  target_compile_definitions(cc_sym PRIVATE SYMFORCE_BUILD_SLAM)
++endif()
++
+ # TODO(aaron): Should there be an install action here?  This is currently installed by setup.py if
+ # you do `pip install .`
+diff --git a/symforce/pybind/cc_sym.cc b/symforce/pybind/cc_sym.cc
+--- a/symforce/pybind/cc_sym.cc
++++ b/symforce/pybind/cc_sym.cc
+@@ -11,7 +11,9 @@
+ #include "./cc_logger.h"
+ #include "./cc_optimization_stats.h"
+ #include "./cc_optimizer.h"
++#ifdef SYMFORCE_BUILD_SLAM
+ #include "./cc_slam.h"
++#endif
+ #include "./cc_values.h"
+ 
+ PYBIND11_MODULE(cc_sym, generated_module) {
+@@ -25,6 +27,8 @@
+   sym::AddLinearizationWrapper(generated_module);
+   sym::AddOptimizationStatsWrapper(generated_module);
+   sym::AddOptimizerWrapper(generated_module);
++#ifdef SYMFORCE_BUILD_SLAM
+   sym::AddSlamWrapper(generated_module);
++#endif
+   sym::AddLoggerWrapper(generated_module);
+ }
