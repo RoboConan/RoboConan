@@ -17,6 +17,9 @@ class BasaltConan(ConanFile):
     package_type = "header-library"
     settings = "os", "arch", "compiler", "build_type"
 
+    def export_sources(self):
+        export_conandata_patches(self)
+
     def package_id(self):
         self.info.clear()
 
@@ -33,6 +36,7 @@ class BasaltConan(ConanFile):
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
+        apply_conandata_patches(self)
 
     def generate(self):
         tc = CMakeToolchain(self)
@@ -56,5 +60,7 @@ class BasaltConan(ConanFile):
     def package_info(self):
         self.cpp_info.set_property("cmake_file_name", "basalt-headers")
         self.cpp_info.set_property("cmake_target_name", "basalt::basalt-headers")
+        if self.settings.compiler == "msvc":
+            self.cpp_info.defines = ["_USE_MATH_DEFINES"]
         self.cpp_info.bindirs = []
         self.cpp_info.libdirs = []
