@@ -1,6 +1,7 @@
 import os
 
 from conan import ConanFile
+from conan.errors import ConanInvalidConfiguration
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
 
@@ -55,6 +56,11 @@ class METISConan(ConanFile):
             self.options.rm_safe("fPIC")
         self.settings.rm_safe("compiler.libcxx")
         self.settings.rm_safe("compiler.cppstd")
+        self.options["gklib"].with_openmp = self.options.with_openmp
+
+    def validate(self):
+        if self.dependencies["gklib"].options.with_openmp != self.options.with_openmp:
+            raise ConanInvalidConfiguration("metis/*:with_openmp and gklib/*:with_openmp must match")
 
     def layout(self):
         cmake_layout(self, src_folder="src")

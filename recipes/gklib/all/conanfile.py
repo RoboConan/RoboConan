@@ -20,10 +20,12 @@ class GKlibConan(ConanFile):
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
+        "with_openmp": [True, False],
     }
     default_options = {
         "shared": False,
         "fPIC": True,
+        "with_openmp": True,
     }
     implements = ["auto_shared_fpic"]
     languages = ["C"]
@@ -45,7 +47,8 @@ class GKlibConan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        self.requires("openmp/system", transitive_headers=True, transitive_libs=True)
+        if self.options.with_openmp:
+            self.requires("openmp/system", transitive_headers=True, transitive_libs=True)
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
@@ -61,6 +64,7 @@ class GKlibConan(ConanFile):
         tc = CMakeToolchain(self)
         tc.variables["ASSERT"] = self.settings.build_type == "Debug"
         tc.variables["ASSERT2"] = self.settings.build_type == "Debug"
+        tc.variables["OPENMP"] = self.options.with_openmp
         tc.generate()
 
     def build(self):
