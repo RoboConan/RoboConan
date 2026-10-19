@@ -19,3 +19,7 @@ patches:
     - patch_file: "patches/005-handle-android-execinfo.h.patch"
       patch_type: "portability"
       patch_description: "Fix HAVE_EXECINFO_H detection for Android"
+    - patch_file: "patches/006-msvc-thread-local.patch"
+      patch_type: "portability"
+      patch_source: "https://github.com/KarypisLab/GKlib/commit/b8b8bdc7e0186f1f36412c74e89153feecb5d436"
+      patch_description: "Express MSVC thread-local storage as a CMake definition"
