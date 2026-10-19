@@ -1,0 +1,167 @@
+diff --git a/gen/cpp/sym/util/epsilon.h b/gen/cpp/sym/util/epsilon.h
+index a4ddb31..9e137da 100644
+--- a/gen/cpp/sym/util/epsilon.h
++++ b/gen/cpp/sym/util/epsilon.h
+@@ -35,7 +35,7 @@ extern template const double kDefaultEpsilon<double>;
+ extern template const float kDefaultEpsilon<float>;
+ 
+ // Shorthand for scalar types
+-constexpr double kDefaultEpsilond = kDefaultEpsilon<double>;
+-constexpr float kDefaultEpsilonf = kDefaultEpsilon<float>;
++constexpr double kDefaultEpsilond = 10.0 * std::numeric_limits<double>::epsilon();
++constexpr float kDefaultEpsilonf = 10.0F * std::numeric_limits<float>::epsilon();
+ 
+ }  // namespace sym
+diff --git a/symforce/opt/assert.h b/symforce/opt/assert.h
+index e5acfe2..37c6250 100644
+--- a/symforce/opt/assert.h
++++ b/symforce/opt/assert.h
+@@ -33,6 +33,12 @@ inline std::string FormatFailure(const char* error, const char* func, const char
+ 
+ }  // namespace sym
+ 
++#if defined(_MSC_VER)
++#define SYM_PRETTY_FUNCTION __FUNCSIG__
++#else
++#define SYM_PRETTY_FUNCTION __PRETTY_FUNCTION__
++#endif
++
+ /**
+  * Assert a runtime condition with a #define disable mechanism.
+  *
+@@ -44,7 +50,7 @@ inline std::string FormatFailure(const char* error, const char* func, const char
+   do {                                                                                          \
+     if (!(expr)) {                                                                              \
+       throw std::runtime_error(                                                                 \
+-          sym::FormatFailure((#expr), __PRETTY_FUNCTION__, __FILE__, __LINE__, ##__VA_ARGS__)); \
++          sym::FormatFailure((#expr), SYM_PRETTY_FUNCTION, __FILE__, __LINE__, ##__VA_ARGS__)); \
+     }                                                                                           \
+   } while (0)
+ 
+@@ -53,7 +59,7 @@ inline std::string FormatFailure(const char* error, const char* func, const char
+     if ((a) != (b)) {                                                                     \
+       throw std::runtime_error(                                                           \
+           sym::FormatFailure(fmt::format((#a " == " #b " ({} == {})"), (a), (b)).c_str(), \
+-                             __PRETTY_FUNCTION__, __FILE__, __LINE__, ##__VA_ARGS__));    \
++                             SYM_PRETTY_FUNCTION, __FILE__, __LINE__, ##__VA_ARGS__));    \
+     }                                                                                     \
+   } while (0)
+ 
+@@ -62,7 +68,7 @@ inline std::string FormatFailure(const char* error, const char* func, const char
+     if (!((a) < (b))) {                                                                 \
+       throw std::runtime_error(                                                         \
+           sym::FormatFailure(fmt::format((#a " < " #b " ({} < {})"), (a), (b)).c_str(), \
+-                             __PRETTY_FUNCTION__, __FILE__, __LINE__, ##__VA_ARGS__));  \
++                             SYM_PRETTY_FUNCTION, __FILE__, __LINE__, ##__VA_ARGS__));  \
+     }                                                                                   \
+   } while (0)
+ 
+@@ -71,7 +77,7 @@ inline std::string FormatFailure(const char* error, const char* func, const char
+     if (!((a) <= (b))) {                                                                  \
+       throw std::runtime_error(                                                           \
+           sym::FormatFailure(fmt::format((#a " <= " #b " ({} <= {})"), (a), (b)).c_str(), \
+-                             __PRETTY_FUNCTION__, __FILE__, __LINE__, ##__VA_ARGS__));    \
++                             SYM_PRETTY_FUNCTION, __FILE__, __LINE__, ##__VA_ARGS__));    \
+     }                                                                                     \
+   } while (0)
+ 
+@@ -80,7 +86,7 @@ inline std::string FormatFailure(const char* error, const char* func, const char
+     if (!((a) > (b))) {                                                                 \
+       throw std::runtime_error(                                                         \
+           sym::FormatFailure(fmt::format((#a " > " #b " ({} > {})"), (a), (b)).c_str(), \
+-                             __PRETTY_FUNCTION__, __FILE__, __LINE__, ##__VA_ARGS__));  \
++                             SYM_PRETTY_FUNCTION, __FILE__, __LINE__, ##__VA_ARGS__));  \
+     }                                                                                   \
+   } while (0)
+ 
+@@ -89,7 +95,7 @@ inline std::string FormatFailure(const char* error, const char* func, const char
+     if (!((a) >= (b))) {                                                                  \
+       throw std::runtime_error(                                                           \
+           sym::FormatFailure(fmt::format((#a " >= " #b " ({} >= {})"), (a), (b)).c_str(), \
+-                             __PRETTY_FUNCTION__, __FILE__, __LINE__, ##__VA_ARGS__));    \
++                             SYM_PRETTY_FUNCTION, __FILE__, __LINE__, ##__VA_ARGS__));    \
+     }                                                                                     \
+   } while (0)
+ 
+diff --git a/third_party/skymarshal/include/lcm/lcm_coretypes.h b/third_party/skymarshal/include/lcm/lcm_coretypes.h
+index 316b4b4..cd97329 100644
+--- a/third_party/skymarshal/include/lcm/lcm_coretypes.h
++++ b/third_party/skymarshal/include/lcm/lcm_coretypes.h
+@@ -19,7 +19,9 @@
+ // aren't inlined, but getting them inlined was a substantial win on my benchmarks.
+ 
+ #define SKYDIO_DISABLE_LCM_FORCE_INLINE 1
+-#if defined(SKYDIO_DISABLE_LCM_FORCE_INLINE)
++#if defined(_MSC_VER)
++#define SKYDIO_LCM_INLINE_PREFIX
++#elif defined(SKYDIO_DISABLE_LCM_FORCE_INLINE)
+ #define SKYDIO_LCM_INLINE_PREFIX __attribute__((unused))
+ #else
+ #define SKYDIO_LCM_INLINE_PREFIX __attribute__((unused, always_inline))
+diff --git a/third_party/skymarshal/include/lcm/lcm_reflection.hpp b/third_party/skymarshal/include/lcm/lcm_reflection.hpp
+index 940e369..8b3a42f 100644
+--- a/third_party/skymarshal/include/lcm/lcm_reflection.hpp
++++ b/third_party/skymarshal/include/lcm/lcm_reflection.hpp
+@@ -161,6 +161,6 @@ uint32_t translate_fields(const char *const fields[], uint32_t field_indices_out
+ // for strings (specialization of the above for iterables)
+ template <>
+-inline uint32_t translate_fields<std::string, true>(const char *const fields[],
++inline uint32_t translate_fields<std::string>(const char *const fields[],
+                                                     uint32_t field_indices_out[],
+                                                     uint32_t num_fields)
+ {
+@@ -360,6 +360,6 @@ uint32_t show_field(std::ostream &stream, const uint32_t field_indices[], uint32
+ // for strings (specialization of the above for iterables)
+ template <>
+-inline uint32_t show_field<std::string, true>(std::ostream &stream, const uint32_t field_indices[],
++inline uint32_t show_field<std::string>(std::ostream &stream, const uint32_t field_indices[],
+                                               uint32_t num_fields, const std::string &item,
+                                               const FormatSettings &settings)
+ {
+@@ -469,6 +469,6 @@ template <typename T, std::enable_if_t<std::is_floating_point<T>::value, bool> =
+ // for booleans
+ template <>
+-[[nodiscard]] inline uint32_t store_field<bool, true>(const uint32_t field_indices[],
++[[nodiscard]] inline uint32_t store_field<bool>(const uint32_t field_indices[],
+                                                       uint32_t num_fields, bool &item,
+                                                       const char *const value)
+ {
+@@ -608,6 +608,6 @@ template <typename T,
+ // for strings (specialization of the above for iterables)
+ template <>
+-[[nodiscard]] inline uint32_t store_field<std::string, true>(const uint32_t field_indices[],
++[[nodiscard]] inline uint32_t store_field<std::string>(const uint32_t field_indices[],
+                                                              uint32_t num_fields, std::string &item,
+                                                              const char *const value)
+ {
+@@ -777,3 +777,3 @@ get_schema()
+     auto elem_ptr = std::make_unique<SchemaType>(get_schema<ElementType>());
+-    return ArrayType{.element_type = std::move(elem_ptr)};
++    return ArrayType{std::move(elem_ptr)};
+ }
+diff --git a/third_party/skymarshal/skymarshal/templates/lcmtype.hpp.template b/third_party/skymarshal/skymarshal/templates/lcmtype.hpp.template
+index df5b825..a7ab83d 100644
+--- a/third_party/skymarshal/skymarshal/templates/lcmtype.hpp.template
++++ b/third_party/skymarshal/skymarshal/templates/lcmtype.hpp.template
+@@ -118,8 +118,12 @@ public:
+         inline {{ size_t }} _decodeNoHash(const void *buf, {{ size_t }} offset, {{ size_t }} maxlen);
+ {% if lcmtype.has_complex_members() %}
+ #if !defined(SKYDIO_DISABLE_LCM_NO_INLINE)
++#if defined(_MSC_VER)
++        __declspec(noinline)
++#else
+         __attribute__((noinline))
+ #endif
++#endif
+         static uint64_t _computeHash(const __lcm_hash_ptr *p)
+         {
+             const __lcm_hash_ptr *fp;
+@@ -226,7 +230,7 @@ public:
+         // Return value is 0 if the operation succeeded.
+         // If the operation failed, return value is equal to 1 + the index of the first invalid field,
+         // 1 + field_size if there are not enough fields, or 2 + field_size if the value is invalid.
+-        __attribute__((nodiscard)) uint32_t store_field(const uint32_t _field_indices[], uint32_t _num_fields, const char* const _value)
++        [[nodiscard]] uint32_t store_field(const uint32_t _field_indices[], uint32_t _num_fields, const char* const _value)
+         {
+             uint32_t ret;
+             switch (_field_indices[0]) {

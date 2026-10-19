@@ -11,6 +11,7 @@ patches:
       patch_source: "https://github.com/symforce-org/symforce/pull/454"
     - patch_file: "patches/0.12-python-binding-fixes.patch"
     - patch_file: "patches/0.11-symenginepy.patch"
+    - patch_file: "patches/0.12-msvc-portability.patch"
   "0.11.0":
     - patch_file: "patches/0.11-update-fmt.patch"
       patch_source: "https://github.com/symforce-org/symforce/pull/454"

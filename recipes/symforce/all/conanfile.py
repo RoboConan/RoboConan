@@ -102,6 +102,9 @@ class SymforceConan(ConanFile):
         tc.cache_variables["FETCHCONTENT_FULLY_DISCONNECTED"] = True
         tc.cache_variables["SYMFORCE_PYTHON_OVERRIDE"] = os.path.join(pyenv.bin_path, "python").replace("\\", "/")
         tc.cache_variables["CYTHON_BIN"] = os.path.join(pyenv.bin_path, "cython").replace("\\", "/")
+        # Defaults to non-portable `-Wall -Wextra` otherwise
+        tc.cache_variables["SYMFORCE_COMPILE_OPTIONS"] = ""
+        tc.preprocessor_definitions["_USE_MATH_DEFINES"] = None
         tc.generate()
 
         deps = CMakeDeps(self)
@@ -159,7 +162,9 @@ class SymforceConan(ConanFile):
         self.cpp_info.components["lcmtypes_cpp"].set_property("cmake_target_name", "symforce::symforce_lcmtypes_cpp")
         self.cpp_info.components["lcmtypes_cpp"].requires = ["eigen::eigen", "fmt::fmt"]
         if self.options.skymarshal_printing:
-            self.cpp_info.components["lcmtypes_cpp"].defines = ["SKYMARSHAL_PRINTING_ENABLED"]
+            self.cpp_info.components["lcmtypes_cpp"].defines.append("SKYMARSHAL_PRINTING_ENABLED")
+        if self.settings.compiler == "msvc":
+            self.cpp_info.components["lcmtypes_cpp"].defines.append("_USE_MATH_DEFINES")
 
         # symforce_gen: generated code
         self.cpp_info.components["gen"].set_property("cmake_target_name", "symforce::symforce_gen")
