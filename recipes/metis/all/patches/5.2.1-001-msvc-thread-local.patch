@@ -1,0 +1,30 @@
+diff --git a/gkbuild.cmake b/gkbuild.cmake
+index 887ee0c..8406fc1 100644
+--- a/gkbuild.cmake
++++ b/gkbuild.cmake
+@@ -88,24 +88,7 @@ endif()
+ 
+ # Custom check for TLS.
+ if(MSVC)
+-  set(GK_COPTIONS "${GK_COPTIONS} -D__thread=__declspec(thread)")
+-
+-  # This if checks if that value is cached or not.
+-  if("${HAVE_THREADLOCALSTORAGE}" MATCHES "^${HAVE_THREADLOCALSTORAGE}$")
+-    file(WRITE ${CMAKE_SOURCE_DIR}/check_thread_storage.c
+-               "extern __thread int x; int main() { return 0; }")
+-    try_compile(HAVE_THREADLOCALSTORAGE
+-      ${CMAKE_BINARY_DIR}
+-      ${CMAKE_SOURCE_DIR}/check_thread_storage.c)
+-    if(HAVE_THREADLOCALSTORAGE)
+-      message(STATUS "checking for thread-local storage - found")
+-    else()
+-      message(STATUS "checking for thread-local storage - not found")
+-    endif()
+-  endif()
+-  if(NOT HAVE_THREADLOCALSTORAGE)
+-    set(GK_COPTIONS "${GK_COPTIONS} -D__thread=")
+-  endif()
++  add_compile_definitions("__thread=__declspec(thread)")
+ endif()
+ 
+ # Finally set the official C flags.

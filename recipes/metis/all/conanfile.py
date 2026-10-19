@@ -3,7 +3,6 @@ import os
 from conan import ConanFile
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
-from conan.tools.microsoft import is_msvc
 
 required_conan_version = ">=2.1"
 
@@ -123,9 +122,6 @@ class METISConan(ConanFile):
             self.cpp_info.defines.append("MACOS")
         elif self.settings.os == "SunOS":
             self.cpp_info.defines.append("SUNOS")
-
-        if is_msvc(self):
-            self.cpp_info.defines.append("__thread=__declspec(thread)")
 
         bits = 64 if self.options.with_64bit_types else 32
         self.cpp_info.defines.append(f"IDXTYPEWIDTH={bits}")
