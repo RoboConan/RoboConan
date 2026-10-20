@@ -1,0 +1,5 @@
+--- a/nasmlib/file.c
++++ b/nasmlib/file.c
+@@ -48 +48 @@
+-#include <stringapiset.h>
++#include <Windows.h>

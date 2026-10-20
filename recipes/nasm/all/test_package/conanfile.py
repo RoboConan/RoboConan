@@ -15,10 +15,11 @@ class TestPackageConan(ConanFile):
         cmake_layout(self)
 
     def test(self):
-        self.run("nasm --version")
+        nasm = "nasmw.exe" if self.settings.os == "Windows" and self.settings.compiler == "msvc" else "nasm"
+        self.run(f"{nasm} --version")
         asm_file = os.path.join(self.source_folder, "hello_linux.asm")
         out_file = os.path.join(self.build_folder, "hello_linux.o")
-        self.run(f"nasm -felf64 {asm_file} -o {out_file}")
+        self.run(f"{nasm} -felf64 {asm_file} -o {out_file}")
         if can_run(self):
             if self.settings.os == "Linux" and self.settings.arch == "x86_64":
                 # TODO was tools.get_env, what should it be?

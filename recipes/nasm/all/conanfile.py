@@ -21,13 +21,18 @@ class NASMConan(ConanFile):
     languages = ["C"]
 
     @property
+    def _is_msvc(self):
+        settings = self.settings_target or self.settings
+        return settings.compiler == "msvc"
+
+    @property
     def _nasm(self):
-        suffix = "w.exe" if is_msvc(self) else ""
+        suffix = "w.exe" if self._is_msvc else ""
         return os.path.join(self.package_folder, "bin", f"nasm{suffix}")
 
     @property
     def _ndisasm(self):
-        suffix = "w.exe" if is_msvc(self) else ""
+        suffix = "w.exe" if self._is_msvc else ""
         return os.path.join(self.package_folder, "bin", f"ndisasm{suffix}")
 
     def _chmod_plus_x(self, filename):
@@ -42,10 +47,12 @@ class NASMConan(ConanFile):
 
     def package_id(self):
         del self.info.settings.compiler
+        if self.settings_target and self.settings_target.compiler == "msvc":
+            self.info.settings_target = self.settings_target
 
     def build_requirements(self):
         if self.settings_build.os == "Windows":
-            if not is_msvc(self):
+            if not self._is_msvc:
                 self.win_bash = True
                 if not self.conf.get("tools.microsoft.bash:path", check_type=str):
                     self.tool_requires("msys2/latest")
@@ -58,7 +65,7 @@ class NASMConan(ConanFile):
         if is_msvc(self):
             tc = NMakeToolchain(self)
             tc.generate()
-        else:
+        elif not self._is_msvc:
             tc = AutotoolsToolchain(self)
             tc.configure_args.append("--disable-werror")
             if self.settings.build_type == "Debug":
@@ -72,9 +79,9 @@ class NASMConan(ConanFile):
             tc.generate()
 
     def build(self):
-        if is_msvc(self):
+        if self._is_msvc:
             with chdir(self, self.source_folder):
-                self.run(r"nmake /f Mkfiles\msvc.mak")
+                self.run("nmake /f Mkfiles/msvc.mak")
         else:
             with chdir(self, self.source_folder):
                 autotools = Autotools(self)
@@ -83,7 +90,7 @@ class NASMConan(ConanFile):
 
     def package(self):
         copy(self, "LICENSE", self.source_folder, os.path.join(self.package_folder, "licenses"))
-        if is_msvc(self):
+        if self._is_msvc:
             copy(self, "*.exe", self.source_folder, os.path.join(self.package_folder, "bin"), keep_path=False)
             with chdir(self, os.path.join(self.package_folder, "bin")):
                 shutil.copy2("nasm.exe", "nasmw.exe")
