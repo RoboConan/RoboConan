@@ -73,12 +73,13 @@ class MpdecimalConan(ConanFile):
 
         # Use a namespaced DLL define to allow a static consuming libraries to link against a shared mpdecimal library
         if Version(self.version) >= "2.5.1":
-            for header in [
+            for filename in [
+                "libmpdec++/decimal.cc",
                 "libmpdec++/decimal.hh",
                 "libmpdec/mpdecimal32vc.h",
                 "libmpdec/mpdecimal64vc.h",
             ]:
-                replace_in_file(self, header, "defined(_DLL)", "defined(MPDECIMAL_DLL)")
+                replace_in_file(self, filename, "defined(_DLL)", "defined(MPDECIMAL_DLL)")
 
     def generate(self):
         if is_msvc(self):
@@ -159,6 +160,7 @@ class MpdecimalConan(ConanFile):
 
     def package_info(self):
         prefix, suffix = self._lib_pre_suf
+        self.cpp_info.components["libmpdecimal"].set_property("pkg_config_name", "libmpdec")
         self.cpp_info.components["libmpdecimal"].libs = [f"{prefix}mpdec{suffix}"]
         if self.options.shared and is_msvc(self):
             define = "MPDECIMAL_DLL" if Version(self.version) >= "2.5.1" else "USE_DLL"
@@ -167,6 +169,7 @@ class MpdecimalConan(ConanFile):
             self.cpp_info.components["libmpdecimal"].system_libs = ["m"]
 
         if self.options.cxx:
+            self.cpp_info.components["libmpdecimal++"].set_property("pkg_config_name", "libmpdec++")
             self.cpp_info.components["libmpdecimal++"].libs = [f"{prefix}mpdec++{suffix}"]
             self.cpp_info.components["libmpdecimal++"].requires = ["libmpdecimal"]
             if self.settings.os in ["Linux", "FreeBSD"]:
