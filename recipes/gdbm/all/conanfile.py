@@ -42,9 +42,6 @@ class GdbmConan(ConanFile):
         "with_readline": False,
     }
 
-    def export_sources(self):
-        export_conandata_patches(self)
-
     def configure(self):
         if self.options.shared:
             self.options.rm_safe("fPIC")
@@ -75,12 +72,11 @@ class GdbmConan(ConanFile):
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
-        apply_conandata_patches(self)
 
     def generate(self):
         if not cross_building(self):
-            virtual_run_env = VirtualRunEnv(self)
-            virtual_run_env.generate(scope="build")
+            venv = VirtualRunEnv(self)
+            venv.generate(scope="build")
         tc = AutotoolsToolchain(self)
         yes_no = lambda v: "yes" if v else "no"
         enable_debug = self.settings.build_type in ["Debug", "RelWithDebInfo"]
@@ -97,7 +93,7 @@ class GdbmConan(ConanFile):
         if self.options.get_safe("with_libiconv"):
             libiconv_package_folder = self.dependencies.direct_host["libiconv"].package_folder
             tc.configure_args.extend([
-                f"--with-libiconv-prefix={libiconv_package_folder}"
+                f"--with-libiconv-prefix={libiconv_package_folder}",
                 "--with-libintl-prefix"
             ])
         else:
