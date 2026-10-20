@@ -56,7 +56,7 @@ class LibffiConan(ConanFile):
             self.win_bash = True
             if not self.conf.get("tools.microsoft.bash:path", default=False, check_type=str):
                 self.tool_requires("msys2/latest")
-        if self.settings_build.os == "Windows" and self.settings.get_safe("compiler.runtime"):
+        if self.settings.os == "Windows" and self.settings.get_safe("compiler.runtime"):
             self.tool_requires("automake/[^1.18.1]")
 
     def source(self):
@@ -84,7 +84,15 @@ class LibffiConan(ConanFile):
             tc.extra_defines.append("FFI_STATIC_BUILD")
 
         env = tc.environment()
-        if self.settings_build.os == "Windows" and self.settings.get_safe("compiler.runtime"):
+        if self.settings.os == "Windows" and self.settings.get_safe("compiler.runtime"):
+            if self.settings_build.os != "Windows":
+                host_triplet = {
+                    "x86": "i686-w64-mingw32",
+                    "x86_64": "x86_64-w64-mingw32",
+                    "armv8": "aarch64-w64-mingw32",
+                }.get(str(self.settings.arch))
+                if host_triplet:
+                    tc.update_configure_args({"--host": host_triplet})
 
             if is_msvc_static_runtime(self):
                 tc.extra_defines.append("USE_STATIC_RTL")
@@ -102,7 +110,12 @@ class LibffiConan(ConanFile):
             elif self.settings.compiler == "clang":
                 architecture_flag = "-clang-cl"
 
-            compile_wrapper = unix_path(self, os.path.join(self.source_folder, "msvcc.sh"))
+            compile_wrapper = os.path.join(self.source_folder, "msvcc.sh")
+            if self.settings_build.os != "Windows":
+                copy(self, "msvcc.sh", src=self.source_folder, dst=self.build_folder)
+                compile_wrapper = os.path.join(self.build_folder, "msvcc.sh")
+                replace_in_file(self, compile_wrapper, "cygpath -ma", "realpath")
+            compile_wrapper = unix_path(self, compile_wrapper)
             if architecture_flag:
                 compile_wrapper = f"{compile_wrapper} {architecture_flag}"
 
