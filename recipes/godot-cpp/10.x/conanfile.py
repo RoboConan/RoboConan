@@ -59,7 +59,7 @@ class GodotCppConan(ConanFile):
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
-        replace_in_file(self, "cmak/godotcpp.cmake",
+        replace_in_file(self, "cmake/godotcpp.cmake",
                         'OUTPUT_NAME "${PROJECT_NAME}${GODOTCPP_SUFFIX}"',
                         'OUTPUT_NAME "${PROJECT_NAME}"')
 
