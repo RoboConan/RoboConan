@@ -4,7 +4,7 @@ from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
 from conan.tools.apple import is_apple_os
 from conan.tools.build import check_min_cppstd
-from conan.tools.cmake import CMakeToolchain, CMake, cmake_layout, CMakeDeps
+from conan.tools.cmake import CMakeToolchain, CMake, cmake_layout
 from conan.tools.files import *
 
 
@@ -20,9 +20,6 @@ class LevelZeroConan(ConanFile):
     def layout(self):
         cmake_layout(self, src_folder="src")
 
-    def requirements(self):
-        self.requires("spdlog/[^1.8]")
-
     def validate(self):
         if is_apple_os(self):
             self.output.warning("Level Zero is not known to support Apple platforms")
@@ -36,19 +33,14 @@ class LevelZeroConan(ConanFile):
         replace_in_file(self, "source/loader/ze_loader.cpp",
                         "#ifdef __linux__",
                         "#if defined(__linux__) || defined(__APPLE__)")
-        rmdir(self, "third_party/spdlog_headers")
         save(self, "samples/CMakeLists.txt", "")
 
     def generate(self):
         tc = CMakeToolchain(self)
-        tc.cache_variables["SYSTEM_SPDLOG"] = True
+        tc.cache_variables["BUILD_L0_LOADER_TESTS"] = False
         tc.generate()
-        deps = CMakeDeps(self)
-        deps.generate()
 
     def build(self):
-        if self.settings.os == "Windows":
-            replace_in_file(self, os.path.join(self.source_folder, "source/utils/logging.h"), "ansicolor", "wincolor")
         cmake = CMake(self)
         cmake.configure()
         cmake.build()
