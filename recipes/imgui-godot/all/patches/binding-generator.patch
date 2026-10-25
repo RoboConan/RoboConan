@@ -1,0 +1,23 @@
+--- a/gdext/scripts/gds_bindings.py
++++ b/gdext/scripts/gds_bindings.py
+@@ -390,7 +390,9 @@ class Property:
+         self.gdtype = type_map.get(self.orig_type, None)
+         if self.is_array:
+             self.array_type, self.array_size = self.orig_type[:-1].split("[")
+-            self.gdtype = Property.array_types[self.array_type]
++            # dear_bindings may expose internal array element types which have
++            # no safe GDScript representation; skip them like other unmapped types.
++            self.gdtype = Property.array_types.get(self.array_type)
+         if self.gdtype == "String":
+             self.gdtype = None
+         try:
+@@ -636,7 +638,7 @@ def main():
+         jdat = json.loads(jfi.read())
+         parser.load(jdat)
+     parser.write()
+ 
+-    subprocess.call("clang-format -i gen/imgui_bindings*", shell=True)
++    # Do not invoke an undeclared host clang-format while generating package sources.
+ 
+ 
+ if __name__ == "__main__":

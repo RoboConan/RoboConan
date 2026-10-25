@@ -1,0 +1,34 @@
+--- a/gdext/include/imgui-godot.h
++++ b/gdext/include/imgui-godot.h
+@@ -97,6 +97,6 @@ inline void AddFont(const Ref<FontFile>& fontFile, int fontSize, bool merge = fa
+         } while (*++glyphRanges != 0);
+     }
+-    detail::ImGuiGD->call(sn, fontSize, merge, gr);
++    detail::ImGuiGD->call(sn, fontFile, fontSize, merge, gr);
+ }
+ 
+ inline void Connect(const Callable& callable)
+@@ -699,11 +699,10 @@ namespace ImGui {
+ using godot::AtlasTexture;
+ using godot::Ref;
+ using godot::StringName;
+-using godot::SubViewport;
+ using godot::Texture2D;
+ #endif
+ 
+-inline bool SubViewport(SubViewport* svp)
++inline bool SubViewport(godot::SubViewport* svp)
+ {
+     ERR_FAIL_COND_V(!ImGui::Godot::detail::GET_IMGUIGD(), false);
+     static const StringName sn("SubViewport");
+--- a/gdext/src/main.cpp
++++ b/gdext/src/main.cpp
+@@ -62,5 +62,7 @@ void initialize_ign_module(ModuleInitializationLevel p_level)
+     if (p_level == MODULE_INITIALIZATION_LEVEL_SERVERS)
+     {
+         ImGui::CreateContext();
+-        ClassDB::register_internal_class<ImGuiSync>();
++        // SyncImGuiPtrs instantiates this bridge from consumer GDExtensions.
++        // Keep it public while all implementation-only helpers remain internal.
++        ClassDB::register_class<ImGuiSync>();
+     }

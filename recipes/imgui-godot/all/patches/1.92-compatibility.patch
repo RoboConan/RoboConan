@@ -1,0 +1,118 @@
+--- a/gdext/include/imconfig-godot.h
++++ b/gdext/include/imconfig-godot.h
+@@ -1,6 +1,10 @@
+ #pragma once
+ 
++// ImGui 1.92 retains these APIs for renderers using the legacy single-atlas
++// texture path. imgui-godot does not advertise RendererHasTextures yet.
++#if IMGUI_VERSION_NUM < 19200
+ #define IMGUI_DISABLE_OBSOLETE_FUNCTIONS // match ImGui.NET
++#endif
+ 
+ #if __has_include("godot_cpp/godot.hpp") // GDExtension
+ #include <godot_cpp/variant/color.hpp>
+--- a/gdext/include/imgui-godot.h
++++ b/gdext/include/imgui-godot.h
+@@ -181,6 +181,19 @@ inline ImTextureID BindTexture(Texture2D* tex)
+ {
+     ERR_FAIL_COND_V(!tex, 0);
+-    return reinterpret_cast<ImTextureID>(tex->get_rid().get_id());
++    return static_cast<ImTextureID>(tex->get_rid().get_id());
++}
++
++inline void ImageTexture(ImTextureID texture, const Vector2& size, const Vector2& uv0, const Vector2& uv1,
++                         const Color& tint_col, const Color& border_col)
++{
++#if IMGUI_VERSION_NUM >= 19190
++    // The replacement API has no per-call border color. This matches ImGui's
++    // obsolete overload, which ignores border_col from 1.91.9 onward.
++    (void)border_col;
++    ImGui::ImageWithBg(texture, size, uv0, uv1, {}, tint_col);
++#else
++    ImGui::Image(texture, size, uv0, uv1, tint_col, border_col);
++#endif
+ }
+ #endif
+ 
+@@ -700,14 +713,14 @@ inline bool SubViewport(SubViewport* svp)
+ inline void Image(Texture2D* tex, const Vector2& size, const Vector2& uv0 = {0, 0}, const Vector2& uv1 = {1, 1},
+                   const Color& tint_col = {1, 1, 1, 1}, const Color& border_col = {0, 0, 0, 0})
+ {
+-    ImGui::Image(ImGui::Godot::BindTexture(tex), size, uv0, uv1, tint_col, border_col);
++    ImGui::Godot::ImageTexture(ImGui::Godot::BindTexture(tex), size, uv0, uv1, tint_col, border_col);
+ }
+ 
+ inline void Image(const Ref<Texture2D>& tex, const Vector2& size, const Vector2& uv0 = {0, 0},
+                   const Vector2& uv1 = {1, 1}, const Color& tint_col = {1, 1, 1, 1},
+                   const Color& border_col = {0, 0, 0, 0})
+ {
+-    ImGui::Image(ImGui::Godot::BindTexture(tex.ptr()), size, uv0, uv1, tint_col, border_col);
++    ImGui::Godot::ImageTexture(ImGui::Godot::BindTexture(tex.ptr()), size, uv0, uv1, tint_col, border_col);
+ }
+ 
+ inline void Image(AtlasTexture* tex, const Vector2& size, const Color& tint_col = {1, 1, 1, 1},
+@@ -715,7 +728,7 @@ inline void Image(AtlasTexture* tex, const Vector2& size, const Color& tint_col =
+ {
+     ImVec2 uv0, uv1;
+     ImGui::Godot::detail::GetAtlasUVs(tex, uv0, uv1);
+-    ImGui::Image(ImGui::Godot::BindTexture(tex), size, uv0, uv1, tint_col, border_col);
++    ImGui::Godot::ImageTexture(ImGui::Godot::BindTexture(tex), size, uv0, uv1, tint_col, border_col);
+ }
+ 
+ inline void Image(const Ref<AtlasTexture>& tex, const Vector2& size, const Color& tint_col = {1, 1, 1, 1},
+@@ -723,7 +736,7 @@ inline void Image(const Ref<AtlasTexture>& tex, const Vector2& size, const Color&
+ {
+     ImVec2 uv0, uv1;
+     ImGui::Godot::detail::GetAtlasUVs(tex.ptr(), uv0, uv1);
+-    ImGui::Image(ImGui::Godot::BindTexture(tex.ptr()), size, uv0, uv1, tint_col, border_col);
++    ImGui::Godot::ImageTexture(ImGui::Godot::BindTexture(tex.ptr()), size, uv0, uv1, tint_col, border_col);
+ }
+ 
+ inline bool ImageButton(const char* str_id, Texture2D* tex, const Vector2& size, const Vector2& uv0 = {0, 0},
+--- a/gdext/src/Fonts.cpp
++++ b/gdext/src/Fonts.cpp
+@@ -63,9 +63,18 @@ struct Fonts::Impl
+         style.ScrollbarRounding = defaultStyle.ScrollbarRounding;
+         style.GrabMinSize = defaultStyle.GrabMinSize;
+         style.GrabRounding = defaultStyle.GrabRounding;
+         style.LogSliderDeadzone = defaultStyle.LogSliderDeadzone;
++#if IMGUI_VERSION_NUM >= 19190
++        style.ImageBorderSize = defaultStyle.ImageBorderSize;
++#endif
+         style.TabRounding = defaultStyle.TabRounding;
++#if IMGUI_VERSION_NUM >= 19190
++        style.TabCloseButtonMinWidthSelected = defaultStyle.TabCloseButtonMinWidthSelected;
++        style.TabCloseButtonMinWidthUnselected = defaultStyle.TabCloseButtonMinWidthUnselected;
++#else
+         style.TabMinWidthForCloseButton = defaultStyle.TabMinWidthForCloseButton;
++#endif
++        style.TabBarOverlineSize = defaultStyle.TabBarOverlineSize;
+         style.SeparatorTextPadding = defaultStyle.SeparatorTextPadding;
+ #if IMGUI_VERSION_NUM >= 18980
+         style.DockingSeparatorSize = defaultStyle.DockingSeparatorSize;
+--- a/gdext/scripts/gds_bindings.py
++++ b/gdext/scripts/gds_bindings.py
+@@ -29,6 +29,9 @@ type_map = {
+     "ImS64": "int64_t",
+     "ImS8": "int8_t",
+     "ImTextureID": "Ref<Texture2D>",
++    # ImGui 1.92 wraps legacy renderer IDs in ImTextureRef while this backend
++    # continues to expose Godot Texture2D references to GDScript.
++    "ImTextureRef": "Ref<Texture2D>",
+     "ImU16": "uint16_t",
+     "ImU32": "Color",
+     "ImU8": "uint8_t",
+@@ -247,7 +250,12 @@ class Param:
+         elif self.gdtype == "Vector2":
+             return f"{{static_cast<float>({self.name}.x), static_cast<float>({self.name}.y)}}"
+         elif self.gdtype == "Ref<Texture2D>":
+-            return f"(ImTextureID){self.name}->get_rid().get_id()"
++            texture_id = f"(ImTextureID){self.name}->get_rid().get_id()"
++            # ImTextureRef stores either a texture object or a legacy renderer ID;
++            # imgui-godot owns Godot textures and passes the latter representation.
++            if self.orig_type == "ImTextureRef":
++                return f"{{nullptr, {texture_id}}}"
++            return texture_id
+         elif self.gdtype == "Color":
+             if self.orig_type == "ImU32":
+                 return f"{self.name}.to_abgr32()"

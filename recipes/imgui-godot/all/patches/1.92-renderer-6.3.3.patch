@@ -1,0 +1,48 @@
+--- a/gdext/src/RdRenderer.cpp
++++ b/gdext/src/RdRenderer.cpp
+@@ -396,7 +396,14 @@ void RdRenderer::ReplaceTextureRIDs(ImDrawData* drawData)
+         ImDrawList* cmdList = drawData->CmdLists[i];
+         for (ImDrawCmd& drawCmd : cmdList->CmdBuffer)
+         {
++#if IMGUI_VERSION_NUM >= 19200
++            // ImGui 1.92 replaces the raw TextureId field with ImTextureRef,
++            // while this backend still supplies legacy renderer texture IDs.
++            drawCmd.TexRef = ImTextureRef(
++                (ImTextureID)RS->texture_get_rd_texture(make_rid(drawCmd.GetTexID())).get_id());
++#else
+             drawCmd.TextureId = (ImTextureID)RS->texture_get_rd_texture(make_rid(drawCmd.TextureId)).get_id();
++#endif
+         }
+     }
+ }
+--- a/gdext/src/RdRendererThreadSafe.cpp
++++ b/gdext/src/RdRendererThreadSafe.cpp
+@@ -17,9 +17,18 @@ struct RdRendererThreadSafe::Impl
+     {
+         ClonedDrawData(ImDrawData* drawData)
+         {
++            // Keep this field-by-field clone synchronized with ImDrawData;
++            // ImGui 1.92 added FrameCount and the non-owned Textures pointer.
++#if IMGUI_VERSION_NUM >= 19200
++            static_assert(sizeof(ImDrawData) == 80);
++#else
+             static_assert(sizeof(ImDrawData) == 64);
++#endif
+             data = IM_NEW(ImDrawData);
+             data->Valid = drawData->Valid;
++#if IMGUI_VERSION_NUM >= 19200
++            data->FrameCount = drawData->FrameCount;
++#endif
+             data->CmdListsCount = drawData->CmdListsCount;
+             data->TotalIdxCount = drawData->TotalIdxCount;
+             data->TotalVtxCount = drawData->TotalVtxCount;
+@@ -28,6 +35,9 @@ struct RdRendererThreadSafe::Impl
+             data->DisplaySize = drawData->DisplaySize;
+             data->FramebufferScale = drawData->FramebufferScale;
+             data->OwnerViewport = drawData->OwnerViewport;
++#if IMGUI_VERSION_NUM >= 19200
++            data->Textures = nullptr;
++#endif
+ 
+             for (int i = 0; i < drawData->CmdLists.Size; ++i)
+             {

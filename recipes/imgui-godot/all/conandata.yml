@@ -1,0 +1,52 @@
+sources:
+  "6.3.3-git.20260517":
+    url: "https://github.com/pkdawson/imgui-godot/archive/a4c2749a62efc01d50090e24e20bca287c23bf26.tar.gz"
+    sha256: "430255988a2630d02dd9be24daa546de1850e135bbeacf2f77d72bb08d9edd3c"
+  "6.3.2":
+    url: "https://github.com/pkdawson/imgui-godot/archive/v6.3.2.tar.gz"
+    sha256: "e15244570a48de9b878eeb28e78c9f6e1554adb1e7706f8fc27c1d8c36f79967"
+
+dear_bindings:
+  "6.3.3-git.20260517":
+    url: "https://github.com/dearimgui/dear_bindings/archive/DearBindings_v0.24_ImGui_v1.92.9b-docking.tar.gz"
+    sha256: "5ca1c294fecd00cf7537b75fbc469562bc9040e8ca4c2f6b83c2f0ac19cfde3d"
+  "6.3.2":
+    url: "https://github.com/dearimgui/dear_bindings/archive/DearBindings_v0.24_ImGui_v1.92.9b-docking.tar.gz"
+    sha256: "5ca1c294fecd00cf7537b75fbc469562bc9040e8ca4c2f6b83c2f0ac19cfde3d"
+
+patches:
+  "6.3.3-git.20260517":
+    - patch_file: "patches/1.92-compatibility.patch"
+      patch_description: "Support Dear ImGui 1.91.9 and 1.92 API changes"
+      patch_type: "portability"
+    - patch_file: "patches/1.92-renderer-6.3.3.patch"
+      patch_description: "Support Dear ImGui 1.92 through its legacy renderer texture path"
+      patch_type: "portability"
+    - patch_file: "patches/binding-generator.patch"
+      patch_description: "Skip unbindable ImGui arrays and avoid invoking an undeclared host clang-format"
+      patch_type: "portability"
+    - patch_file: "patches/native-gdextension-only.patch"
+      patch_description: "Remove C# runtime fallbacks and project checks because only native GDExtension is packaged"
+      patch_type: "conan"
+    - patch_file: "patches/public-cxx23-header.patch"
+      patch_description: "Fix the native C++23 header and cross-extension sync bridge"
+      patch_type: "portability"
+  "6.3.2":
+    - patch_file: "patches/1.92-compatibility.patch"
+      patch_description: "Support Dear ImGui 1.91.9 and 1.92 API changes"
+      patch_type: "portability"
+    - patch_file: "patches/1.92-renderer-6.3.2.patch"
+      patch_description: "Support Dear ImGui 1.92 through its legacy renderer texture path"
+      patch_type: "portability"
+    - patch_file: "patches/6.3.2-godot-cpp-10.patch"
+      patch_description: "Backport upstream Godot 4.5 API compatibility changes"
+      patch_type: "portability"
+    - patch_file: "patches/binding-generator.patch"
+      patch_description: "Skip unbindable ImGui arrays and avoid invoking an undeclared host clang-format"
+      patch_type: "portability"
+    - patch_file: "patches/native-gdextension-only.patch"
+      patch_description: "Remove C# runtime fallbacks and project checks because only native GDExtension is packaged"
+      patch_type: "conan"
+    - patch_file: "patches/public-cxx23-header.patch"
+      patch_description: "Fix the native C++23 header and cross-extension sync bridge"
+      patch_type: "portability"

@@ -1,0 +1,69 @@
+--- a/addons/imgui-godot/scripts/ImGuiRoot.gd
++++ b/addons/imgui-godot/scripts/ImGuiRoot.gd
+@@ -2,23 +2,8 @@ extends Node
+ 
+ signal imgui_layout
+ 
+-const csharp_controller := "res://addons/imgui-godot/ImGuiGodot/ImGuiController.cs"
+-const csharp_sync := "res://addons/imgui-godot/ImGuiGodot/ImGuiSync.cs"
+-
+ func _enter_tree():
+-    var has_csharp := false
+-    if ClassDB.class_exists("CSharpScript"):
+-        var script := load(csharp_sync)
+-        has_csharp = script.get_instance_base_type() == "Object"
+-
++    # The Conan package deliberately ships only the native GDExtension backend.
+     if ClassDB.class_exists("ImGuiController"):
+         # native
+         add_child(ClassDB.instantiate("ImGuiController"))
+-        if has_csharp:
+-            var obj: Object = load(csharp_sync).new()
+-            obj.SyncPtrs()
+-            obj.free()
+-    else:
+-        # C# only
+-        if has_csharp:
+-            add_child(load(csharp_controller).new())
+--- a/addons/imgui-godot/scripts/ImGuiPlugin.gd
++++ b/addons/imgui-godot/scripts/ImGuiPlugin.gd
+@@ -30,37 +30,8 @@ func _enter_tree():
+     if ProjectSettings.has_setting("autoload/ImGuiLayer"):
+         remove_autoload_singleton("ImGuiLayer")
+ 
+-    # warn user if csproj will fail to build
+-    if "C#" in ProjectSettings.get_setting("application/config/features"):
+-        var projPath: String = ProjectSettings.get_setting("dotnet/project/solution_directory")
+-        var fn: String = "%s.csproj" % ProjectSettings.get_setting("dotnet/project/assembly_name")
+-        check_csproj(projPath.path_join(fn))
+-
+-func check_csproj(fn):
+-    var fi := FileAccess.open(fn, FileAccess.READ)
+-    if !fi:
+-        return
+-
+-    var changesNeeded := ""
+-    var data := fi.get_as_text()
+-    var idx := data.find("<TargetFramework>net")
+-    if idx != -1:
+-        idx += len("<TargetFramework>net")
+-        var idx_dot := data.find(".", idx)
+-        var netVer := data.substr(idx, idx_dot - idx).to_int()
+-        if netVer < 8:
+-            changesNeeded += "- Set target framework to .NET 8 or later\n"
+-
+-    if !data.contains("<AllowUnsafeBlocks>"):
+-        changesNeeded += "- Allow unsafe blocks\n"
+-
+-    if !data.contains("<PackageReference Include=\"ImGui.NET\""):
+-        changesNeeded += "- Add NuGet package ImGui.NET\n"
+-
+-    if changesNeeded != "":
+-        var text := "Your .csproj requires the following changes:\n\n%s" % changesNeeded
+-        push_warning("imgui-godot\n\n%s" % text)
+-
++    # C# project validation is omitted because this package only ships native GDExtension.
++
+ func _exit_tree():
+     remove_export_plugin(_exporter)
+     remove_autoload_singleton("ImGuiRoot")
