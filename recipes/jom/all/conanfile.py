@@ -23,8 +23,8 @@ class JomInstallerConan(ConanFile):
         del self.info.settings.build_type
 
     def validate(self):
-        if self.settings.os != "Windows":
-            raise ConanInvalidConfiguration(f"{self.ref} only supports Windows")
+        if self.settings.os != "Windows" and (not self.settings_target or self.settings_target.os != "Windows"):
+            raise ConanInvalidConfiguration(f"{self.ref} is only intended to be used on Windows or as a Windows build tool")
 
     def source(self):
         pass
@@ -36,6 +36,9 @@ class JomInstallerConan(ConanFile):
     def package(self):
         copy(self, "LICENSE.GPL", self.build_folder, os.path.join(self.package_folder, "licenses"))
         copy(self, "*.exe", self.build_folder, os.path.join(self.package_folder, "bin"))
+        if os.name == "posix":
+            jom = os.path.join(self.package_folder, "bin", "jom.exe")
+            os.chmod(jom, os.stat(jom).st_mode | 0o111)
 
     def package_info(self):
         self.cpp_info.libdirs = []
