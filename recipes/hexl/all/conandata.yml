@@ -1,7 +1,4 @@
 sources:
-  "1.2.5":
-    url: "https://github.com/intel/hexl/archive/refs/tags/v1.2.5.tar.gz"
-    sha256: "3692e6e6183dbc49253e51e86c3e52e7affcac925f57db0949dbb4d34b558a9a"
-  "1.2.4":
-    url: "https://github.com/intel/hexl/archive/refs/tags/v1.2.4.tar.gz"
-    sha256: "f91dd158e3faa8795035f618286cdef7dacbf488fd0ba4f44409880997b4549f"
+  "1.2.6":
+    url: "https://github.com/intel/hexl/archive/v1.2.6.tar.gz"
+    sha256: "5035cedff6984060c10e2ce7587dab83483787ea2010e1b60d18d19bb3538f3b"
