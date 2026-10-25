@@ -40,9 +40,6 @@ class PackageConan(ConanFile):
 
     python_requires = "conan-utils/latest"
 
-    def export_sources(self):
-        export_conandata_patches(self)
-
     def config_options(self):
         if self.settings.os != "Windows":
             del self.options.with_win32
@@ -81,7 +78,6 @@ class PackageConan(ConanFile):
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
-        apply_conandata_patches(self)
 
     def generate(self):
         if self.options.get_safe("with_wayland") and can_run(self):
