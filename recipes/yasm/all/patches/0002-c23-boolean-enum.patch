@@ -1,0 +1,152 @@
+--- a/libyasm/bitvect.h
++++ b/libyasm/bitvect.h
+@@ -83,7 +83,7 @@
+     #ifdef MACOS_TRADITIONAL
+         #define boolean Boolean
+     #else
+-        typedef enum boolean { false = FALSE, true = TRUE } boolean;
++        typedef enum boolean { boolean_false = FALSE, boolean_true = TRUE } boolean;
+     #endif
+ #endif
+ 
+--- a/libyasm/bitvect.c
++++ b/libyasm/bitvect.c
+@@ -561,7 +561,7 @@
+ 
+ wordptr BitVector_Shadow(wordptr addr)     /* makes new, same size but empty */
+ {
+-    return( BitVector_Create(bits_(addr),true) );
++    return( BitVector_Create(bits_(addr),boolean_true) );
+ }
+ 
+ wordptr BitVector_Clone(wordptr addr)               /* makes exact duplicate */
+@@ -570,7 +570,7 @@
+     wordptr twin;
+ 
+     bits = bits_(addr);
+-    twin = BitVector_Create(bits,false);
++    twin = BitVector_Create(bits,boolean_false);
+     if ((twin != NULL) and (bits > 0))
+         BIT_VECTOR_cpy_words(twin,addr,size_(addr));
+     return(twin);
+@@ -588,7 +588,7 @@
+     bitsX = bits_(X);
+     bitsY = bits_(Y);
+     bitsZ = bitsX + bitsY;
+-    Z = BitVector_Create(bitsZ,false);
++    Z = BitVector_Create(bitsZ,boolean_false);
+     if ((Z != NULL) and (bitsZ > 0))
+     {
+         BIT_VECTOR_cpy_words(Z,Y,size_(Y));
+@@ -927,7 +927,7 @@
+             empty = TRUE;
+             while (empty and (--size > 0))
+             {
+-                if ((value = *addr++)) empty = false; else offset++;
++                if ((value = *addr++)) empty = boolean_false; else offset++;
+             }
+             if (empty) return(FALSE);
+         }
+@@ -952,7 +952,7 @@
+         empty = TRUE;
+         while (empty and (--size > 0))
+         {
+-            if ((value = NOT *addr++)) empty = false; else offset++;
++            if ((value = NOT *addr++)) empty = boolean_false; else offset++;
+         }
+         if (empty) value = LSB;
+     }
+@@ -1003,7 +1003,7 @@
+             empty = TRUE;
+             while (empty and (--size > 0))
+             {
+-                if ((value = *addr--)) empty = false; else offset--;
++                if ((value = *addr--)) empty = boolean_false; else offset--;
+             }
+             if (empty) return(FALSE);
+         }
+@@ -1028,7 +1028,7 @@
+         empty = TRUE;
+         while (empty and (--size > 0))
+         {
+-            if ((value = NOT *addr--)) empty = false; else offset--;
++            if ((value = NOT *addr--)) empty = boolean_false; else offset--;
+         }
+         if (empty) value = MSB;
+     }
+@@ -2713,8 +2713,8 @@
+     {
+         if ( BIT_VECTOR_TST_BIT(Z,count) )
+         {
+-            carry = false;
+-            overflow = BitVector_compute(X,X,Y,false,&carry);
++            carry = boolean_false;
++            overflow = BitVector_compute(X,X,Y,boolean_false,&carry);
+             if (strict) ok = not (carry or overflow);
+             else        ok = not  carry;
+         }
+@@ -2969,7 +2969,7 @@
+         if (X != Y) BitVector_Copy(X,Y);
+         return(ErrCode_Ok);
+     }
+-    Q = BitVector_Create(bits,false);
++    Q = BitVector_Create(bits,boolean_false);
+     if (Q == NULL)
+     {
+         return(ErrCode_Null);
+@@ -3091,7 +3091,7 @@
+         *V = 1;
+         return(ErrCode_Ok);
+     }
+-    if ((L = BitVector_Create_List(bits,false,11)) == NULL)
++    if ((L = BitVector_Create_List(bits,boolean_false,11)) == NULL)
+     {
+         return(ErrCode_Null);
+     }
+@@ -3117,8 +3117,8 @@
+     BitVector_Empty(Y1);
+     BitVector_Empty(Y2);
+     *Y2 = 1;
+-    sgn_x = false;
+-    sgn_y = false;
++    sgn_x = boolean_false;
++    sgn_y = boolean_false;
+     while (not error)
+     {
+         if ((error = BitVector_Div_Pos(Q,A,B,R)))
+@@ -3132,7 +3132,7 @@
+         sgn_q = sgn_a XOR sgn_b;
+ 
+         if (sgn_x) BitVector_Negate(Z,X2); else BitVector_Copy(Z,X2);
+-        if ((error = BitVector_Mul_Pos(X3,Z,Q,true)))
++        if ((error = BitVector_Mul_Pos(X3,Z,Q,boolean_true)))
+         {
+             break;
+         }
+@@ -3146,7 +3146,7 @@
+         sgn_x = (((*(X3+size) &= mask) AND msb) != 0);
+ 
+         if (sgn_y) BitVector_Negate(Z,Y2); else BitVector_Copy(Z,Y2);
+-        if ((error = BitVector_Mul_Pos(Y3,Z,Q,true)))
++        if ((error = BitVector_Mul_Pos(Y3,Z,Q,boolean_true)))
+         {
+             break;
+         }
+@@ -3574,7 +3574,7 @@
+ 
+     while (empty and (size-- > 0))
+     {
+-        if ((c = *addr++)) empty = false; else i++;
++        if ((c = *addr++)) empty = boolean_false; else i++;
+     }
+     if (empty) return((Z_long) LONG_MAX);                  /* plus infinity  */
+     i <<= LOGBITS;
+@@ -3596,7 +3596,7 @@
+     addr += size-1;
+     while (empty and (size-- > 0))
+     {
+-        if ((c = *addr--)) empty = false; else i--;
++        if ((c = *addr--)) empty = boolean_false; else i--;
+     }
+     if (empty) return((Z_long) LONG_MIN);                  /* minus infinity */
+     i <<= LOGBITS;

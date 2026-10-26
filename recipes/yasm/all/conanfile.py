@@ -39,6 +39,8 @@ class YASMConan(ConanFile):
             if not self.conf.get("tools.microsoft.bash:path", check_type=str):
                 self.tool_requires("msys2/latest")
         if "+git" in self.version and not is_msvc(self):
+            self.tool_requires("autoconf/[^2.71]")
+            self.tool_requires("automake/[^1.18.1]")
             self.tool_requires("libtool/[^2.4.7]")
 
     def source(self):
