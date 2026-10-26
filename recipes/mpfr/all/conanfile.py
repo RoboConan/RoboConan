@@ -40,6 +40,7 @@ class MpfrConan(ConanFile):
 
     def export_sources(self):
         copy(self, "CMakeLists.txt.in", src=self.recipe_folder, dst=self.export_sources_folder)
+        export_conandata_patches(self)
 
     def layout(self):
         if self.settings.os == "Windows":
@@ -61,6 +62,7 @@ class MpfrConan(ConanFile):
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
+        apply_conandata_patches(self)
 
     def generate(self):
         env = VirtualBuildEnv(self)

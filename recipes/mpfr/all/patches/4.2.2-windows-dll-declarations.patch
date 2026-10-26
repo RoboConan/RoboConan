@@ -1,0 +1,16 @@
+--- a/src/mpfr.h
++++ b/src/mpfr.h
+@@ -321,9 +321,11 @@
+ /* Support for WINDOWS Dll:
+    Check if we are inside a MPFR build, and if so export the functions.
+    Otherwise does the same thing as GMP */
+-#if defined(__MPFR_WITHIN_MPFR) && __GMP_LIBGMP_DLL
++#if defined(__MPFR_WITHIN_MPFR) && (defined(MPFR_DLL) || __GMP_LIBGMP_DLL)
+ # define __MPFR_DECLSPEC __GMP_DECLSPEC_EXPORT
+-#else
++#elif defined(MPFR_DLL)
++# define __MPFR_DECLSPEC __GMP_DECLSPEC_IMPORT
++#else
+ # ifndef __GMP_DECLSPEC
+ #  define __GMP_DECLSPEC
+ # endif
