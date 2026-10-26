@@ -30,7 +30,7 @@ void test_f77blas() {
   blasint ldc = 3;
   double alpha = 1.0;
   double beta  = 2.0;
-  dgemm_(&transa, &transb, &m, &n, &k, &alpha, A, &lda, B, &ldb, &beta, C, &ldc);
+  BLASFUNC(dgemm)(&transa, &transb, &m, &n, &k, &alpha, A, &lda, B, &ldb, &beta, C, &ldc);
 
   for(int i=0; i<9; i++)
     printf("%lf ", C[i]);
