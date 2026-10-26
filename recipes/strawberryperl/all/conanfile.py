@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
@@ -28,11 +29,12 @@ class StrawberryPerlConan(ConanFile):
             raise ConanInvalidConfiguration(f"{self.ref} is only available for x86 and x86_64 architectures.")
 
     def validate(self):
-        if self.settings.os != "Windows":
+        settings = self.settings_target or self.settings
+        if settings.os != "Windows":
             raise ConanInvalidConfiguration(f"{self.ref} is only intended to be used on Windows.")
 
     def compatibility(self):
-        if self.settings.arch == "armv8":
+        if self.settings.os == "Windows" and self.settings.arch == "armv8":
             return [{"settings": [("arch", "x86_64")]}]
 
     def source(self):
@@ -47,6 +49,9 @@ class StrawberryPerlConan(ConanFile):
         copy(self, pattern="*", src=os.path.join(self.build_folder, "perl", "lib"), dst=os.path.join(self.package_folder, "lib"))
         copy(self, pattern="*", src=os.path.join(self.build_folder, "perl", "vendor", "lib"), dst=os.path.join(self.package_folder, "lib"))
         rmdir(self, os.path.join(self.package_folder, "lib", "pkgconfig"))
+        if os.name == "posix":
+            for executable in Path(self.package_folder, "bin").rglob("*.exe"):
+                executable.chmod(executable.stat().st_mode | 0o111)
 
     def package_info(self):
         self.cpp_info.libdirs = []
