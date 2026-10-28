@@ -7,7 +7,6 @@ from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
 from conan.tools.files import *
 from conan.tools.layout import basic_layout
-from conan.tools.scm import Version
 
 required_conan_version = ">=2.1"
 
@@ -22,7 +21,7 @@ class IntelCompilerRuntimeConan(ConanFile):
     settings = "os", "arch", "compiler", "build_type"
     default_options = {
         "umf/*:shared": True,
-        "zlib/*:shared": True,
+        "zlib-ng/*:shared": True,
     }
 
     @cached_property
@@ -43,21 +42,20 @@ class IntelCompilerRuntimeConan(ConanFile):
 
     def requirements(self):
         if self.settings.os == "Windows":
-            if Version(self.version) >= "2025.3":
-                self.requires("umf/[^1]")
+            self.requires("umf/[^1]")
         else:
-            self.requires("zlib/[^1.2]")
+            self.requires("zlib-ng/[^2.0]")
 
     def validate(self):
         if self.settings.os not in ["Linux", "Windows"]:
             raise ConanInvalidConfiguration(f"{self.settings.os} is not supported")
         if self.settings.arch != "x86_64":
             raise ConanInvalidConfiguration(f"{self.settings.arch} is not supported")
-        if self.settings.os == "Windows" and Version(self.version) >= "2025.3":
+        if self.settings.os == "Windows":
             if not self.dependencies["umf"].options.shared:
                 raise ConanInvalidConfiguration("intel-compiler-runtime requires umf:shared=True")
-        if self.settings.os == "Linux" and not self.dependencies["zlib"].options.shared:
-            raise ConanInvalidConfiguration("intel-compiler-runtime requires zlib:shared=True")
+        if self.settings.os == "Linux" and not self.dependencies["zlib-ng"].options.shared:
+            raise ConanInvalidConfiguration("intel-compiler-runtime requires zlib-ng:shared=True")
 
     def build(self):
         get(self, **self._packages["intel-cmplr-lib-rt"], destination=self.build_folder, strip_root=True)
