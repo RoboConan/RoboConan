@@ -67,12 +67,20 @@ class BlasConan(ConanFile):
 
     def package_id(self):
         self.info.settings.clear()
-        del self.info.options.shared
-        del self.info.options.interface
+        provider = str(self.info.options.provider)
+        if provider != "accelerate":
+            dependency = {"mkl": "onemkl", "nvpl": "nvpl_blas"}.get(provider, provider)
+            self.info.requires[dependency].full_package_mode()
 
     @cached_property
     def _dependency(self):
         return self.dependencies[self._dep_name]
+
+    @property
+    def extension_properties(self):
+        if self.options.provider == "accelerate":
+            return {"fortran_name_mangling": "lower_underscore"}
+        return {"fortran_name_mangling": self._dependency.extension_properties["fortran_name_mangling"]}
 
     def validate(self):
         if self.options.provider == "accelerate":

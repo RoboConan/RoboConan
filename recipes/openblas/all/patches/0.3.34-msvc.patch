@@ -1,0 +1,99 @@
+--- a/cmake/prebuild.cmake
++++ b/cmake/prebuild.cmake
+@@ -130,7 +130,7 @@
+ endif ()
+ 
+ # Cannot run getarch on target if we are cross-compiling
+-if (DEFINED CORE AND CMAKE_CROSSCOMPILING AND NOT (${HOST_OS} STREQUAL "WINDOWSSTORE"))
++if (DEFINED CORE AND CMAKE_CROSSCOMPILING AND NOT CMAKE_CROSSCOMPILING_EMULATOR AND NOT (${HOST_OS} STREQUAL "WINDOWSSTORE"))
+   # Write to config as getarch would
+   if (DEFINED TARGET_CORE)
+   set(TCORE ${TARGET_CORE})
+@@ -1666,8 +1666,8 @@
+   message(STATUS "Running getarch")
+ 
+   # use the cmake binary w/ the -E param to run a shell command in a cross-platform way
+-execute_process(COMMAND "${PROJECT_BINARY_DIR}/${GETARCH_BIN}" 0 OUTPUT_VARIABLE GETARCH_MAKE_OUT)
+-execute_process(COMMAND "${PROJECT_BINARY_DIR}/${GETARCH_BIN}" 1 OUTPUT_VARIABLE GETARCH_CONF_OUT)
++execute_process(COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} "${PROJECT_BINARY_DIR}/${GETARCH_BIN}" 0 OUTPUT_VARIABLE GETARCH_MAKE_OUT)
++execute_process(COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} "${PROJECT_BINARY_DIR}/${GETARCH_BIN}" 1 OUTPUT_VARIABLE GETARCH_CONF_OUT)
+ 
+   message(STATUS "GETARCH results:\n${GETARCH_MAKE_OUT}")
+ 
+@@ -1693,8 +1693,8 @@
+   endif ()
+ 
+   # use the cmake binary w/ the -E param to run a shell command in a cross-platform way
+-execute_process(COMMAND "${PROJECT_BINARY_DIR}/${GETARCH2_BIN}" 0 OUTPUT_VARIABLE GETARCH2_MAKE_OUT)
+-execute_process(COMMAND "${PROJECT_BINARY_DIR}/${GETARCH2_BIN}" 1 OUTPUT_VARIABLE GETARCH2_CONF_OUT)
++execute_process(COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} "${PROJECT_BINARY_DIR}/${GETARCH2_BIN}" 0 OUTPUT_VARIABLE GETARCH2_MAKE_OUT)
++execute_process(COMMAND ${CMAKE_CROSSCOMPILING_EMULATOR} "${PROJECT_BINARY_DIR}/${GETARCH2_BIN}" 1 OUTPUT_VARIABLE GETARCH2_CONF_OUT)
+ 
+   # append config data from getarch_2nd to the TARGET file and read in CMake vars
+   file(APPEND "${TARGET_CONF_TEMP}" ${GETARCH2_CONF_OUT})
+--- a/driver/others/blas_server_omp.c
++++ b/driver/others/blas_server_omp.c
+@@ -74,8 +74,13 @@
+ 
+ extern int openblas_omp_adaptive_env(void);
+ 
++#ifdef HAVE_C11
+ static _Atomic(void *) blas_thread_buffer[MAX_PARALLEL_NUMBER][MAX_CPU_NUMBER];
+ static _Atomic _Bool blas_buffer_inuse[MAX_PARALLEL_NUMBER];
++#else
++static void *blas_thread_buffer[MAX_PARALLEL_NUMBER][MAX_CPU_NUMBER];
++static _Bool blas_buffer_inuse[MAX_PARALLEL_NUMBER];
++#endif
+ 
+ static void adjust_thread_buffers(void) {
+
+--- a/cmake/f_check.cmake
++++ b/cmake/f_check.cmake
+@@ -52,7 +52,7 @@ if (NOT ONLY_CBLAS)
+     "#define NEEDBUNDERSCORE 1\n"
+     "#define NEED2UNDERSCORES 0\n")
+   else ()
+-	  set (FCOMMON_OPT "${FCOMMON_OPT} /fp:precise /recursive /names:lowercase /assume:nounderscore")
++	  set (FCOMMON_OPT "${FCOMMON_OPT} /fp:consistent /recursive /names:lowercase /assume:nounderscore")
+   endif()
+ else ()
+
+--- a/cmake/fc.cmake
++++ b/cmake/fc.cmake
+@@ -124,10 +124,20 @@ endif ()
+ if (${F_COMPILER} STREQUAL "INTEL" OR CMAKE_Fortran_COMPILER_ID MATCHES "Intel")
+   set(CCOMMON_OPT "${CCOMMON_OPT} -DF_INTERFACE_INTEL")
+-  if (INTERFACE64)
+-    set(FCOMMON_OPT "${FCOMMON_OPT} -i8")
++  if (CMAKE_SYSTEM_NAME MATCHES "Windows" AND CMAKE_Fortran_COMPILER_ID STREQUAL "IntelLLVM")
++    if (INTERFACE64)
++      set(FCOMMON_OPT "${FCOMMON_OPT} /integer-size:64")
++    endif ()
++  else ()
++    if (INTERFACE64)
++      set(FCOMMON_OPT "${FCOMMON_OPT} -i8")
++    endif ()
++    set(FCOMMON_OPT "${FCOMMON_OPT} -recursive -fp-model=consistent")
+   endif ()
+-  set(FCOMMON_OPT "${FCOMMON_OPT} -recursive -fp-model=consistent")
+   if (USE_OPENMP)
+-    set(OpenMP_Fortran_FLAGS "-qopenmp" CACHE STRING "OpenMP Fortran compiler flags")
++    if (CMAKE_SYSTEM_NAME MATCHES "Windows" AND CMAKE_Fortran_COMPILER_ID STREQUAL "IntelLLVM")
++      set(OpenMP_Fortran_FLAGS "/Qopenmp" CACHE STRING "OpenMP Fortran compiler flags")
++    else ()
++      set(OpenMP_Fortran_FLAGS "-qopenmp" CACHE STRING "OpenMP Fortran compiler flags")
++    endif ()
+   endif ()
+ endif ()
+
+--- a/cmake/system.cmake
++++ b/cmake/system.cmake
+@@ -803,6 +803,6 @@
+ if (${CMAKE_C_COMPILER} STREQUAL "LSB" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+   set(LAPACK_CFLAGS "${LAPACK_CFLAGS} -DLAPACK_COMPLEX_STRUCTURE")
+ endif ()
+-if (${CMAKE_C_COMPILER_ID} MATCHES "IntelLLVM" AND ${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
++if (${CMAKE_Fortran_COMPILER_ID} MATCHES "IntelLLVM" AND ${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+-	set(LAPACK_CFLAGS "${LAPACK_CFLAGS} -DNOCHANGE")
++  set(LAPACK_CFLAGS "${LAPACK_CFLAGS} -DNOCHANGE")
+ endif ()

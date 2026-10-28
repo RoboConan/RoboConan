@@ -8,7 +8,7 @@ from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
 from conan.tools.microsoft import is_msvc, is_msvc_static_runtime
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.13"
 
 
 class LibtorchConan(ConanFile):
@@ -309,6 +309,10 @@ class LibtorchConan(ConanFile):
         check_min_cppstd(self, 17)
         if self.settings.get_safe("compiler.cstd"):
             check_min_cstd(self, 11)
+        if self.options.blas == "generic":
+            mangling = self.dependencies["lapack"].extension_properties["fortran_name_mangling"]
+            if mangling != "lower_underscore":
+                raise ConanInvalidConfiguration("LibTorch requires BLAS with lower_underscore names")
         if self.options.get_safe("with_mpi") and not self.dependencies["openmpi"].options.with_cuda:
             raise ConanInvalidConfiguration("openmpi must be built with CUDA support (-o openmpi/*:with_cuda=True)")
         miniz_dep = self.dependencies["miniz"]

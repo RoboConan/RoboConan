@@ -5,7 +5,7 @@ from conan.errors import ConanInvalidConfiguration
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.13"
 
 
 class ScsConan(ConanFile):
@@ -76,6 +76,10 @@ class ScsConan(ConanFile):
             raise ConanInvalidConfiguration("use_spectral_cones requires with_lapack")
         if self.options.with_cudss and self.options.dlong:
             raise ConanInvalidConfiguration("cuDSS requires 32-bit integers (dlong=False)")
+        if self.options.with_lapack:
+            mangling = self.dependencies["lapack"].extension_properties["fortran_name_mangling"]
+            if not mangling.startswith("lower_"):
+                raise ConanInvalidConfiguration("SCS requires BLAS/LAPACK name mangling to be lower_no_underscore, lower_underscore, or lower_underscore_extra")
 
     def build_requirements(self):
         self.tool_requires("cmake/[>=3.5]")
@@ -86,6 +90,10 @@ class ScsConan(ConanFile):
 
     def generate(self):
         tc = CMakeToolchain(self)
+        if self.options.with_lapack:
+            mangling = self.dependencies["lapack"].extension_properties["fortran_name_mangling"]
+            if mangling.endswith("no_underscore"):
+                tc.preprocessor_definitions["NOBLASSUFFIX"] = "1"
         tc.cache_variables["BUILD_TESTING"] = False
         tc.cache_variables["SFLOAT"] = self.options.sfloat
         tc.cache_variables["DLONG"] = self.options.dlong

@@ -6,7 +6,7 @@ from conan.tools.apple import is_apple_os
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.13"
 
 
 class BlasfeoConan(ConanFile):
@@ -47,6 +47,12 @@ class BlasfeoConan(ConanFile):
     implements = ["auto_shared_fpic"]
     languages = ["C"]
 
+    @property
+    def extension_properties(self):
+        if self.options.fortran_blas_api:
+            return {"fortran_name_mangling": "lower_underscore"}
+        return {}
+
     def export_sources(self):
         export_conandata_patches(self)
 
@@ -71,6 +77,9 @@ class BlasfeoConan(ConanFile):
             raise ConanInvalidConfiguration(
                 "use_external_blas and fortran_blas_api cannot be enabled simultaneously"
             )
+        if self.options.use_external_blas:
+            if self.dependencies["blas"].extension_properties["fortran_name_mangling"] != "lower_underscore":
+                raise ConanInvalidConfiguration("BLASFEO requires BLAS with lower_underscore names")
 
     def layout(self):
         cmake_layout(self, src_folder="src")

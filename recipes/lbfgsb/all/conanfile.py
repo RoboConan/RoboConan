@@ -1,7 +1,6 @@
 import os
 
 from conan import ConanFile
-from conan.errors import ConanInvalidConfiguration
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
 
@@ -15,7 +14,7 @@ class LbfgsbConan(ConanFile):
     homepage = "https://users.iems.northwestern.edu/~nocedal/lbfgsb.html"
     topics = ("optimization", "quasi-newton", "bound-constrained")
     package_type = "library"
-    settings = "os", "arch", "compiler", "build_type"
+    settings = "os", "arch", "compiler", "build_type", "fortran"
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
@@ -25,12 +24,17 @@ class LbfgsbConan(ConanFile):
         "fPIC": True,
     }
     implements = ["auto_shared_fpic"]
-    languages = ["C"]
 
-    @property
-    def _fortran_compiler(self):
-        executables = self.conf.get("tools.build:compiler_executables", default={}, check_type=dict)
-        return executables.get("fortran")
+    python_requires = "conan-fortran/latest"
+    python_requires_extend = "conan-fortran.Fortran"
+
+    def config_options(self):
+        if self.settings.os == "Windows":
+            del self.options.fPIC
+        # Fortran library, not C or C++
+        self.settings.rm_safe("compiler.cstd")
+        self.settings.rm_safe("compiler.cppstd")
+        self.settings.rm_safe("compiler.libcxx")
 
     def export_sources(self):
         copy(self, "CMakeLists.txt", self.recipe_folder, self.export_sources_folder)
@@ -38,12 +42,14 @@ class LbfgsbConan(ConanFile):
     def layout(self):
         cmake_layout(self, src_folder="src")
 
+    def requirements(self):
+        self.fortran.requires_runtime()
+
+    def validate(self):
+        self.fortran.validate_settings()
+
     def validate_build(self):
-        if not self._fortran_compiler:
-            raise ConanInvalidConfiguration(
-                "A Fortran compiler is required. "
-                "Please provide one by setting tools.build:compiler_executables={'fortran': '...'}."
-            )
+        self.fortran.validate_build()
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version])
@@ -52,6 +58,8 @@ class LbfgsbConan(ConanFile):
 
     def generate(self):
         tc = CMakeToolchain(self)
+        if self.settings.os == "Windows" and self.options.shared:
+            tc.variables["CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS"] = True
         tc.generate()
         deps = CMakeDeps(self)
         deps.generate()
@@ -72,5 +80,4 @@ class LbfgsbConan(ConanFile):
         if not self.options.shared:
             if self.settings.os in ["Linux", "FreeBSD"]:
                 self.cpp_info.system_libs = ["m"]
-            if "gfortran" in self._fortran_compiler:
-                self.cpp_info.system_libs.append("gfortran")
+        self.fortran.add_runtime_to_cpp_info(self.cpp_info)

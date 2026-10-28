@@ -3,7 +3,7 @@ from functools import cached_property
 from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.13"
 
 
 class LapackConan(ConanFile):
@@ -62,10 +62,20 @@ class LapackConan(ConanFile):
     def package_id(self):
         self.info.settings.clear()
         self.info.requires["blas"].full_package_mode()
+        if str(self.info.options.provider) == "reference":
+            self.info.requires["lapack-reference"].full_package_mode()
 
     @cached_property
     def _dependency(self):
         return self.dependencies[self._dep_name]
+
+    @property
+    def extension_properties(self):
+        if self.options.provider == "reference":
+            dependency = self._dependency
+        else:
+            dependency = self.dependencies["blas"]
+        return {"fortran_name_mangling": dependency.extension_properties["fortran_name_mangling"]}
 
     def validate(self):
         if self.options.provider != "reference":

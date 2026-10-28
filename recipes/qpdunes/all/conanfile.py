@@ -1,11 +1,12 @@
 import os
 
 from conan import ConanFile
+from conan.errors import ConanInvalidConfiguration
 from conan.tools.build import check_min_cstd, stdcpp_library
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.13"
 
 
 class QpDunesConan(ConanFile):
@@ -40,6 +41,9 @@ class QpDunesConan(ConanFile):
     def validate(self):
         if self.settings.get_safe("compiler.cstd"):
             check_min_cstd(self, 99)
+        mangling = self.dependencies["lapack"].extension_properties["fortran_name_mangling"]
+        if mangling != "lower_underscore":
+            raise ConanInvalidConfiguration("qpDUNES requires LAPACK with lower_underscore names")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)

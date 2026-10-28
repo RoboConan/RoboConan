@@ -9,7 +9,7 @@ from conan.tools.files import *
 from conan.tools.microsoft import is_msvc, is_msvc_static_runtime
 from conan.tools.scm import Version
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.13"
 
 
 class SCIPConan(ConanFile):
@@ -196,6 +196,11 @@ class SCIPConan(ConanFile):
 
     def generate(self):
         tc = CMakeToolchain(self)
+        if self.options.get_safe("with_lapack"):
+            mangling = self.dependencies["lapack"].extension_properties["fortran_name_mangling"]
+            convention = f"FNAME_{'UCASE' if mangling.startswith('upper_') else 'LCASE'}_"
+            convention += "NODECOR" if mangling.endswith("no_underscore") else "DECOR"
+            tc.preprocessor_definitions[convention] = None
         tc.cache_variables["AUTOBUILD"] = False
         tc.cache_variables["BUILD_TESTING"] = False
         tc.cache_variables["SHARED"] = self.options.shared

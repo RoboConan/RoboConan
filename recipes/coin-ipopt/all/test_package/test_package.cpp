@@ -42,5 +42,4 @@ int main()
     if (solvers & IPOPTLINEARSOLVER_WSMP) {
         puts("- wsmp");
     }
-    return 0;
 }

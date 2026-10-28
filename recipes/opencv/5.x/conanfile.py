@@ -795,6 +795,11 @@ class OpenCVConan(ConanFile):
         self._check_mandatory_options(_opencv_modules(self.options, self.settings))
         check_min_cppstd(self, 17)
 
+        if self.options.get_safe("with_lapack"):
+            mangling = self.dependencies["lapack"].extension_properties["fortran_name_mangling"]
+            if mangling != "lower_underscore":
+                raise ConanInvalidConfiguration("OpenCV requires LAPACK with lower_underscore names")
+
         if not self.dependencies["zlib-ng"].options.zlib_compat:
             raise ConanInvalidConfiguration("OpenCV requires zlib-ng:zlib_compat=True")
 

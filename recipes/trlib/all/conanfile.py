@@ -1,11 +1,12 @@
 import os
 
 from conan import ConanFile
+from conan.errors import ConanInvalidConfiguration
 from conan.tools.build import check_min_cstd
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.13"
 
 
 class TrlibConan(ConanFile):
@@ -36,6 +37,9 @@ class TrlibConan(ConanFile):
     def validate(self):
         if self.settings.get_safe("compiler.cstd"):
             check_min_cstd(self, 11)
+        mangling = self.dependencies["lapack"].extension_properties["fortran_name_mangling"]
+        if not mangling.startswith("lower_"):
+            raise ConanInvalidConfiguration("TRLIB requires BLAS/LAPACK names to be lower_no_underscore, lower_underscore, or lower_underscore_extra")
 
     def build_requirements(self):
         self.tool_requires("cmake/[>=3.16]")
@@ -49,6 +53,8 @@ class TrlibConan(ConanFile):
     def generate(self):
         tc = CMakeToolchain(self)
         tc.cache_variables["BUILD_TESTING"] = False
+        mangling = self.dependencies["lapack"].extension_properties["fortran_name_mangling"]
+        tc.cache_variables["TRLIB_BLAS_LAPACK_UNDERSCORE_SUFFIX"] = not mangling.endswith("no_underscore")
         tc.generate()
         deps = CMakeDeps(self)
         deps.generate()

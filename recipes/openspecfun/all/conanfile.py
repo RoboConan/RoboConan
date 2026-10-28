@@ -14,7 +14,9 @@ class OpenSpecfunConan(ConanFile):
     homepage = "https://github.com/JuliaMath/openspecfun"
     topics = ("math", "transcendental-functions", "complex-functions")
     package_type = "library"
-    settings = "os", "arch", "compiler", "build_type"
+    settings = "os", "arch", "compiler", "build_type", "fortran"
+    python_requires = "conan-fortran/latest"
+    python_requires_extend = "conan-fortran.Fortran"
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
@@ -27,11 +29,6 @@ class OpenSpecfunConan(ConanFile):
     implements = ["auto_shared_fpic"]
     languages = ["C"]
 
-    @property
-    def _fortran_compiler(self):
-        executables = self.conf.get("tools.build:compiler_executables", default={}, check_type=dict)
-        return executables.get("fortran")
-
     def export_sources(self):
         export_conandata_patches(self)
 
@@ -39,12 +36,13 @@ class OpenSpecfunConan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
-        if not self._fortran_compiler:
-            self.requires("gfortran/[*]")
+        self.fortran.requires_runtime()
 
-    def build_requirements(self):
-        if not self._fortran_compiler:
-            self.tool_requires("gfortran/[*]")
+    def validate(self):
+        self.fortran.validate_settings()
+
+    def validate_build(self):
+        self.fortran.validate_build()
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
@@ -68,5 +66,4 @@ class OpenSpecfunConan(ConanFile):
         self.cpp_info.libs = ["openspecfun"]
         if self.settings.os in ["Linux", "FreeBSD"]:
             self.cpp_info.system_libs = ["m"]
-        if not self._fortran_compiler:
-            self.cpp_info.system_libs.append("gfortran")
+        self.fortran.add_runtime_to_cpp_info(self.cpp_info)

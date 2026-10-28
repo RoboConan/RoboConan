@@ -21,7 +21,7 @@ class OpenMPIConan(ConanFile):
     topics = ("mpi", "openmpi", "hpc")
     provides = ["mpi"]
     package_type = "library"
-    settings = "os", "arch", "compiler", "build_type", "cuda"
+    settings = "os", "arch", "compiler", "build_type", "cuda", "fortran"
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
@@ -51,6 +51,9 @@ class OpenMPIConan(ConanFile):
         "with_xpmem": False,
     }
 
+    python_requires = "conan-fortran/latest"
+    python_requires_extend = "conan-fortran.Fortran"
+
     def config_options(self):
         if self.settings.os == "Windows":
             del self.options.fPIC
@@ -70,6 +73,8 @@ class OpenMPIConan(ConanFile):
             self.settings.rm_safe("compiler.libcxx")
             self.settings.rm_safe("compiler.cppstd")
             self.options.rm_safe("enable_cxx_exceptions")
+        if self.options.fortran == "no":
+            self.settings.rm_safe("fortran")
         if is_apple_os(self):
             # Unavailable due to dependency on libnl
             self.options.rm_safe("with_verbs")
@@ -122,11 +127,19 @@ class OpenMPIConan(ConanFile):
             self.requires(f"cuda-driver-stubs/[~{self.settings.cuda.version}]")
         if self.options.with_oneapi:
             self.requires("level-zero/[1.17.39]", force=True)
+        if self.options.fortran != "no":
+            self.fortran.requires_runtime()
 
     def validate(self):
         if self.settings.os == "Windows":
             # Requires Cygwin or WSL
             raise ConanInvalidConfiguration("OpenMPI doesn't support Windows")
+        if self.options.fortran != "no":
+            self.fortran.validate_settings()
+
+    def validate_build(self):
+        if self.options.fortran != "no":
+            self.fortran.validate_build()
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
@@ -315,6 +328,7 @@ class OpenMPIConan(ConanFile):
             self.cpp_info.components["ompi-fort"].set_property("cmake_target_name", "MPI::MPI_Fortran")
             self.cpp_info.components["ompi-fort"].libs = ["mpi_mpifh"]
             self.cpp_info.components["ompi-fort"].requires = ["ompi"]
+            self.fortran.add_runtime_to_cpp_info(self.cpp_info.components["ompi-fort"])
             # Aliases
             self.cpp_info.components["ompi-f77"].set_property("pkg_config_name", "ompi-f77")
             self.cpp_info.components["ompi-f77"].requires = ["ompi-fort"]

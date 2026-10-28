@@ -9,7 +9,7 @@ from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout, CMakeDeps
 from conan.tools.files import *
 from conan.tools.scm import Version
 
-required_conan_version = ">=2.4"
+required_conan_version = ">=2.13"
 
 
 class SundialsConan(ConanFile):
@@ -239,11 +239,17 @@ class SundialsConan(ConanFile):
             tc.cache_variables[f"{module_prefix}SUNMATRIX_CUSPARSE"] = self.options.get_safe("with_cuda", False) and self.options.index_size == 32
             tc.cache_variables[f"{module_prefix}SUNLINSOL_CUSOLVERSP"] = self.options.get_safe("with_cuda", False) and self.options.index_size == 32
 
-        # Configure default LAPACK naming conventions for OpenBLAS.
-        # Needed to avoid a Fortran compiler requirement to detect the correct name mangling scheme.
-        # https://github.com/LLNL/sundials/blob/v7.1.1/cmake/SundialsSetupCompilers.cmake#L269-L360
-        tc.cache_variables["SUNDIALS_LAPACK_CASE"] = "lower"
-        tc.cache_variables["SUNDIALS_LAPACK_UNDERSCORES"] = "one"
+        if self.options.with_lapack:
+            mangling = self.dependencies["lapack"].extension_properties["fortran_name_mangling"]
+            prefix = "SUNDIALS_LAPACK" if Version(self.version) >= "7.0" else "SUNDIALS_F77_FUNC"
+            tc.cache_variables[f"{prefix}_CASE"] = "upper" if mangling.startswith("upper_") else "lower"
+            if mangling.endswith("_extra"):
+                underscores = "two"
+            elif mangling.endswith("no_underscore"):
+                underscores = "none"
+            else:
+                underscores = "one"
+            tc.cache_variables[f"{prefix}_UNDERSCORES"] = underscores
 
         if self.options.with_cuda:
             tc.cache_variables["CMAKE_CUDA_ARCHITECTURES"] = str(self.settings.cuda.architectures).replace(",", ";")

@@ -67,6 +67,9 @@ class EigenConan(ConanFile):
             check_min_cppstd(self, "14")
         else:
             check_min_cppstd(self, "03")
+        if self.options.with_blas and self.dependencies["blas"].options.provider != "mkl":
+            if self.dependencies["blas"].extension_properties["fortran_name_mangling"] != "lower_underscore":
+                raise ConanInvalidConfiguration("Eigen requires BLAS with lower_underscore names")
         if self.options.get_safe("with_sycl"):
             check_min_cppstd(self, "17")
             if self.settings.compiler != "intel-cc" or self.settings.compiler.mode not in ["icx", "dpcpp"]:

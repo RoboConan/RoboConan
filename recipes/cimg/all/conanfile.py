@@ -7,7 +7,7 @@ from conan.tools.files import *
 from conan.tools.layout import basic_layout
 from conan.tools.scm import Version
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.13"
 
 
 class CImgConan(ConanFile):
@@ -181,6 +181,10 @@ class CImgConan(ConanFile):
 
     def validate(self):
         check_min_cppstd(self, "11")
+
+        if self.options.enable_lapack:
+            if self.dependencies["lapack"].extension_properties["fortran_name_mangling"] != "lower_underscore":
+                raise ConanInvalidConfiguration("CImg requires LAPACK with lower_underscore names")
 
         if not self.options.get_safe("enable_display"):
             if self.options.get_safe("enable_xrandr") or self.options.get_safe("enable_xshm"):

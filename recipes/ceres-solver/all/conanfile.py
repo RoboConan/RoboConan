@@ -10,7 +10,7 @@ from conan.tools.files import *
 from conan.tools.microsoft import is_msvc_static_runtime
 from conan.tools.scm import Version
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.13"
 
 
 class CeresSolverConan(ConanFile):
@@ -203,6 +203,9 @@ class CeresSolverConan(ConanFile):
 
     def validate(self):
         check_min_cppstd(self, self._min_cppstd)
+        if self.options.use_lapack:
+            if self.dependencies["lapack"].extension_properties["fortran_name_mangling"] != "lower_underscore":
+                raise ConanInvalidConfiguration("Ceres requires LAPACK with lower_underscore names")
         if self.options.get_safe("use_cuda"):
             self.cuda.validate_settings()
         # https://github.com/ceres-solver/ceres-solver/blob/2.2.0/CMakeLists.txt#L203

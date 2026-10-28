@@ -3,6 +3,7 @@ import os
 from conan import ConanFile
 from conan.tools.build import can_run
 from conan.tools.cmake import cmake_layout, CMake, CMakeToolchain
+from conan.tools.microsoft import is_msvc
 
 
 class TestPackageConan(ConanFile):
@@ -29,6 +30,7 @@ class TestPackageConan(ConanFile):
             tc.preprocessor_definitions["OPENBLAS_TEST_LAPACKE"] = None
         if dependency.options.get_safe("use_fortran", False):
             tc.preprocessor_definitions["OPENBLAS_TEST_FORTRAN"] = None
+            tc.cache_variables["OPENBLAS_TEST_INTEL_FORTRAN_ALIASES"] = is_msvc(self)
         tc.generate()
 
     def build(self):

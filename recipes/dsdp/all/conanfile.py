@@ -4,7 +4,7 @@ from conan import ConanFile
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
 
-required_conan_version = ">=2.4"
+required_conan_version = ">=2.13"
 
 
 class DsdpConan(ConanFile):
@@ -44,6 +44,11 @@ class DsdpConan(ConanFile):
 
     def generate(self):
         tc = CMakeToolchain(self)
+        mangling = self.dependencies["lapack"].extension_properties["fortran_name_mangling"]
+        if mangling.startswith("upper_"):
+            tc.preprocessor_definitions["CAPSBLAS"] = None
+        if mangling.endswith("no_underscore"):
+            tc.preprocessor_definitions["NOUNDERBLAS"] = None
         tc.cache_variables["DSDPTIMER"] = str(self.options.timing).upper()
         tc.generate()
         deps = CMakeDeps(self)

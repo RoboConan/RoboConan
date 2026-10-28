@@ -5,7 +5,7 @@ from conan.errors import ConanInvalidConfiguration
 from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
 from conan.tools.files import *
 
-required_conan_version = ">=2.4"
+required_conan_version = ">=2.13"
 
 
 class LusolConan(ConanFile):
@@ -15,7 +15,7 @@ class LusolConan(ConanFile):
     homepage = "http://web.stanford.edu/group/SOL/software/lusol/"
     topics = ("linear-algebra", "sparse-matrix", "lu-factorization", "numerical")
     package_type = "static-library"
-    settings = "os", "arch", "compiler", "build_type"
+    settings = "os", "arch", "compiler", "build_type", "fortran"
     options = {
         "fPIC": [True, False],
     }
@@ -25,25 +25,29 @@ class LusolConan(ConanFile):
     implements = ["auto_shared_fpic"]
     languages = ["C"]
 
+    python_requires = "conan-fortran/latest"
+    python_requires_extend = "conan-fortran.Fortran"
+
     def export_sources(self):
         copy(self, "CMakeLists.txt", self.recipe_folder, os.path.join(self.export_sources_folder, "src"))
 
     def layout(self):
         cmake_layout(self, src_folder="src")
 
-    @property
-    def _fortran_compiler(self):
-        return self.conf.get("tools.build:compiler_executables", default={}, check_type=dict).get("fortran", None)
-
     def requirements(self):
         self.requires("lapack/latest")
+        self.fortran.requires_runtime()
+
+    def validate(self):
+        self.fortran.validate_settings()
+        mangling = self.dependencies["lapack"].extension_properties["fortran_name_mangling"]
+        if mangling != self.fortran.mangling.value:
+            raise ConanInvalidConfiguration(
+                f"LAPACK uses {mangling}, but the configured Fortran toolchain uses {self.fortran.mangling.value}"
+            )
 
     def validate_build(self):
-        if not self._fortran_compiler:
-            raise ConanInvalidConfiguration(
-                "A Fortran compiler is required. "
-                "Please add one to `tools.build:compiler_executables={'fortran': '...'}`."
-            )
+        self.fortran.validate_build()
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
@@ -66,5 +70,4 @@ class LusolConan(ConanFile):
         self.cpp_info.libs = ["clusol"]
         if self.settings.os in ["Linux", "FreeBSD"]:
             self.cpp_info.system_libs = ["m"]
-        if "gfortran" in self._fortran_compiler:
-            self.cpp_info.system_libs.append("gfortran")
+        self.fortran.add_runtime_to_cpp_info(self.cpp_info)

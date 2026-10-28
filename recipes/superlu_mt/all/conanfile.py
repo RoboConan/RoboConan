@@ -6,7 +6,7 @@ from conan.tools.build import check_min_cstd
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.13"
 
 
 class SuperLuMtConan(ConanFile):
@@ -55,9 +55,13 @@ class SuperLuMtConan(ConanFile):
         if not any([self.options.enable_single, self.options.enable_double,
                     self.options.enable_complex, self.options.enable_complex16]):
             raise ConanInvalidConfiguration("At least one precision variant must be enabled")
+        mangling = self.dependencies["blas"].extension_properties["fortran_name_mangling"]
+        if mangling.startswith("upper_") and not mangling.endswith("no_underscore"):
+            raise ConanInvalidConfiguration("SuperLU_MT does not support BLAS with upper_underscore or upper_underscore_extra names")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
+        replace_in_file(self, "SRC/CMakeLists.txt", "PRIVATE Add_)", "PRIVATE ${SUPERLU_FORTRAN})")
         # rm(self, "colamd.*", "SRC")
         # save(self, "SRC/CMakeLists.txt",
         #      "\nfind_package(COLAMD REQUIRED)\n"
@@ -65,6 +69,13 @@ class SuperLuMtConan(ConanFile):
 
     def generate(self):
         tc = CMakeToolchain(self)
+        mangling = self.dependencies["blas"].extension_properties["fortran_name_mangling"]
+        if mangling.startswith("upper_"):
+            tc.cache_variables["SUPERLU_FORTRAN"] = "UpCase"
+        elif mangling.endswith("no_underscore"):
+            tc.cache_variables["SUPERLU_FORTRAN"] = "NoChange"
+        else:
+            tc.cache_variables["SUPERLU_FORTRAN"] = "Add_"
         tc.cache_variables["PLAT"] = "_OPENMP" if self.options.threading == "openmp" else "_PTHREAD"
         tc.cache_variables["enable_tests"] = False
         tc.cache_variables["enable_examples"] = False

@@ -29,6 +29,8 @@ class NvplBlasConan(ConanFile):
         "compatibility_headers": True,
     }
 
+    extension_properties = {"fortran_name_mangling": "lower_underscore"}
+
     python_requires = "conan-cuda/latest"
 
     @cached_property

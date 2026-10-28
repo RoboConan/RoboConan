@@ -57,6 +57,7 @@ class BlisConan(ConanFile):
     }
     implements = ["auto_shared_fpic"]
     languages = ["C"]
+    extension_properties = {"fortran_name_mangling": "lower_underscore"}
 
     def config_options(self):
         if self.settings.os == "Windows":

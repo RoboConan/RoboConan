@@ -59,6 +59,7 @@ class SuiteSparseConfigConan(ConanFile):
         blas_variables = {}
         blas_variables["BLA_VENDOR"] = self._bla_vendor
         blas_variables["SUITESPARSE_USE_64BIT_BLAS"] = self.dependencies["blas"].options.interface == "ilp64"
+        blas_variables["SUITESPARSE_C_TO_FORTRAN"] = self._c_to_fortran
         # Skip try_run()-s
         if self._bla_vendor == "OpenBLAS":
             blas_variables["OPENBLAS_2015_COMPILES"] = True
@@ -71,6 +72,13 @@ class SuiteSparseConfigConan(ConanFile):
             blas_variables["MKL_RUNS"] = True
         return blas_variables
 
+    @property
+    def _c_to_fortran(self):
+        mangling = self.dependencies["lapack"].extension_properties["fortran_name_mangling"]
+        name = "NAME" if mangling.startswith("upper_") else "name"
+        if not mangling.endswith("no_underscore"):
+            name += "##_"
+        return f"(name,NAME) {name}"
 
     def generate(self):
         tc = CMakeToolchain(self)
@@ -81,12 +89,10 @@ class SuiteSparseConfigConan(ConanFile):
         tc.cache_variables["SUITESPARSE_DEMOS"] = False
         tc.cache_variables["SUITESPARSE_USE_STRICT"] = True  # don't allow implicit dependencies
         tc.cache_variables["SUITESPARSE_USE_FORTRAN"] = False  # Fortran sources are translated to C instead
+        tc.cache_variables["SUITESPARSE_C_TO_FORTRAN"] = self._c_to_fortran
         tc.cache_variables["BUILD_TESTING"] = False
         tc.cache_variables["CMAKE_TRY_COMPILE_CONFIGURATION"] = str(self.settings.build_type)  # for BLAS try_compile()-s
         tc.cache_variables.update(self._blas_variables)
-        # Force single-underscore Fortran name mangling so that SuiteSparse_config.h
-        # uses the BLAS_UNDERSCORE branch instead of the CMake-detected #else fallback.
-        tc.preprocessor_definitions["BLAS_UNDERSCORE"] = None
         tc.generate()
 
         deps = CMakeDeps(self)
@@ -125,11 +131,5 @@ class SuiteSparseConfigConan(ConanFile):
 
         if self.settings.os in ["Linux", "FreeBSD"]:
             self.cpp_info.system_libs.append("m")
-
-        # Force single-underscore Fortran name mangling (the standard convention
-        # for all BLAS implementations available via blas/latest: OpenBLAS, MKL, etc.).
-        # Without this, the SUITESPARSE_USE_FORTRAN=False fallback in SuiteSparse_config.h
-        # may pick up a wrong convention from CMake's try_compile on some systems.
-        self.cpp_info.defines.append("BLAS_UNDERSCORE")
 
         self.cpp_info.set_property("cmake_extra_variables", self._blas_variables)

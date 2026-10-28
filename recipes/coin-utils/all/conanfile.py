@@ -11,7 +11,7 @@ from conan.tools.gnu import Autotools, AutotoolsDeps, AutotoolsToolchain, PkgCon
 from conan.tools.layout import basic_layout
 from conan.tools.microsoft import is_msvc, unix_path
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.13"
 
 
 class CoinUtilsConan(ConanFile):
@@ -24,7 +24,7 @@ class CoinUtilsConan(ConanFile):
     homepage = "https://github.com/coin-or/CoinUtils"
     license = "EPL-2.0"
     package_type = "library"
-    settings = "os", "arch", "compiler", "build_type"
+    settings = "os", "arch", "compiler", "build_type", "fortran"
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
@@ -42,6 +42,9 @@ class CoinUtilsConan(ConanFile):
         "with_readline": "Build with GNU Readline support",
     }
     implements = ["auto_shared_fpic"]
+
+    python_requires = "conan-fortran/latest"
+    python_requires_extend = "conan-fortran.Fortran"
 
     def config_options(self):
         if self.settings.os == "Windows":
@@ -95,20 +98,20 @@ class CoinUtilsConan(ConanFile):
             f"--with-glpk={yes_no(self.options.with_glpk)}",
             f"--enable-gnu-packages={yes_no(self.options.with_readline)}",
             "F77=unavailable",
-            "ac_cv_f77_mangling=lower case, underscore, no extra underscore",
             # These are only used for sample datasets
             "--without-netlib",
             "--without-sample",
         ])
-        if self.settings.os != "Windows":
+        tc.configure_args.append(f"ac_cv_f77_mangling={self.fortran.autoconf_mangling}")
+        if not is_msvc(self):
             tc.configure_args.append("--enable-coinutils-threads")
         if is_msvc(self):
             tc.configure_args.append(f"--enable-msvc={self.settings.compiler.runtime}")
             tc.extra_cxxflags.append("-EHsc")
         env = tc.environment()
         if is_msvc(self):
-            compile_wrapper = unix_path(self, self.conf.get("user.automake:compile-wrapper"))
-            ar_wrapper = unix_path(self, self.conf.get("user.automake:lib-wrapper"))
+            compile_wrapper = unix_path(self, self.dependencies.build["automake"].conf_info.get("user.automake:compile-wrapper"))
+            ar_wrapper = unix_path(self, self.dependencies.build["automake"].conf_info.get("user.automake:lib-wrapper"))
             env.define("CC", f"{compile_wrapper} cl -nologo")
             env.define("CXX", f"{compile_wrapper} cl -nologo")
             env.define("LD", "link -nologo")
@@ -152,11 +155,15 @@ class CoinUtilsConan(ConanFile):
         autotools = Autotools(self)
         autotools.autoreconf(build_script_folder="CoinUtils")
         autotools.configure(build_script_folder="CoinUtils")
-        # Manually specify OpenBLAS name mangling since F77 is not available to autodetect it.
+        # Manually specify BLAS name mangling since F77 is not available to autodetect it.
+        f77_name = "NAME" if self.fortran.mangling.case == "upper" else "name"
+        f77_name_ = f77_name
+        if self.fortran.mangling.underscore:
+            f77_name += " ## _"
+            f77_name_ += " ## __" if self.fortran.mangling.extra_underscore else " ## _"
         save(self, os.path.join(self.build_folder, "src/config.h"),
-             ("\n"
-              "#define F77_FUNC(name,NAME) name ## _\n"
-              "#define F77_FUNC_(name,NAME) name ## _\n"),
+             f"\n#define F77_FUNC(name,NAME) {f77_name}\n"
+             f"#define F77_FUNC_(name,NAME) {f77_name_}\n",
              append=True)
         autotools.make()
 

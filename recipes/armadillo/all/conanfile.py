@@ -7,7 +7,7 @@ from conan.tools.cmake import CMake, CMakeToolchain, CMakeDeps, cmake_layout
 from conan.tools.files import *
 from conan.tools.scm import Version
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.13"
 
 
 class ArmadilloConan(ConanFile):
@@ -41,6 +41,19 @@ class ArmadilloConan(ConanFile):
         "with_openmp": True,
     }
     implements = ["auto_header_only", "auto_shared_fpic"]
+
+    def config_options(self):
+        if self.settings.os == "Windows":
+            self.options.rm_safe("fPIC")
+
+    def configure(self):
+        if self.options.header_only:
+            self.options.rm_safe("fPIC")
+            self.options.rm_safe("shared")
+        elif self.options.shared:
+            self.options.rm_safe("fPIC")
+        if self.options.with_lapack:
+            self.options.with_blas.value = True
 
     def layout(self):
         cmake_layout(self, src_folder="src")
@@ -102,7 +115,11 @@ class ArmadilloConan(ConanFile):
         tc.cache_variables["USE_ARPACK"] = self.options.with_arpack
         tc.cache_variables["USE_SuperLU"] = self.options.with_superlu
         if self.options.with_blas:
-            tc.preprocessor_definitions["ARMA_BLAS_UNDERSCORE"] = None
+            mangling = self.dependencies["blas"].extension_properties["fortran_name_mangling"]
+            if mangling.startswith("upper_"):
+                tc.preprocessor_definitions["ARMA_BLAS_CAPITALS"] = None
+            if not mangling.endswith("no_underscore"):
+                tc.preprocessor_definitions["ARMA_BLAS_UNDERSCORE"] = None
             if self.dependencies["blas"].options.interface == "ilp64":
                 tc.preprocessor_definitions["ARMA_BLAS_LONG_LONG"] = None
                 tc.preprocessor_definitions["ARMA_BLAS_64BIT_INT"] = None
@@ -177,7 +194,11 @@ class ArmadilloConan(ConanFile):
         self.cpp_info.builddirs = ["share/conan"]
 
         if self.options.with_blas:
-            self.cpp_info.defines.append("ARMA_BLAS_UNDERSCORE")
+            mangling = self.dependencies["blas"].extension_properties["fortran_name_mangling"]
+            if mangling.startswith("upper_"):
+                self.cpp_info.defines.append("ARMA_BLAS_CAPITALS")
+            if not mangling.endswith("no_underscore"):
+                self.cpp_info.defines.append("ARMA_BLAS_UNDERSCORE")
             self.cpp_info.defines.append("ARMA_USE_FORTRAN_HIDDEN_ARGS")
             if self.dependencies["blas"].options.interface == "ilp64":
                 self.cpp_info.defines.append("ARMA_BLAS_LONG_LONG")

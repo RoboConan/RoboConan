@@ -6,7 +6,7 @@ from conan.tools.build import check_min_cppstd, check_min_cstd
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
 
-required_conan_version = ">=2.4"
+required_conan_version = ">=2.13"
 
 
 class ArpackNgConan(ConanFile):
@@ -16,7 +16,7 @@ class ArpackNgConan(ConanFile):
     homepage = "https://github.com/opencollab/arpack-ng"
     topics = ("eigenvalue", "eigenvector", "sparse-matrix", "linear-algebra", "fortran")
     package_type = "library"
-    settings = "os", "arch", "compiler", "build_type"
+    settings = "os", "arch", "compiler", "build_type", "fortran"
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
@@ -31,19 +31,17 @@ class ArpackNgConan(ConanFile):
     }
     implements = ["auto_shared_fpic"]
 
-    @property
-    def _fortran_compiler(self):
-        return self.conf.get("tools.build:compiler_executables", default={}, check_type=dict).get("fortran", None)
+    python_requires = "conan-fortran/latest"
+    python_requires_extend = "conan-fortran.Fortran"
 
     def configure(self):
         if self.options.shared:
             self.options.rm_safe("fPIC")
         if self.options.with_eigen:
             self.options.icb.value = True
-
-    def package_id(self):
-        self.info.settings.rm_safe("compiler.cppstd")
-        self.info.settings.rm_safe("compiler.libcxx")
+        if not self.options.icb:
+            self.settings.rm_safe("compiler.cppstd")
+            self.settings.rm_safe("compiler.libcxx")
 
     def layout(self):
         cmake_layout(self, src_folder="src")
@@ -52,15 +50,18 @@ class ArpackNgConan(ConanFile):
         self.requires("lapack/latest")
         if self.options.with_eigen:
             self.requires("eigen/[>=3.3 <6]", transitive_headers=True)
+        self.fortran.requires_runtime()
 
     def validate_build(self):
-        if not self._fortran_compiler:
-            raise ConanInvalidConfiguration(
-                f"{self.name} requires a Fortran compiler. "
-                "Please provide one by setting tools.build:compiler_executables={'fortran': '...'}."
-            )
+        self.fortran.validate_build()
 
     def validate(self):
+        self.fortran.validate_settings()
+        mangling = self.dependencies["lapack"].extension_properties["fortran_name_mangling"]
+        if mangling != self.fortran.mangling.value:
+            raise ConanInvalidConfiguration(
+                f"LAPACK uses {mangling}, but the configured Fortran toolchain uses {self.fortran.mangling.value}"
+            )
         if self.settings.get_safe("compiler.cstd"):
             check_min_cstd(self, 99)
         if self.options.icb:
@@ -104,5 +105,4 @@ class ArpackNgConan(ConanFile):
         if not self.options.shared:
             if self.settings.os in ["Linux", "FreeBSD"]:
                 self.cpp_info.system_libs = ["m", "dl"]
-            if "gfortran" in self._fortran_compiler:
-                self.cpp_info.system_libs.append("gfortran")
+        self.fortran.add_runtime_to_cpp_info(self.cpp_info)

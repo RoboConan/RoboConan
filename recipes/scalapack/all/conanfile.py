@@ -5,7 +5,7 @@ from conan.errors import ConanInvalidConfiguration
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.13"
 
 
 class ScalapackConan(ConanFile):
@@ -15,7 +15,9 @@ class ScalapackConan(ConanFile):
     homepage = "http://www.netlib.org/scalapack/"
     topics = ("linear-algebra", "distributed-computing", "mpi", "lapack", "blas")
     package_type = "library"
-    settings = "os", "arch", "compiler", "build_type"
+    settings = "os", "arch", "compiler", "build_type", "fortran"
+    python_requires = "conan-fortran/latest"
+    python_requires_extend = "conan-fortran.Fortran"
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
@@ -27,27 +29,27 @@ class ScalapackConan(ConanFile):
     implements = ["auto_shared_fpic"]
     languages = ["C"]
 
-    @property
-    def _fortran_compiler(self):
-        executables = self.conf.get("tools.build:compiler_executables", default={}, check_type=dict)
-        return executables.get("fortran")
-
     def layout(self):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
         self.requires("lapack/latest", transitive_headers=True)
         self.requires("openmpi/[>=4 <6]", transitive_headers=True, transitive_libs=True)
+        self.fortran.requires_runtime()
 
     def build_requirements(self):
         self.tool_requires("cmake/[>=3.26 <5]")
 
-    def validate_build(self):
-        if not self._fortran_compiler:
+    def validate(self):
+        self.fortran.validate_settings()
+        mangling = self.dependencies["lapack"].extension_properties["fortran_name_mangling"]
+        if mangling != self.fortran.mangling.value:
             raise ConanInvalidConfiguration(
-                "A Fortran compiler is required. "
-                "Please add one to `tools.build:compiler_executables={'fortran': '...'}`."
+                f"LAPACK uses {mangling}, but the configured Fortran toolchain uses {self.fortran.mangling.value}"
             )
+
+    def validate_build(self):
+        self.fortran.validate_build()
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
@@ -61,7 +63,13 @@ class ScalapackConan(ConanFile):
         tc.cache_variables["SCALAPACK_BUILD_TESTS"] = False
         tc.cache_variables["BUILD_TESTING"] = False
         tc.cache_variables["USE_OPTIMIZED_LAPACK_BLAS"] = True
-        tc.cache_variables["CDEFS"] = "Add_"  # Fortran name mangling
+        mangling = self.fortran.mangling
+        if mangling.case == "upper":
+            tc.cache_variables["CDEFS"] = "UpCase"
+        elif mangling.underscore:
+            tc.cache_variables["CDEFS"] = "Add_"
+        else:
+            tc.cache_variables["CDEFS"] = "NoChange"
         tc.generate()
 
         deps = CMakeDeps(self)
@@ -91,6 +99,5 @@ class ScalapackConan(ConanFile):
         if not self.options.shared:
             if self.settings.os in ["Linux", "FreeBSD"]:
                 self.cpp_info.system_libs = ["m", "dl"]
-            if "gfortran" in self._fortran_compiler:
-                self.cpp_info.system_libs.append("gfortran")
         self.cpp_info.requires = ["lapack::lapack", "openmpi::ompi-c"]
+        self.fortran.add_runtime_to_cpp_info(self.cpp_info)

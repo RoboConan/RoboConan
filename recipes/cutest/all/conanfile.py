@@ -1,8 +1,6 @@
 import os
 
 from conan import ConanFile
-from conan.errors import ConanInvalidConfiguration
-from conan.tools.build import cross_building
 from conan.tools.meson import Meson, MesonToolchain
 from conan.tools.files import *
 from conan.tools.layout import basic_layout
@@ -17,7 +15,7 @@ class CutestConan(ConanFile):
     homepage = "https://github.com/ralna/CUTEst"
     topics = ("optimization", "testing", "constrained-optimization", "unconstrained-optimization")
     package_type = "shared-library"
-    settings = "os", "arch", "compiler", "build_type"
+    settings = "os", "arch", "compiler", "build_type", "fortran"
     options = {
         "quadruple": [True, False],
         "int64": [True, False],
@@ -28,10 +26,8 @@ class CutestConan(ConanFile):
     }
     languages = ["C"]
 
-    @property
-    def _fortran_compiler(self):
-        executables = self.conf.get("tools.build:compiler_executables", default={}, check_type=dict)
-        return executables.get("fortran")
+    python_requires = "conan-fortran/latest"
+    python_requires_extend = "conan-fortran.Fortran"
 
     def configure(self):
         if "arm" in str(self.settings.arch):
@@ -40,12 +36,14 @@ class CutestConan(ConanFile):
     def layout(self):
         basic_layout(self, src_folder="src")
 
+    def validate(self):
+        self.fortran.validate_settings()
+
     def validate_build(self):
-        if not self._fortran_compiler:
-            raise ConanInvalidConfiguration(
-                f"{self.name} requires a Fortran compiler. "
-                "Please provide one by setting tools.build:compiler_executables={'fortran': '...'}."
-            )
+        self.fortran.validate_build()
+
+    def requirements(self):
+        self.fortran.requires_runtime()
 
     def build_requirements(self):
         self.tool_requires("meson/[^1]")
@@ -56,13 +54,12 @@ class CutestConan(ConanFile):
     def generate(self):
         tc = MesonToolchain(self)
         tc.project_options["tests"] = False
-        tc.project_options["quadruple"] = self.options.quadruple
-        tc.project_options["int64"] = self.options.int64
+        tc.project_options["quadruple"] = bool(self.options.quadruple)
+        tc.project_options["int64"] = bool(self.options.int64)
         tc.project_options["modules"] = False
         tc.project_options["default_library"] = "shared"
+        self.fortran.configure_meson_toolchain(tc)
         tc.generate()
-        meson_ini = "conan_meson_cross.ini" if cross_building(self) else "conan_meson_native.ini"
-        replace_in_file(self, meson_ini, "[binaries]", f"[binaries]\nfortran = '{self._fortran_compiler}'")
 
     def build(self):
         meson = Meson(self)
@@ -80,3 +77,5 @@ class CutestConan(ConanFile):
         self.cpp_info.components["double"].libs = ["cutest_double" + suffix]
         if self.options.quadruple:
             self.cpp_info.components["quadruple"].libs = ["cutest_quadruple" + suffix]
+        for component in self.cpp_info.components.values():
+            self.fortran.add_runtime_to_cpp_info(component)

@@ -6,7 +6,7 @@ from conan.tools.build import check_min_cppstd
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.13"
 
 
 class UnoConan(ConanFile):
@@ -16,7 +16,7 @@ class UnoConan(ConanFile):
     homepage = "https://github.com/cvanaret/Uno"
     topics = ("optimization", "nonlinear-programming", "mathematical-optimization", "solver")
     package_type = "library"
-    settings = "os", "arch", "compiler", "build_type"
+    settings = "os", "arch", "compiler", "build_type", "fortran"
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
@@ -43,12 +43,16 @@ class UnoConan(ConanFile):
     }
     implements = ["auto_shared_fpic"]
 
-    @property
-    def _fortran_compiler(self):
-        executables = self.conf.get("tools.build:compiler_executables", default={}, check_type=dict)
-        return executables.get("fortran")
+    python_requires = "conan-fortran/latest"
+    python_requires_extend = "conan-fortran.Fortran"
+
+    def config_options(self):
+        if self.settings.os == "Windows":
+            del self.options.fPIC
 
     def configure(self):
+        if self.options.shared:
+            self.options.rm_safe("fPIC")
         if self.options.get_safe("hsl_runtime_loading"):
             self.options.with_hsl.value = True
 
@@ -59,6 +63,7 @@ class UnoConan(ConanFile):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
+        self.fortran.requires_runtime()
         self.requires("blas/latest")
         self.requires("lapack/latest")
         if self.options.with_asl:
@@ -78,15 +83,17 @@ class UnoConan(ConanFile):
 
     def validate(self):
         check_min_cppstd(self, 17)
+        self.fortran.validate_settings()
+        mangling = self.dependencies["lapack"].extension_properties["fortran_name_mangling"]
+        if mangling != self.fortran.mangling.value:
+            raise ConanInvalidConfiguration(
+                f"LAPACK uses {mangling}, but the configured Fortran toolchain uses {self.fortran.mangling.value}"
+            )
         if self.options.get_safe("hsl_runtime_loading") and not self.options.shared:
             raise ConanInvalidConfiguration("hsl_runtime_loading=True requires shared=True")
 
     def validate_build(self):
-        if not self._fortran_compiler:
-            raise ConanInvalidConfiguration(
-                "A Fortran compiler is required. "
-                "Please provide one by setting tools.build:compiler_executables={'fortran': '...'}."
-            )
+        self.fortran.validate_build()
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
@@ -180,6 +187,7 @@ class UnoConan(ConanFile):
             uno.system_libs = ["m"]
             if self.options.get_safe("hsl_runtime_loading"):
                 uno.system_libs.append("dl")
+        self.fortran.add_runtime_to_cpp_info(uno)
 
         if self.options.with_asl:
             uno_ampl = self.cpp_info.components["uno_ampl"]

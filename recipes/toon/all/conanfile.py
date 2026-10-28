@@ -7,7 +7,7 @@ from conan.tools.files import *
 from conan.tools.layout import basic_layout
 from conan.tools.scm import Version
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.13"
 
 
 class ToonConan(ConanFile):
@@ -56,6 +56,10 @@ class ToonConan(ConanFile):
 
     def validate(self):
         check_min_cppstd(self, self._min_cppstd)
+        if self.options.with_lapack:
+            mangling = self.dependencies["lapack"].extension_properties["fortran_name_mangling"]
+            if mangling != "lower_underscore":
+                raise ConanInvalidConfiguration("TooN requires LAPACK with lower_underscore names")
         minimum_version = self._compilers_minimum_version.get(str(self.settings.compiler), False)
         if minimum_version and Version(self.settings.compiler.version) < minimum_version:
             raise ConanInvalidConfiguration(

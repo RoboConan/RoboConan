@@ -10,7 +10,7 @@ from conan.tools.gnu import Autotools, AutotoolsToolchain, PkgConfigDeps, PkgCon
 from conan.tools.layout import basic_layout
 from conan.tools.microsoft import is_msvc, unix_path
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.13"
 
 
 class CoinClpConan(ConanFile):
@@ -20,7 +20,7 @@ class CoinClpConan(ConanFile):
     homepage = "https://github.com/coin-or/Ipopt"
     topics = ("optimization", "interior-point", "nonlinear-optimization", "nonconvex")
     package_type = "library"
-    settings = "os", "arch", "compiler", "build_type"
+    settings = "os", "arch", "compiler", "build_type", "fortran"
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
@@ -44,6 +44,9 @@ class CoinClpConan(ConanFile):
         "with_spral": True,
     }
     implements = ["auto_shared_fpic"]
+
+    python_requires = "conan-fortran/latest"
+    python_requires_extend = "conan-fortran.Fortran"
 
     def configure(self):
         # Shared builds on Windows are not supported yet
@@ -126,6 +129,7 @@ class CoinClpConan(ConanFile):
             "--disable-f77",
             "--disable-java",
         ]
+        tc.configure_args.append(f"ac_cv_f77_mangling={self.fortran.autoconf_mangling}")
 
         if self.options.with_spral:
             cflags, ldflags = self._flags_from_pc("spral")
@@ -135,13 +139,17 @@ class CoinClpConan(ConanFile):
         _, ldflags = self._flags_from_pc("lapack")
         tc.configure_args.append(f"--with-lapack-lflags={ldflags}")
 
+        if is_msvc(self):
+            tc.extra_cxxflags.append("-EHsc")
+
         env = tc.environment()
         if is_msvc(self):
-            compile_wrapper = unix_path(self, self.conf.get("user.automake:compile-wrapper"))
-            ar_wrapper = unix_path(self, self.conf.get("user.automake:lib-wrapper"))
+            automake = self.dependencies.build["automake"]
+            compile_wrapper = unix_path(self, automake.conf_info.get("user.automake:compile-wrapper"))
+            ar_wrapper = unix_path(self, automake.conf_info.get("user.automake:lib-wrapper"))
             env.define("CC", f"{compile_wrapper} cl -nologo")
             env.define("CXX", f"{compile_wrapper} cl -nologo")
-            env.define("LD", f"{compile_wrapper} link -nologo")
+            env.define("LD", "link -nologo")
             env.define("AR", f"{ar_wrapper} lib")
             env.define("NM", "dumpbin -symbols")
             env.define("OBJDUMP", ":")
@@ -157,6 +165,16 @@ class CoinClpConan(ConanFile):
             shutil.copy(gnu_config, self.source_folder)
         autotools = Autotools(self)
         autotools.configure()
+        # Manually specify BLAS/LAPACK name mangling since F77 is disabled.
+        f77_name = "NAME" if self.fortran.mangling.case == "upper" else "name"
+        f77_name_ = f77_name
+        if self.fortran.mangling.underscore:
+            f77_name += " ## _"
+            f77_name_ += " ## __" if self.fortran.mangling.extra_underscore else " ## _"
+        save(self, os.path.join(self.build_folder, "src", "Common", "config.h"),
+             f"\n#define F77_FUNC(name,NAME) {f77_name}\n"
+             f"#define F77_FUNC_(name,NAME) {f77_name_}\n",
+             append=True)
         autotools.make()
 
     def package(self):

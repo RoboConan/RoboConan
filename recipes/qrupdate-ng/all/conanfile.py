@@ -1,10 +1,11 @@
 import os
 
 from conan import ConanFile
+from conan.errors import ConanInvalidConfiguration
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.13"
 
 
 class QrupdateNgConan(ConanFile):
@@ -14,25 +15,38 @@ class QrupdateNgConan(ConanFile):
     homepage = "https://github.com/mpimd-csc/qrupdate-ng"
     topics = ("linear-algebra", "qr-decomposition", "cholesky-decomposition", "fortran")
     package_type = "library"
-    settings = "os", "arch", "compiler", "build_type"
+    settings = "os", "arch", "compiler", "build_type", "fortran"
+    python_requires = "conan-fortran/latest"
+    python_requires_extend = "conan-fortran.Fortran"
     options = {
         "shared": [True, False],
     }
     default_options = {
         "shared": False,
     }
-    languages = ["C"]
 
-    @property
-    def _fortran_compiler(self):
-        return self.conf.get("tools.build:compiler_executables", default={}, check_type=dict).get("fortran", None)
-
+    def config_options(self):
+        self.settings.rm_safe("compiler.cstd")
+        self.settings.rm_safe("compiler.cppstd")
+        self.settings.rm_safe("compiler.libcxx")
 
     def layout(self):
         cmake_layout(self, src_folder="src")
 
     def requirements(self):
         self.requires("lapack/latest")
+        self.fortran.requires_runtime()
+
+    def validate(self):
+        self.fortran.validate_settings()
+        mangling = self.dependencies["lapack"].extension_properties["fortran_name_mangling"]
+        if mangling != self.fortran.mangling.value:
+            raise ConanInvalidConfiguration(
+                f"LAPACK uses {mangling}, but the configured Fortran toolchain uses {self.fortran.mangling.value}"
+            )
+
+    def validate_build(self):
+        self.fortran.validate_build()
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
@@ -70,5 +84,4 @@ class QrupdateNgConan(ConanFile):
         if not self.options.shared:
             if self.settings.os in ["Linux", "FreeBSD"]:
                 self.cpp_info.system_libs = ["m"]
-            if "gfortran" in self._fortran_compiler:
-                self.cpp_info.system_libs.append("gfortran")
+        self.fortran.add_runtime_to_cpp_info(self.cpp_info)

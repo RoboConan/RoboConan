@@ -8,7 +8,7 @@ from conan.tools.files import *
 from conan.tools.microsoft import is_msvc
 from conan.tools.scm import Version
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.13"
 
 
 class DlibConan(ConanFile):
@@ -92,6 +92,9 @@ class DlibConan(ConanFile):
 
     def validate(self):
         check_min_cppstd(self, 14 if Version(self.version) >= "19.24.2" else 11)
+        if self.options.with_lapack:
+            if not self.dependencies["lapack"].extension_properties["fortran_name_mangling"].startswith("lower_"):
+                raise ConanInvalidConfiguration("dlib requires LAPACK name mangling to be lower_no_underscore, lower_underscore, or lower_underscore_extra")
         if is_msvc(self) and self.options.shared:
             raise ConanInvalidConfiguration(f"{self.ref} does not support shared on Windows. See https://github.com/davisking/dlib/issues/1483.")
         if self.options.with_cuda:

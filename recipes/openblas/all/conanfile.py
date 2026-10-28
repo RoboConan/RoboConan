@@ -66,7 +66,7 @@ class OpenblasConan(ConanFile):
     homepage = "https://www.openblas.net"
     topics = ("blas", "lapack")
     package_type = "library"
-    settings = "os", "arch", "compiler", "build_type"
+    settings = "os", "arch", "compiler", "build_type", "fortran"
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
@@ -77,7 +77,7 @@ class OpenblasConan(ConanFile):
         "build_bfloat16": [True, False],
         "use_locking": [True, False],
         "dynamic_arch": [True, False],
-        "target": [None] + available_openblas_targets,
+        "target": [None, "GENERIC"] + available_openblas_targets,
         "max_threads": ["auto", "ANY"],
         "max_omp_parallel": ["ANY"],
         "use_fortran": [True, False],
@@ -95,7 +95,7 @@ class OpenblasConan(ConanFile):
         "target": None,
         "max_threads": 128,
         "max_omp_parallel": 1,
-        "use_fortran": True,  # Only enabled if a Fortran compiler is found
+        "use_fortran": True,
     }
     options_description = {
         "interface": "Optionally build with ILP64 interface instead of LP64 (incompatible with the standard API)",
@@ -108,17 +108,27 @@ class OpenblasConan(ConanFile):
         "target": "OpenBLAS TARGET variable (see TargetList.txt)",
         "max_threads": "The maximum number of parallel threads you expect to need (defaults to the number of cores in the build cpu)",
         "max_omp_parallel": "Number of OpenMP instances that your code may use for parallel calls into OpenBLAS",
-        "use_fortran": "Build LAPACK from the original Fortran instead of translated C sources. Enabled by default if a Fortran compiler is available.",
+        "use_fortran": "Build LAPACK from the original Fortran instead of translated C sources",
     }
+    languages = ["C"]
+
+    python_requires = "conan-fortran/latest"
+    python_requires_extend = "conan-fortran.Fortran"
 
     @property
-    def _fortran_compiler(self):
-        return self.conf.get("tools.build:compiler_executables", default={}).get("fortran", None)
+    def extension_properties(self):
+        name_mangling = "lower_underscore"
+        if self.options.get_safe("use_fortran"):
+            name_mangling = self.fortran.mangling.value
+            # OpenBLAS explicitly overrides IntelLLVM's Windows default.
+            if self.settings.os == "Windows" and self.fortran.compiler == "ifx":
+                name_mangling = "lower_no_underscore"
+        return {"fortran_name_mangling": name_mangling}
 
     def config_options(self):
         if self.settings.os == "Windows":
             del self.options.fPIC
-        if not self._fortran_compiler:
+        if self.settings.get_safe("fortran") is None:
             self.options.use_fortran = False
         if self.settings.compiler in ["msvc", "apple-clang"]:
             self.options.build_relapack = False
@@ -135,6 +145,11 @@ class OpenblasConan(ConanFile):
             del self.options.max_threads
         if self.options.threading != "openmp":
             del self.options.max_omp_parallel
+        if not self.options.get_safe("use_fortran", False):
+            self.settings.rm_safe("fortran")
+
+        if is_msvc(self) and not self.options.target:
+            self.options.target = "GENERIC"
 
         # When cross-compiling, OpenBLAS requires explicitly setting TARGET
         if cross_building(self, skip_x64_x86=True) and not self.options.target:
@@ -151,8 +166,12 @@ class OpenblasConan(ConanFile):
     def requirements(self):
         if self.options.threading == "openmp":
             self.requires("openmp/system")
+        if self.options.get_safe("use_fortran"):
+            self.fortran.requires_runtime()
 
     def validate(self):
+        if is_msvc(self) and self.options.target != "GENERIC":
+            raise ConanInvalidConfiguration("MSVC only supports OpenBLAS' generic target")
         if self.options.get_safe("build_relapack") and self.settings.compiler in ["msvc", "apple-clang"]:
             # ld: unknown option: --allow-multiple-definition on apple-clang
             raise ConanInvalidConfiguration(f'"{self.name}/*:build_relapack=True" option is only supported for GCC and Clang')
@@ -160,9 +179,8 @@ class OpenblasConan(ConanFile):
             if int(self.settings.os.api_level.value) < 23:
                 # All basic complex math functions are only available since API level 23.
                 raise ConanInvalidConfiguration("build_lapack=True requires Android API level 23 or higher for complex math support")
-        if self.options.get_safe("use_fortran") and not self._fortran_compiler:
-            raise ConanInvalidConfiguration(f"use_fortran=True requires a Fortran compiler. "
-                                            "Please set the 'fortran' executable path in 'tools.build:compiler_executables'.")
+        if self.options.get_safe("use_fortran"):
+            self.fortran.validate_settings()
 
     def build_requirements(self):
         if self.options.threading == "openmp":
@@ -174,9 +192,15 @@ class OpenblasConan(ConanFile):
         # we couldn't infer the target from settings.arch, fail
         if cross_building(self, skip_x64_x86=True) and not self.options.target:
             raise ConanInvalidConfiguration(f'Could not determine OpenBLAS TARGET. Please set the "{self.name}/*:target=XXX" option.')
+        if self.options.get_safe("use_fortran"):
+            self.fortran.validate_build()
+
+    def export_sources(self):
+        export_conandata_patches(self)
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
+        apply_conandata_patches(self)
         # Disable test subdirs.
         # ctest also otherwise fails to compile on Android API 22 and earlier due to incomplete complex support.
         save(self, os.path.join(self.source_folder, "cpp_thread_test", "CMakeLists.txt"), "")
@@ -210,6 +234,11 @@ class OpenblasConan(ConanFile):
         tc.variables["DYNAMIC_ARCH"] = self.options.dynamic_arch
         tc.variables["BUILD_BFLOAT16"] = self.options.build_bfloat16
         tc.variables["MSVC_STATIC_CRT"] = is_msvc_static_runtime(self)
+        if is_msvc(self):
+            # OpenBLAS declares generic ASM, but its MSVC build has no assembly sources.
+            for runtime in ("MultiThreaded", "MultiThreadedDLL", "MultiThreadedDebug", "MultiThreadedDebugDLL"):
+                tc.variables[f"CMAKE_ASM_COMPILE_OPTIONS_MSVC_RUNTIME_LIBRARY_{runtime}"] = ""
+            tc.cache_variables["CMAKE_TRY_COMPILE_CONFIGURATION"] = str(self.settings.build_type)
         tc.variables["ANDROID"] = self.settings.os == "Android"
         tc.generate()
 
@@ -255,12 +284,14 @@ class OpenblasConan(ConanFile):
 
         self.cpp_info.includedirs.append(f"include/openblas{self._64bit}")
         self.cpp_info.libs = [self._lib_name]
+        if self.options.build_lapack:
+            self.cpp_info.defines.append("HAVE_LAPACK_CONFIG_H")
         if not self.options.shared:
             if self.settings.os in ["Linux", "FreeBSD"]:
                 self.cpp_info.system_libs.append("m")
                 if self.options.threading != "serial":
                     self.cpp_info.system_libs.append("pthread")
-            if self.options.get_safe("use_fortran") and "gfortran" in self._fortran_compiler:
-                self.cpp_info.system_libs.append("gfortran")
+        if self.options.get_safe("use_fortran"):
+            self.fortran.add_runtime_to_cpp_info(self.cpp_info)
 
         self.runenv_info.define_path("OpenBLAS_HOME", self.package_folder)

@@ -7,7 +7,7 @@ from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
 from conan.tools.scm import Version
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.13"
 
 
 class PackageConan(ConanFile):
@@ -326,6 +326,9 @@ class PackageConan(ConanFile):
             raise ConanInvalidConfiguration("with_pthread=True is not supported for MSVC")
         if self.options.matlab_interface and self.options.octave_interface:
             raise ConanInvalidConfiguration("matlab_interface and octave_interface cannot be enabled at the same time")
+        if self.options.with_lapack:
+            if self.dependencies["lapack"].extension_properties["fortran_name_mangling"] != "lower_underscore":
+                raise ConanInvalidConfiguration("CasADi requires LAPACK with lower_underscore names")
 
     @property
     def _with_wasm_js(self):

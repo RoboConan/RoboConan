@@ -5,7 +5,7 @@ from conan.errors import ConanInvalidConfiguration
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.13"
 
 
 class SlicotConan(ConanFile):
@@ -15,7 +15,7 @@ class SlicotConan(ConanFile):
     homepage = "https://github.com/SLICOT/SLICOT-Reference"
     topics = ("linear-algebra", "control-systems", "system-identification", "eigenvalues","descriptor-systems", "periodic-systems", "control-systems-design")
     package_type = "library"
-    settings = "os", "arch", "compiler", "build_type"
+    settings = "os", "arch", "compiler", "build_type", "fortran"
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
@@ -25,12 +25,16 @@ class SlicotConan(ConanFile):
         "fPIC": True,
     }
     implements = ["auto_shared_fpic"]
-    languages = ["C"]
 
-    @property
-    def _fortran_compiler(self):
-        executables = self.conf.get("tools.build:compiler_executables", default={}, check_type=dict)
-        return executables.get("fortran")
+    python_requires = "conan-fortran/latest"
+    python_requires_extend = "conan-fortran.Fortran"
+
+    def config_options(self):
+        if self.settings.os == "Windows":
+            del self.options.fPIC
+        self.settings.rm_safe("compiler.cstd")
+        self.settings.rm_safe("compiler.cppstd")
+        self.settings.rm_safe("compiler.libcxx")
 
     def export_sources(self):
         copy(self, "CMakeLists.txt", self.recipe_folder, os.path.join(self.export_sources_folder, "src"))
@@ -40,13 +44,18 @@ class SlicotConan(ConanFile):
 
     def requirements(self):
         self.requires("lapack/latest")
+        self.fortran.requires_runtime()
+
+    def validate(self):
+        self.fortran.validate_settings()
+        mangling = self.dependencies["lapack"].extension_properties["fortran_name_mangling"]
+        if mangling != self.fortran.mangling.value:
+            raise ConanInvalidConfiguration(
+                f"LAPACK uses {mangling}, but the configured Fortran toolchain uses {self.fortran.mangling.value}"
+            )
 
     def validate_build(self):
-        if not self._fortran_compiler:
-            raise ConanInvalidConfiguration(
-                "A Fortran compiler is required. "
-                "Please add one to `tools.build:compiler_executables={'fortran': '...'}`."
-            )
+        self.fortran.validate_build()
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
@@ -80,5 +89,4 @@ class SlicotConan(ConanFile):
         if not self.options.shared:
             if self.settings.os in ["Linux", "FreeBSD"]:
                 self.cpp_info.system_libs = ["m", "mvec"]
-            if "gfortran" in (self._fortran_compiler or ""):
-                self.cpp_info.system_libs.append("gfortran")
+        self.fortran.add_runtime_to_cpp_info(self.cpp_info)

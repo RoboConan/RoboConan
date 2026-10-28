@@ -1,6 +1,7 @@
 import os
 
 from conan import ConanFile
+from conan.errors import ConanInvalidConfiguration
 from conan.tools.apple import fix_apple_shared_install_name
 from conan.tools.build import cross_building
 from conan.tools.env import VirtualRunEnv
@@ -9,7 +10,7 @@ from conan.tools.gnu import Autotools, AutotoolsDeps, AutotoolsToolchain
 from conan.tools.layout import basic_layout
 from conan.tools.microsoft import unix_path
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.13"
 
 
 class OoqpConan(ConanFile):
@@ -33,6 +34,11 @@ class OoqpConan(ConanFile):
     def requirements(self):
         self.requires("lapack/latest")
         self.requires("coin-hsl/[*]")
+
+    def validate(self):
+        mangling = self.dependencies["lapack"].extension_properties["fortran_name_mangling"]
+        if mangling != "lower_underscore":
+            raise ConanInvalidConfiguration("OOQP requires BLAS/LAPACK with lower_underscore names")
 
     def build_requirements(self):
         if self.settings_build.os == "Windows":

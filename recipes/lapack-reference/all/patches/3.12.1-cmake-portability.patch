@@ -1,0 +1,32 @@
+--- a/INSTALL/CMakeLists.txt
++++ b/INSTALL/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-cmake_minimum_required(VERSION 3.13)
++cmake_minimum_required(VERSION 3.15)
+ project(TIMING Fortran)
+ 
+ # Add the CMake directory for custom CMake modules
+--- a/LAPACKE/CMakeLists.txt
++++ b/LAPACKE/CMakeLists.txt
+@@ -102,6 +102,10 @@ target_include_directories(${LAPACKELIB} PUBLIC
+   $<INSTALL_INTERFACE:include>
+ )
+ if(WIN32 AND NOT UNIX)
++  target_compile_definitions(${LAPACKELIB}_obj PRIVATE HAVE_LAPACK_CONFIG_H LAPACK_COMPLEX_STRUCTURE)
++  if(BUILD_INDEX64_EXT_API)
++    target_compile_definitions(${LAPACKELIB}_64_obj PRIVATE HAVE_LAPACK_CONFIG_H LAPACK_COMPLEX_STRUCTURE)
++  endif()
+   target_compile_definitions(${LAPACKELIB} PUBLIC HAVE_LAPACK_CONFIG_H LAPACK_COMPLEX_STRUCTURE)
+   message(STATUS "Windows BUILD")
+ endif()
+--- a/LAPACKE/include/CMakeLists.txt
++++ b/LAPACKE/include/CMakeLists.txt
+@@ -19,7 +19,7 @@ if(CMAKE_Fortran_COMPILER AND CMAKE_C_COMPILER)
+     MACRO_NAMESPACE "LAPACK_"
+     SYMBOL_NAMESPACE "LAPACK_")
+ endif()
+-if(NOT FortranCInterface_GLOBAL_FOUND OR NOT FortranCInterface_MODULE_FOUND)
++if(NOT FortranCInterface_GLOBAL_FOUND)
+   message(WARNING "Reverting to pre-defined include/lapacke_mangling.h")
+   configure_file(lapacke_mangling_with_flags.h.in
+                  ${LAPACK_BINARY_DIR}/include/lapacke_mangling.h)

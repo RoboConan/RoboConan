@@ -5,13 +5,14 @@ from io import StringIO
 from pathlib import Path
 
 from conan import ConanFile
+from conan.errors import ConanInvalidConfiguration
 from conan.tools.env import Environment
 from conan.tools.files import *
 from conan.tools.gnu import PkgConfigDeps
 from conan.tools.layout import basic_layout
 from conan.tools.meson import Meson, MesonToolchain
 
-required_conan_version = ">=2.4"
+required_conan_version = ">=2.13"
 
 
 class NumpyConan(ConanFile):
@@ -58,6 +59,11 @@ class NumpyConan(ConanFile):
         self.requires("blas/latest")
         if not self._python_executable:
             self.requires("cpython/[^3]", transitive_headers=True, transitive_libs=True)
+
+    def validate(self):
+        mangling = self.dependencies["blas"].extension_properties["fortran_name_mangling"]
+        if mangling != "lower_underscore":
+            raise ConanInvalidConfiguration("NumPy requires BLAS with lower_underscore names")
 
     def build_requirements(self):
         self.tool_requires("ninja/[^1.10]")

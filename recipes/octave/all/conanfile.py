@@ -9,7 +9,7 @@ from conan.tools.layout import basic_layout
 from conan.tools.microsoft import unix_path
 from conan.tools.scm import Version
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.13"
 
 
 class OctaveConan(ConanFile):
@@ -19,7 +19,7 @@ class OctaveConan(ConanFile):
     homepage = "https://www.octave.org"
     topics = ("scientific-computing", "matlab", "numerical-analysis", "mathematics")
     package_type = "shared-library"
-    settings = "os", "arch", "compiler", "build_type"
+    settings = "os", "arch", "compiler", "build_type", "fortran"
     options = {
         "with_arpack": [True, False],
         "with_curl": [True, False],
@@ -45,15 +45,23 @@ class OctaveConan(ConanFile):
         "with_sundials": False,
     }
 
+    python_requires = "conan-fortran/latest"
+    python_requires_extend = "conan-fortran.Fortran"
+
     @property
-    def _fortran_compiler(self):
-        executables = self.conf.get("tools.build:compiler_executables", default={}, check_type=dict)
-        return executables.get("fortran")
+    def _fortran_calling_convention(self):
+        mangling = self.fortran.mangling
+        if mangling.case == "upper" and not mangling.underscore and not mangling.extra_underscore:
+            return "visual-fortran"
+        if mangling.case == "lower" and mangling.underscore and not mangling.extra_underscore:
+            return "gfortran"
+        raise ConanInvalidConfiguration(f"Octave does not support {mangling.value} names")
 
     def layout(self):
         basic_layout(self, src_folder="src")
 
     def requirements(self):
+        self.fortran.requires_runtime()
         self.requires("lapack/latest")
         self.requires("fftw/[^3.3]")
         self.requires("pcre2/[^10]")
@@ -92,13 +100,15 @@ class OctaveConan(ConanFile):
 
     def validate(self):
         check_min_cppstd(self, 17)
+        self.fortran.validate_settings()
+        mangling = self.dependencies["lapack"].extension_properties["fortran_name_mangling"]
+        if mangling != self.fortran.mangling.value:
+            raise ConanInvalidConfiguration(
+                f"LAPACK uses {mangling}, but the configured Fortran toolchain uses {self.fortran.mangling.value}"
+            )
 
     def validate_build(self):
-        if not self._fortran_compiler:
-            raise ConanInvalidConfiguration(
-                "Octave requires a Fortran compiler to build. "
-                "Please provide one by setting tools.build:compiler_executables={'fortran': '...'}."
-            )
+        self.fortran.validate_build()
 
     def build_requirements(self):
         self.tool_requires("libtool/[^2.4.7]")
@@ -129,7 +139,7 @@ class OctaveConan(ConanFile):
         tc.configure_args.extend([
             "--disable-docs",
             "--enable-year2038",
-            "--enable-fortran-calling-convention=gfortran",
+            f"--enable-fortran-calling-convention={self._fortran_calling_convention}",
             "--enable-readline",
             f"--with-libreadline-prefix={unix_path(self, self.dependencies['readline'].package_folder)}",
             f"--enable-openmp={yes_no(self.options.with_openmp)}",
@@ -287,3 +297,4 @@ class OctaveConan(ConanFile):
         if self.options.with_sundials:
             requires.append("sundials::sundials")
         self.cpp_info.components["octave_"].requires = requires
+        self.fortran.add_runtime_to_cpp_info(self.cpp_info.components["octave_"])

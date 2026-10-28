@@ -17,7 +17,7 @@ class AlpaqaConan(ConanFile):
     homepage = "https://github.com/kul-optec/alpaqa"
     topics = ("optimization", "panoc", "alm", "mpc", "nonlinear-programming")
     package_type = "library"
-    settings = "os", "arch", "compiler", "build_type"
+    settings = "os", "arch", "compiler", "build_type", "fortran"
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
@@ -55,10 +55,21 @@ class AlpaqaConan(ConanFile):
         "with_qpalm": False,
     }
     implements = ["auto_shared_fpic"]
+    languages = ["C++"]
 
-    @property
-    def _fortran_compiler(self):
-        return self.conf.get("tools.build:compiler_executables", default={}).get("fortran")
+    python_requires = "conan-fortran/latest"
+    python_requires_extend = "conan-fortran.Fortran"
+
+    def config_options(self):
+        if self.settings.os == "Windows":
+            del self.options.fPIC
+
+    def configure(self):
+        if self.options.shared:
+            self.options.rm_safe("fPIC")
+        self.options["eigen"].with_blas = self.options.with_blas
+        if not self.options.with_lbfgsb:
+            self.settings.rm_safe("fortran")
 
     def export_sources(self):
         export_conandata_patches(self)
@@ -81,6 +92,7 @@ class AlpaqaConan(ConanFile):
             self.requires("qpalm/[^1.2]", transitive_headers=True)
         if self.options.with_lbfgsb:
             self.requires("lbfgsb/[^3.0]")
+            self.fortran.requires_runtime()
         if self.options.with_lbfgspp:
             self.requires("lbfgspp/[>=0.4 <1]")
         if self.options.with_blas:
@@ -90,13 +102,16 @@ class AlpaqaConan(ConanFile):
 
     def validate(self):
         check_min_cppstd(self, 20, gnu_extensions=self.options.precision_quad)
+        if self.dependencies["eigen"].options.with_blas != self.options.with_blas:
+            raise ConanInvalidConfiguration("alpaqa:with_blas must match eigen:with_blas")
         if self.options.with_cutest:
             check_min_cppstd(self, 23)
-        if self.options.with_lbfgsb and not self._fortran_compiler:
-            raise ConanInvalidConfiguration(
-                "with_lbfgsb=True requires a Fortran compiler. "
-                "Please provide one by setting tools.build:compiler_executables={'fortran': '...'}."
-            )
+        if self.options.with_lbfgsb:
+            self.fortran.validate_settings()
+
+    def validate_build(self):
+        if self.options.with_lbfgsb:
+            self.fortran.validate_build()
 
     def build_requirements(self):
         self.tool_requires("cmake/[>=3.25]")
@@ -177,7 +192,6 @@ class AlpaqaConan(ConanFile):
         if self.options.enable_ocp:
             self.cpp_info.components["core"].defines.append("ALPAQA_WITH_OCP")
         if self.options.with_blas:
-            self.cpp_info.components["core"].defines.append("EIGEN_USE_BLAS")
             self.cpp_info.components["core"].requires.append("blas::blas")
         if self.options.with_openmp:
             self.cpp_info.components["core"].requires.append("openmp::openmp")
@@ -231,6 +245,7 @@ class AlpaqaConan(ConanFile):
             self.cpp_info.components["lbfgsb-adapter"].set_property("cmake_target_name", "alpaqa::lbfgsb-adapter")
             self.cpp_info.components["lbfgsb-adapter"].libs = ["alpaqa-lbfgsb-adapter"]
             self.cpp_info.components["lbfgsb-adapter"].requires = ["core", "lbfgsb::lbfgsb"]
+            self.fortran.add_runtime_to_cpp_info(self.cpp_info.components["lbfgsb-adapter"])
             self.cpp_info.components["lbfgsb-adapter"].defines = ["ALPAQA_WITH_LBFGSB"]
 
         # LBFGS++ adapter component

@@ -84,6 +84,14 @@ class OneMKLConan(ConanFile):
     }
     provides = ["mkl"]
 
+    @property
+    def extension_properties(self):
+        if self.settings.os == "Windows" and self.options.interface_type == "intel":
+            name_mangling = "upper_no_underscore"
+        else:
+            name_mangling = "lower_underscore"
+        return {"fortran_name_mangling": name_mangling}
+
     @cached_property
     def _packages(self):
         with open(os.path.join(self.recipe_folder, "sources", f"{self.version}.yml")) as f:

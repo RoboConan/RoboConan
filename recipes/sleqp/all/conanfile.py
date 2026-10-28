@@ -1,10 +1,11 @@
 import os
 
 from conan import ConanFile
+from conan.errors import ConanInvalidConfiguration
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
 
-required_conan_version = ">=2.4"
+required_conan_version = ">=2.13"
 
 
 class SleqpConan(ConanFile):
@@ -64,6 +65,12 @@ class SleqpConan(ConanFile):
             self.requires("coin-hsl/[*]")
         elif self.options.fact_backend == "lapack":
             self.requires("lapack/latest")
+
+    def validate(self):
+        if self.options.fact_backend == "lapack":
+            mangling = self.dependencies["lapack"].extension_properties["fortran_name_mangling"]
+            if mangling != "lower_underscore":
+                raise ConanInvalidConfiguration("SLEQP requires LAPACK with lower_underscore names")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)

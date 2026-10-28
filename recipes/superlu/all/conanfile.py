@@ -6,7 +6,7 @@ from conan.tools.build import check_min_cstd
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.13"
 
 
 class SuperLUConan(ConanFile):
@@ -53,6 +53,9 @@ class SuperLUConan(ConanFile):
         if not any([self.options.enable_single, self.options.enable_double,
                     self.options.enable_complex, self.options.enable_complex16]):
             raise ConanInvalidConfiguration("At least one precision variant must be enabled")
+        mangling = self.dependencies["blas"].extension_properties["fortran_name_mangling"]
+        if mangling.startswith("upper_") and not mangling.endswith("no_underscore"):
+            raise ConanInvalidConfiguration("SuperLU does not support BLAS with upper_underscore or upper_underscore_extra names")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
@@ -61,6 +64,13 @@ class SuperLUConan(ConanFile):
 
     def generate(self):
         tc = CMakeToolchain(self)
+        mangling = self.dependencies["blas"].extension_properties["fortran_name_mangling"]
+        if mangling.startswith("upper_"):
+            tc.preprocessor_definitions["UpCase"] = None
+        elif mangling.endswith("no_underscore"):
+            tc.preprocessor_definitions["NoChange"] = None
+        else:
+            tc.preprocessor_definitions["Add_"] = None
         tc.cache_variables["CMAKE_PROJECT_SuperLU_INCLUDE"] = "conan_deps.cmake"
         tc.cache_variables["enable_tests"] = False
         tc.cache_variables["enable_examples"] = False

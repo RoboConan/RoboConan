@@ -6,7 +6,7 @@ from conan.tools.build import check_min_cstd
 from conan.tools.cmake import CMakeDeps, cmake_layout, CMake, CMakeToolchain
 from conan.tools.files import *
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.13"
 
 
 class SuperSCSConan(ConanFile):
@@ -86,6 +86,11 @@ class SuperSCSConan(ConanFile):
             check_min_cstd(self, 99)
         if not self.options.build_direct and not self.options.build_indirect:
             raise ConanInvalidConfiguration("At least one of build_direct or build_indirect must be enabled")
+        mangling = self.dependencies["lapack"].extension_properties["fortran_name_mangling"]
+        if not mangling.startswith("lower_"):
+            raise ConanInvalidConfiguration(
+                "SuperSCS requires BLAS/LAPACK name mangling to be lower_no_underscore, lower_underscore, or lower_underscore_extra"
+            )
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
@@ -98,6 +103,9 @@ class SuperSCSConan(ConanFile):
 
     def generate(self):
         tc = CMakeToolchain(self)
+        mangling = self.dependencies["lapack"].extension_properties["fortran_name_mangling"]
+        if mangling.endswith("no_underscore"):
+            tc.preprocessor_definitions["NOBLASSUFFIX"] = "1"
         tc.cache_variables["BUILD_DIRECT"] = self.options.build_direct
         tc.cache_variables["BUILD_INDIRECT"] = self.options.build_indirect
         tc.cache_variables["USE_OPENMP"] = self.options.with_openmp
