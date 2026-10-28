@@ -57,7 +57,3 @@ class LevelZeroConan(ConanFile):
         self.cpp_info.components["ze-loader"].set_property("pkg_config_name", "libze_loader")
         self.cpp_info.components["ze-loader"].libs = ["ze_loader"]
         self.cpp_info.components["ze-loader"].includedirs = ["include", "include/level_zero"]
-        if self.settings.os in ["Linux", "FreeBSD"]:
-            self.cpp_info.components["ze-loader"].system_libs = ["pthread"]
-        elif self.settings.os == "Windows":
-            self.cpp_info.components["ze-loader"].system_libs = ["cfgmgr32"]
