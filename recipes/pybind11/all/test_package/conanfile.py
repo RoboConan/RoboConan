@@ -20,8 +20,11 @@ class TestPackageConan(ConanFile):
         deps.generate()
 
         tc = CMakeToolchain(self)
+        python = os.path.join(self.dependencies.build["cpython"].package_folder, "bin", "python").replace("\\", "/")
+        tc.variables["Python_EXECUTABLE"] = python
+        tc.variables["Python3_EXECUTABLE"] = python
         if not can_run(self):
-            tc.variables["Python_EXECUTABLE"] = os.path.join(self.dependencies.build["cpython"].package_folder, "bin", "python").replace("\\", "/")
+            tc.variables["PYBIND11_USE_CROSSCOMPILING"] = True
         tc.generate()
 
         env = Environment()
