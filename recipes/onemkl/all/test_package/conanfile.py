@@ -2,18 +2,24 @@ import os
 
 from conan import ConanFile
 from conan.tools.build import can_run
-from conan.tools.cmake import cmake_layout, CMake
+from conan.tools.cmake import cmake_layout, CMake, CMakeToolchain
 
 
 class TestPackageConan(ConanFile):
     settings = "os", "arch", "compiler", "build_type"
-    generators = "CMakeDeps", "CMakeToolchain"
+    generators = "CMakeDeps"
 
     def requirements(self):
         self.requires(self.tested_reference_str)
 
     def layout(self):
         cmake_layout(self)
+
+    def generate(self):
+        tc = CMakeToolchain(self)
+        tc.cache_variables["TEST_MKL_BLACS"] = bool(self.dependencies["onemkl"].options.blacs)
+        tc.cache_variables["TEST_MKL_SYCL_DISTRIBUTED_DFT"] = bool(self.dependencies["onemkl"].options.get_safe("sycl_distributed_dft"))
+        tc.generate()
 
     def build(self):
         cmake = CMake(self)

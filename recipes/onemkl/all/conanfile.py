@@ -91,7 +91,7 @@ class OneMKLConan(ConanFile):
 
     @property
     def _sycl_domains(self):
-        return ["blas", "lapack", "data_fitting", "dft", "rng", "sparse", "stats", "vm", "distributed_dft"]
+        return ["blas", "lapack", "data_fitting", "dft", "rng", "sparse", "stats", "vm"]
 
     def export(self):
         copy(self, f"{self.version}.yml", os.path.join(self.recipe_folder, "sources"), os.path.join(self.export_folder, "sources"))
@@ -116,13 +116,15 @@ class OneMKLConan(ConanFile):
         if not self.options.blacs:
             del self.options.mpi
         else:
-            self.provides = ["onemkl", "mkl", "blacs", "scalapack"]
+            self.provides = ["mkl", "blacs", "scalapack"]
         if not self.options.sycl or self.options.get_safe("sdl"):
             self.options.rm_safe("omp_offload")
         if not self.options.sycl:
             for opt, _ in list(self.options.items()):
                 if opt.startswith("sycl_"):
                     self.options.rm_safe(opt)
+        elif self.options.get_safe("sycl_distributed_dft"):
+            self.options.sycl_dft.value = True
 
     def package_id(self):
         del self.info.settings.compiler
@@ -143,11 +145,16 @@ class OneMKLConan(ConanFile):
             self.requires("onetbb/[>=2021]")
         elif self.options.threading == "intel":
             v = Version(self.version)
-            self.requires(f"intel-openmp/[~{v.major}.{v.minor}]")
+            self.requires(f"intel-openmp/[~{v.major}.{v.minor}]", transitive_libs=True)
         if self.options.sycl:
             v = Version(self.version)
             self.requires(f"intel-dpcpp-sycl/[~{v.major}.{v.minor}]")
             self.requires(f"intel-opencl/[~{v.major}.{v.minor}]")
+        if self.options.blacs or self.options.get_safe("sycl_distributed_dft"):
+            if self.options.mpi == "intelmpi" or self.options.get_safe("sycl_distributed_dft"):
+                self.requires("intelmpi/[^2021.18]", transitive_headers=True, transitive_libs=True)
+            else:
+                self.requires("openmpi/[>=4 <6]", transitive_headers=True, transitive_libs=True)
 
     def validate(self):
         if self.settings.os not in ["FreeBSD", "Linux", "Windows"]:
@@ -159,6 +166,10 @@ class OneMKLConan(ConanFile):
                 raise ConanInvalidConfiguration(f"{self.settings.compiler} does not support SYCL.")
         if self.options.threading == "gnu" and self.settings.compiler not in ["gcc", "clang"]:
             raise ConanInvalidConfiguration("threading=gnu option is only available with GCC or Clang compilers.")
+        if self.settings.os == "Windows" and self.options.blacs and self.options.mpi != "intelmpi":
+            raise ConanInvalidConfiguration("Only Intel MPI is supported by BLACS on Windows")
+        if self.options.get_safe("sycl_distributed_dft") and self.options.blacs and self.options.mpi != "intelmpi":
+            raise ConanInvalidConfiguration("SYCL distributed DFT requires Intel -o mpi=intelmpi")
 
     def _get_pypi_package(self, name):
         get(self, **self._packages[name], destination=self.build_folder, strip_root=True)
@@ -351,21 +362,23 @@ class OneMKLConan(ConanFile):
             self.cpp_info.components["cdft"].set_property("cmake_target_name", "MKL::MKL_CDFT")
             self.cpp_info.components["cdft"].libs = [f"mkl_cdft_core{suffix}"]
             self.cpp_info.components["cdft"].requires = [f"blacs-{self.options.mpi}"]
-            self.cpp_info.components["cdft"].requires = [self._mkl_lib]
 
             self.cpp_info.components["scalapack"].set_property("cmake_target_name", "MKL::MKL_SCALAPACK")
             self.cpp_info.components["scalapack"].libs = [f"mkl_scalapack_{interface}{suffix}"]
             self.cpp_info.components["scalapack"].requires = [f"blacs-{self.options.mpi}"]
-            self.cpp_info.components["scalapack"].requires = [self._mkl_lib]
 
             self.cpp_info.components["blacs"].set_property("cmake_target_name", "MKL::MKL_BLACS")
             self.cpp_info.components["blacs"].requires = [f"blacs-{self.options.mpi}"]
             if self.options.mpi == "intelmpi":
-                self.cpp_info.components["blacs-intelmpi"].libs = [f"mkl_blacs_intelmpi_{interface}{suffix}"]
-                self.cpp_info.components["blacs-intelmpi"].requires = [self._mkl_lib]
+                if self.settings.os == "Windows" and self.options.get_safe("shared", True):
+                    self.cpp_info.components["blacs-intelmpi"].libs = [f"mkl_blacs_{interface}{suffix}"]
+                    self.runenv_info.define("MKL_BLACS_MPI", "INTELMPI")
+                else:
+                    self.cpp_info.components["blacs-intelmpi"].libs = [f"mkl_blacs_intelmpi_{interface}{suffix}"]
+                self.cpp_info.components["blacs-intelmpi"].requires = [self._mkl_lib, "intelmpi::mpi-c"]
             if self.options.mpi == "openmpi":
                 self.cpp_info.components["blacs-openmpi"].libs = [f"mkl_blacs_openmpi_{interface}{suffix}"]
-                self.cpp_info.components["blacs-openmpi"].requires = [self._mkl_lib]
+                self.cpp_info.components["blacs-openmpi"].requires = [self._mkl_lib, "openmpi::ompi-c"]
 
         # Fortran95 API libraries
         if self.options.blas95:
@@ -418,6 +431,12 @@ class OneMKLConan(ConanFile):
                     comp.sharedlinkflags = sycl_link_flags
                     comp.exelinkflags = sycl_link_flags
                     sycl_comp.requires.append(component_name)
+
+            if self.options.get_safe("sycl_distributed_dft"):
+                distributed_dft = self.cpp_info.components["mkl-sycl-distributed-dft"]
+                distributed_dft.set_property("cmake_target_name", "MKL::MKL_SYCL_DISTRIBUTED_DFT")
+                distributed_dft.libs = [f"mkl_sycl_distributed_dft{suffix}"]
+                distributed_dft.requires = ["mkl-sycl-dft", "intelmpi::mpi-c"]
 
             if self.options.get_safe("omp_offload"):
                 mkl_comp.requires.append("mkl-sycl")

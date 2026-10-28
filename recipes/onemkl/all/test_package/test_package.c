@@ -73,6 +73,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <mkl_types.h>
+#ifdef TEST_MKL_BLACS
+#include <mpi.h>
+#include <mkl_blacs.h>
+#include <mkl_cdft.h>
+#include <mkl_scalapack.h>
+#endif
 
 /* Complex datatype */
 struct _fcomplex { float re, im; };
@@ -108,6 +114,14 @@ int main() {
            {-6.11f, -3.81f}, { 0.14f, -7.71f}, { 1.41f,  3.40f}, { 8.54f, -4.05f}
         };
         /* Executable statements */
+#ifdef TEST_MKL_BLACS
+        void (*blacs_info)(MKL_INT*, MKL_INT*) = blacs_pinfo;
+        MKL_LONG (*create_descriptor_dm)(MPI_Comm, DFTI_DESCRIPTOR_DM_HANDLE*, enum DFTI_CONFIG_VALUE,
+                                         enum DFTI_CONFIG_VALUE, MKL_LONG, ...) = DftiCreateDescriptorDM;
+        double (*scalapack_lamch)(const MKL_INT*, const char*) = pdlamch;
+        if (blacs_info == NULL || create_descriptor_dm == NULL || scalapack_lamch == NULL)
+            return 1;
+#endif
         printf( " CGESV Example Program Results\n" );
         /* Solve the equations A*X = B */
         cgesv( &n, &nrhs, a, &lda, ipiv, b, &ldb, &info );
