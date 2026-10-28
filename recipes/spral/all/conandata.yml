@@ -5,3 +5,4 @@ sources:
 patches:
   "2025.09.18":
     - patch_file: "patches/use-pkgconf.patch"
+    - patch_file: "patches/2025.09.18-msvc-portability.patch"

@@ -1,0 +1,58 @@
+--- a/include/spral_complex.h
++++ b/include/spral_complex.h
+@@ -6,6 +6,9 @@
+ #ifdef __cplusplus
+ #include <complex>
+ typedef std::complex<double> spral_double_complex;
++#elif defined(_MSC_VER)
++#include <complex.h>
++typedef _Dcomplex spral_double_complex;
+ #else /* ifdef __cplusplus */
+ #include <complex.h>
+ typedef double complex spral_double_complex;
+--- a/src/ssids/cpu/kernels/SimdVec.hxx
++++ b/src/ssids/cpu/kernels/SimdVec.hxx
+@@ -167,15 +167,15 @@
+    /// Extract indvidual elements of vector (messy and inefficient)
+    /// idx MUST be < vector_length.
+    double operator[](size_t idx) const {
+-      double
++      alignas(
+ #if defined(__AVX512F__)
+-        __attribute__((aligned(64)))
++        64
+ #elif defined(__AVX__)
+-        __attribute__((aligned(32)))
++        32
+ #else
+-        __attribute__((aligned(16)))
++        16
+ #endif
+-        val_as_array[vector_length];
++      ) double val_as_array[vector_length];
+       store_aligned(val_as_array);
+       return val_as_array[idx];
+    }
+--- a/src/ssids/cpu/kernels/block_ldlt.hxx
++++ b/src/ssids/cpu/kernels/block_ldlt.hxx
+@@ -180,14 +180,14 @@
+    bestc = blend(bestc, bestc2, v_gt_bestv);
+    // Extract results
+ #if defined(__AVX512F__)
+-   T __attribute__((aligned(64))) bv2[SimdVecT::vector_length];
+-   intT __attribute__((aligned(64))) br2[SimdVecT::vector_length], bc2[SimdVecT::vector_length];
++   alignas(64) T bv2[SimdVecT::vector_length];
++   alignas(64) intT br2[SimdVecT::vector_length], bc2[SimdVecT::vector_length];
+ #elif defined(__AVX__)
+-   T __attribute__((aligned(32))) bv2[SimdVecT::vector_length];
+-   intT __attribute__((aligned(32))) br2[SimdVecT::vector_length], bc2[SimdVecT::vector_length];
++   alignas(32) T bv2[SimdVecT::vector_length];
++   alignas(32) intT br2[SimdVecT::vector_length], bc2[SimdVecT::vector_length];
+ #else
+-   T __attribute__((aligned(16))) bv2[SimdVecT::vector_length];
+-   intT __attribute__((aligned(16))) br2[SimdVecT::vector_length], bc2[SimdVecT::vector_length];
++   alignas(16) T bv2[SimdVecT::vector_length];
++   alignas(16) intT br2[SimdVecT::vector_length], bc2[SimdVecT::vector_length];
+ #endif
+    bestv.store_aligned(bv2);
+    bestr.store_aligned(&br2[0].d);
