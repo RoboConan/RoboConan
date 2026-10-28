@@ -6,7 +6,7 @@ from conan.tools.apple import fix_apple_shared_install_name
 from conan.tools.files import *
 from conan.tools.gnu import Autotools, AutotoolsToolchain, PkgConfigDeps
 from conan.tools.layout import basic_layout
-from conan.tools.microsoft import is_msvc, msvc_runtime_flag, unix_path
+from conan.tools.microsoft import is_msvc, unix_path
 
 required_conan_version = ">=2.1"
 
@@ -34,6 +34,10 @@ class CoinCglConan(ConanFile):
             del self.options.fPIC
             del self.options.shared
             self.package_type = "static-library"
+
+    def configure(self):
+        if self.options.get_safe("shared"):
+            self.options.rm_safe("fPIC")
 
     def layout(self):
         basic_layout(self, src_folder="src")
@@ -69,15 +73,15 @@ class CoinCglConan(ConanFile):
         ])
         if is_msvc(self):
             tc.extra_cxxflags.append("-EHsc")
-            tc.configure_args.append(f"--enable-msvc={msvc_runtime_flag(self)}")
         env = tc.environment()
         env.define("PKG_CONFIG_PATH", self.generators_folder)
         if is_msvc(self):
-            compile_wrapper = unix_path(self, self.conf.get("user.automake:compile-wrapper"))
-            ar_wrapper = unix_path(self, self.conf.get("user.automake:lib-wrapper"))
+            automake = self.dependencies.build["automake"]
+            compile_wrapper = unix_path(self, automake.conf_info.get("user.automake:compile-wrapper"))
+            ar_wrapper = unix_path(self, automake.conf_info.get("user.automake:lib-wrapper"))
             env.define("CC", f"{compile_wrapper} cl -nologo")
             env.define("CXX", f"{compile_wrapper} cl -nologo")
-            env.define("LD", f"{compile_wrapper} link -nologo")
+            env.define("LD", "link -nologo")
             env.define("AR", f'{ar_wrapper} "lib -nologo"')
             env.define("NM", "dumpbin -symbols")
         tc.generate(env)

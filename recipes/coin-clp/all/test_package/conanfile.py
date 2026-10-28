@@ -26,7 +26,6 @@ class TestPackageConan(ConanFile):
 
     def test(self):
         if can_run(self):
-            mps = os.path.join(self.source_folder, "sample.mps")
             for executable in ("pkg_config_test", "libclp_test", "solver_test", "osi_clp_test"):
                 bin_path = os.path.join(self.cpp.build.bindir, executable)
-                self.run(f"{bin_path} {mps}", env="conanrun")
+                self.run(bin_path, env="conanrun")

@@ -6,7 +6,7 @@ from conan.tools.apple import fix_apple_shared_install_name
 from conan.tools.files import *
 from conan.tools.gnu import Autotools, AutotoolsToolchain, PkgConfigDeps
 from conan.tools.layout import basic_layout
-from conan.tools.microsoft import is_msvc, msvc_runtime_flag, unix_path
+from conan.tools.microsoft import is_msvc, unix_path
 
 required_conan_version = ">=2.1"
 
@@ -34,6 +34,16 @@ class CoinDyLPConan(ConanFile):
     def export_sources(self):
         export_conandata_patches(self)
 
+    def config_options(self):
+        if self.settings.os == "Windows":
+            del self.options.fPIC
+            del self.options.shared
+            self.package_type = "static-library"
+
+    def configure(self):
+        if self.options.get_safe("shared"):
+            self.options.rm_safe("fPIC")
+
     def layout(self):
         basic_layout(self, src_folder="src")
 
@@ -54,12 +64,16 @@ class CoinDyLPConan(ConanFile):
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
         apply_conandata_patches(self)
+        # Upstream's MSVC fallback contains a stray carriage return, so the
+        # subsequent size comparison never matches C char.
+        replace_in_file(self, "DyLP/m4/ac_dylp_equiv_for_cpp_bool.m4",
+                        'ac_cv_sizeof_cpp_bool="1\r"',
+                        'ac_cv_sizeof_cpp_bool="1"')
 
     def generate(self):
         tc = AutotoolsToolchain(self)
         if is_msvc(self):
             tc.extra_cxxflags.append("-EHsc")
-            tc.configure_args.append(f"--enable-msvc={msvc_runtime_flag(self)}")
         env = tc.environment()
         env.define("PKG_CONFIG_PATH", self.generators_folder)
         if str(self.settings.compiler) in ["gcc", "clang", "apple-clang"]:

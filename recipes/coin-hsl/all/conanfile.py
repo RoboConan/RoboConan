@@ -2,13 +2,12 @@ import os
 
 from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
-from conan.tools.build import cross_building
 from conan.tools.files import *
 from conan.tools.gnu import PkgConfigDeps
 from conan.tools.layout import basic_layout
 from conan.tools.meson import Meson, MesonToolchain
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.13"
 
 
 class CoinHslConan(ConanFile):
@@ -18,7 +17,7 @@ class CoinHslConan(ConanFile):
     homepage = "https://licences.stfc.ac.uk/product/coin-hsl"
     topics = ("optimization", "linear-solver", "linear-algebra", "coin-or", "ma27", "ma28", "ma57", "ma77", "ma86", "ma97", "mc19", "mc68")
     package_type = "library"
-    settings = "os", "arch", "compiler", "build_type"
+    settings = "os", "arch", "compiler", "build_type", "fortran"
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
@@ -28,11 +27,10 @@ class CoinHslConan(ConanFile):
         "fPIC": True,
     }
     implements = ["auto_shared_fpic"]
+    languages = ["C"]
 
-    @property
-    def _fortran_compiler(self):
-        executables = self.conf.get("tools.build:compiler_executables", default={}, check_type=dict)
-        return executables.get("fortran")
+    python_requires = "conan-fortran/latest"
+    python_requires_extend = "conan-fortran.Fortran"
 
     def export_sources(self):
         export_conandata_patches(self)
@@ -40,10 +38,14 @@ class CoinHslConan(ConanFile):
     def layout(self):
         basic_layout(self, src_folder="src")
 
+    def validate(self):
+        self.fortran.validate_settings()
+
     def requirements(self):
         self.requires("lapack/latest")
         self.requires("metis/[^5.1]")
         self.requires("openmp/system")
+        self.fortran.requires_runtime()
 
     def build_requirements(self):
         self.tool_requires("meson/[^1]")
@@ -71,11 +73,7 @@ class CoinHslConan(ConanFile):
                 f"{self._file_name} not found in {self._archive_dir}. "
                 f"Please download it from {self.homepage} (after acquiring a license) and place it there."
             )
-        if not self._fortran_compiler:
-            raise ConanInvalidConfiguration(
-                "A Fortran compiler is required. "
-                "Please provide one by setting tools.build:compiler_executables={'fortran': '...'}."
-            )
+        self.fortran.validate_build()
 
     def source(self):
         unzip(self, self._archive_path, strip_root=True)
@@ -85,9 +83,8 @@ class CoinHslConan(ConanFile):
         tc = MesonToolchain(self)
         tc.project_options["modules"] = False  # Don't install Fortran modules
         tc.project_options["libmetis_version"] = str(self.dependencies["metis"].ref.version.major)
+        self.fortran.configure_meson_toolchain(tc)
         tc.generate()
-        meson_ini = "conan_meson_cross.ini" if cross_building(self) else "conan_meson_native.ini"
-        replace_in_file(self, meson_ini, "[binaries]", f"[binaries]\nfortran = '{self._fortran_compiler}'")
 
         deps = PkgConfigDeps(self)
         deps.generate()
@@ -109,5 +106,4 @@ class CoinHslConan(ConanFile):
         if not self.options.shared:
             if self.settings.os in ["Linux", "FreeBSD"]:
                 self.cpp_info.system_libs = ["m", "mvec"]
-            if "gfortran" in self._fortran_compiler:
-                self.cpp_info.system_libs.append("gfortran")
+        self.fortran.add_runtime_to_cpp_info(self.cpp_info)

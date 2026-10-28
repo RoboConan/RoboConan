@@ -2,3 +2,6 @@ sources:
   "0.95.1":
     url: "https://github.com/coin-or/Dip/archive/releases/0.95.1.tar.gz"
     sha256: "064deaaee854ad6cf865501cbfc8864c066ab9d8af9d15d4cbe0b4599782c6db"
+patches:
+  "0.95.1":
+    - patch_file: "patches/cxx17-functional.patch"

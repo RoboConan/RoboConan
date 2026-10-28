@@ -52,6 +52,10 @@ class CoinUtilsConan(ConanFile):
             del self.options.shared
             self.package_type = "static-library"
 
+    def configure(self):
+        if self.options.get_safe("shared"):
+            self.options.rm_safe("fPIC")
+
     def layout(self):
         basic_layout(self, src_folder="src")
 

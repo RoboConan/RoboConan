@@ -5,7 +5,7 @@ from conan import ConanFile
 from conan.tools.files import *
 from conan.tools.gnu import Autotools, AutotoolsToolchain, PkgConfigDeps, PkgConfig
 from conan.tools.layout import basic_layout
-from conan.tools.microsoft import is_msvc, msvc_runtime_flag, unix_path
+from conan.tools.microsoft import is_msvc, unix_path
 
 required_conan_version = ">=2.1"
 
@@ -32,6 +32,12 @@ class BonminConan(ConanFile):
     }
     implements = ["auto_shared_fpic"]
 
+    def config_options(self):
+        if self.settings.os == "Windows":
+            del self.options.shared
+            del self.options.fPIC
+            self.package_type = "static-library"
+
     def export_sources(self):
         export_conandata_patches(self)
 
@@ -39,6 +45,8 @@ class BonminConan(ConanFile):
         basic_layout(self, src_folder="src")
 
     def configure(self):
+        if self.options.get_safe("shared"):
+            self.options.rm_safe("fPIC")
         self.options["coin-ipopt"].with_asl = self.options.with_asl
 
     def requirements(self):
@@ -59,9 +67,15 @@ class BonminConan(ConanFile):
             self.win_bash = True
             if not self.conf.get("tools.microsoft.bash:path", check_type=str):
                 self.tool_requires("msys2/latest")
+        if is_msvc(self):
+            self.tool_requires("automake/[^1.18.1]")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
+        apply_conandata_patches(self)
+        replace_in_file(self, "Bonmin/src/Apps/Makefile.am",
+                        "cp bonmin.exe $(bindir)/bonmin.exe",
+                        "cp bonmin.exe $(DESTDIR)$(bindir)/bonmin.exe")
 
     def _flags_from_pc(self, name):
         pc = PkgConfig(self, name, self.generators_folder)
@@ -94,8 +108,6 @@ class BonminConan(ConanFile):
 
         if is_msvc(self):
             tc.extra_cxxflags.append("-EHsc")
-            tc.configure_args.append(f"--enable-msvc={msvc_runtime_flag(self)}")
-        tc.generate()
 
         env = tc.environment()
         env.define("PKG_CONFIG_PATH", self.generators_folder)
@@ -103,8 +115,9 @@ class BonminConan(ConanFile):
             # The old configure script probes GNU C before initializing the object suffix.
             env.define("ac_cv_c_compiler_gnu", "yes")
         if is_msvc(self):
-            compile_wrapper = unix_path(self, self.conf.get("user.automake:compile-wrapper"))
-            ar_wrapper = unix_path(self, self.conf.get("user.automake:lib-wrapper"))
+            automake = self.dependencies.build["automake"]
+            compile_wrapper = unix_path(self, automake.conf_info.get("user.automake:compile-wrapper"))
+            ar_wrapper = unix_path(self, automake.conf_info.get("user.automake:lib-wrapper"))
             env.define("CC", f"{compile_wrapper} cl -nologo")
             env.define("CXX", f"{compile_wrapper} cl -nologo")
             env.define("LD", "link -nologo")

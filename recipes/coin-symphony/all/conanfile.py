@@ -7,7 +7,7 @@ from conan.tools.build import stdcpp_library
 from conan.tools.files import *
 from conan.tools.gnu import Autotools, AutotoolsToolchain, PkgConfigDeps
 from conan.tools.layout import basic_layout
-from conan.tools.microsoft import is_msvc, msvc_runtime_flag, unix_path
+from conan.tools.microsoft import is_msvc, unix_path
 
 required_conan_version = ">=2.1"
 
@@ -46,6 +46,16 @@ class SymphonyConan(ConanFile):
 
     def export_sources(self):
         export_conandata_patches(self)
+
+    def config_options(self):
+        if self.settings.os == "Windows":
+            del self.options.fPIC
+            del self.options.shared
+            self.package_type = "static-library"
+
+    def configure(self):
+        if self.options.get_safe("shared"):
+            self.options.rm_safe("fPIC")
 
     def layout(self):
         basic_layout(self, src_folder="src")
@@ -91,6 +101,7 @@ class SymphonyConan(ConanFile):
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
+        apply_conandata_patches(self)
 
     def generate(self):
         tc = AutotoolsToolchain(self)
@@ -121,8 +132,6 @@ class SymphonyConan(ConanFile):
         ]
         if is_msvc(self):
             tc.extra_cxxflags.append("-EHsc")
-            tc.configure_args.append(f"--enable-msvc={msvc_runtime_flag(self)}")
-        tc.generate()
 
         env = tc.environment()
         env.define("PKG_CONFIG_PATH", self.generators_folder)
@@ -130,8 +139,9 @@ class SymphonyConan(ConanFile):
             # The old configure script probes GNU C before initializing the object suffix.
             env.define("ac_cv_c_compiler_gnu", "yes")
         if is_msvc(self):
-            compile_wrapper = unix_path(self, self.conf.get("user.automake:compile-wrapper"))
-            ar_wrapper = unix_path(self, self.conf.get("user.automake:lib-wrapper"))
+            automake = self.dependencies.build["automake"]
+            compile_wrapper = unix_path(self, automake.conf_info.get("user.automake:compile-wrapper"))
+            ar_wrapper = unix_path(self, automake.conf_info.get("user.automake:lib-wrapper"))
             env.define("CC", f"{compile_wrapper} cl -nologo")
             env.define("CXX", f"{compile_wrapper} cl -nologo")
             env.define("LD", "link -nologo")
@@ -152,7 +162,7 @@ class SymphonyConan(ConanFile):
         autotools = Autotools(self)
         autotools.autoreconf(build_script_folder="SYMPHONY")
         autotools.configure(build_script_folder="SYMPHONY")
-        autotools.make()
+        autotools.make(args=[] if self.options.tools else ["WHATTOMAKEBINS="])
 
     def package(self):
         copy(self, "LICENSE", self.source_folder, os.path.join(self.package_folder, "licenses"))
@@ -162,7 +172,7 @@ class SymphonyConan(ConanFile):
         save(self, os.path.join(self.build_folder, "src", ".libs", "libSymAppl.lai"), "")
         save(self, os.path.join(self.build_folder, "src", ".libs", "libSymApplStubs.lai"), "")
         autotools = Autotools(self)
-        autotools.install()
+        autotools.install(args=[] if self.options.tools else ["WHATTOMAKEBINS="])
         rm(self, "*.la", os.path.join(self.package_folder, "lib"))
         rmdir(self, os.path.join(self.package_folder, "lib", "pkgconfig"))
         rmdir(self, os.path.join(self.package_folder, "share"))

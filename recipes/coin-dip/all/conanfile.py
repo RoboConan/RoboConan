@@ -5,7 +5,7 @@ from conan import ConanFile
 from conan.tools.files import *
 from conan.tools.gnu import Autotools, AutotoolsToolchain, PkgConfigDeps
 from conan.tools.layout import basic_layout
-from conan.tools.microsoft import is_msvc, msvc_runtime_flag, unix_path
+from conan.tools.microsoft import is_msvc, unix_path
 
 required_conan_version = ">=2.1"
 
@@ -41,6 +41,16 @@ class CoinDipConan(ConanFile):
     def export_sources(self):
         export_conandata_patches(self)
 
+    def config_options(self):
+        if self.settings.os == "Windows":
+            del self.options.fPIC
+            del self.options.shared
+            self.package_type = "static-library"
+
+    def configure(self):
+        if self.options.get_safe("shared"):
+            self.options.rm_safe("fPIC")
+
     def layout(self):
         basic_layout(self, src_folder="src")
 
@@ -73,6 +83,9 @@ class CoinDipConan(ConanFile):
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
         apply_conandata_patches(self)
+        replace_in_file(self, "Dip/src/Makefile.am",
+                        "cp dip.exe $(bindir)/dip.exe",
+                        "cp dip.exe $(DESTDIR)$(bindir)/dip.exe")
 
     def generate(self):
         tc = AutotoolsToolchain(self)
@@ -93,14 +106,13 @@ class CoinDipConan(ConanFile):
 
         if is_msvc(self):
             tc.extra_cxxflags.append("-EHsc")
-            tc.configure_args.append(f"--enable-msvc={msvc_runtime_flag(self)}")
-        tc.generate()
 
         env = tc.environment()
         env.define("PKG_CONFIG_PATH", self.generators_folder)
         if is_msvc(self):
-            compile_wrapper = unix_path(self, self.conf.get("user.automake:compile-wrapper"))
-            ar_wrapper = unix_path(self, self.conf.get("user.automake:lib-wrapper"))
+            automake = self.dependencies.build["automake"]
+            compile_wrapper = unix_path(self, automake.conf_info.get("user.automake:compile-wrapper"))
+            ar_wrapper = unix_path(self, automake.conf_info.get("user.automake:lib-wrapper"))
             env.define("CC", f"{compile_wrapper} cl -nologo")
             env.define("CXX", f"{compile_wrapper} cl -nologo")
             env.define("LD", "link -nologo")

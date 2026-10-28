@@ -1,0 +1,21 @@
+--- a/Dip/src/UtilMacros.h
++++ b/Dip/src/UtilMacros.h
+@@ -445,7 +445,8 @@ inline std::string& UtilStrToLower(std::string& s)
+    }
+ 
+    // This is a fix for MSVC++ The old version is below
+-   std::transform(s.begin(), s.end(), s.begin(), std::ptr_fun<int, int>(tolower));
++   std::transform(s.begin(), s.end(), s.begin(),
++                  [](unsigned char c) { return std::tolower(c); });
+    //int i;
+    //for (i = 0; s[i] != '\0'; i++)
+    //   s[i] = static_cast<char>(tolower(s[i]));
+@@ -721,7 +722,7 @@ template <class T> inline void UtilNegateArr(const int   arrLen,
+ 
+ // ------------------------------------------------------------------------- //
+ template <class T>
+-struct AddOffset : public std::unary_function<T, T> {
++struct AddOffset {
+    T m_n;
+    T operator() (const T& k) {
+       return k + m_n;

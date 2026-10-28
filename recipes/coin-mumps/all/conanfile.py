@@ -11,7 +11,7 @@ from conan.tools.gnu import Autotools, AutotoolsToolchain, PkgConfigDeps, PkgCon
 from conan.tools.layout import basic_layout
 from conan.tools.microsoft import unix_path
 
-required_conan_version = ">=2.4"
+required_conan_version = ">=2.13"
 
 
 class CoinMumpsConan(ConanFile):
@@ -21,7 +21,7 @@ class CoinMumpsConan(ConanFile):
     homepage = "https://github.com/coin-or-tools/ThirdParty-Mumps"
     topics = ("solver", "sparse", "direct", "parallel", "linear-algebra")
     package_type = "shared-library"
-    settings = "os", "arch", "compiler", "build_type"
+    settings = "os", "arch", "compiler", "build_type", "fortran"
     options = {
         "precision": ["single", "double", "all"],
         "with_openmp": [True, False],
@@ -34,18 +34,19 @@ class CoinMumpsConan(ConanFile):
     }
     languages = ["C"]
 
-    @property
-    def _fortran_compiler(self):
-        executables = self.conf.get("tools.build:compiler_executables", default={}, check_type=dict)
-        return executables.get("fortran")
+    python_requires = "conan-fortran/latest"
+    python_requires_extend = "conan-fortran.Fortran"
 
     def layout(self):
         basic_layout(self, src_folder="src")
 
+    def validate(self):
+        self.fortran.validate_settings()
+
     def requirements(self):
-        self.requires("openmpi/[>=4 <6]", transitive_headers=True, transitive_libs=True)
         self.requires("lapack/latest")
         self.requires("metis/[^5.2.1]")
+        self.fortran.requires_runtime()
         if self.options.with_openmp:
             self.requires("openmp/system")
 
@@ -54,11 +55,7 @@ class CoinMumpsConan(ConanFile):
             self.tool_requires("pkgconf/[<4]")
 
     def validate_build(self):
-        if not self._fortran_compiler:
-            raise ConanInvalidConfiguration(
-                "MUMPS requires a Fortran compiler. "
-                "Please provide one by setting tools.build:compiler_executables={'fortran': '...'}."
-            )
+        self.fortran.validate_build()
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version]["build_scripts"], strip_root=True)
@@ -96,14 +93,18 @@ class CoinMumpsConan(ConanFile):
             f"--enable-openmp={yes_no(self.options.with_openmp)}",
             f"--with-precision={self.options.precision}",
             f"--with-intsize={int_size}",
-            f"FC={self._fortran_compiler}",
+            f"FC={self.fortran.executable}",
         ])
         _, ldflags = self._flags_from_pc("lapack")
         tc.configure_args.append(f"--with-lapack-lflags={ldflags}")
         cflags, ldflags = self._flags_from_pc("metis")
         tc.configure_args.append(f"--with-metis-cflags={cflags}")
         tc.configure_args.append(f"--with-metis-lflags={ldflags}")
-        tc.generate()
+        env = tc.environment()
+        if self.settings.os == "Windows" and self.fortran.compiler == "ifx":
+            # MUMPS' Fortran sources use configure-provided preprocessor definitions.
+            env.append("FCFLAGS", "/fpp")
+        tc.generate(env)
 
     def build(self):
         autotools = Autotools(self)
@@ -132,13 +133,11 @@ class CoinMumpsConan(ConanFile):
                 self.cpp_info.system_libs.extend(["m"])
                 if self.options.with_pthread:
                     self.cpp_info.system_libs.extend(["pthread"])
-            if "gfortran" in self._fortran_compiler:
-                self.cpp_info.system_libs.extend(["gfortran", "quadmath"])
 
         self.cpp_info.requires = [
-            "openmpi::ompi-c",
             "lapack::lapack",
             "metis::metis",
         ]
         if self.options.with_openmp:
             self.cpp_info.requires.append("openmp::openmp")
+        self.fortran.add_runtime_to_cpp_info(self.cpp_info)

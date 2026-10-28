@@ -2,3 +2,7 @@ sources:
   "5.7.3":
     url: "https://github.com/coin-or/SYMPHONY/archive/releases/5.7.3.tar.gz"
     sha256: "a42edebce10321b299fabd2ae3487c8e55f8b69e074b18c2976c1165d552be89"
+patches:
+  "5.7.3":
+    - patch_file: "patches/5.7.3-msvc-install-tools.patch"
+      patch_description: "Install MSVC tools through DESTDIR and tolerate disabled tool builds"

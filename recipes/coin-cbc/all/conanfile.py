@@ -5,7 +5,7 @@ from conan import ConanFile
 from conan.tools.files import *
 from conan.tools.gnu import Autotools, AutotoolsToolchain, PkgConfigDeps
 from conan.tools.layout import basic_layout
-from conan.tools.microsoft import is_msvc, msvc_runtime_flag, unix_path
+from conan.tools.microsoft import is_msvc, unix_path
 
 required_conan_version = ">=2.1"
 
@@ -43,6 +43,10 @@ class CoinCbcConan(ConanFile):
             del self.options.shared
             self.package_type = "static-library"
 
+    def configure(self):
+        if self.options.get_safe("shared"):
+            self.options.rm_safe("fPIC")
+
     def layout(self):
         basic_layout(self, src_folder="src")
 
@@ -54,7 +58,7 @@ class CoinCbcConan(ConanFile):
         if self.options.with_asl:
             self.requires("ampl-asl/[^1]")
         if self.options.with_nauty:
-            self.requires("nauty/[^2.9.1]")
+            self.requires("nauty/[^2.9.1]", transitive_libs=True)
         if is_msvc(self) and self.options.parallel:
             self.requires("pthreads4w/[^3.0.0]")
 
@@ -73,6 +77,9 @@ class CoinCbcConan(ConanFile):
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
         apply_conandata_patches(self)
+        replace_in_file(self, "Cbc/src/Makefile.am",
+                        "cp cbc.exe $(bindir)/cbc.exe",
+                        "cp cbc.exe $(DESTDIR)$(bindir)/cbc.exe")
         replace_in_file(self, "Cbc/src/CbcSymmetry.hpp", '#include "nauty/', '#include "')
 
     def generate(self):
@@ -99,7 +106,6 @@ class CoinCbcConan(ConanFile):
             tc.configure_args.append(f"--with-nauty-incdir={unix_path(self, nauty_info.includedir)}")
         if is_msvc(self):
             tc.extra_cxxflags.append("-EHsc")
-            tc.configure_args.append(f"--enable-msvc={msvc_runtime_flag(self)}")
             if self.options.parallel:
                 pthreads4w_info = self.dependencies["pthreads4w"].cpp_info
                 pthreads_path = os.path.join(pthreads4w_info.libdir, pthreads4w_info.libs[0] + ".lib")
@@ -110,12 +116,13 @@ class CoinCbcConan(ConanFile):
         env = tc.environment()
         env.define("PKG_CONFIG_PATH", self.generators_folder)
         if is_msvc(self):
-            compile_wrapper = unix_path(self, self.conf.get("user.automake:compile-wrapper"))
-            ar_wrapper = unix_path(self, self.conf.get("user.automake:lib-wrapper"))
+            automake = self.dependencies.build["automake"]
+            compile_wrapper = unix_path(self, automake.conf_info.get("user.automake:compile-wrapper"))
+            ar_wrapper = unix_path(self, automake.conf_info.get("user.automake:lib-wrapper"))
             env.define("CC", f"{compile_wrapper} cl -nologo")
             env.define("CXX", f"{compile_wrapper} cl -nologo")
             env.define("LD", "link -nologo")
-            env.define("AR", f"{ar_wrapper} lib")
+            env.define("AR", f'{ar_wrapper} "lib -nologo"')
             env.define("NM", "dumpbin -symbols")
             env.vars(self).save_script("conanbuild_msvc")
         tc.generate(env)

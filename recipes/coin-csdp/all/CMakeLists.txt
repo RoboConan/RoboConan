@@ -13,7 +13,11 @@ option(CSDP_BUILD_THETA "Build theta graph theory tools" ON)
 find_package(BLAS REQUIRED)
 find_package(LAPACK REQUIRED)
 
-add_compile_definitions(BIT64 USEGETTIME)
+add_compile_definitions(BIT64)
+
+if(NOT MSVC)
+    add_compile_definitions(USEGETTIME)
+endif()
 
 if(UNIX AND NOT APPLE AND NOT CYGWIN)
     add_compile_definitions(USESIGTERM)
@@ -24,6 +28,9 @@ include_directories(include)
 file(GLOB CSDP_SOURCES lib/*.c)
 add_library(csdp ${CSDP_SOURCES})
 target_link_libraries(csdp PUBLIC ${BLAS_LIBRARIES} ${LAPACK_LIBRARIES})
+if(MSVC)
+    target_compile_definitions(csdp PRIVATE strcasecmp=_stricmp)
+endif()
 
 include(CheckLibraryExists)
 check_library_exists(m log "" CAN_LINK_LIBM)
@@ -62,7 +69,8 @@ endif()
 
 install(TARGETS csdp
         ARCHIVE DESTINATION lib
-        LIBRARY DESTINATION lib)
+        LIBRARY DESTINATION lib
+        RUNTIME DESTINATION bin)
 
 install(DIRECTORY include/
         DESTINATION include/csdp

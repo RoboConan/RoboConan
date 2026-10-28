@@ -5,9 +5,9 @@ from conan import ConanFile
 from conan.tools.files import *
 from conan.tools.gnu import Autotools, AutotoolsToolchain, PkgConfigDeps, PkgConfig
 from conan.tools.layout import basic_layout
-from conan.tools.microsoft import is_msvc, msvc_runtime_flag, unix_path
+from conan.tools.microsoft import is_msvc, unix_path
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.13"
 
 
 class CoinCouenneConan(ConanFile):
@@ -38,10 +38,18 @@ class CoinCouenneConan(ConanFile):
     def export_sources(self):
         export_conandata_patches(self)
 
+    def config_options(self):
+        if self.settings.os == "Windows":
+            del self.options.shared
+            del self.options.fPIC
+            self.package_type = "static-library"
+
     def layout(self):
         basic_layout(self, src_folder="src")
 
     def configure(self):
+        if self.options.get_safe("shared"):
+            self.options.rm_safe("fPIC")
         self.options["coin-bonmin"].with_asl = self.options.with_asl
 
     def requirements(self):
@@ -63,10 +71,18 @@ class CoinCouenneConan(ConanFile):
             self.win_bash = True
             if not self.conf.get("tools.microsoft.bash:path", check_type=str):
                 self.tool_requires("msys2/latest")
+        if is_msvc(self):
+            self.tool_requires("automake/[^1.18.1]")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
         apply_conandata_patches(self)
+        replace_in_file(self, "Couenne/src/branch/Nauty.h",
+                        '#include "nauty.h"',
+                        "#include <nauty/nauty.h>")
+        replace_in_file(self, "Couenne/src/main/Makefile.am",
+                        "cp couenne.exe $(bindir)/couenne.exe",
+                        "cp couenne.exe $(DESTDIR)$(bindir)/couenne.exe")
         # Fortran's only needed for BLAS naming scheme detection. Don't look for it.
         replace_in_file(self, "Couenne/configure.ac", "AC_COIN_PROG_F77", "")
         replace_in_file(self, "Couenne/configure.ac", "AC_COIN_F77_WRAPPERS", "")
@@ -113,13 +129,11 @@ class CoinCouenneConan(ConanFile):
             tc.configure_args.append(f"--with-nauty-lib=-l{nauty_info.libs[0]} -L{unix_path(self, nauty_info.libdir)}")
             tc.configure_args.append(f"--with-nauty-incdir={unix_path(self, nauty_info.includedir)}")
 
-        # Drop deprecated `register` keywords
-        tc.extra_cxxflags.append("-Dregister=")
-
         if is_msvc(self):
             tc.extra_cxxflags.append("-EHsc")
-            tc.configure_args.append(f"--enable-msvc={msvc_runtime_flag(self)}")
-        tc.generate()
+        else:
+            # Drop deprecated `register` keywords
+            tc.extra_cxxflags.append("-Dregister=")
 
         env = tc.environment()
         env.define("PKG_CONFIG_PATH", self.generators_folder)
@@ -127,8 +141,9 @@ class CoinCouenneConan(ConanFile):
             # The old configure script probes GNU C before initializing the object suffix.
             env.define("ac_cv_c_compiler_gnu", "yes")
         if is_msvc(self):
-            compile_wrapper = unix_path(self, self.conf.get("user.automake:compile-wrapper"))
-            ar_wrapper = unix_path(self, self.conf.get("user.automake:lib-wrapper"))
+            automake = self.dependencies.build["automake"]
+            compile_wrapper = unix_path(self, automake.conf_info.get("user.automake:compile-wrapper"))
+            ar_wrapper = unix_path(self, automake.conf_info.get("user.automake:lib-wrapper"))
             env.define("CC", f"{compile_wrapper} cl -nologo")
             env.define("CXX", f"{compile_wrapper} cl -nologo")
             env.define("LD", "link -nologo")
@@ -146,11 +161,16 @@ class CoinCouenneConan(ConanFile):
         autotools = Autotools(self)
         autotools.autoreconf(build_script_folder="Couenne")
         autotools.configure(build_script_folder="Couenne")
-        # Manually specify OpenBLAS naming scheme since F77 is not available to autodetect it.
+        # Manually specify BLAS name mangling since F77 is not available to autodetect it.
+        mangling = self.dependencies["lapack"].extension_properties["fortran_name_mangling"]
+        f77_name = "NAME" if mangling.startswith("upper_") else "name"
+        f77_name_ = f77_name
+        if not mangling.endswith("no_underscore"):
+            f77_name += " ## _"
+            f77_name_ += " ## __" if mangling.endswith("_extra") else " ## _"
         save(self, os.path.join(self.build_folder, "src/config.h"),
-             "\n"
-             "#define F77_FUNC(name,NAME) name ## _\n"
-             "#define F77_FUNC_(name,NAME) name ## _\n",
+             f"\n#define F77_FUNC(name,NAME) {f77_name}\n"
+             f"#define F77_FUNC_(name,NAME) {f77_name_}\n",
              append=True)
         autotools.make()
 

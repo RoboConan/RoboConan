@@ -1,0 +1,17 @@
+--- a/SYMPHONY/src/Makefile.am
++++ b/SYMPHONY/src/Makefile.am
+@@ -698,9 +698,11 @@
+ 
+ if COIN_CXX_IS_CL
+ install-exec-hook:
+-	test -s symphony.exe.manifest && \
+-	mt -manifest symphony.exe.manifest -outputresource:symphony.exe;\
+-	cp symphony.exe $(bindir)/symphony.exe
++	if test -s symphony.exe; then \
++	  test ! -s symphony.exe.manifest || \
++	    mt -manifest symphony.exe.manifest -outputresource:symphony.exe; \
++	  cp symphony.exe $(DESTDIR)$(bindir)/symphony.exe; \
++	fi
+ endif
+ 
+ #######################################################################

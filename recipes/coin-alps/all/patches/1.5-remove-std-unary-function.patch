@@ -1,0 +1,11 @@
+--- a/Alps/src/AlpsHelperFunctions.h
++++ b/Alps/src/AlpsHelperFunctions.h
+@@ -35,7 +35,7 @@
+ //#############################################################################
+ 
+ /** A functor class used in calulating total workload in a node pool. */
+-class TotalWorkload : public std::unary_function<AlpsTreeNode*, void> {
++class TotalWorkload {
+ 
+  private:
+     double totalLoad_;

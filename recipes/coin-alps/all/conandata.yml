@@ -5,3 +5,8 @@ sources:
   "1.5.12":
     url: "https://github.com/coin-or/CHiPPS-ALPS/archive/releases/1.5.12.tar.gz"
     sha256: "b781e32c0e1bedd3ba7eddf72943408693e314377879ee3ef8ef562aa94bbdfc"
+patches:
+  "2.0.2":
+    - patch_file: "patches/remove-std-unary-function.patch"
+  "1.5.12":
+    - patch_file: "patches/1.5-remove-std-unary-function.patch"

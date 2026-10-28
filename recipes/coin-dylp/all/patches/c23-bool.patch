@@ -1,6 +1,6 @@
 --- a/DyLP/src/DylpStdLib/dylib_std.h
 +++ b/DyLP/src/DylpStdLib/dylib_std.h
-@@ -64,1 +64,9 @@
+@@ -63,17 +63,26 @@
  #ifndef	__cplusplus
 +#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L
 +#ifndef FALSE
@@ -13,7 +13,16 @@
  #define FALSE 0
  #define TRUE 1
  # ifdef BOOL
-@@ -77,3 +85,4 @@
+   typedef BOOL bool ;
+ # else
+ /*
+   You're in trouble. Normally a definition for BOOL is determined by the
+   configure script; apparently you're outside of whatever framework should
+   do this. If you're not worried about C++ compatibility, int is a good a
+   choice as anything. If you're concerned about C++ compatibility, write a
+   small C++ program that prints out sizeof(bool) and add the definition here.
+ */
+ # warning The compile-time symbol BOOL is not defined (dylib_std.h)
    typedef int bool ;
  # endif
  #endif

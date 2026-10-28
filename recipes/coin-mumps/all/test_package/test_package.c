@@ -1,5 +1,5 @@
 #include <math.h>
-#include <mpi.h>
+#include <mumps_mpi.h>
 #include <dmumps_c.h>
 
 int main(int argc, char **argv)
@@ -10,9 +10,7 @@ int main(int argc, char **argv)
     double a[] = {1.0, 2.0};
     double rhs[] = {1.0, 4.0};
 
-    if (MPI_Init(&argc, &argv) != MPI_SUCCESS) {
-        return 1;
-    }
+    MPI_Init(&argc, &argv);
     id.comm_fortran = -987654;
     id.par = 1;
     id.sym = 0;

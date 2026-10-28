@@ -5,7 +5,7 @@ from conan import ConanFile
 from conan.tools.files import *
 from conan.tools.gnu import Autotools, AutotoolsToolchain, PkgConfigDeps
 from conan.tools.layout import basic_layout
-from conan.tools.microsoft import is_msvc, msvc_runtime_flag, unix_path
+from conan.tools.microsoft import is_msvc, unix_path
 from conan.tools.scm import Version
 
 required_conan_version = ">=2.1"
@@ -22,12 +22,28 @@ class CoinAlpsConan(ConanFile):
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
+        "with_mpi": [True, False],
     }
     default_options = {
         "shared": False,
         "fPIC": True,
+        "with_mpi": False,
     }
     implements = ["auto_shared_fpic"]
+
+    def export_sources(self):
+        export_conandata_patches(self)
+
+    def config_options(self):
+        if self.settings.os == "Windows":
+            del self.options.fPIC
+            del self.options.shared
+            del self.options.with_mpi
+            self.package_type = "static-library"
+
+    def configure(self):
+        if self.options.get_safe("shared"):
+            self.options.rm_safe("fPIC")
 
     def layout(self):
         basic_layout(self, src_folder="src")
@@ -35,7 +51,7 @@ class CoinAlpsConan(ConanFile):
     def requirements(self):
         self.requires("coin-utils/[^2.11.11]", transitive_headers=True, transitive_libs=True)
         self.requires("coin-osi/[>=0.108.10 <1]")
-        if Version(self.version) >= "2.0":
+        if self.options.get_safe("with_mpi"):
             self.requires("openmpi/[>=4 <6]", transitive_headers=True)
 
     def build_requirements(self):
@@ -50,19 +66,19 @@ class CoinAlpsConan(ConanFile):
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
+        apply_conandata_patches(self)
 
     def generate(self):
         tc = AutotoolsToolchain(self)
         if is_msvc(self):
             tc.extra_cxxflags.append("-EHsc")
-            tc.configure_args.append(f"--enable-msvc={msvc_runtime_flag(self)}")
-        tc.generate()
 
         env = tc.environment()
         env.define("PKG_CONFIG_PATH", self.generators_folder)
         if is_msvc(self):
-            compile_wrapper = unix_path(self, self.conf.get("user.automake:compile-wrapper"))
-            ar_wrapper = unix_path(self, self.conf.get("user.automake:lib-wrapper"))
+            automake = self.dependencies.build["automake"]
+            compile_wrapper = unix_path(self, automake.conf_info.get("user.automake:compile-wrapper"))
+            ar_wrapper = unix_path(self, automake.conf_info.get("user.automake:lib-wrapper"))
             env.define("CC", f"{compile_wrapper} cl -nologo")
             env.define("CXX", f"{compile_wrapper} cl -nologo")
             env.define("LD", "link -nologo")
@@ -103,5 +119,5 @@ class CoinAlpsConan(ConanFile):
             "coin-utils::coin-utils",
             "coin-osi::libosi",
         ]
-        if Version(self.version) >= "2.0":
+        if self.options.get_safe("with_mpi"):
             self.cpp_info.requires.append("openmpi::ompi-c")
