@@ -66,9 +66,9 @@ class GmpConan(ConanFile):
             self.win_bash = True
             if not self.conf.get("tools.microsoft.bash:path", check_type=str):
                 self.tool_requires("msys2/latest")
-            if is_msvc(self):
-                self.tool_requires("yasm/[^1.3.0]")  # Needed for determining 32-bit word size
-                self.tool_requires("automake/[^1.18.1]")  # Needed for lib-wrapper
+        if is_msvc(self):
+            self.tool_requires("yasm/[^1.3.0]")  # Needed for determining 32-bit word size
+            self.tool_requires("automake/[^1.18.1]")  # Needed for lib-wrapper
         self.tool_requires("libtool/[*]")
 
     def source(self):
@@ -86,7 +86,7 @@ class GmpConan(ConanFile):
         yes_no = lambda v: "yes" if v else "no"
         tc.configure_args.extend([
             f'--with-pic={yes_no(self.options.get_safe("fPIC", True))}',
-            f'--enable-assembly={yes_no(not self.options.get_safe("enable_assembly"))}',
+            f'--enable-assembly={yes_no(self.options.get_safe("enable_assembly"))}',
             f'--enable-fat={yes_no(self.options.get_safe("enable_fat"))}',
             f'--enable-cxx={yes_no(self.options.enable_cxx)}',
             '--srcdir=../src', # Use relative path to avoid issues with #include "$srcdir/gmp-h.in" on Windows
@@ -104,12 +104,13 @@ class GmpConan(ConanFile):
         env = tc.environment() # Environment must be captured *after* setting extra_cflags, etc. to pick up changes
         if is_msvc(self):
             yasm_wrapper = unix_path(self, os.path.join(self.source_folder, "yasm_wrapper.sh"))
+            os.chmod(yasm_wrapper, 0o755)
             yasm_machine = {
                 "x86": "x86",
                 "x86_64": "amd64",
             }[str(self.settings.arch)]
             env.define("CCAS", f"{yasm_wrapper} -a x86 -m {yasm_machine} -p gas -r raw -f win32 -g null -X gnu")
-            ar_wrapper = unix_path(self, self.conf.get("user.automake:lib-wrapper"))
+            ar_wrapper = unix_path(self, self.dependencies.build["automake"].conf_info.get("user.automake:lib-wrapper"))
             env.define("CC", "cl -nologo")
             env.define("CXX", "cl -nologo")
             env.define("LD", "link -nologo")
