@@ -1,11 +1,10 @@
 sources:
+  "1.2.0":
+    url: "https://github.com/oneapi-src/unified-memory-framework/archive/v1.2.0.tar.gz"
+    sha256: "02d97020d796616dd3d1d35d9fb8cf6943fdb4ed79920c7448f09408dae68833"
+  "1.1.0":
+    url: "https://github.com/oneapi-src/unified-memory-framework/archive/v1.1.0.tar.gz"
+    sha256: "c08ec0e673f78b10b166c390aee50d83b3a99c666679f34d5b3a781b8f323dbd"
   "1.0.3":
-    url: "https://github.com/oneapi-src/unified-memory-framework/archive/refs/tags/v1.0.3.tar.gz"
+    url: "https://github.com/oneapi-src/unified-memory-framework/archive/v1.0.3.tar.gz"
     sha256: "0880843dfcea208ffefab9a5343cd4c68ca2b1b590a408818a4e559208f334f4"
-  "0.11.2":
-    source:
-      url: "https://github.com/oneapi-src/unified-memory-framework/archive/refs/tags/v0.11.2.tar.gz"
-      sha256: "c6785e977b0d586bfc536b65125b1fdf60d948bede977614c2627b8336e7b3ea"
-    cmake:
-      url: "https://raw.githubusercontent.com/oneapi-src/unified-memory-framework/e7d285269e04d3c0e70917c24945c80a4ea3313a/CMakeLists.txt"
-      sha256: "2759f4dfe4a509ed0d73b6a2250c8133133c132dde351b5af3c7bb341dc13e1f"

@@ -1,0 +1,8 @@
+Linux:
+  intel-cmplr-lib-rt:
+    url: https://files.pythonhosted.org/packages/7a/60/c9232e85f37a7f9e40d800679341b27eae240e4992221b861e0f3882d109/intel_cmplr_lib_rt-2026.2.0-py2.py3-none-manylinux_2_28_x86_64.whl
+    sha256: 9f713083073a820d2496a6da8e8d4f3482aba6640f74521d25ea48dcebe72748
+Windows:
+  intel-cmplr-lib-rt:
+    url: https://files.pythonhosted.org/packages/60/d3/3be0c4a92a90e839dbff94052228fc11fad3ed08b562f236ec8585b297ec/intel_cmplr_lib_rt-2026.2.0-py2.py3-none-win_amd64.whl
+    sha256: bfeec6a2a1f032a36490cc46cb1d566813fd75fd9e068b80f231043abfb4dc98
