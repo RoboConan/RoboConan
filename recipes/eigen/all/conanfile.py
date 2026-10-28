@@ -1,12 +1,13 @@
 import os
 
 from conan import ConanFile
+from conan.errors import ConanInvalidConfiguration
 from conan.tools.build import check_min_cppstd
 from conan.tools.cmake import CMake, cmake_layout, CMakeToolchain
 from conan.tools.files import *
 from conan.tools.scm import Version
 
-required_conan_version = ">=2.1"
+required_conan_version = ">=2.13"
 
 
 class EigenConan(ConanFile):
@@ -19,10 +20,12 @@ class EigenConan(ConanFile):
     package_type = "header-library"
     settings = "os", "arch", "compiler", "build_type"
     options = {
+        "with_blas": [True, False],
         "with_openmp": [True, False],
         "MPL2_only": [True, False],
     }
     default_options = {
+        "with_blas": False,
         "with_openmp": True,
         # No longer applicable in Eigen 5.x.
         # As of Eigen 3.4.0, only the following were LGPL:
@@ -56,6 +59,8 @@ class EigenConan(ConanFile):
             check_min_cppstd(self, "03")
 
     def requirements(self):
+        if self.options.with_blas:
+            self.requires("blas/latest", transitive_libs=True)
         if self.options.with_openmp:
             self.requires("openmp/system")
 
@@ -108,3 +113,7 @@ class EigenConan(ConanFile):
             self.cpp_info.defines = ["EIGEN_MPL2_ONLY"]
         if not self.options.with_openmp:
             self.cpp_info.defines.append("EIGEN_DONT_PARALLELIZE")
+        if self.options.with_blas:
+            self.cpp_info.defines.append("EIGEN_USE_BLAS")
+            if self.dependencies["blas"].options.provider == "mkl":
+                self.cpp_info.defines.append("EIGEN_USE_MKL")
