@@ -3,8 +3,10 @@ import re
 from functools import cached_property
 from pathlib import Path
 
+import yaml
 from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
+from conan.tools.build import stdcpp_library
 from conan.tools.files import *
 from conan.tools.layout import basic_layout
 
@@ -35,7 +37,12 @@ class IntelIppConan(ConanFile):
 
     @cached_property
     def _packages(self):
-        return self.conan_data["sources"][self.version][str(self.settings.os)]
+        with open(os.path.join(self.recipe_folder, "sources", f"{self.version}.yml")) as f:
+            return yaml.safe_load(f)[str(self.settings.os)]
+
+    def export(self):
+        copy(self, f"{self.version}.yml", os.path.join(self.recipe_folder, "sources"),
+             os.path.join(self.export_folder, "sources"))
 
     @property
     def _library_suffix(self):
@@ -50,7 +57,7 @@ class IntelIppConan(ConanFile):
 
     def requirements(self):
         if self.options.threading == "openmp":
-            self.requires("intel-openmp/[>=2025]")
+            self.requires("intel-openmp/[>=2025]", transitive_libs=True)
         else:
             self.requires("onetbb/[>=2021]")
 
@@ -73,6 +80,8 @@ class IntelIppConan(ConanFile):
     def package(self):
         if self.settings.os == "Windows":
             move_folder_contents(self, os.path.join(self.build_folder, "data", "Library"), self.package_folder)
+            copy(self, "*", os.path.join(self.build_folder, "data", "include"),
+                 os.path.join(self.package_folder, "include"))
         else:
             move_folder_contents(self, os.path.join(self.build_folder, "data"), self.package_folder)
         copy(self, "LICENSE.txt", self.build_folder, os.path.join(self.package_folder, "licenses"))
@@ -91,6 +100,13 @@ class IntelIppConan(ConanFile):
                     link = Path(str(library).rsplit(".so", 1)[0] + ".so")
                     if not link.exists():
                         link.symlink_to(library.name)
+                # The 2026.1 Linux wheel contains the CPU-specific libraries as
+                # *.so.12, while the dispatchers load the *.so.12.1 names.
+                for suffix in ("d1", "k0", "l9", "y8"):
+                    for library in Path(libdir).glob(f"libipp*{suffix}.so.12"):
+                        link = Path(f"{library}.1")
+                        if not link.exists():
+                            link.symlink_to(library.name)
         else:
             if self.settings.os == "Windows":
                 components = ["ippcc", "ippcore", "ippcv", "ippdc", "ippe", "ippi", "ipps", "ippvm"]
@@ -121,7 +137,7 @@ class IntelIppConan(ConanFile):
         })
 
         dependencies = {
-            "ipp_iw": [],
+            "ipp_iw": ["ippcv", "ippcc"],
             "ippe": [],
             "ippcore": [],
             "ippvm": ["ippcore"],
@@ -152,6 +168,12 @@ class IntelIppConan(ConanFile):
                 component.libs = [name]
             else:
                 component.libs = [f"{name}{self._library_suffix}"]
+
+        if self.settings.os == "Linux" and not self.options.shared:
+            # Intel's static threading layers contain C++ objects even though
+            # the IPP API itself is C-compatible.
+            if stdcpp_library(self):
+                self.cpp_info.components["ippcore_tl"].system_libs = [stdcpp_library(self)]
 
         self.cpp_info.components["ipp_iw"].includedirs.extend([
             "include/ipp",

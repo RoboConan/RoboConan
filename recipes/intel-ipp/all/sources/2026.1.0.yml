@@ -1,0 +1,26 @@
+Linux:
+  ipp:
+    url: https://files.pythonhosted.org/packages/77/7d/5320a0560ae4eb9671eaa39b7cf25734d663b01aafb9a3e650c2cc661532/ipp-2026.1.0-py2.py3-none-manylinux_2_28_x86_64.whl
+    sha256: a29933f31db32f61222358681ede94451975932056961a4f6da85b243767d07f
+  ipp-devel:
+    url: https://files.pythonhosted.org/packages/16/12/7574836f5347026cb0943ab1fb141e0e0e47af799bce816140b11e36c1ef/ipp_devel-2026.1.0-py2.py3-none-manylinux_2_28_x86_64.whl
+    sha256: d9a315cb1a8dec9d1397f492c580c9484f678744359f4063952c217f3a1d6ad8
+  ipp-include:
+    url: https://files.pythonhosted.org/packages/e6/98/f1dfb96f763aa0181b966bd2d359e7ee18e0000ecd71938fdb170de907ed/ipp_include-2026.1.0-py2.py3-none-manylinux_2_28_x86_64.whl
+    sha256: 866abc2721bcaa7b9285be09c4f8f4fc3e037160bbdf5183dc0d5dbfceeba445
+  ipp-static:
+    url: https://files.pythonhosted.org/packages/dc/e7/8a48c618728a4b2b0398f08a64c7de10ff896dfbb70c9cadfde2d291e604/ipp_static-2026.1.0-py2.py3-none-manylinux_2_28_x86_64.whl
+    sha256: a1f8258198a75e9ba8695c168542bacafb28c0695c672942336f9a86f3a4b0d3
+Windows:
+  ipp:
+    url: https://files.pythonhosted.org/packages/a4/d1/88027792d70c3e1dffd3c002aef237edd652281421e19ed8d8942784cee8/ipp-2026.1.0-py2.py3-none-win_amd64.whl
+    sha256: e126cd79b9d95dfe10f468158550a677f1a2bb477f8581425669ed9d193f0243
+  ipp-devel:
+    url: https://files.pythonhosted.org/packages/9c/9d/1a4bf6a7679e7c7d11a9bd6db0f0a7a4a3159c7d95ee4fc296c36e73743a/ipp_devel-2026.1.0-py2.py3-none-win_amd64.whl
+    sha256: c26f194f3b8b022cb56c911a1c86cac8de84268063f1048439fc2f2f1ececc1c
+  ipp-include:
+    url: https://files.pythonhosted.org/packages/27/48/f5a84af2c879a631c0f6b2d2afe4c75009cb7fcdddce79cd19f00e5c026a/ipp_include-2026.1.0-py2.py3-none-win_amd64.whl
+    sha256: 54674c58bdb50b20bdc55e96555292bb79aa2a470b98e2f148352ce62a634fb9
+  ipp-static:
+    url: https://files.pythonhosted.org/packages/27/e5/fe2a32ce003a3d45347ca25d54ca50da067065271b57361d04e84e956955/ipp_static-2026.1.0-py2.py3-none-win_amd64.whl
+    sha256: 41e47007eda2eb2ea0174e7a1c7258d87c7aa762316c66a3a6e769cc65124f70

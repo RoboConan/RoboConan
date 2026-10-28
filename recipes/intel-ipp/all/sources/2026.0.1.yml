@@ -1,0 +1,26 @@
+Linux:
+  ipp:
+    url: https://files.pythonhosted.org/packages/a4/2a/7d1c80cb1e1713bf586225d0e90571fcb8b3416f682560be8eda1f0842c4/ipp-2026.0.1-py2.py3-none-manylinux_2_28_x86_64.whl
+    sha256: e51a4fcb2d1e7cdd99d952737ff5affa415f379ecf1c51284da695a3bc67d834
+  ipp-devel:
+    url: https://files.pythonhosted.org/packages/15/95/f8b4d99c1576a37bdfcf854f943e1cd9e8789b1b41988aabf3c5a63db776/ipp_devel-2026.0.1-py2.py3-none-manylinux_2_28_x86_64.whl
+    sha256: 4a15664273c3e22ab08c66e7ba437fefe296362406f696482bfb53f5a5da33f7
+  ipp-include:
+    url: https://files.pythonhosted.org/packages/8b/9d/a9f8d504ac64e1761565a1aeaac2960d7e812a038f50fedf40f839142f3a/ipp_include-2026.0.1-py2.py3-none-manylinux_2_28_x86_64.whl
+    sha256: f15db5989ffadcf354118443260cdd2c9f083b65dffc7d26f9650d60b1a5b4e0
+  ipp-static:
+    url: https://files.pythonhosted.org/packages/4b/68/dea399f576a5b2a5ede34e921cef17d75b6d24ecff626656babe71fba112/ipp_static-2026.0.1-py2.py3-none-manylinux_2_28_x86_64.whl
+    sha256: 722b651fc8a5e620725d077c63f4c0b7234d5dd04d7e78e7149f0a6729309b54
+Windows:
+  ipp:
+    url: https://files.pythonhosted.org/packages/11/1b/7e61cdf445a0df9435d19323914218507a082bdfc3b31e0a1acf7f6e0899/ipp-2026.0.1-py2.py3-none-win_amd64.whl
+    sha256: 093d008e160ae1538886f8f1f2ffeed6311888e20423c64b2e93701494b0cf33
+  ipp-devel:
+    url: https://files.pythonhosted.org/packages/d3/a9/4b0ab20aed9f38fe9b8b7fd0c06a2f200e032c8361fedaf6399939e20f60/ipp_devel-2026.0.1-py2.py3-none-win_amd64.whl
+    sha256: c5d3350921f400e41ff2a24a45297686da4bbfe32e61fe7602614587506084a8
+  ipp-include:
+    url: https://files.pythonhosted.org/packages/0f/f0/5ce9459b2da0a0f787669d3ca3704c45b355b155e3d7c7306ae8134f8982/ipp_include-2026.0.1-py2.py3-none-win_amd64.whl
+    sha256: 32a51c2abf3a0acfb5053e85ca02579a97ecd91445cefe886cbf0e6862cad4bb
+  ipp-static:
+    url: https://files.pythonhosted.org/packages/e0/ac/f1ae05b6ba4beec197cc701f1e18180b28529abfe1bd550dbdb6499dd1b5/ipp_static-2026.0.1-py2.py3-none-win_amd64.whl
+    sha256: 39712a6aff1c59137eae9ad8700fc40222ecc411f76c92e64557298207700db0
