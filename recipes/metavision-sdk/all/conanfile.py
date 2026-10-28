@@ -42,6 +42,12 @@ class MetavisionSdkConan(ConanFile):
         "boost/*:with_timer": True,
     }
 
+    python_requires = "conan-utils/latest"
+
+    @property
+    def _utils(self):
+        return self.python_requires["conan-utils"].module
+
     @property
     def _stream_module(self):
         return "stream" if Version(self.version).major >= 5 else "driver"
@@ -149,12 +155,7 @@ class MetavisionSdkConan(ConanFile):
             self._extract_deb(filename, os.path.join(self.build_folder, "advanced-sdk"))
 
     def _extract_deb(self, deb_file, dst):
-        deb = Path(deb_file)
-        content = deb.read_bytes()
-        pos = content.find(b"data.tar.gz") + 60
-        tgz = deb.with_suffix(".tar.gz")
-        tgz.write_bytes(content[pos:-1])
-        unzip(self, str(tgz), dst)
+        self._utils.extract_deb(deb_file, dst)
 
     def build(self):
         if self.options.advanced_sdk_repo_url:

@@ -14,6 +14,7 @@ sys.path.append(str(Path(__file__).resolve().parent))
 
 from conan import ConanFile
 
+from src.deb import extract_deb, open_deb_data_tar, extract_subdir_from_tarfile  # NOQA
 from src.limit_jobs import limit_build_jobs, monitor_memory_usage  # NOQA
 from src.meson_msvc import fix_msvc_libnames, _fix_libnames  # NOQA
 from src.python_venv import PythonVenv, pip_install  # NOQA

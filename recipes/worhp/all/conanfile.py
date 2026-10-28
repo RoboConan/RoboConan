@@ -1,6 +1,4 @@
 import os
-import re
-from pathlib import Path
 
 from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
@@ -27,6 +25,12 @@ class WorhpConan(ConanFile):
         "worhpmonitor": False,
     }
 
+    python_requires = "conan-utils/latest"
+
+    @property
+    def _utils(self):
+        return self.python_requires["conan-utils"].module
+
     def config_options(self):
         if self.settings.os != "Windows" or self.settings.arch != "x86_64":
             del self.options.worhpmonitor
@@ -49,10 +53,6 @@ class WorhpConan(ConanFile):
                 raise ConanInvalidConfiguration("Only x86_64 is supported on Windows")
         else:
             raise ConanInvalidConfiguration(f"{self.settings.os} is not supported")
-
-    def build_requirements(self):
-        if self.settings.os in ["Linux", "FreeBSD"]:
-            self.tool_requires("tar/[*]")
 
     @property
     def _download_info(self):
@@ -89,13 +89,7 @@ class WorhpConan(ConanFile):
 
 
     def _extract_deb(self, deb_file, dst):
-        deb = Path(deb_file)
-        content = deb.read_bytes()
-        m = re.search(rb"data.tar.\w+", content)
-        pos = content.find(m[0]) + 60
-        tgz = Path(self.build_folder, m[0].decode())
-        tgz.write_bytes(content[pos:-1])
-        self.run(f"tar -xf '{tgz}' -C '{dst}'")
+        self._utils.extract_deb(deb_file, dst)
 
     def _source(self):
         if self.settings.os in ["Linux", "FreeBSD"]:

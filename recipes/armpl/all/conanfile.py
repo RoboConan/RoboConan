@@ -1,8 +1,5 @@
-import contextlib
 import os
-import shutil
 import tarfile
-import tempfile
 
 from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
@@ -31,6 +28,13 @@ class ArmPLConan(ConanFile):
         "interface": "lp64",
         "threading": "omp",
     }
+    extension_properties = {"fortran_name_mangling": "lower_underscore"}
+
+    python_requires = "conan-utils/latest"
+
+    @property
+    def _utils(self):
+        return self.python_requires["conan-utils"].module
 
     def layout(self):
         basic_layout(self, src_folder="src")
@@ -89,6 +93,7 @@ class ArmPLConan(ConanFile):
         # Extract library files
         ver_str = ".".join(self.version.split(".")[:2])
         extract_from_armpl_tar(
+            self._utils,
             filename,
             "armpl_",
             f"/opt/arm/armpl_{ver_str}_gcc",
@@ -129,7 +134,7 @@ class ArmPLConan(ConanFile):
         self.cpp_info.components["astring"].set_property("nosoname", True)
 
 
-def extract_from_armpl_tar(outer_tar_path, deb_prefix, subdir, output_dir, path_filter=None):
+def extract_from_armpl_tar(utils, outer_tar_path, deb_prefix, subdir, output_dir, path_filter=None):
     """
     Full pipeline:
     - Open outer .tar
@@ -154,9 +159,8 @@ def extract_from_armpl_tar(outer_tar_path, deb_prefix, subdir, output_dir, path_
                 for member in inner:
                     if member.name.startswith(deb_prefix) and member.name.endswith(".deb"):
                         with inner.extractfile(member) as deb_stream:
-                            with open_deb_data_tar(deb_stream) as deb_tar:
-                                extract_subdir_from_tarfile(deb_tar, subdir, output_dir, path_filter)
-                                return
+                            utils.extract_deb(deb_stream, output_dir, subdir, path_filter=path_filter)
+                            return
                 raise ValueError(f"No .deb starting with {deb_prefix} found")
 
 
@@ -173,51 +177,3 @@ def find_payload_in_sh(sh_stream, marker=b"__START_OF_PAYLOAD__\n"):
             break
     # Now positioned right after marker
     return sh_stream
-
-
-@contextlib.contextmanager
-def open_deb_data_tar(deb_stream):
-    """
-    Context manager yielding a TarFile for the data.tar.* inside a .deb stream.
-    """
-    if deb_stream.read(8) != b"!<arch>\n":
-        raise ValueError("Not a valid ar archive (.deb)")
-    while True:
-        header = deb_stream.read(60)
-        if not header or len(header) < 60:
-            break
-        name = header[:16].decode().strip()
-        size = int(header[48:58].decode().strip())
-        if name.startswith("data.tar"):
-            # Dump into a temporary file and truncate to the correct size
-            with tempfile.TemporaryFile() as tmp:
-                shutil.copyfileobj(deb_stream, tmp)
-                tmp.seek(size)
-                tmp.write(b"")
-                tmp.seek(0)
-                with tarfile.open(fileobj=tmp, mode="r:*") as tf:
-                    yield tf
-                    return
-        # Skip this member (data + padding)
-        deb_stream.seek(size + (size % 2), 1)
-    raise ValueError("No data.tar.* found in deb")
-
-
-def extract_subdir_from_tarfile(tf, subdir, output_dir, path_filter=None):
-    """
-    Extract only files under `subdir` from a TarFile into output_dir.
-    """
-    subdir = subdir.lstrip("/")
-    members = []
-    for m in tf:
-        name = m.name.lstrip("./")
-        if name.startswith(subdir):
-            # Adjust path so extraction is relative to output_dir
-            m.path = os.path.relpath(name, subdir)
-            if path_filter and not path_filter(m.path):
-                continue
-            members.append(m)
-    if not members:
-        raise ValueError(f"No files found under {subdir}")
-    os.makedirs(output_dir, exist_ok=True)
-    tf.extractall(path=output_dir, members=members)
