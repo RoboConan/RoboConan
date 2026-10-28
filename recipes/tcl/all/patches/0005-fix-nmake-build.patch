@@ -1,0 +1,32 @@
+--- win/makefile.vc
++++ win/makefile.vc
+@@ -773,7 +773,7 @@ $(TCLSCRIPTZIP): $(TCLLIB) $(TCLSH) dlls
+ #---------------------------------------------------------------------
+ tcl-nmake: $(OUT_DIR)\tcl.nmake
+ $(OUT_DIR)\tcl.nmake:
+-	@type << >$@
++	type <<temp.tmp >$@
+ CORE_MACHINE = $(MACHINE)
+ CORE_DEBUG = $(DEBUG)
+ CORE_USE_THREAD_ALLOC = $(USE_THREAD_ALLOC)
+--- win/rules.vc
++++ win/rules.vc
+@@ -645,7 +645,6 @@ ddebug = $(ddebug) -DFORTIFY_SOURCE=2
+ # generated libraries only usable by the specific VC++ version that
+ # created it. Requires /LTCG linker option
+ !if [$(NMAKEHLP_NATIVE) -c -GL]
+-OPTIMIZATIONS  = $(OPTIMIZATIONS) -GL
+ CC_GL_OPT_ENABLED = 1
+ !else
+ # In newer compilers -GL and -YX are incompatible.
+@@ -1561,10 +1560,4 @@ carch = $(carch) /DHAVE_CPUID=1
+ !endif
+-
+-!if $(DEBUG)
+-# Turn warnings into errors
+-cwarn = $(cwarn) -WX
+-!endif
+-
+ INCLUDES = $(TCL_INCLUDES) $(TK_INCLUDES) $(PRJ_INCLUDES)
+ !if !$(DOING_TCL) && !$(DOING_TK)
+ INCLUDES = $(INCLUDES) -I"$(GENERICDIR)" -I"$(WIN_DIR)" -I"$(COMPATDIR)"

@@ -1,0 +1,40 @@
+--- win/makefile.vc
++++ win/makefile.vc
+@@ -1064,8 +1064,8 @@ install-libraries: tclConfig tcl-nmake install-msgs install-tzdata
+ 	@$(CPY) "$(GENERICDIR)\tclOODecls.h"      "$(INCLUDE_INSTALL_DIR)\"
+ 	@$(CPY) "$(GENERICDIR)\tclPlatDecls.h"    "$(INCLUDE_INSTALL_DIR)\"
+ 	@$(CPY) "$(GENERICDIR)\tclTomMath.h"      "$(INCLUDE_INSTALL_DIR)\"
+ 	@$(CPY) "$(GENERICDIR)\tclTomMathDecls.h" "$(INCLUDE_INSTALL_DIR)\"
+-	@$(CPY) "$(TOMMATHDIR)\tommath.h"         "$(INCLUDE_INSTALL_DIR)\"
++	@$(CPY) "$(WIN_DIR)\tclWinPort.h"          "$(INCLUDE_INSTALL_DIR)\"
+ !if !$(TCL_EMBED_SCRIPTS)
+ 	@$(ECHO) Installing library files to $(SCRIPT_INSTALL_DIR)
+ 	@if not exist "$(SCRIPT_INSTALL_DIR)" \
+--- win/rules.vc
++++ win/rules.vc
+@@ -276,7 +276,6 @@ _TCL_H = ..\generic\tcl.h
+ 
+ # BEGIN Case 2(b) - Building Tk
+ 
+-TCLINSTALL = 0 # Tk always builds against Tcl source, not an installed Tcl
+ !if "$(TCLDIR)" == ""
+ !if [echo TCLDIR = \> nmakehlp.out] \
+    || [$(NMAKEHLP_NATIVE) -L generic\tcl.h >> nmakehlp.out]
+@@ -286,9 +285,15 @@ TCLINSTALL = 0 # Tk always builds against Tcl source, not an installed Tcl
+ !endif # TCLDIR == ""
+ 
+ _TCLDIR	= $(TCLDIR:/=\)
+-_TCL_H  = $(_TCLDIR)\generic\tcl.h
++!if exist("$(_TCLDIR)\include\tcl.h")
++TCLINSTALL = 1
++_TCL_H  = $(_TCLDIR)\include\tcl.h
++!else
++TCLINSTALL = 0
++_TCL_H  = $(_TCLDIR)\generic\tcl.h
++!endif
+ !if !exist("$(_TCL_H)")
+-!error Could not locate tcl.h. Please set the TCLDIR macro to point to the Tcl *source* directory.
++!error Could not locate tcl.h. Please set the TCLDIR macro to point to the Tcl source or installation directory.
+ !endif
+ 
+ _TK_H = ..\generic\tk.h

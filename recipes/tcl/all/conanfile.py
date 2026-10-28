@@ -1,4 +1,5 @@
 import os
+import re
 from pathlib import Path
 
 from conan import ConanFile
@@ -37,10 +38,6 @@ class TclConan(ConanFile):
     def export_sources(self):
         export_conandata_patches(self)
 
-    def config_options(self):
-        if self.settings.os == "Windows":
-            del self.options.fPIC
-
     def layout(self):
         basic_layout(self, src_folder="src")
         # source folder must be a sub-directory of the build folder
@@ -48,6 +45,7 @@ class TclConan(ConanFile):
 
     def requirements(self):
         self.requires("zlib-ng/[^2.0]")
+        self.requires("libtommath/[^1.3]")
         self.requires("sqlite3/[^3.40]")
 
     def validate(self):
@@ -67,22 +65,16 @@ class TclConan(ConanFile):
         for path in Path("compat/zlib").iterdir():
             if path.is_file() and path.name not in {"zutil.h", "crc32.h"}:
                 path.unlink()
-        # unvendor sqlite3
-        rmdir(self, next(Path("pkgs").glob("sqlite*")))
+        # unvendor libtommath and sqlite3 while retaining Tcl's sqlite extension
+        rmdir(self, os.path.join(self.source_folder, "libtommath"))
+        sqlite = next(Path(self.source_folder, "pkgs").glob("sqlite*"))
+        for path in (sqlite / "compat" / "sqlite3").iterdir():
+            if path.name != "spaceanal.tcl":
+                path.unlink()
 
         unix_config_dir = os.path.join(self.source_folder, "unix")
         unix_makefile_in = os.path.join(unix_config_dir, "Makefile.in")
 
-        if Version(self.version) < "9.0.0":
-            # When disabling 64-bit support (in 32-bit), this test must be 0 in order to use "long long" for 64-bit ints
-            # (${tcl_type_64bit} can be either "__int64" or "long long")
-            replace_in_file(self, os.path.join(unix_config_dir, "configure"),
-                            "(sizeof(${tcl_type_64bit})==sizeof(long))",
-                            "(sizeof(${tcl_type_64bit})!=sizeof(long))")
-
-        # Avoid building internal libraries as shared libraries
-        if Version(self.version) < "9.0.0":
-            replace_in_file(self, unix_makefile_in, "--enable-shared --enable-threads", "--enable-threads")
         # Avoid clearing CFLAGS and LDFLAGS in the makefile
         replace_in_file(self, unix_makefile_in, "\nCFLAGS\t", "\n#CFLAGS\t")
         replace_in_file(self, unix_makefile_in, "\nLDFLAGS\t", "\n#LDFLAGS\t")
@@ -98,18 +90,6 @@ class TclConan(ConanFile):
         win_tcl_m4 = os.path.join(win_config_dir, "tcl.m4")
         replace_in_file(self, win_tcl_m4, "-static-libgcc", "")
 
-        # nmake creates a temporary file with mixed forward/backward slashes
-        # force the filename to avoid cryptic error messages
-        win_makefile_vc = os.path.join(win_config_dir, "makefile.vc")
-        replace_in_file(self, win_makefile_vc, "@type << >$@", "type <<temp.tmp >$@")
-
-        win_rules_vc = os.path.join(self.source_folder, "win", "rules.vc")
-        # do not treat nmake build warnings as errors
-        replace_in_file(self, win_rules_vc, "cwarn = $(cwarn) -WX", "")
-        # disable whole program optimization to be portable across different MSVC versions.
-        # See conan-io/conan-center-index#4811 conan-io/conan-center-index#4094
-        replace_in_file(self, win_rules_vc, "OPTIMIZATIONS  = $(OPTIMIZATIONS) -GL", "")
-
     def generate(self):
         if is_msvc(self):
             tc = NMakeToolchain(self)
@@ -123,8 +103,18 @@ class TclConan(ConanFile):
 
             tc = AutotoolsToolchain(self)
             def yes_no(v): return "yes" if v else "no"
+            # Tcl's configure script does not use the standard Autotools static
+            # switches.  Static/shared selection is inferred from --enable-shared.
+            tc.update_configure_args({
+                "--enable-static": None,
+                "--disable-static": None,
+            })
             tc.configure_args.extend([
-                "--enable-threads",
+                # Embedding the script library in a static archive does not make
+                # it available to arbitrary consumers linked against that archive.
+                "--disable-zipfs",
+                "--with-system-libtommath",
+                "PKG_CFG_ARGS=--with-system-sqlite",
                 f"--enable-symbols={yes_no(self.settings.build_type == 'Debug')}",
                 f"--enable-64bit={yes_no(self.settings.arch == 'x86_64')}",
             ])
@@ -143,7 +133,7 @@ class TclConan(ConanFile):
             replace_in_file(self, macos_configure, "#define HAVE_CPUID 1", "#undef HAVE_CPUID")
 
     def _build_nmake(self, targets):
-        opts = []
+        opts = ["noembed"]
         # https://core.tcl.tk/tips/doc/trunk/tip/477.md
         if not self.options.shared:
             opts.append("static")
@@ -188,7 +178,7 @@ class TclConan(ConanFile):
     def package(self):
         copy(self, "license.terms", src=self.source_folder, dst=os.path.join(self.package_folder, "licenses"))
         if is_msvc(self):
-            self._build_nmake(["install-binaries", "install-libraries"])
+            self._build_nmake(["install-binaries", "install-libraries", "install-pkgs"])
         else:
             autotools = Autotools(self)
             autotools.install()
@@ -207,7 +197,15 @@ class TclConan(ConanFile):
         replace_in_file(self, tcl_config, "\nTCL_SRC_DIR", "\n#TCL_SRC_DIR")
         ## Replace references to package folder by TCL_ROOT env var supposed to be defined by VirtualRunEnv
         if is_msvc(self):
-            replace_in_file(self, tcl_config, self.package_folder, "${TCL_ROOT}")
+            replace_in_file(self, tcl_config, self.package_folder.replace("/", "\\"), "${TCL_ROOT}")
+            zlib_lib = self.dependencies["zlib-ng"].cpp_info.libs[0]
+            replace_in_file(self, tcl_config, "TCL_ZLIB_LIB_NAME='zdll.lib'",
+                            f"TCL_ZLIB_LIB_NAME='{zlib_lib}.lib'")
+            content = load(self, tcl_config)
+            content = re.sub(r" -Fp[^ ]+", "", content)
+            content = re.sub(r' -I"[^"]+\\(?:win|generic)"', "", content)
+            content = content.replace(" /DBUILD_tcl", "")
+            save(self, tcl_config, content)
         else:
             replace_in_file(self, tcl_config, "TCL_PREFIX='/'", "TCL_PREFIX='${TCL_ROOT}'")
             replace_in_file(self, tcl_config, "TCL_EXEC_PREFIX='/'", "TCL_EXEC_PREFIX='${TCL_ROOT}'")
@@ -216,20 +214,28 @@ class TclConan(ConanFile):
                 replace_in_file(self, tcl_config, f"{{{to_replace}lib}}", "{${TCL_ROOT}/lib}", strict=False)
                 replace_in_file(self, tcl_config, f"='{to_replace}lib", "='${TCL_ROOT}/lib", strict=False)
                 replace_in_file(self, tcl_config, f"-I{to_replace}include", "-I${TCL_ROOT}/include", strict=False)
-        for dep in ["zlib-ng", "sqlite3"]:
-            var = f"CONAN_TCL_{dep.upper().replace('-', '_')}_ROOT"
-            replace_in_file(self, tcl_config, self.dependencies[dep].package_folder, "${%s}" % var)
+            for dep in ["zlib-ng", "libtommath", "sqlite3"]:
+                var = f"CONAN_TCL_{dep.upper().replace('-', '_')}_ROOT"
+                replace_in_file(self, tcl_config, self.dependencies[dep].package_folder, "${%s}" % var)
+            replace_in_file(self, tcl_config, "TCL_LIBS='",
+                            "TCL_LIBS='-L${CONAN_TCL_SQLITE3_ROOT}/lib "
+                            "-L${CONAN_TCL_LIBTOMMATH_ROOT}/lib "
+                            "-L${CONAN_TCL_ZLIB_NG_ROOT}/lib ")
 
     def package_info(self):
         self.cpp_info.set_property("cmake_file_name", "TCL")
         self.cpp_info.set_property("pkg_config_name", "tcl")
-        # Debian also installs a tcl8.6.pc file
+        # Match the versioned pkg-config alias installed by upstream.
         v = Version(self.version)
         self.cpp_info.set_property("pkg_config_aliases", [f"tcl{v.major}.{v.minor}"])
 
-        # There are other libs in subfolders, but they are only used
-        # for TCL extensions and should not be linked against.
-        self.cpp_info.libs = collect_libs(self, os.path.join(self.package_folder, "lib"))
+        if is_msvc(self):
+            suffix = "" if self.options.shared else "s"
+            if not self.options.shared and is_msvc_static_runtime(self):
+                suffix += "x"
+            self.cpp_info.libs = [f"tcl{v.major}{v.minor}{suffix}", "tclstub"]
+        else:
+            self.cpp_info.libs = [f"tcl{v.major}.{v.minor}", "tclstub"]
 
         if self.settings.os == "Windows":
             self.cpp_info.system_libs = ["ws2_32", "netapi32", "userenv"]
@@ -240,14 +246,14 @@ class TclConan(ConanFile):
 
         if is_msvc(self) and not self.options.shared:
             self.cpp_info.defines.append("STATIC_BUILD")
+        self.cpp_info.defines.append("TCL_WITH_EXTERNAL_TOMMATH")
 
-        tcl_version = Version(self.version)
-        tcl_library = os.path.join(self.package_folder, "lib", f"tcl{tcl_version.major}.{tcl_version.minor}")
+        tcl_library = os.path.join(self.package_folder, "lib", f"tcl{v.major}.{v.minor}")
         self.runenv_info.define_path("TCL_LIBRARY", tcl_library)
 
         self.runenv_info.define_path("TCL_ROOT", self.package_folder)
 
-        for dep in ["zlib-ng", "sqlite3"]:
+        for dep in ["zlib-ng", "libtommath", "sqlite3"]:
             var = f"CONAN_TCL_{dep.upper().replace('-', '_')}_ROOT"
             self.buildenv_info.define_path(var, self.dependencies[dep].package_folder)
 

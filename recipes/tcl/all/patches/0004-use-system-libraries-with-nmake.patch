@@ -1,0 +1,67 @@
+--- win/makefile.vc
++++ win/makefile.vc
+@@ -346,6 +346,8 @@ ZLIBOBJS = \
+ !else
+ ZLIBOBJS = $(OUT_DIR)\zdll.lib
+ !endif
++# zlib is supplied by Conan.
++ZLIBOBJS =
+ 
+ !if $(STATIC_BUILD)
+ TOMMATHOBJS = \
+@@ -421,6 +423,8 @@ TOMMATHOBJS = \
+ !else
+ TOMMATHOBJS = $(OUT_DIR)\tommath.lib
+ !endif
++# libtommath is supplied by Conan.
++TOMMATHOBJS =
+ 
+ PLATFORMOBJS = \
+ 	$(TMP_DIR)\tclWin32Dll.obj \
+@@ -466,12 +470,8 @@ LIBTCLVFS = $(OUT_DIR)\$(LIBTCLVFSSUBDIR)
+ 
+ # Additional include and C macro definitions for the implicit rules
+ # defined in rules.vc
+-PRJ_INCLUDES	= -I"$(TOMMATHDIR)"
++PRJ_INCLUDES	=
+ PRJ_DEFINES	= /DMP_PREC=4 /Dinline=__inline /D_CRT_SECURE_NO_DEPRECATE /D_CRT_NONSTDC_NO_DEPRECATE /DMP_FIXED_CUTOFFS /DUTF8PROC_STATIC
+-
+-!if $(STATIC_BUILD)
+-PRJ_DEFINES = $(PRJ_DEFINES) /DTCL_WITH_INTERNAL_ZLIB
+-!endif
+ 
+ # Additional Link libraries needed beyond those in rules.vc
+ PRJ_LIBS   = netapi32.lib user32.lib userenv.lib ws2_32.lib
+@@ -529,7 +529,7 @@ shell:      libtclzip
+ 	@$(COPY) /b "$(TCLSHRAW)"+"$(TCLSCRIPTZIP)" "$(TCLSH)"
+ !endif
+ 
+-dlls:	    setup $(TCLDDELIB) $(OUT_DIR)\zlib1.dll $(OUT_DIR)\libtommath.dll
++dlls:	    setup $(TCLDDELIB)
+ libtclzip:  $(TCLSCRIPTZIP)
+ 
+ tcltest:    setup core $(TCLTEST) dlls $(EXECTESTAPP)
+@@ -1049,12 +1049,6 @@ install-binaries:
+ 	@$(CPY) "$(TCLLIB)" "$(BIN_INSTALL_DIR)\"
+ !endif
+ 	@$(CPY) "$(TCLIMPLIB)" "$(LIB_INSTALL_DIR)\"
+-	@$(CPY) "$(OUT_DIR)\zlib1.dll" "$(BIN_INSTALL_DIR)\"
+-	@$(CPY) "$(OUT_DIR)\libtommath.dll" "$(BIN_INSTALL_DIR)\"
+-!if !$(STATIC_BUILD)
+-	@$(CPY) "$(OUT_DIR)\zdll.lib" "$(LIB_INSTALL_DIR)\"
+-	@$(CPY) "$(OUT_DIR)\tommath.lib" "$(LIB_INSTALL_DIR)\"
+-!endif
+ 	@$(ECHO) Installing $(TCLSHNAME)
+ 	@$(CPY) "$(TCLSH)" "$(BIN_INSTALL_DIR)\"
+ 	@$(ECHO) Installing $(TCLSTUBLIBNAME)
+--- win/rules.vc
++++ win/rules.vc
+@@ -1450,6 +1450,7 @@ OPTDEFINES	= $(OPTDEFINES) /DUSE_THREAD_ALLOC=1
+ !if $(STATIC_BUILD)
+ OPTDEFINES	= $(OPTDEFINES) /DSTATIC_BUILD
+-!elseif $(TCL_VERSION) > 86
++!endif
++!if $(TCL_VERSION) > 86
+ OPTDEFINES	= $(OPTDEFINES) /DTCL_WITH_EXTERNAL_TOMMATH
+ !if "$(MACHINE)" == "AMD64" || "$(MACHINE)" == "ARM64"
+ OPTDEFINES	= $(OPTDEFINES) /DMP_64BIT
