@@ -95,10 +95,13 @@ class Pthreads4WConan(ConanFile):
                 autotools.make(target=make_target, args=["-j1"])
 
     def package(self):
-        copy(self, "LICENSE", src=self.source_folder, dst=os.path.join(self.package_folder, "licenses"))
+        copy(self, "LICENSE", self.source_folder, os.path.join(self.package_folder, "licenses"))
         with chdir(self, self.source_folder):
             if is_msvc(self):
-                self.run("nmake install DESTROOT={}".format(self.package_folder), env="conanbuild")
+                copy(self, "pthreadV*.dll", self.source_folder, os.path.join(self.package_folder, "bin"))
+                copy(self, "*pthreadV*.lib", self.source_folder, os.path.join(self.package_folder, "lib"))
+                for header in ["_ptw32.h", "pthread.h", "sched.h", "semaphore.h"]:
+                    copy(self, header, self.source_folder, os.path.join(self.package_folder, "include"))
             else:
                 autotools = Autotools(self)
                 mkdir(self, os.path.join(self.package_folder, "include"))
