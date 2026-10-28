@@ -1,0 +1,8 @@
+Linux:
+  intel-sycl-rt:
+    url: https://files.pythonhosted.org/packages/2d/e4/d00d83c95510bbf3837f956d1ad61245a5ca533bd1a84b176b789cb1e558/intel_sycl_rt-2026.2.0-py2.py3-none-manylinux_2_28_x86_64.whl
+    sha256: ad920da1ffcb43edbc03422a7c85094997e6d578f9ab534743442af70bcbfaa1
+Windows:
+  intel-sycl-rt:
+    url: https://files.pythonhosted.org/packages/51/db/4d3a99cfb75f7f9f671979f4fea41629be06a77fef55c3c811970a8698e1/intel_sycl_rt-2026.2.0-py2.py3-none-win_amd64.whl
+    sha256: 16533cb8a6bc10f884201b354b8d167b041af42eeff06cc3f5af0a025bc8bac7

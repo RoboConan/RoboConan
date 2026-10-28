@@ -20,6 +20,9 @@ class IntelDpcppSyclConan(ConanFile):
     topics = ("intel", "sycl", "pre-built")
     package_type = "shared-library"
     settings = "os", "arch", "compiler", "build_type"
+    default_options = {
+        "zlib-ng/*:shared": True,
+    }
 
     @cached_property
     def _packages(self):
@@ -30,8 +33,11 @@ class IntelDpcppSyclConan(ConanFile):
         copy(self, f"{self.version}.yml", os.path.join(self.recipe_folder, "sources"), os.path.join(self.export_folder, "sources"))
 
     def requirements(self):
-        self.requires("umf/[<1]", options={"shared": True})
-        self.requires(f"intel-ur/{self.version}")
+        version = ".".join(str(self.version).split(".")[:2])
+        self.requires(f"intel-compiler-runtime/[~{version}]")
+        self.requires(f"intel-ur/[~{version}]")
+        if self.settings.os == "Linux":
+            self.requires("zlib-ng/[^2.0]")
 
     def package_id(self):
         del self.info.settings.compiler
@@ -41,19 +47,19 @@ class IntelDpcppSyclConan(ConanFile):
         basic_layout(self, src_folder="src")
 
     def validate(self):
-        if self.settings.os not in ["Linux", "FreeBSD", "Windows"]:
+        if self.settings.os not in ["Linux", "Windows"]:
             raise ConanInvalidConfiguration(f"{self.settings.os} is not supported")
         if self.settings.arch != "x86_64":
             raise ConanInvalidConfiguration(f"{self.settings.arch} is not supported")
-        if not self.dependencies["umf"].options.shared:
-            raise ConanInvalidConfiguration("-o hwloc/*:shared=True is required")
+        if self.settings.os == "Linux":
+            if not self.dependencies["zlib-ng"].options.shared:
+                raise ConanInvalidConfiguration("intel-dpcpp-sycl requires zlib-ng:shared=True")
 
     def _get_pypi_package(self, name):
         get(self, **self._packages[name], destination=self.build_folder, strip_root=True)
 
     def build(self):
         self._get_pypi_package("intel-sycl-rt")
-        self._get_pypi_package("intel-cmplr-lib-rt")
 
     def package(self):
         if self.settings.os == "Windows":
@@ -66,7 +72,7 @@ class IntelDpcppSyclConan(ConanFile):
         rm(self, "*onnxruntime*", os.path.join(self.package_folder, "lib"))
         rm(self, "*onnxruntime*", os.path.join(self.package_folder, "bin"))
         # Replace hard copies with symlinks
-        if self.settings.os in ["Linux", "FreeBSD"]:
+        if self.settings.os == "Linux":
             libdir = Path(self.package_folder, "lib")
             for p in list(libdir.glob("*.so.*.*")) + list(libdir.glob("libintlc.so.*")):
                 target = str(p.parent / p.name.split(".", 1)[0])
