@@ -7,7 +7,7 @@ from contextlib import contextmanager
 from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration, ConanException
 from conan.tools.apple import is_apple_os, XCRun
-from conan.tools.build import cross_building
+from conan.tools.build import cross_building, build_jobs
 from conan.tools.env import Environment, VirtualBuildEnv
 from conan.tools.files import *
 from conan.tools.gnu import Autotools, AutotoolsToolchain, AutotoolsDeps
@@ -98,13 +98,13 @@ class OpenSSLConan(ConanFile):
                 raise ConanInvalidConfiguration("os=Emscripten requires openssl:{asm,threads,stdio}=False")
 
     def build_requirements(self):
+        if (self.settings_build.os == "Windows" or self._use_nmake) and self.options.asm:
+            self.tool_requires("nasm/[*]")
+        if self._use_nmake:
+            self.tool_requires("strawberryperl/[^5.32]")
+            self.tool_requires("jom/[^1.1]")
         if self.settings_build.os == "Windows":
-            if self.options.asm:
-                self.tool_requires("nasm/[*]")
-            if self._use_nmake:
-                self.tool_requires("strawberryperl/[^5.32.1.1]")
-                self.tool_requires("jom/1.1.4")
-            else:
+            if not self._use_nmake:
                 self.win_bash = True
                 if not self.conf.get("tools.microsoft.bash:path", check_type=str):
                     self.tool_requires("msys2/latest")
@@ -428,6 +428,11 @@ class OpenSSLConan(ConanFile):
             return self.dependencies.build["strawberryperl"].conf_info.get("user.strawberryperl:perl", check_type=str)
         return "perl"
 
+    def _adjust_path(self, path):
+        if self._use_nmake:
+            return path.replace("\\", "/")
+        return unix_path(self, path)
+
     @contextmanager
     def _make_context(self):
         if self._use_nmake:
@@ -464,22 +469,24 @@ class OpenSSLConan(ConanFile):
                 self._patch_install_name()
 
                 if self._use_nmake:
+                    makefile = "makefile"
                     try:
-                        self.run("jom /F Makefile")
+                        self.run(f"jom /F {makefile} -j{build_jobs(self)}")
                     except ConanException:
                         # Try again with plain nmake instead of jom in case something broke due to parallelization
-                        self.run("nmake /F Makefile")
+                        self.run(f"nmake /F {makefile}")
                 else:
                     autotools.make()
 
     def _patch_install_name(self):
+        makefile = "makefile" if self._use_nmake else "Makefile"
         if is_apple_os(self) and self.options.shared:
             old_str = '-install_name $(INSTALLTOP)/$(LIBDIR)/'
             new_str = '-install_name @rpath/'
-            replace_in_file(self, "Makefile", old_str, new_str)
+            replace_in_file(self, makefile, old_str, new_str)
         if self._use_nmake:
             # NMAKE interprets trailing backslash as line continuation
-            replace_in_file(self, "Makefile", 'INSTALLTOP_dir=\\', 'INSTALLTOP_dir=/')
+            replace_in_file(self, makefile, 'INSTALLTOP_dir=\\', 'INSTALLTOP_dir=/')
 
     def _replace_runtime_in_file(self, filename):
         runtime = msvc_runtime_flag(self)
@@ -491,7 +498,8 @@ class OpenSSLConan(ConanFile):
         copy(self, "*LICENSE", self.source_folder, os.path.join(self.package_folder, "licenses"), keep_path=False)
         if self._use_nmake:
             with chdir(self, self.source_folder):
-                self.run(f"nmake -f Makefile install_sw DESTDIR={self.package_folder}")
+                makefile = "makefile"
+                self.run(f'nmake -f {makefile} install_sw "DESTDIR={self._adjust_path(self.package_folder)}"')
             rm(self, "*.pdb", self.package_folder, recursive=True)
         else:
             autotools = Autotools(self)

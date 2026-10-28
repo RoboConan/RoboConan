@@ -8,7 +8,7 @@ from conan.tools.build import build_jobs
 from conan.tools.files import *
 from conan.tools.gnu import AutotoolsToolchain
 from conan.tools.layout import basic_layout
-from conan.tools.microsoft import is_msvc, unix_path
+from conan.tools.microsoft import is_msvc, NMakeDeps, unix_path
 
 required_conan_version = ">=2.21" # for cmake_extra_variables
 
@@ -94,13 +94,14 @@ class OpenSSLConan(ConanFile):
             self.requires("zstd/[~1.5]")
 
     def build_requirements(self):
+        if (self.settings_build.os == "Windows" or self._msvc_abi) \
+                and self.options.asm and self.settings.arch in ("x86", "x86_64"):
+            self.tool_requires("nasm/[*]")
+        if self._msvc_abi:
+            self.tool_requires("strawberryperl/[^5.32]")
+            self.tool_requires("jom/[^1.1]")
         if self.settings_build.os == "Windows":
-            if self.options.asm and self.settings.arch in ("x86", "x86_64"):
-                self.tool_requires("nasm/[*]")
-            if self._msvc_abi:
-                self.tool_requires("jom/[*]")
-                self.tool_requires("strawberryperl/[^5.32.1.1]")
-            else:
+            if not self._msvc_abi:
                 self.win_bash = True
                 if not self.conf.get("tools.microsoft.bash:path", check_type=str):
                     self.tool_requires("msys2/latest")
@@ -222,12 +223,17 @@ class OpenSSLConan(ConanFile):
         )
 
     def generate(self):
+        if self._msvc_abi:
+            NMakeDeps(self).generate()
+
         tc = AutotoolsToolchain(self)
         if is_msvc(self):
             tc.extra_cflags.append("-nologo")
         if is_apple_os(self) and self.options.shared:
             tc.extra_ldflags.append("-headerpad_max_install_names")
-        tc.generate()
+        env = tc.environment()
+        env.define("PERL", self._perl)
+        tc.generate(env)
 
     def _adjust_path(self, path):
         if self._msvc_abi:
@@ -249,6 +255,7 @@ class OpenSSLConan(ConanFile):
             "no-docs",
             "no-unit-test",
             "no-tests",
+            f"PERL={self._perl}",
         ]
 
         if self.settings.os == "Android":
@@ -265,9 +272,7 @@ class OpenSSLConan(ConanFile):
             zlib_cpp_info = self.dependencies["zlib-ng"].cpp_info.aggregated_components()
             include_path = self._adjust_path(zlib_cpp_info.includedirs[0])
             if self._msvc_abi:
-                zlib_lib = self._adjust_path(
-                    os.path.join(zlib_cpp_info.libdirs[0], f"{zlib_cpp_info.libs[0]}.lib")
-                )
+                zlib_lib = f"{zlib_cpp_info.libs[0]}.lib"
             else:
                 zlib_lib = self._adjust_path(zlib_cpp_info.libdirs[0])
             args.extend([
@@ -280,19 +285,21 @@ class OpenSSLConan(ConanFile):
 
         if self.options.with_brotli:
             brotli_cpp_info = self.dependencies["brotli"].cpp_info.aggregated_components()
-            args.extend([
+            brotli_args = [
                 "enable-brotli",
                 f'--with-brotli-include="{self._adjust_path(brotli_cpp_info.includedirs[0])}"',
-                f'--with-brotli-lib="{self._adjust_path(brotli_cpp_info.libdirs[0])}"',
-            ])
+            ]
+            if not self._msvc_abi:
+                brotli_args.append(
+                    f'--with-brotli-lib="{self._adjust_path(brotli_cpp_info.libdirs[0])}"'
+                )
+            args.extend(brotli_args)
 
         if self.options.with_zstd:
             zstd_cpp_info = self.dependencies["zstd"].cpp_info.aggregated_components()
             zstd_lib = self._adjust_path(zstd_cpp_info.libdirs[0])
             if self._msvc_abi:
-                zstd_lib = self._adjust_path(
-                    os.path.join(zstd_cpp_info.libdirs[0], f"{zstd_cpp_info.libs[0]}.lib")
-                )
+                zstd_lib = f"{zstd_cpp_info.libs[0]}.lib"
             args.extend([
                 "enable-zstd",
                 f'--with-zstd-include="{self._adjust_path(zstd_cpp_info.includedirs[0])}"',
@@ -323,7 +330,9 @@ class OpenSSLConan(ConanFile):
 
     @property
     def _perl(self):
-        return "perl" if "strawberryperl" in self.dependencies.build else ""
+        if self._msvc_abi:
+            return self.dependencies.build["strawberryperl"].conf_info.get("user.strawberryperl:perl", check_type=str)
+        return "perl"
 
     def build(self):
         configure = os.path.join(self.source_folder, "Configure").replace("\\", "/")
@@ -331,13 +340,14 @@ class OpenSSLConan(ConanFile):
         self.run(f"{self._perl} ./configdata.pm --dump", env="conanbuild")
         self.run(f"{self._make_program} -j{build_jobs(self)}", env="conanbuild")
         if self._msvc_abi:
-            replace_in_file(self, "Makefile", "INSTALLTOP_dir=\\", "INSTALLTOP_dir=/")
+            makefile = "makefile"
+            replace_in_file(self, makefile, "INSTALLTOP_dir=\\", "INSTALLTOP_dir=/")
         if not self._msvc_abi and self.options.shared:
             replace_in_file(self, "Makefile", "INSTALL_LIBS=libcrypto.a libssl.a", "INSTALL_LIBS=")
 
     def package(self):
         copy(self, "*LICENSE*", src=self.source_folder, dst=os.path.join(self.package_folder, "licenses"))
-        package_folder = self.package_folder.replace("\\", "/")
+        package_folder = self._adjust_path(self.package_folder)
         self.run(f'{self._make_program} install_sw -j1 DESTDIR="{package_folder}"', env="conanbuild")
         if is_apple_os(self):
             fix_apple_shared_install_name(self)

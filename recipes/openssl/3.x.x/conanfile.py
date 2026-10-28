@@ -9,7 +9,7 @@ from conan.tools.build import build_jobs
 from conan.tools.files import *
 from conan.tools.gnu import AutotoolsToolchain
 from conan.tools.layout import basic_layout
-from conan.tools.microsoft import is_msvc, msvc_runtime_flag, unix_path
+from conan.tools.microsoft import is_msvc, msvc_runtime_flag, NMakeDeps, unix_path
 from conan.tools.scm import Version
 
 required_conan_version = ">=2.1"
@@ -107,13 +107,14 @@ class OpenSSLConan(ConanFile):
             raise ConanInvalidConfiguration("OpenSSL 3 does not support building shared libraries for iOS")
 
     def build_requirements(self):
+        if (self.settings_build.os == "Windows" or self._use_nmake) \
+                and self.options.asm and self.settings.arch in ["x86", "x86_64"]:
+            self.tool_requires("nasm/[*]")
+        if self._use_nmake:
+            self.tool_requires("strawberryperl/[^5.32]")
+            self.tool_requires("jom/[^1.1]")
         if self.settings_build.os == "Windows":
-            if self.options.asm and self.settings.arch in ["x86", "x86_64"]:
-                self.tool_requires("nasm/[*]")
-            if self._use_nmake:
-                self.tool_requires("strawberryperl/[^5.32.1.1]")
-                self.tool_requires("jom/[*]")
-            else:
+            if not self._use_nmake:
                 self.win_bash = True
                 if not self.conf.get("tools.microsoft.bash:path", check_type=str):
                     self.tool_requires("msys2/latest")
@@ -345,9 +346,7 @@ class OpenSSLConan(ConanFile):
             zlib_cpp_info = self.dependencies["zlib-ng"].cpp_info.aggregated_components()
             include_path = self._adjust_path(zlib_cpp_info.includedirs[0])
             if self._use_nmake:
-                zlib_lib_flag = self._adjust_path(
-                    os.path.join(zlib_cpp_info.libdirs[0], f"{zlib_cpp_info.libs[0]}.lib")
-                )
+                zlib_lib_flag = f"{zlib_cpp_info.libs[0]}.lib"
             else:
                 zlib_lib_flag = self._adjust_path(zlib_cpp_info.libdirs[0])
             args.extend([
@@ -360,19 +359,21 @@ class OpenSSLConan(ConanFile):
 
         if self.options.get_safe("with_brotli"):
             brotli_cpp_info = self.dependencies["brotli"].cpp_info.aggregated_components()
-            args.extend([
+            brotli_args = [
                 "enable-brotli",
                 f'--with-brotli-include="{self._adjust_path(brotli_cpp_info.includedirs[0])}"',
-                f'--with-brotli-lib="{self._adjust_path(brotli_cpp_info.libdirs[0])}"',
-            ])
+            ]
+            if not self._use_nmake:
+                brotli_args.append(
+                    f'--with-brotli-lib="{self._adjust_path(brotli_cpp_info.libdirs[0])}"'
+                )
+            args.extend(brotli_args)
 
         if self.options.get_safe("with_zstd"):
             zstd_cpp_info = self.dependencies["zstd"].cpp_info.aggregated_components()
             zstd_lib = self._adjust_path(zstd_cpp_info.libdirs[0])
             if self._use_nmake:
-                zstd_lib = self._adjust_path(
-                    os.path.join(zstd_cpp_info.libdirs[0], f"{zstd_cpp_info.libs[0]}.lib")
-                )
+                zstd_lib = f"{zstd_cpp_info.libs[0]}.lib"
             args.extend([
                 "enable-zstd",
                 f'--with-zstd-include="{self._adjust_path(zstd_cpp_info.includedirs[0])}"',
@@ -390,13 +391,16 @@ class OpenSSLConan(ConanFile):
         return args
 
     def generate(self):
+        if self._use_nmake:
+            NMakeDeps(self).generate()
+
         tc = AutotoolsToolchain(self)
         env = tc.environment()
         env.define_path("PERL", self._perl)
         if self.settings.compiler == "apple-clang":
-            xcrun = XCRun(self)
-            env.define_path("CROSS_SDK", os.path.basename(xcrun.sdk_path))
-            env.define_path("CROSS_TOP", os.path.dirname(os.path.dirname(xcrun.sdk_path)))
+            sdk_path = self.conf.get("tools.apple:sdk_path") or XCRun(self).sdk_path
+            env.define_path("CROSS_SDK", os.path.basename(sdk_path))
+            env.define_path("CROSS_TOP", os.path.dirname(os.path.dirname(sdk_path)))
 
         if is_apple_os(self) and self.options.shared:
             # Inject -headerpad_max_install_names for shared library, otherwise fix_apple_shared_install_name() may fail.
@@ -470,10 +474,10 @@ class OpenSSLConan(ConanFile):
     def _run_make(self, targets=None, parallel=True, install=False, use_jom=False):
         command = [self._make_program(use_jom)]
         if install:
-            command.append(f"DESTDIR={self._adjust_path(self.package_folder)}")
+            command.append(f'"DESTDIR={self._adjust_path(self.package_folder)}"')
         if targets:
             command.extend(targets)
-        if not self._use_nmake:
+        if use_jom or not self._use_nmake:
             command.append(f"-j{build_jobs(self)}" if parallel else "-j1")
         self.run(" ".join(command), env="conanbuild")
 
@@ -500,7 +504,8 @@ class OpenSSLConan(ConanFile):
             if self._use_nmake:
                 # When `--prefix=/`, the scripts derive `\` without escaping, which
                 # causes issues on Windows
-                replace_in_file(self, "Makefile", "INSTALLTOP_dir=\\", "INSTALLTOP_dir=\\\\")
+                makefile = "makefile"
+                replace_in_file(self, makefile, "INSTALLTOP_dir=\\", "INSTALLTOP_dir=\\\\")
                 if Version(self.version) >= "3.3.0":
                     # replace backslashes in paths with forward slashes
                     mkinstallvars_pl = os.path.join(self.source_folder, "util", "mkinstallvars.pl")
@@ -526,7 +531,7 @@ class OpenSSLConan(ConanFile):
     def build(self):
         self._make()
         configdata_pm = self._adjust_path(os.path.join(self.source_folder, "configdata.pm"))
-        self.run(f"{self._perl} {configdata_pm} --dump")
+        self.run(f'{self._perl} "{configdata_pm}" --dump')
 
     def _make_program(self, use_jom):
         if self._use_nmake:
