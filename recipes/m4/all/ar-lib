@@ -57,7 +57,8 @@ func_file_conv ()
 	    file_conv=cygwin
 	    ;;
 	  *)
-	    file_conv=wine
+	    # The profile-provided MSVC tool wrapper converts POSIX paths for lib.exe
+	    file_conv=none
 	    ;;
 	esac
       fi
@@ -68,9 +69,7 @@ func_file_conv ()
 	cygwin)
 	  file=`cygpath -m "$file" || echo "$file"`
 	  ;;
-	wine)
-	  file=`winepath -w "$file" || echo "$file"`
-	  ;;
+	none) ;;
       esac
       ;;
   esac

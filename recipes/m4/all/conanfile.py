@@ -120,7 +120,7 @@ class M4Conan(ConanFile):
             save(self, help2man, "#!/usr/bin/env bash\n:")
             if os.name == "posix":
                 os.chmod(help2man, os.stat(help2man).st_mode | 0o111)
-        if self.settings_build.os == "Windows":
+        if is_msvc(self):
             # ar-lib is needed for building m4 with Visual Studio.
             # Re-use the one from m4/1.4.18.
             # We can't use automake here to avoid a build cycle (m4 -> automake -> autoconf -> m4)
