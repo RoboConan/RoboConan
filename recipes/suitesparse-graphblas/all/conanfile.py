@@ -103,6 +103,9 @@ class SuiteSparseGraphBlasConan(ConanFile):
 
         self.cpp_info.includedirs.append("include/suitesparse")
 
+        if not self.options.shared:
+            self.cpp_info.defines.append("GB_STATIC")
+
         if self.settings.os in ["Linux", "FreeBSD"]:
             self.cpp_info.system_libs.extend(["m", "pthread", "dl"])
 

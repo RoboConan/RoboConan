@@ -82,18 +82,19 @@ class SuiteSparseLagraphConan(ConanFile):
 
         self.cpp_info.components["LAGraph"].set_property("cmake_target_name", "SuiteSparse::LAGraph")
         if not self.options.shared:
-            self.cpp_info.components["KLU"].set_property("cmake_target_aliases", ["SuiteSparse::LAGraph_static"])
+            self.cpp_info.components["LAGraph"].set_property("cmake_target_aliases", ["SuiteSparse::LAGraph_static"])
         self.cpp_info.components["LAGraph"].set_property("pkg_config_name", "LAGraph")
         self.cpp_info.components["LAGraph"].libs = ["lagraph" + suffix]
         self.cpp_info.components["LAGraph"].requires = ["suitesparse-graphblas::suitesparse-graphblas"]
         self.cpp_info.components["LAGraph"].includedirs.append("include/suitesparse")
-        self.cpp_info.components["LAGraph"].defines.append("LG_DLL")
+        if self.options.shared:
+            self.cpp_info.components["LAGraph"].defines.append("LG_DLL")
         if self.settings.os in ["Linux", "FreeBSD"]:
             self.cpp_info.components["LAGraph"].system_libs.extend(["m", "pthread"])
 
         self.cpp_info.components["LAGraphX"].set_property("cmake_target_name", "SuiteSparse::LAGraphX")
         if not self.options.shared:
-            self.cpp_info.components["KLU"].set_property("cmake_target_aliases", ["SuiteSparse::LAGraph_static"])
+            self.cpp_info.components["LAGraphX"].set_property("cmake_target_aliases", ["SuiteSparse::LAGraphX_static"])
         self.cpp_info.components["LAGraphX"].set_property("pkg_config_name", "LAGraphX")
         self.cpp_info.components["LAGraphX"].libs = ["lagraphx" + suffix]
         self.cpp_info.components["LAGraphX"].requires = ["LAGraph"]

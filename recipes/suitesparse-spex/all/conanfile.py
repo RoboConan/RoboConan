@@ -89,7 +89,7 @@ class SuiteSparseSpexConan(ConanFile):
         self.cpp_info.set_property("cmake_file_name", "SPEX")
         self.cpp_info.set_property("cmake_target_name", "SuiteSparse::SPEX")
         if not self.options.shared:
-            self.cpp_info.set_property("cmake_target_aliases", ["SuiteSparse::COLAMD_static"])
+            self.cpp_info.set_property("cmake_target_aliases", ["SuiteSparse::SPEX_static"])
         self.cpp_info.set_property("pkg_config_name", "SPEX")
 
         suffix = "_static" if is_msvc(self) and not self.options.shared else ""

@@ -86,8 +86,7 @@ class SuiteSparseParuConan(ConanFile):
             self.cpp_info.set_property("cmake_target_aliases", ["SuiteSparse::ParU_static"])
         self.cpp_info.set_property("pkg_config_name", "ParU")
 
-        suffix = "_static" if is_msvc(self) and not self.options.shared else ""
-        self.cpp_info.libs = ["paru" + suffix]
+        self.cpp_info.libs = ["ParU_static" if is_msvc(self) and not self.options.shared else "paru"]
         self.cpp_info.includedirs.append("include/suitesparse")
 
         if self.settings.os in ["Linux", "FreeBSD"]:

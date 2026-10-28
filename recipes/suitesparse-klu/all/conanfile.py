@@ -102,7 +102,7 @@ class SuiteSparseKluConan(ConanFile):
             self.cpp_info.components["KLU_CHOLMOD"].libs = ["klu_cholmod" + suffix]
             self.cpp_info.components["KLU_CHOLMOD"].set_property("cmake_target_name", "SuiteSparse::KLU_CHOLMOD")
             if not self.options.shared:
-                self.cpp_info.components["KLU"].set_property("cmake_target_aliases", ["SuiteSparse::KLU_CHOLMOD_static"])
+                self.cpp_info.components["KLU_CHOLMOD"].set_property("cmake_target_aliases", ["SuiteSparse::KLU_CHOLMOD_static"])
             self.cpp_info.components["KLU_CHOLMOD"].set_property("pkg_config_name", "KLU_CHOLMOD")
             self.cpp_info.components["KLU_CHOLMOD"].includedirs.append("include/suitesparse")
             self.cpp_info.components["KLU_CHOLMOD"].requires = [
