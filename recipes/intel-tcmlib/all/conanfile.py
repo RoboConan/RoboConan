@@ -21,6 +21,9 @@ class IntelTcmlibConan(ConanFile):
     topics = ("intel", "tbb", "pre-built")
     package_type = "shared-library"
     settings = "os", "arch", "compiler", "build_type"
+    default_options = {
+        "hwloc/*:shared": True,
+    }
 
     @cached_property
     def _packages(self):
@@ -39,17 +42,16 @@ class IntelTcmlibConan(ConanFile):
 
     def requirements(self):
         # Can't unvendor hwloc on Windows because the libhwloc-15.dll name does not match hwloc.dll from the recipe
-        if self.settings.os != "Windows":
-            self.requires("hwloc/[^2.12]", options={"shared": True})
+        if self.settings.os == "Linux":
+            self.requires("hwloc/[^2.12]")
 
     def validate(self):
-        if self.settings.os not in ["Linux", "FreeBSD", "Windows"]:
+        if self.settings.os not in ["Linux", "Windows"]:
             raise ConanInvalidConfiguration(f"{self.settings.os} is not supported")
         if self.settings.arch != "x86_64":
             raise ConanInvalidConfiguration(f"{self.settings.arch} is not supported")
-        if self.settings.os != "Windows":
-            if not self.dependencies["hwloc"].options.shared:
-                raise ConanInvalidConfiguration("-o hwloc/*:shared=True is required")
+        if self.settings.os == "Linux" and not self.dependencies["hwloc"].options.shared:
+            raise ConanInvalidConfiguration("intel-tcmlib requires hwloc:shared=True")
 
     def _get_pypi_package(self, name):
         get(self, **self._packages[name], destination=self.build_folder, strip_root=True)
@@ -65,7 +67,7 @@ class IntelTcmlibConan(ConanFile):
             move_folder_contents(self, os.path.join(self.build_folder, "data"), self.package_folder)
         copy(self, "*", os.path.join(self.package_folder, "share/doc/tcm/licensing"), os.path.join(self.package_folder, "licenses"))
         rmdir(self, os.path.join(self.package_folder, "share"))
-        if self.settings.os in ["Linux", "FreeBSD"]:
+        if self.settings.os == "Linux":
             rm(self, "libhwloc.*", os.path.join(self.package_folder, "lib"))
             for lib in ["tcm", "tcm_debug"]:
                 libfile = f"lib{lib}.so.{self.version}"
@@ -76,8 +78,6 @@ class IntelTcmlibConan(ConanFile):
                 ]:
                     os.unlink(os.path.join(self.package_folder, "lib", target))
                     os.symlink(libfile, os.path.join(self.package_folder, "lib", target))
-        else:
-            rm(self, "*hwloc*", os.path.join(self.package_folder, "bin"))
 
     def package_info(self):
         self.cpp_info.includedirs = []

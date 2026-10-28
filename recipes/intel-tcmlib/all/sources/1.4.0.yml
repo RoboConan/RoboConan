@@ -1,8 +1,0 @@
-Linux:
-  tcmlib:
-    url: https://files.pythonhosted.org/packages/28/9d/97d81fa340b9f1a0e33d6260daeb8bd7bbc2ef5b686be193491de5c9880a/tcmlib-1.4.0-py2.py3-none-manylinux_2_28_x86_64.whl
-    sha256: b2a2b68c100cc2a6163d394353b3013ab2479e70300b9bc1cb7f7822bcc38a40
-Windows:
-  tcmlib:
-    url: https://files.pythonhosted.org/packages/91/7b/e30c461a27b97e0090e4db822eeb1d37b310863241f8c3ee56f68df3e76e/tcmlib-1.4.0-py2.py3-none-win_amd64.whl
-    sha256: ab24f73c52b224cb744a0c0c28fcef8e51aec3c88aa6b39202c149495d6d2ea0
