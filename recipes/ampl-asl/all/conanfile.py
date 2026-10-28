@@ -57,6 +57,9 @@ class AmplAslConan(ConanFile):
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
         apply_conandata_patches(self)
+        replace_in_file(self, "CMakeLists.txt",
+                        "file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/arith.h",
+                        "file(WRITE ${GENERATED_INCLUDE_DIR}/arith.h")
 
     def generate(self):
         tc = CMakeToolchain(self)

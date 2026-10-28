@@ -1,6 +1,7 @@
 import os
 
 from conan import ConanFile
+from conan.tools.build import stdcpp_library
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
 
@@ -113,6 +114,8 @@ class HiGHSConan(ConanFile):
         self.cpp_info.components["highs_"].includedirs.append("include/highs")
         if self.settings.os in ["Linux", "FreeBSD"]:
             self.cpp_info.components["highs_"].system_libs = ["m", "pthread"]
+        if not self.options.shared and stdcpp_library(self):
+            self.cpp_info.components["highs_"].system_libs.append(stdcpp_library(self))
         self.cpp_info.components["highs_"].requires = ["zlib-ng::zlib-ng"]
         if self.options.get_safe("with_hipo"):
             self.cpp_info.components["highs_"].requires.append("blas::blas")
