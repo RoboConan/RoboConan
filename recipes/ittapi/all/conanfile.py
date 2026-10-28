@@ -21,23 +21,31 @@ class IttApiConan(ConanFile):
     settings = "os", "arch", "compiler", "build_type"
     options = {
         "fPIC": [True, False],
+        "cpp": [True, False],
         "ptmark": [True, False],
     }
     default_options = {
         "fPIC": True,
+        "cpp": False,
         "ptmark": False,
     }
     implements = ["auto_shared_fpic"]
     languages = ["C"]
+
+    def export_sources(self):
+        export_conandata_patches(self)
 
     def layout(self):
         cmake_layout(self, src_folder="src")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
+        apply_conandata_patches(self)
 
     def generate(self):
         toolchain = CMakeToolchain(self)
+        toolchain.variables["BUILD_TESTING"] = False
+        toolchain.variables["ITT_API_CPP_SUPPORT"] = self.options.cpp
         toolchain.variables["ITT_API_IPT_SUPPORT"] = self.options.ptmark
         toolchain.generate()
 
@@ -57,7 +65,10 @@ class IttApiConan(ConanFile):
         # https://github.com/intel/ittapi/blob/03f7260c96d4b437d12dceee7955ebb1e30e85ad/CMakeLists.txt#L176
         self.cpp_info.set_property("cmake_file_name", "ittapi")
         self.cpp_info.set_property("cmake_target_name", "ittapi::ittnotify")
-        self.cpp_info.set_property("cmake_target_aliases", ["ittapi::ittapi"]) # for compatibility with earlier revisions of the recipe
+        cmake_target_aliases = ["ittapi::ittapi"] # for compatibility with earlier revisions of the recipe
+        if self.options.cpp:
+            cmake_target_aliases.append("ittapi::ittapi-cpp")
+        self.cpp_info.set_property("cmake_target_aliases", cmake_target_aliases)
         if self.settings.os == "Windows":
             self.cpp_info.libs = ["libittnotify"]
         else:

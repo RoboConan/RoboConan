@@ -1,7 +1,8 @@
 sources:
-  "3.26.1":
-    url: "https://github.com/intel/ittapi/archive/v3.26.1.tar.gz"
-    sha256: "e070b01293cd9ebaed8e5dd1dd0a662735637b1d144bbdcb6ba18fd90683accf"
-  "3.25.5":
-    url: "https://github.com/intel/ittapi/archive/v3.25.5.tar.gz"
-    sha256: "2d19243e7ac8a7de08bfd005429a308c1db52a18e5b7b66d29a6c19f066946e3"
+  "3.28.4":
+    url: "https://github.com/intel/ittapi/archive/v3.28.4.tar.gz"
+    sha256: "70572732cdf41c2625fe18c8f3d4f71533b114cb6889fba18495422973560ca3"
+patches:
+  "3.28.4":
+    - patch_file: "patches/3.28.4-disable-cpp-tests.patch"
+      patch_description: "Honor BUILD_TESTING for the C++ wrapper samples and tests"

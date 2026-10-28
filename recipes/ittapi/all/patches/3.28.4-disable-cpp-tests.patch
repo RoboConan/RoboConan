@@ -1,0 +1,16 @@
+diff --git a/cpp/CMakeLists.txt b/cpp/CMakeLists.txt
+--- a/cpp/CMakeLists.txt
++++ b/cpp/CMakeLists.txt
+@@ -15,6 +15,7 @@ target_include_directories(ittapi-cpp
+ target_link_libraries(ittapi-cpp INTERFACE ittnotify)
+ target_compile_features(ittapi-cpp INTERFACE cxx_std_17)
+ 
++if(BUILD_TESTING)
+ if(NOT WIN32)
+     find_package(Threads)
+ endif()
+@@ -54,3 +55,4 @@ foreach(test_name ${CPP_TESTS})
+     endif()
+     add_test(NAME cpp_${test_name} COMMAND ${test_name})
+ endforeach()
++endif()
