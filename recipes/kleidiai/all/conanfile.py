@@ -5,6 +5,7 @@ from conan.errors import ConanInvalidConfiguration
 from conan.tools.build import check_min_cppstd, check_min_cstd
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
+from conan.tools.scm import Version
 
 required_conan_version = ">=2.1"
 
@@ -21,15 +22,23 @@ class KleidiAIConan(ConanFile):
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
+        "experimental_ops": [True, False],
     }
     default_options = {
         "shared": False,
         "fPIC": True,
+        "experimental_ops": False,
     }
     implements = ["auto_shared_fpic"]
 
     def layout(self):
         cmake_layout(self)
+
+    def config_options(self):
+        if self.settings.os == "Windows":
+            self.options.rm_safe("fPIC")
+        if Version(self.version) < "1.30":
+            self.options.rm_safe("experimental_ops")
 
     def validate(self):
         # Uses -march=armv8.2-a to build most of its micro-kernels
@@ -38,6 +47,11 @@ class KleidiAIConan(ConanFile):
         check_min_cppstd(self, 14)
         if self.settings.compiler.get_safe("cstd"):
             check_min_cstd(self, 99)
+        if self.options.get_safe("experimental_ops"):
+            if not str(self.settings.arch).startswith("armv8"):
+                raise ConanInvalidConfiguration("Experimental ops require Arm64.")
+            if self.settings.compiler == "msvc":
+                raise ConanInvalidConfiguration("Experimental ops do not support MSVC.")
 
     def build_requirements(self):
         self.tool_requires("cmake/[>=3.16 <5]")
@@ -50,6 +64,8 @@ class KleidiAIConan(ConanFile):
     def generate(self):
         tc = CMakeToolchain(self)
         tc.cache_variables["KLEIDIAI_BUILD_TESTS"] = False
+        if Version(self.version) >= "1.30":
+            tc.cache_variables["KLEIDIAI_BUILD_EXPERIMENTAL_OPS"] = self.options.experimental_ops
         tc.generate()
 
         deps = CMakeDeps(self)
@@ -69,7 +85,22 @@ class KleidiAIConan(ConanFile):
 
     def package_info(self):
         self.cpp_info.set_property("cmake_file_name", "KleidiAI")
-        self.cpp_info.set_property("cmake_target_name", "KleidiAI::kleidiai")
-        self.cpp_info.libs = ["kleidiai"]
+        if Version(self.version) < "1.30":
+            self.cpp_info.set_property("cmake_target_name", "KleidiAI::kleidiai")
+            self.cpp_info.libs = ["kleidiai"]
+            if self.settings.os in ["Linux", "FreeBSD"]:
+                self.cpp_info.system_libs = ["dl"]
+            return
+
+        self.cpp_info.components["core"].set_property("cmake_target_name", "KleidiAI::kleidiai")
+        self.cpp_info.components["core"].libs = ["kleidiai"]
         if self.settings.os in ["Linux", "FreeBSD"]:
-            self.cpp_info.system_libs = ["dl"]
+            self.cpp_info.components["core"].system_libs = ["dl"]
+
+        cmake_file_names = {"KleidiAI": {"components": ["core"]}}
+        if self.options.experimental_ops:
+            self.cpp_info.components["ops"].set_property("cmake_target_name", "KleidiAIOps::kleidiai_ops")
+            self.cpp_info.components["ops"].includedirs = ["include/KleidiAIOps"]
+            self.cpp_info.components["ops"].libs = ["kleidiai_ops"]
+            cmake_file_names["KleidiAIOps"] = {"components": ["ops"]}
+        self.cpp_info.set_property("cmake_file_names", cmake_file_names)

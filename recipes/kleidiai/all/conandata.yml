@@ -1,4 +1,7 @@
 sources:
+  "1.32.0":
+    url: "https://gitlab.arm.com/kleidi/kleidiai/-/archive/v1.32.0/kleidiai-v1.32.0.tar.bz2"
+    sha256: "bf673a7896249e96b0a299f3d73d393a9f9f02fd5c877070b3abb7d10c7b9b84"
   "1.9.0":
     url: "https://gitlab.arm.com/kleidi/kleidiai/-/archive/v1.9.0/kleidiai-v1.9.0.tar.bz2"
     sha256: "92da055c0e0fe3f1c48427f300b1106eca6646cce2c3c9d0413d22fbcd4eee98"
