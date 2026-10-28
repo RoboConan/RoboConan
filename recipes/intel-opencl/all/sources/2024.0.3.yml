@@ -1,8 +1,0 @@
-Linux:
-  intel-opencl-rt:
-    url: https://files.pythonhosted.org/packages/7e/52/1caad96c1eb6554aa635bcf515bc33cf0686d3e61a6921ab19515422b555/intel_opencl_rt-2024.0.3-py2.py3-none-manylinux1_x86_64.whl
-    sha256: fb19c2bc680e06b49f38ade5d8a8b309538cea5c1c5c69cc39a6584ffea3a4bf
-Windows:
-  intel-opencl-rt:
-    url: https://files.pythonhosted.org/packages/44/b4/2c224ce5d02920e90fe0e4f878f726d7fb300bda29cb57848849de4f869c/intel_opencl_rt-2024.0.3-py2.py3-none-win_amd64.whl
-    sha256: 4d390d255647ad7a07888559f7ab1f924116e75db36e673366ec6a9d7b57a08b

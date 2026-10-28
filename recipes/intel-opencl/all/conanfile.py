@@ -7,6 +7,7 @@ from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
 from conan.tools.files import *
 from conan.tools.layout import basic_layout
+from conan.tools.scm import Version
 
 required_conan_version = ">=2.1"
 
@@ -20,6 +21,9 @@ class IntelOpenCLConan(ConanFile):
     topics = ("intel", "opencl", "pre-built")
     package_type = "shared-library"
     settings = "os", "arch", "compiler", "build_type"
+    default_options = {
+        "zlib-ng/*:shared": True,
+    }
 
     provides = ["opencl-icd-loader"]
 
@@ -40,13 +44,24 @@ class IntelOpenCLConan(ConanFile):
 
     def requirements(self):
         self.requires("opencl-headers/[*]", transitive_headers=True)
-        self.requires(f"intel-ur/{self.version}")
+        version = ".".join(str(self.version).split(".")[:2])
+        self.requires(f"intel-compiler-runtime/[~{version}]")
+        if Version(self.version) < "2025":
+            self.requires("onetbb/[^2021]")
+        elif Version(self.version) < "2026":
+            self.requires("onetbb/[^2022]")
+        else:
+            self.requires("onetbb/[^2023]")
+        if self.settings.os == "Linux":
+            self.requires("zlib-ng/[^2.0]")
 
     def validate(self):
-        if self.settings.os not in ["Linux", "FreeBSD", "Windows"]:
+        if self.settings.os not in ["Linux", "Windows"]:
             raise ConanInvalidConfiguration(f"{self.settings.os} is not supported")
         if self.settings.arch != "x86_64":
             raise ConanInvalidConfiguration(f"{self.settings.arch} is not supported")
+        if self.settings.os == "Linux" and not self.dependencies["zlib-ng"].options.shared:
+            raise ConanInvalidConfiguration("intel-opencl requires zlib-ng:shared=True")
 
     def _get_pypi_package(self, name):
         get(self, **self._packages[name], destination=self.build_folder, strip_root=True)
@@ -68,7 +83,7 @@ class IntelOpenCLConan(ConanFile):
         rmdir(self, os.path.join(self.package_folder, "share"))
         rmdir(self, os.path.join(self.package_folder, "Scripts"))
         # Replace hard copies with symlinks
-        if self.settings.os in ["Linux", "FreeBSD"]:
+        if self.settings.os == "Linux":
             libdir = Path(self.package_folder, "lib")
             for p in list(libdir.glob("*.so.*.*")):
                 target = str(p.parent / p.name.split(".", 1)[0])

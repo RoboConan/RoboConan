@@ -1,11 +1,6 @@
 # Use recipes/conan-utils/all/scripts/update-oneapi.py to add new versions
 sources:
+  "2026.2.0":
   "2026.1.2":
   "2026.0.0":
   "2025.3.3":
-  "2025.2.2":
-  "2025.1.1":
-  "2025.0.5":
-  "2024.2.2":
-  "2024.1.2":
-  "2024.0.3":
