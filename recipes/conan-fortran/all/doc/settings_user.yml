@@ -1,0 +1,72 @@
+# Add this to ~/.conan2/settings_user.yml to enable the RoboConan Fortran settings.
+#
+# Compiler executables remain a profile concern, normally configured through
+# tools.build:compiler_executables={"fortran": "..."}.
+# Recipes may add the matching Intel runtime explicitly from requirements():
+#
+#     self.fortran.requires_runtime()
+#
+# Set user.conan-fortran:require_runtime=False in a profile's [conf] section to
+# suppress that dependency. This is a no-op for non-Intel Fortran compilers.
+#
+# Name mangling normally follows the configured compiler, or the conventional
+# lower-case/one-underscore ABI when the Fortran setting is absent. It can be
+# overridden with one of:
+#
+#     user.conan-fortran:name_mangling=lower_no_underscore
+#     user.conan-fortran:name_mangling=lower_underscore
+#     user.conan-fortran:name_mangling=lower_underscore_extra
+#     user.conan-fortran:name_mangling=upper_no_underscore
+#     user.conan-fortran:name_mangling=upper_underscore
+#     user.conan-fortran:name_mangling=upper_underscore_extra
+#
+# This describes the effective compiler ABI; it does not add compiler flags.
+# Any flags which change name mangling must be configured in the profile too.
+#
+# The "extra" forms add a second trailing underscore only to names which
+# already contain an underscore. To make an override part of package IDs, opt
+# in from the profile:
+#
+#     tools.info.package_id:confs=["user.conan-fortran:name_mangling"]
+fortran:
+    gfortran:
+        version: [ANY]
+        std: [null, 77, 90, 95, 2003, 2008, 2018, 2023]
+        extensions: [null, True, False]
+        runtime: [static, dynamic]
+    ifx:
+        version: [ANY]
+        std: [null, 77, 90, 95, 2003, 2008, 2018, 2023]
+        extensions: [null, True, False]
+        runtime: [static, dynamic]
+        runtime_type: [null, Debug, Release]
+    ifort:
+        version: [ANY]
+        std: [null, 77, 90, 95, 2003, 2008, 2018]
+        extensions: [null, True, False]
+        runtime: [static, dynamic]
+        runtime_type: [null, Debug, Release]
+    flang:
+        version: [ANY]
+        std: [null, 77, 90, 95, 2003, 2008, 2018, 2023]
+        extensions: [null, True, False]
+        runtime: [static, dynamic]
+    nvfortran:
+        version: [ANY]
+        std: [null, 77, 90, 95, 2003, 2008, 2018, 2023]
+        extensions: [null, True, False]
+        runtime: [static, dynamic]
+
+# Example profile values:
+# [settings]
+# fortran=gfortran
+# fortran.version=15
+# fortran.std=2018
+# fortran.extensions=True
+# fortran.runtime=dynamic
+#
+# [conf]
+# user.conan-fortran:require_runtime=True
+#
+# BLAS integer interfaces such as LP64/ILP64 deliberately remain options of the
+# blas provider package rather than part of this compiler setting.
