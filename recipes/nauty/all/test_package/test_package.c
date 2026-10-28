@@ -1,4 +1,4 @@
-#include <nauty.h>
+#include <nauty/nauty.h>
 #include <stdio.h>
 
 int main() {

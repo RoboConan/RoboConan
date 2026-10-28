@@ -125,6 +125,7 @@ class NautyConan(ConanFile):
         cmake.install()
 
     def package_info(self):
+        self.cpp_info.includedirs = ["include", "include/nauty"]
         self.cpp_info.set_property("cmake_target_aliases", ["nauty", self._libname])
         self.cpp_info.set_property("pkg_config_name", self._libname)
         self.cpp_info.set_property("pkg_config_aliases", ["nauty"])
