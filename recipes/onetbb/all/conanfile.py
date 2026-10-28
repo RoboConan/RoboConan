@@ -84,6 +84,10 @@ class OneTBBConan(ConanFile):
         tc = CMakeToolchain(self)
         tc.variables["TBB_TEST"] = False
         tc.variables["TBB_STRICT"] = False
+        if Version(self.version) >= "2023.2":
+            # TCM is packaged separately as intel-tcmlib.
+            tc.variables["TCM_BUILD"] = False
+            tc.variables["TCM_TEST"] = False
         tc.variables["TBBMALLOC_BUILD"] = self.options.tbbmalloc
         if self.options.get_safe("interprocedural_optimization") is not None:
             tc.variables["TBB_ENABLE_IPO"] = self.options.interprocedural_optimization
