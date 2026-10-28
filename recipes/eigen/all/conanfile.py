@@ -21,12 +21,16 @@ class EigenConan(ConanFile):
     settings = "os", "arch", "compiler", "build_type"
     options = {
         "with_blas": [True, False],
+        "with_lapacke": [True, False],
         "with_openmp": [True, False],
+        "with_sycl": [True, False],
         "MPL2_only": [True, False],
     }
     default_options = {
         "with_blas": False,
+        "with_lapacke": False,
         "with_openmp": True,
+        "with_sycl": False,
         # No longer applicable in Eigen 5.x.
         # As of Eigen 3.4.0, only the following were LGPL:
         #   Eigen/src/SparseCholesky/SimplicialCholesky.h
@@ -34,6 +38,10 @@ class EigenConan(ConanFile):
         #   unsupported/Eigen/src/IterativeSolvers/*
         "MPL2_only": True,
     }
+
+    def config_options(self):
+        if Version(self.version) < "5.0":
+            self.options.rm_safe("with_sycl")
 
     def export_sources(self):
         export_conandata_patches(self)
@@ -45,6 +53,8 @@ class EigenConan(ConanFile):
                 self.license = "MPL-2.0 AND BSD-3-Clause"
             else:
                 self.license = "MPL-2.0 AND BSD-3-Clause AND LGPL-2.1-or-later"
+        if self.options.with_lapacke:
+            self.options.with_blas.value = True
 
     def layout(self):
         cmake_layout(self, src_folder="src")
@@ -57,12 +67,20 @@ class EigenConan(ConanFile):
             check_min_cppstd(self, "14")
         else:
             check_min_cppstd(self, "03")
+        if self.options.get_safe("with_sycl"):
+            check_min_cppstd(self, "17")
+            if self.settings.compiler != "intel-cc" or self.settings.compiler.mode not in ["icx", "dpcpp"]:
+                raise ConanInvalidConfiguration("SYCL support requires the DPC++ compiler")
 
     def requirements(self):
         if self.options.with_blas:
-            self.requires("blas/latest", transitive_libs=True)
+            self.requires("blas/latest", transitive_headers=True, transitive_libs=True)
+        if self.options.with_lapacke:
+            self.requires("lapack/latest", transitive_headers=True, transitive_libs=True)
         if self.options.with_openmp:
             self.requires("openmp/system")
+        if self.options.get_safe("with_sycl"):
+            self.requires(f"intel-dpcpp-sycl/[~{self.settings.compiler.version}]", transitive_headers=True, transitive_libs=True)
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
@@ -117,3 +135,10 @@ class EigenConan(ConanFile):
             self.cpp_info.defines.append("EIGEN_USE_BLAS")
             if self.dependencies["blas"].options.provider == "mkl":
                 self.cpp_info.defines.append("EIGEN_USE_MKL")
+        if self.options.with_lapacke:
+            self.cpp_info.defines.append("EIGEN_USE_LAPACKE")
+        if self.options.get_safe("with_sycl"):
+            self.cpp_info.defines.extend(["EIGEN_USE_SYCL", "SYCL_COMPILER_IS_DPCPP"])
+            self.cpp_info.cxxflags.append("-fsycl")
+            self.cpp_info.sharedlinkflags.append("-fsycl")
+            self.cpp_info.exelinkflags.append("-fsycl")

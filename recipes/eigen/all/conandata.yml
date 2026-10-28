@@ -27,6 +27,14 @@ disable_stupid_warnings_h:
   - url: "https://gitlab.com/libeigen/eigen/-/raw/695e49d1bd953aa7a314fb69acf11c68a0777304/Eigen/src/Core/util/DisableStupidWarnings.h"
     sha256: "12ac7e06cfbcc65bf3217de6131f154e742082596bee210962a217af8bbea0c4"
 patches:
+  "5.0.1":
+    - patch_file: "patches/5.0-sycl-oneapi.patch"
+      patch_description: "Fix SYCL compilation with oneAPI 2025+"
+      patch_type: "portability"
+  "5.0.0":
+    - patch_file: "patches/5.0-sycl-oneapi.patch"
+      patch_description: "Fix SYCL compilation with oneAPI 2025+"
+      patch_type: "portability"
   "3.4.0":
     - patch_file: "patches/3.4.0-0001-vec-reduce-half.patch"
       patch_description: "Fix vectorized reductions compilation errors for Eigen::half"

@@ -1,0 +1,74 @@
+diff --git a/unsupported/Eigen/CXX11/src/Tensor/TensorContractionSycl.h b/unsupported/Eigen/CXX11/src/Tensor/TensorContractionSycl.h
+index ea210a1f8..b2025299d 100644
+--- a/unsupported/Eigen/CXX11/src/Tensor/TensorContractionSycl.h
++++ b/unsupported/Eigen/CXX11/src/Tensor/TensorContractionSycl.h
+@@ -47,7 +47,7 @@ struct TVPanelSize {
+   // LocalThreadSizeC: determines total number of thread per workgroup for the contracting dimension
+   static constexpr StorageIndex LocalThreadSizeC = EIGEN_SYCL_LOCAL_THREAD_DIM0;
+   // LocalThreadSizeNC: determines total number of thread per workgroup for the non-contracting dimension
+-  static constxpr StorageIndex LocalThreadSizeNC = EIGEN_SYCL_LOCAL_THREAD_DIM1;
++  static constexpr StorageIndex LocalThreadSizeNC = EIGEN_SYCL_LOCAL_THREAD_DIM1;
+   // TileSizeDimNC: determines the tile size for the non-contracting dimension
+   static constexpr StorageIndex TileSizeDimNC = NCWindow / NCFactor;
+   // TileSizeDimC: determines the tile size for the contracting dimension
+diff --git a/Eigen/src/Core/arch/SYCL/PacketMath.h b/Eigen/src/Core/arch/SYCL/PacketMath.h
+index 6b6bfe43b..34b4f892f 100644
+--- a/Eigen/src/Core/arch/SYCL/PacketMath.h
++++ b/Eigen/src/Core/arch/SYCL/PacketMath.h
+@@ -108,7 +108,11 @@ EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE void pstore(Eigen::half* to, const cl::syc
+   }
+ 
+ // global space
+-SYCL_PSET1(cl::sycl::cl_half8)
++template <>
++EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE cl::sycl::cl_half8 pset1<cl::sycl::cl_half8>(
++    const typename unpacket_traits<cl::sycl::cl_half8>::type& from) {
++  return cl::sycl::cl_half8(cl::sycl::cl_half(static_cast<float>(from)));
++}
+ SYCL_PSET1(cl::sycl::cl_float4)
+ SYCL_PSET1(cl::sycl::cl_double2)
+ 
+diff --git a/unsupported/Eigen/CXX11/src/Tensor/TensorConvolutionSycl.h b/unsupported/Eigen/CXX11/src/Tensor/TensorConvolutionSycl.h
+index 915c5de48..5b91d006e 100644
+--- a/unsupported/Eigen/CXX11/src/Tensor/TensorConvolutionSycl.h
++++ b/unsupported/Eigen/CXX11/src/Tensor/TensorConvolutionSycl.h
+@@ -213,10 +213,10 @@ struct EigenConvolutionKernel<Evaluator, CoeffReturnType, KernelType, Index, Inp
+     auto kernel_ptr = kernel_filter;
+     const auto num_input = cl::sycl::range<3>{itemID.get_local_range() + kernel_size - 1};
+ 
+-    const auto input_offset = cl::sycl::range<3>{itemID.get_group().get_id() * itemID.get_local_range()};
++    const auto input_offset = itemID.get_group().get_id() * itemID.get_local_range();
+ 
+     const auto output_offset =
+-        cl::sycl::range<3>{itemID.get_group().get_id() * itemID.get_local_range() + itemID.get_local_id()};
++        itemID.get_group().get_id() * itemID.get_local_range() + itemID.get_local_id();
+ 
+     for (size_t p = 0; p < numP; p++) {
+       /// fill the shared memory
+diff --git a/unsupported/Eigen/CXX11/src/Tensor/TensorDeviceSycl.h b/unsupported/Eigen/CXX11/src/Tensor/TensorDeviceSycl.h
+index b291fed66..cfb6289c4 100644
+--- a/unsupported/Eigen/CXX11/src/Tensor/TensorDeviceSycl.h
++++ b/unsupported/Eigen/CXX11/src/Tensor/TensorDeviceSycl.h
+@@ -69,7 +69,7 @@ EIGEN_STRONG_INLINE auto get_sycl_supported_devices() -> decltype(cl::sycl::devi
+       std::transform(vendor.begin(), vendor.end(), vendor.begin(), ::tolower);
+       bool unsupported_condition = (device.is_cpu() && platform_name.find("amd") != std::string::npos &&
+                                     vendor.find("apu") == std::string::npos) ||
+-                                   (platform_name.find("experimental") != std::string::npos) || device.is_host();
++                                   (platform_name.find("experimental") != std::string::npos);
+       if (!unsupported_condition) {
+         supported_devices.push_back(device);
+       }
+diff --git a/unsupported/Eigen/CXX11/src/Tensor/TensorEvaluator.h b/unsupported/Eigen/CXX11/src/Tensor/TensorEvaluator.h
+index 5544953e2..f58986793 100644
+--- a/unsupported/Eigen/CXX11/src/Tensor/TensorEvaluator.h
++++ b/unsupported/Eigen/CXX11/src/Tensor/TensorEvaluator.h
+@@ -851,8 +851,7 @@ struct TensorEvaluator<const TensorSelectOp<IfArgType, ThenArgType, ElseArgType>
+ #if defined(EIGEN_USE_SYCL) && defined(SYCL_COMPILER_IS_DPCPP)
+ template <typename Derived, typename Device>
+ struct cl::sycl::is_device_copyable<
+-    Eigen::TensorEvaluator<Derived, Device>,
+-    std::enable_if_t<!std::is_trivially_copyable<Eigen::TensorEvaluator<Derived, Device>>::value>> : std::true_type {};
++    Eigen::TensorEvaluator<Derived, Device>> : std::true_type {};
+ #endif
+ 
+ #endif  // EIGEN_CXX11_TENSOR_TENSOR_EVALUATOR_H
