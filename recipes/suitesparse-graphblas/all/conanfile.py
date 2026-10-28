@@ -22,17 +22,21 @@ class SuiteSparseGraphBlasConan(ConanFile):
         "shared": [True, False],
         "fPIC": [True, False],
         "compact": [True, False],
+        "jit": [True, False],
     }
     default_options = {
         "shared": False,
         "fPIC": True,
         "compact": True,
+        "jit": True,
     }
     options_description = {
         "compact": ("If True, disable creation of many fast FactoryKernels at compile time. "
-                    "The necessary kernels are compiled at run-time, via JIT, instead and "
-                    "performance will be the same. JIT-compiled kernels are placed in <package_folder>/share. "
-                    "Non-compact builds are significantly slower to compile and produce a larger library (both about 15x).")
+                    "With JIT enabled, the necessary kernels are compiled at run-time and performance will be the same. "
+                    "Without JIT, GraphBLAS remains functional but falls back to slower generic kernels. "
+                    "JIT-compiled kernels are placed in <package_folder>/share. "
+                    "Non-compact builds are significantly slower to compile and produce a larger library (both about 15x)."),
+        "jit": "Enable run-time compilation of GraphBLAS kernels",
     }
     implements = ["auto_shared_fpic"]
     # note: C++ is used if CUDA is enabled
@@ -60,6 +64,7 @@ class SuiteSparseGraphBlasConan(ConanFile):
         tc.variables["BUILD_SHARED_LIBS"] = self.options.shared
         tc.variables["BUILD_STATIC_LIBS"] = not self.options.shared
         tc.variables["GRAPHBLAS_COMPACT"] = self.options.compact
+        tc.variables["GRAPHBLAS_USE_JIT"] = self.options.jit
         tc.variables["GRAPHBLAS_USE_OPENMP"] = True
         tc.variables["GRAPHBLAS_USE_CUDA"] = False  # experimental, not ready for production as of 9.1.0
         tc.variables["SUITESPARSE_USE_CUDA"] = False
@@ -72,9 +77,10 @@ class SuiteSparseGraphBlasConan(ConanFile):
         deps = CMakeDeps(self)
         deps.generate()
 
-        env = Environment()
-        env.define_path("GRAPHBLAS_CACHE_PATH", self._jit_cache_dir)
-        env.vars(self).save_script("graphblas_jit_cache")
+        if self.options.jit:
+            env = Environment()
+            env.define_path("GRAPHBLAS_CACHE_PATH", self._jit_cache_dir)
+            env.vars(self).save_script("graphblas_jit_cache")
 
     def build(self):
         cmake = CMake(self)
@@ -111,5 +117,6 @@ class SuiteSparseGraphBlasConan(ConanFile):
 
         # FIXME: The JIT cache contains both input sources as well as the compilation cache.
         # The latter should not be located under the Conan package folder.
-        self.buildenv_info.define_path("GRAPHBLAS_CACHE_PATH", self._jit_cache_dir)
-        self.runenv_info.define_path("GRAPHBLAS_CACHE_PATH", self._jit_cache_dir)
+        if self.options.jit:
+            self.buildenv_info.define_path("GRAPHBLAS_CACHE_PATH", self._jit_cache_dir)
+            self.runenv_info.define_path("GRAPHBLAS_CACHE_PATH", self._jit_cache_dir)
