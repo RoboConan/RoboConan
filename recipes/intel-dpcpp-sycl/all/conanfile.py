@@ -75,6 +75,9 @@ class IntelDpcppSyclConan(ConanFile):
         if self.settings.os == "Linux":
             libdir = Path(self.package_folder, "lib")
             for p in list(libdir.glob("*.so.*.*")) + list(libdir.glob("libintlc.so.*")):
+                version = p.name.partition(".so.")[2]
+                if not all(part.isdigit() for part in version.split(".")):
+                    continue
                 target = str(p.parent / p.name.split(".", 1)[0])
                 for suffix in p.suffixes[:-1]:
                     target += suffix
