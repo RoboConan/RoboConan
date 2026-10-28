@@ -1,9 +1,6 @@
+# Use recipes/conan-utils/all/scripts/update-oneapi.py to add new versions
 sources:
-  "2025.2.1":
-    "Linux":
-      url: "https://registrationcenter-download.intel.com/akdlm/IRC_NAS/04c5fd98-57e6-4a4b-be4d-e84de3aea45a/intel-dpcpp-cpp-compiler-2025.2.1.7_offline.sh"
-      sha256: "028ef9e2176289bab6b9d19828199d26cb6cd91babdcfcece7a9dd00c5a50376"
-  "2025.1.1":
-    "Linux":
-      url: "https://registrationcenter-download.intel.com/akdlm/IRC_NAS/c4d2aef3-3123-475e-800c-7d66fd8da2a5/intel-dpcpp-cpp-compiler-2025.1.1.9_offline.sh"
-      sha256: "63ea61f54a5ea9d30059ea499697e04953915ef317c0e8fc457077b690c726df"
+  "2026.2.0":
+  "2026.1.1":
+  "2026.0.0":
+  "2025.3.3":

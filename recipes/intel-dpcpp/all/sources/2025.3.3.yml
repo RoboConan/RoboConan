@@ -1,0 +1,28 @@
+Linux:
+  intel-oneapi-dpcpp-cpp:
+    url: https://apt.repos.intel.com/oneapi/pool/main/intel-oneapi-dpcpp-cpp-2025.3-2025.3.3-30_amd64.deb
+    sha256: 9af9ab24a34999d04dcf4f23e320a55bd3466e78936eae86dc375e074c68933e
+  intel-oneapi-compiler-dpcpp-cpp-common:
+    url: https://apt.repos.intel.com/oneapi/pool/main/intel-oneapi-compiler-dpcpp-cpp-common-2025.3-2025.3.3-30_all.deb
+    sha256: 5be9153a5fab6c6079a4d56e986b5417190ad7548ff0dfe25cf4960108797d6a
+  intel-oneapi-compiler-dpcpp-cpp-runtime:
+    url: https://apt.repos.intel.com/oneapi/pool/main/intel-oneapi-compiler-dpcpp-cpp-runtime-2025.3-2025.3.3-30_amd64.deb
+    sha256: 77c159ebbea0a306a011ddb4f0bc49a6d04cc0da00416bdd6476a0996d162f82
+  intel-oneapi-compiler-shared:
+    url: https://apt.repos.intel.com/oneapi/pool/main/intel-oneapi-compiler-shared-2025.3-2025.3.3-30_amd64.deb
+    sha256: 0351fa28d5cdee04509ad2ce2de61abdcde79ed0cb6b77262b24f89dce416705
+  intel-oneapi-compiler-shared-common:
+    url: https://apt.repos.intel.com/oneapi/pool/main/intel-oneapi-compiler-shared-common-2025.3-2025.3.3-30_all.deb
+    sha256: e643e9cd89bfa7c028d3ad3580c0e30ab2473c49bb926a07ee37058ef293da60
+  intel-oneapi-compiler-shared-runtime:
+    url: https://apt.repos.intel.com/oneapi/pool/main/intel-oneapi-compiler-shared-runtime-2025.3-2025.3.3-30_amd64.deb
+    sha256: ea2a909484b7b53a380b0354635df7f0a967726839ef5f662e709db4e0d64eba
+  intel-oneapi-openmp:
+    url: https://apt.repos.intel.com/oneapi/pool/main/intel-oneapi-openmp-2025.3-2025.3.3-30_amd64.deb
+    sha256: 99b531121a7d2fe10439e8ad8b4bd3080de99241fb25c241fd422b71acb86aed
+  intel-oneapi-dpcpp-debugger:
+    url: https://apt.repos.intel.com/oneapi/pool/main/intel-oneapi-dpcpp-debugger-2025.3-2025.3.1-7_amd64.deb
+    sha256: e18bef111d389603228b399e280f898a72be514d4cb4ca5c9e30492640fb2db2
+  intel-oneapi-dev-utilities:
+    url: https://apt.repos.intel.com/oneapi/pool/main/intel-oneapi-dev-utilities-2025.3-2025.3.1-15_amd64.deb
+    sha256: 61ab278788edbc2ad047e8f6f63f1f73f5508b4c96cc2b05e449289061a76c7d

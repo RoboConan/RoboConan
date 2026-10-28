@@ -1,0 +1,25 @@
+Linux:
+  intel-oneapi-dpcpp-cpp:
+    url: https://apt.repos.intel.com/oneapi/pool/main/intel-oneapi-dpcpp-cpp-2026.1-2026.1.1-325_amd64.deb
+    sha256: fa97aac3f6ef43b0966f736dc47ebd4c97bddc709c80cba0fec0e1a1f36f9662
+  intel-oneapi-compiler-dpcpp-cpp-common:
+    url: https://apt.repos.intel.com/oneapi/pool/main/intel-oneapi-compiler-dpcpp-cpp-common-2026.1-2026.1.1-325_all.deb
+    sha256: d26bef9048fd2f9ff9cc8a0443f41766ef3ff0682d6847f3d60f496f3fdd4d26
+  intel-oneapi-compiler-dpcpp-cpp-runtime:
+    url: https://apt.repos.intel.com/oneapi/pool/main/intel-oneapi-compiler-dpcpp-cpp-runtime-2026.1-2026.1.1-325_amd64.deb
+    sha256: df0413d57cff5a9c67bd02c1e958d7e0512f77878bbcf976c9e08af7c0b1069c
+  intel-oneapi-compiler-shared:
+    url: https://apt.repos.intel.com/oneapi/pool/main/intel-oneapi-compiler-shared-2026.1-2026.1.1-325_amd64.deb
+    sha256: 87039478855d1b7ce08c5a30456e360158cdf45a6fb6a791083651ec340c5e99
+  intel-oneapi-compiler-shared-common:
+    url: https://apt.repos.intel.com/oneapi/pool/main/intel-oneapi-compiler-shared-common-2026.1-2026.1.1-325_all.deb
+    sha256: 283b675d295c9da38902edbc936980cde6b85d835480269f87559e5c59236591
+  intel-oneapi-compiler-shared-runtime:
+    url: https://apt.repos.intel.com/oneapi/pool/main/intel-oneapi-compiler-shared-runtime-2026.1-2026.1.1-325_amd64.deb
+    sha256: c0c77700243af0413f7fbefd26649943c4959171ead91b6ace36ef0c8dfb2630
+  intel-oneapi-openmp:
+    url: https://apt.repos.intel.com/oneapi/pool/main/intel-oneapi-openmp-2026.1-2026.1.1-325_amd64.deb
+    sha256: 89fdf95c72613ae1a7fb0834c7b8ccd4c2460fc68e37643b2bbe44c37678bd02
+  intel-oneapi-dpcpp-debugger:
+    url: https://apt.repos.intel.com/oneapi/pool/main/intel-oneapi-dpcpp-debugger-2026.1-2026.1.0-70_amd64.deb
+    sha256: b6da9590c514af088c7d899a89b0fa36141f4ca0e2821488d05faa65fb42c7cc

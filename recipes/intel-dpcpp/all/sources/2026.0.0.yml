@@ -1,0 +1,28 @@
+Linux:
+  intel-oneapi-dpcpp-cpp:
+    url: https://apt.repos.intel.com/oneapi/pool/main/intel-oneapi-dpcpp-cpp-2026.0-2026.0.0-947_amd64.deb
+    sha256: ffa5fc9f0e7f73c3f44254d030296fdc28b589f515923542f7395d9471857528
+  intel-oneapi-compiler-dpcpp-cpp-common:
+    url: https://apt.repos.intel.com/oneapi/pool/main/intel-oneapi-compiler-dpcpp-cpp-common-2026.0-2026.0.0-947_all.deb
+    sha256: 04405085391a7c8d83d8a8f71be65e76e441cb469056c0d2648109e13ee0ac46
+  intel-oneapi-compiler-dpcpp-cpp-runtime:
+    url: https://apt.repos.intel.com/oneapi/pool/main/intel-oneapi-compiler-dpcpp-cpp-runtime-2026.0-2026.0.0-947_amd64.deb
+    sha256: b7db83a2c8ad06ab5f080fb5ec7c5b004353157f92c0ddb9af3ece0422d9a249
+  intel-oneapi-compiler-shared:
+    url: https://apt.repos.intel.com/oneapi/pool/main/intel-oneapi-compiler-shared-2026.0-2026.0.0-947_amd64.deb
+    sha256: 67bf46baff36755aed231381c5f5b8a5e5b0a4b9a6170cac3ebbe129bd36abf9
+  intel-oneapi-compiler-shared-common:
+    url: https://apt.repos.intel.com/oneapi/pool/main/intel-oneapi-compiler-shared-common-2026.0-2026.0.0-947_all.deb
+    sha256: 63ac1d171518cf046ffe71ec025553c87ba2504e26e4b6f2c5a22b427d608dc5
+  intel-oneapi-compiler-shared-runtime:
+    url: https://apt.repos.intel.com/oneapi/pool/main/intel-oneapi-compiler-shared-runtime-2026.0-2026.0.0-947_amd64.deb
+    sha256: 0357c84d73cee0af8d4c682bdb290908bf842885e8c24936f3e7e58159e9745e
+  intel-oneapi-openmp:
+    url: https://apt.repos.intel.com/oneapi/pool/main/intel-oneapi-openmp-2026.0-2026.0.0-947_amd64.deb
+    sha256: 3a9ce881c439dbd8150ae7f32da02d7b982bcfa6eff679574e8f05ad8d2c0f57
+  intel-oneapi-dpcpp-debugger:
+    url: https://apt.repos.intel.com/oneapi/pool/main/intel-oneapi-dpcpp-debugger-2026.0-2026.0.0-220_amd64.deb
+    sha256: d24fdc5c35913890a39c0c88472152ab0ed530818aa766f2c3fa3357286060a9
+  intel-oneapi-dev-utilities:
+    url: https://apt.repos.intel.com/oneapi/pool/main/intel-oneapi-dev-utilities-2026.0-2026.0.1-16_amd64.deb
+    sha256: 50b80bb9eb4cb9e67b112ddf5befa4b8ce6415d870931d3a45c3ff0665351fcd
