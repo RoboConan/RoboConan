@@ -2,18 +2,24 @@ import os
 
 from conan import ConanFile
 from conan.tools.build import can_run
-from conan.tools.cmake import CMake, cmake_layout
+from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 
 
 class TestPackageConan(ConanFile):
     settings = "os", "arch", "compiler", "build_type"
-    generators = "CMakeToolchain", "CMakeDeps"
 
     def layout(self):
         cmake_layout(self)
 
     def requirements(self):
         self.requires(self.tested_reference_str)
+
+    def generate(self):
+        tc = CMakeToolchain(self)
+        if self.dependencies["onedpl"].options.backend in ["dpcpp", "dpcpp_only"]:
+            tc.preprocessor_definitions["TEST_ONEDPL_SYCL"] = None
+        tc.generate()
+        CMakeDeps(self).generate()
 
     def build(self):
         cmake = CMake(self)
