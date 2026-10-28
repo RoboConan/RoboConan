@@ -1,28 +1,4 @@
 sources:
-  "9.0.1":
-    url: "https://downloads.sourceforge.net/tcl/tk9.0.1-src.tar.gz"
-    sha256: "d6f01a4d598bfc6398be9584e1bab828c907b0758db4bbb351a1429106aec527"
-  "8.6.16":
-    url: "https://downloads.sourceforge.net/tcl/tk8.6.16-src.tar.gz"
-    sha256: "be9f94d3575d4b3099d84bc3c10de8994df2d7aa405208173c709cc404a7e5fe"
-patches:
-  "9.0.1":
-    - patch_file: "patches/9.0.1/0002-Add-windows-conan-compatibility.patch"
-      patch_description: "Add windows conan compatibility"
-      patch_type: "conan"
-    - patch_file: "patches/9.0.1/0003-Patch-tkConfig.sh.patch"
-      patch_description: "Remove TK_BUILD_* and TK_SRC_DIR from tkConfig.sh for portability"
-      patch_type: "portability"
-    - patch_file: "patches/9.0.1/0004-Fix-msvc-shared-build.patch"
-      patch_description: "Output an inline file directly to its final destination to avoid a failure in C3I"
-      patch_type: "conan"
-  "8.6.16":
-    - patch_file: "patches/8.6.16/0002-Add-windows-conan-compatibility.patch"
-      patch_description: "Add windows conan compatibility"
-      patch_type: "conan"
-    - patch_file: "patches/8.6.16/0003-Patch-tkConfig.sh.patch"
-      patch_description: "Remove TK_BUILD_* and TK_SRC_DIR from tkConfig.sh for portability"
-      patch_type: "portability"
-    - patch_file: "patches/8.6.13/0004-Fix-msvc-shared-build.patch"
-      patch_description: "Output an inline file directly to its final destination to avoid a failure in C3I"
-      patch_type: "conan"
+  "9.1.0":
+    url: "https://downloads.sourceforge.net/tcl/tk9.1.0-src.tar.gz"
+    sha256: "772ce7a97c07c2db4c957c93af7ab4dff4bd3037772836b6afbcd0974023b3d6"

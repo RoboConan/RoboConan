@@ -4,11 +4,11 @@ from conan import ConanFile
 from conan.errors import ConanException, ConanInvalidConfiguration
 from conan.tools.apple import is_apple_os, fix_apple_shared_install_name
 from conan.tools.build import cross_building
-from conan.tools.env import VirtualRunEnv
+from conan.tools.env import Environment, VirtualRunEnv
 from conan.tools.files import *
-from conan.tools.gnu import Autotools, AutotoolsDeps, AutotoolsToolchain
+from conan.tools.gnu import Autotools, AutotoolsToolchain, PkgConfigDeps
 from conan.tools.layout import basic_layout
-from conan.tools.microsoft import NMakeDeps, NMakeToolchain, is_msvc
+from conan.tools.microsoft import NMakeDeps, NMakeToolchain, is_msvc, is_msvc_static_runtime
 from conan.tools.scm import Version
 
 required_conan_version = ">=2.4"
@@ -25,26 +25,64 @@ class TkConan(ConanFile):
     options = {
         "shared": [True, False],
         "fPIC": [True, False],
+        "with_atk": [True, False],
+        "with_bidi": [True, False],
+        "with_libcups": [True, False],
+        "with_xft": [True, False],
+        "with_xrender": [True, False],
+        "with_xss": [True, False],
     }
     default_options = {
         "shared": False,
         "fPIC": True,
+        "with_atk": False,
+        "with_bidi": True,
+        "with_libcups": False,
+        "with_xft": True,
+        "with_xrender": True,
+        "with_xss": True,
     }
     implements = ["auto_shared_fpic"]
     languages = ["C"]
 
-    def export_sources(self):
-        export_conandata_patches(self)
+    def config_options(self):
+        if self.settings.os == "Windows":
+            del self.options.fPIC
+        if self.settings.os not in ["Linux", "FreeBSD"]:
+            del self.options.with_atk
+            del self.options.with_bidi
+            del self.options.with_libcups
+            del self.options.with_xft
+            del self.options.with_xrender
+            del self.options.with_xss
+
+    def configure(self):
+        if self.options.shared:
+            self.options.rm_safe("fPIC")
+        if self.options.get_safe("with_bidi"):
+            self.options.with_xft = True
 
     def requirements(self):
         self.requires(f"tcl/{self.version}", transitive_headers=True, transitive_libs=True)
-        if self.settings.os == "Linux":
-            self.requires("fontconfig/[^2.13.93]")
+        if self.settings.os in ["Linux", "FreeBSD"]:
             # Used in public tk.h
             self.requires("xorg/system", transitive_headers=True)
+            if self.options.with_xft:
+                self.requires("fontconfig/[^2.13]")
+                self.requires("libxft/[^2.3]")
+            if self.options.with_bidi:
+                self.requires("harfbuzz/[>=2.8]")
+                self.requires("sheenbidi/[^3.0]")
+            if self.options.with_libcups:
+                self.requires("libcups/[^2.2]")
+            if self.options.with_atk:
+                self.requires("at-spi2-core/[^2.53]")
 
     def build_requirements(self):
         self.tool_requires("automake/[^1.18.1]")
+        if self.settings.os in ["Linux", "FreeBSD"]:
+            if not self.conf.get("tools.gnu:pkg_config", check_type=str):
+                self.tool_requires("pkgconf/[<4]")
         if not is_msvc(self):
             if (
                 self.settings_build.os == "Windows"
@@ -56,6 +94,9 @@ class TkConan(ConanFile):
     def validate(self):
         if self.dependencies["tcl"].options.shared != self.options.shared:
             raise ConanInvalidConfiguration("The shared option of tcl and tk must have the same value")
+        if (self.options.get_safe("with_atk")
+                and not self.dependencies["at-spi2-core"].options.shared):
+            raise ConanInvalidConfiguration("Tk accessibility support requires shared at-spi2-core")
         if self.settings.os == "Macos" and cross_building(self):
             raise ConanInvalidConfiguration("The tk conan recipe does not currently support Macos cross-builds. A contribution to add this functionality would be welcome.")
 
@@ -64,15 +105,37 @@ class TkConan(ConanFile):
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
-        apply_conandata_patches(self)
         makefile = os.path.join(self.source_folder, "unix", "Makefile.in")
         replace_in_file(self, makefile, "LDFLAGS			= @LDFLAGS_DEFAULT@ @LDFLAGS@", "")
         replace_in_file(self, makefile, " ${CFLAGS}", " ${CFLAGS} ${CPPFLAGS}")
-        configure = os.path.join(self.source_folder, "unix", "configure")
-        if Version(self.version) < "9.0.0":
+        # Tk 9.1 vendors SheenBidi 3.0.0 as a unity source. Use the standalone
+        # dependency instead, while retaining upstream's HarfBuzz integration.
+        for configure_name in ["configure", "configure.ac"]:
+            configure = os.path.join(self.source_folder, "unix", configure_name)
             replace_in_file(self, configure,
-                            "case 1: case (sizeof(${tcl_type_64bit})==sizeof(long)): ;",
-                            "case 1: case (sizeof(${tcl_type_64bit})!=sizeof(long)): ;")
+                            'UNIX_FONT_OBJS="tkUnixBidiFont.o SheenBidi.o"',
+                            'UNIX_FONT_OBJS="tkUnixBidiFont.o"')
+            replace_in_file(self, configure,
+                            'BIDI_CFLAGS="-I${TK_SRC_DIR}/unix/bidi/Headers \\\n\t\t     -I${TK_SRC_DIR}/unix/bidi/Source \\\n\t\t     -I${TK_SRC_DIR}/unix/bidi \\\n\t\t     -DSB_CONFIG_UNITY -DSB_CONFIG_EXPERIMENTAL_TEXT_API -w"',
+                            'BIDI_CFLAGS="`pkg-config --cflags sheenbidi`"')
+            replace_in_file(self, configure,
+                            'HB_LIBS=`pkg-config --libs harfbuzz`',
+                            'HB_LIBS="`pkg-config --libs harfbuzz` `pkg-config --libs sheenbidi`"')
+            replace_in_file(self, configure,
+                            "found_cups=`cups-config 2>/dev/null`",
+                            "found_cups=`pkg-config --exists cups 2>/dev/null && echo yes`")
+            replace_in_file(self, configure,
+                            'CUPS_CFLAGS="-DHAVE_CUPS"',
+                            'CUPS_CFLAGS="-DHAVE_CUPS `pkg-config --cflags cups`"')
+            replace_in_file(self, configure,
+                            "CUPS_LIBS=`cups-config --libs`",
+                            "CUPS_LIBS=`pkg-config --libs cups`")
+        rmdir(self, os.path.join(self.source_folder, "unix", "bidi"))
+
+        # NMake's inline file syntax otherwise creates a malformed output path.
+        replace_in_file(self, os.path.join(self.source_folder, "win", "makefile.vc"),
+                        "@type << > $(OUT_DIR)\\pkgIndex.tcl",
+                        "@type <<$(OUT_DIR)\\pkgIndex.tcl")
 
     def generate(self):
         if is_msvc(self):
@@ -91,15 +154,31 @@ class TkConan(ConanFile):
 
             yes_no = lambda v: "yes" if v else "no"
             tc = AutotoolsToolchain(self)
+            # Tk's configure script does not use the standard Autotools static
+            # switches. Static/shared selection is inferred from --enable-shared.
+            tc.update_configure_args({
+                "--enable-static": None,
+                "--disable-static": None,
+            })
             tcl_root = self.dependencies['tcl'].package_folder
             tc.configure_args.extend([
-                "--enable-threads",
+                # Keep the script library available to arbitrary consumers of
+                # the static library instead of embedding it as an archive tail.
+                "--disable-zipfs",
                 f"--enable-symbols={yes_no(self.settings.build_type == 'Debug')}",
                 f"--enable-64bit={yes_no(self.settings.arch == 'x86_64')}",
                 f"--enable-aqua={yes_no(is_apple_os(self))}",
                 f"--with-tcl={os.path.join(tcl_root, 'lib')}",
-                f"--with-x={yes_no(self.settings.os == 'Linux')}",
+                f"--with-x={yes_no(self.settings.os in ['Linux', 'FreeBSD'])}",
             ])
+            if self.settings.os in ["Linux", "FreeBSD"]:
+                tc.configure_args.extend([
+                    f"--enable-bidi={yes_no(self.options.with_bidi)}",
+                    f"--enable-libcups={yes_no(self.options.with_libcups)}",
+                    f"--enable-xft={yes_no(self.options.with_xft)}",
+                    f"--enable-xrender={yes_no(self.options.with_xrender)}",
+                    f"--enable-xss={yes_no(self.options.with_xss)}",
+                ])
             tc.make_args.append(f"TCL_GENERIC_DIR={os.path.join(tcl_root, 'include')}")
             if self.settings.os in ["Linux", "FreeBSD"]:
                 # Ensure the library has a soname, fix https://github.com/conan-io/conan-center-index/issues/27691
@@ -111,9 +190,15 @@ class TkConan(ConanFile):
                 tc.extra_ldflags.append("-Wl,--as-needed")
             tc.generate()
 
-            if self.settings.os == "Linux":
-                deps = AutotoolsDeps(self)
+            if self.settings.os in ["Linux", "FreeBSD"]:
+                deps = PkgConfigDeps(self)
                 deps.generate()
+
+                # Only declared Conan dependencies participate in upstream's
+                # ATK auto-detection.
+                env = Environment()
+                env.define_path("PKG_CONFIG_LIBDIR", self.generators_folder)
+                env.vars(self).save_script("conan_pkg_config")
 
     def _get_default_build_system(self):
         if is_apple_os(self):
@@ -134,7 +219,7 @@ class TkConan(ConanFile):
 
     def _build_nmake(self, target="release"):
         # https://core.tcl.tk/tips/doc/trunk/tip/477.md
-        opts = []
+        opts = ["noembed"]
         if not self.options.shared:
             opts.append("static")
         if self.settings.build_type == "Debug":
@@ -155,7 +240,7 @@ class TkConan(ConanFile):
                 continue
             if lib.startswith(f"tcl{suffix}"):
                 tclimplib = os.path.join(tcl_lib_path, lib)
-            elif lib.startswith(f"tclstub{suffix}"):
+            elif lib == "tclstub.lib":
                 tclstublib = os.path.join(tcl_lib_path, lib)
 
         if tclimplib is None or tclstublib is None:
@@ -201,9 +286,24 @@ class TkConan(ConanFile):
 
         tkConfigShPath = os.path.join(self.package_folder, "lib", "tkConfig.sh")
         if os.path.exists(tkConfigShPath):
+            for variable in ["TK_BUILD_LIB_SPEC", "TK_SRC_DIR", "TK_BUILD_STUB_LIB_SPEC", "TK_BUILD_STUB_LIB_PATH"]:
+                replace_in_file(self, tkConfigShPath, f"\n{variable}=", f"\n#{variable}=")
             # This can only be modified after build since the value being replaced is a result
             # of variable substitution in tkConfig.sh.in
             replace_in_file(self, tkConfigShPath, "//", "${TK_ROOT}/")
+            tk_config = load(self, tkConfigShPath)
+            for dependency in self.dependencies.host.values():
+                if dependency.package_folder and dependency.package_folder in tk_config:
+                    if not os.path.isdir(os.path.join(dependency.package_folder, "lib")):
+                        libdir = f"-L{dependency.package_folder}/lib "
+                        if libdir in tk_config:
+                            replace_in_file(self, tkConfigShPath, libdir, "")
+                            tk_config = tk_config.replace(libdir, "")
+                        continue
+                    name = str(dependency.ref.name).upper().replace("-", "_")
+                    replacement = f"${{CONAN_TK_{name}_ROOT}}"
+                    replace_in_file(self, tkConfigShPath, dependency.package_folder, replacement)
+                    tk_config = tk_config.replace(dependency.package_folder, replacement)
 
         fix_apple_shared_install_name(self)
 
@@ -212,17 +312,13 @@ class TkConan(ConanFile):
         lib_infix = f"{v.major}.{v.minor}"
         if is_msvc(self):
             lib_infix = f"{v.major}{v.minor}"
-            tk_suffix = "t{}{}{}".format(
-                "" if self.options.shared else "s",
-                "g" if self.settings.build_type == "Debug" else "",
-                "x" if ("dynamic" in str(self.settings.compiler.runtime) or "MD" in str(self.settings.compiler.runtime)) and not self.options.shared else "",
-            )
+            tk_suffix = "" if self.options.shared else "s"
+            if not self.options.shared and is_msvc_static_runtime(self):
+                tk_suffix += "x"
         else:
             tk_suffix = ""
-        if Version(self.version) >= "9.0.0":
-            self.cpp_info.libs = [f"tcl{v.major}tk{lib_infix}{tk_suffix}", "tkstub"]
-        else:
-            self.cpp_info.libs = [f"tk{lib_infix}{tk_suffix}", f"tkstub{lib_infix}"]
+        self.cpp_info.libs = [f"tcl{v.major}tk{lib_infix}{tk_suffix}", "tkstub"]
+        self.cpp_info.requires = ["tcl::tcl"]
         if self.settings.os == "Macos":
             self.cpp_info.frameworks = ["CoreFoundation", "Cocoa", "Carbon", "IOKit", "QuartzCore", "UniformTypeIdentifiers"]
             self.cpp_info.exelinkflags = ["-ObjC"]
@@ -243,21 +339,37 @@ class TkConan(ConanFile):
                 "uuid",
                 "ole32",
                 "oleaut32",
+                "oleacc",
+                "usp10",
+                "dwmapi",
+                "msimg32",
             ]
-        elif self.settings.os == "Linux":
-            self.cpp_info.requires = [
-                "tcl::tcl",
-                "fontconfig::fontconfig",
-                "xorg::x11",
-                "xorg::xcb",
-                "xorg::xrender",
-                "xorg::xau",
-                "xorg::xdmcp",
-                "xorg::xscrnsaver",
-            ]
+        elif self.settings.os in ["Linux", "FreeBSD"]:
+            self.cpp_info.requires.append("xorg::x11")
+            if self.options.with_xft:
+                self.cpp_info.requires.extend(["fontconfig::fontconfig", "libxft::libxft"])
+            if self.options.with_bidi:
+                self.cpp_info.requires.extend(["harfbuzz::harfbuzz_", "sheenbidi::sheenbidi"])
+            if self.options.with_xrender:
+                self.cpp_info.requires.append("xorg::xrender")
+            if self.options.with_xss:
+                self.cpp_info.requires.extend(["xorg::xext", "xorg::xscrnsaver"])
+            if self.options.with_libcups:
+                self.cpp_info.requires.append("libcups::libcups")
+            if self.options.with_atk:
+                self.cpp_info.requires.extend(["at-spi2-core::atk", "at-spi2-core::atk-bridge"])
 
         tk_library = os.path.join(self.package_folder, "lib", f"{self.name}{v.major}.{v.minor}",).replace("\\", "/")
         self.runenv_info.define("TK_LIBRARY", tk_library)
 
         tk_root = self.package_folder.replace("\\", "/")
         self.runenv_info.define("TK_ROOT", tk_root)
+
+        tk_config = os.path.join(self.package_folder, "lib", "tkConfig.sh")
+        tk_config = load(self, tk_config) if os.path.exists(tk_config) else ""
+        for dependency in self.dependencies.host.values():
+            if dependency.package_folder:
+                name = str(dependency.ref.name).upper().replace("-", "_")
+                var = f"CONAN_TK_{name}_ROOT"
+                if f"${{{var}}}" in tk_config:
+                    self.buildenv_info.define_path(var, dependency.package_folder)
