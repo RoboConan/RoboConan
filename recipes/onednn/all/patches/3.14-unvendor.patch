@@ -1,0 +1,132 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -117,6 +117,28 @@ if(DNNL_AARCH64_USE_KAI)
+     add_definitions_with_host_compiler(-DDNNL_AARCH64_USE_KAI=1)
+ endif()
+
++if(DNNL_EXPERIMENTAL_LOGGING)
++    find_package(spdlog REQUIRED CONFIG)
++    link_libraries(spdlog::spdlog)
++endif()
++
++if(DNNL_TARGET_ARCH STREQUAL "X64" OR DNNL_TARGET_ARCH STREQUAL "AARCH64")
++    if(DNNL_ENABLE_JIT_PROFILING OR DNNL_ENABLE_ITT_TASKS)
++        find_package(ittapi REQUIRED CONFIG)
++        link_libraries(ittapi::ittnotify)
++    endif()
++endif()
++if(DNNL_TARGET_ARCH STREQUAL "X64")
++    find_package(xbyak REQUIRED CONFIG)
++    link_libraries(xbyak::xbyak)
++elseif(DNNL_TARGET_ARCH STREQUAL "AARCH64")
++    find_package(xbyak_aarch64 REQUIRED CONFIG)
++    link_libraries(xbyak_aarch64::xbyak_aarch64)
++elseif(DNNL_TARGET_ARCH STREQUAL "RV64")
++    find_package(xbyak_riscv REQUIRED CONFIG)
++    link_libraries(xbyak_riscv::xbyak_riscv)
++endif()
++
+ if(UNIX OR MINGW)
+     # CMAKE_<lang>_STANDARD support, so set it to our defaults, unless
+     # overridden by the user
+diff --git a/cmake/blas.cmake b/cmake/blas.cmake
+--- a/cmake/blas.cmake
++++ b/cmake/blas.cmake
+@@ -21,6 +21,7 @@
+ endif()
+ set(blas_cmake_included true)
+ include("cmake/options.cmake")
++include(CheckFunctionExists)
+
+ if(DNNL_BLAS_VENDOR STREQUAL "NONE")
+     return()
+@@ -71,7 +72,8 @@
+      list(APPEND EXTRA_SHARED_LIBS BLAS::BLAS)
+
+      # Check that the BLAS library supports the CBLAS interface.
+-     set(CMAKE_REQUIRED_LIBRARIES "${BLAS_LINKER_FLAGS};${BLAS_LIBRARIES}")
++     set(CMAKE_REQUIRED_LIBRARIES "${BLAS_LIBRARIES}")
++     set(CMAKE_REQUIRED_LINK_OPTIONS "${BLAS_LINKER_FLAGS}")
+      set(CMAKE_REQUIRED_FLAGS "${BLAS_COMPILER_FLAGS}")
+
+      # Find and include  accompanying cblas.h
+diff --git a/src/common/CMakeLists.txt b/src/common/CMakeLists.txt
+--- a/src/common/CMakeLists.txt
++++ b/src/common/CMakeLists.txt
+@@ -20,7 +20,7 @@ file(GLOB SOURCES
+     ${CMAKE_CURRENT_SOURCE_DIR}/*.c
+     ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp
+     )
+-if(DNNL_ENABLE_JIT_PROFILING OR DNNL_ENABLE_ITT_TASKS)
++if(FALSE)
+     if(DNNL_TARGET_ARCH STREQUAL "AARCH64" OR DNNL_TARGET_ARCH STREQUAL "X64")
+         file(GLOB ITT_SOURCES
+             ${ITTNOTIFY_ROOT}/ittnotify/*.c
+diff --git a/src/common/ittnotify.hpp b/src/common/ittnotify.hpp
+--- a/src/common/ittnotify.hpp
++++ b/src/common/ittnotify.hpp
+@@ -22,7 +22,7 @@
+
+ #if defined(DNNL_ENABLE_ITT_TASKS)
+ #include "dnnl_debug.h"
+-#include "ittnotify/ittnotify.h"
++#include "ittnotify.h"
+ #else
+ // Forward declaration of the ITT id type defined in ittnotify/ittnotify.h.
+ struct ___itt_id; // NOLINT
+diff --git a/src/cpu/aarch64/CMakeLists.txt b/src/cpu/aarch64/CMakeLists.txt
+--- a/src/cpu/aarch64/CMakeLists.txt
++++ b/src/cpu/aarch64/CMakeLists.txt
+@@ -52,6 +52,4 @@ set_property(GLOBAL APPEND PROPERTY DNNL_LIB_DEPS
+ set_property(GLOBAL APPEND PROPERTY DNNL_LIB_DEPS
+     $<TARGET_OBJECTS:${OBJ_LIB}>)
+-
+-add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/xbyak_aarch64 xbyak_aarch64)
+
+ if(DNNL_AARCH64_USE_KAI)
+-    add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/kleidiai/experimental/ops kleidiai_ops)
++    find_package(KleidiAIOps REQUIRED CONFIG)
+
+-    target_link_libraries(${OBJ_LIB} PRIVATE kleidiai_ops)
++    target_link_libraries(${OBJ_LIB} PRIVATE KleidiAIOps::kleidiai_ops)
+
+     set_property(GLOBAL APPEND PROPERTY DNNL_SUBDIR_EXTRA_STATIC_LIBS
+-        kleidiai_ops)
++        KleidiAIOps::kleidiai_ops)
+ endif()
+diff --git a/src/cpu/jit_utils/jit_utils.cpp b/src/cpu/jit_utils/jit_utils.cpp
+--- a/src/cpu/jit_utils/jit_utils.cpp
++++ b/src/cpu/jit_utils/jit_utils.cpp
+@@ -33,7 +33,7 @@
+ #endif
+
+ #if DNNL_ENABLE_JIT_PROFILING
+-#include "ittnotify/jitprofiling.h"
++#include "jitprofiling.h"
+ #ifdef __linux__
+ #include "cpu/jit_utils/linux_perf/linux_perf.hpp"
+ #endif
+diff --git a/src/cpu/x64/cpu_isa_traits.hpp b/src/cpu/x64/cpu_isa_traits.hpp
+--- a/src/cpu/x64/cpu_isa_traits.hpp
++++ b/src/cpu/x64/cpu_isa_traits.hpp
+@@ -501,7 +501,7 @@ bool mayiuse(const cpu_isa_t cpu_isa, bool soft) {
+             //   6. XCR0[7:5] = 0b111       (implied by the AVX10 checks)
+             //   7. CR4.OSXSAVE = 1         (implied by the XCR0 queries)
+             REG_AMX_ISA(return mayiuse(avx10_2, soft) && mayiuse(amx_tile, soft)
+-                    && cpu().has(Cpu::tACE) && cpu().getACEversion() >= 1
++                    && cpu().has(Cpu::tACE) && cpu().getACEVersion() >= 1
+                     && cpu().getMaxPalette() >= amx_palette_ace
+                     && cpu().has(Cpu::tAVX10_V2_AUX)
+                     && x64::ace::is_available());
+diff --git a/src/cpu/rv64/CMakeLists.txt b/src/cpu/rv64/CMakeLists.txt
+--- a/src/cpu/rv64/CMakeLists.txt
++++ b/src/cpu/rv64/CMakeLists.txt
+@@ -27,7 +27,2 @@ add_library(${OBJ_LIB} OBJECT ${SOURCES})
+ set_property(GLOBAL APPEND PROPERTY DNNL_LIB_DEPS
+              $<TARGET_OBJECTS:${OBJ_LIB}>)
+-
+-# Add xbyak_riscv include path for JIT code generation
+-target_include_directories(${OBJ_LIB} PRIVATE
+-    ${PROJECT_SOURCE_DIR}/third_party
+-)

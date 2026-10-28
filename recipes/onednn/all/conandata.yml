@@ -1,18 +1,8 @@
 sources:
-  "3.9.0":
+  "3.14.0":
     onednn:
-      url: "https://github.com/uxlfoundation/oneDNN/archive/refs/tags/v3.9.tar.gz"
-      sha256: "806ec963b8a89cc7555c43afbb6f5369dc9010c8cf435b85aaf708acd1a2d837"
-    ze_intel_gpu.h:
-      url: "https://raw.githubusercontent.com/intel/compute-runtime/59cb5098e7bb43a517864b3c0d987d28640fbdbc/level_zero/include/level_zero/ze_intel_gpu.h"
-      sha256: "f43e88fc3e6b17af9269254f010c89ae7916780e1d996fb48bff7a60c3c6c503"
-    ze_stypes.h:
-      url: "https://raw.githubusercontent.com/intel/compute-runtime/59cb5098e7bb43a517864b3c0d987d28640fbdbc/level_zero/include/level_zero/ze_stypes.h"
-      sha256: "e4d2432ece8213bc38733f840539a8927f63b64399f639258d621263f87aec26"
-  "3.8.1":
-    onednn:
-      url: "https://github.com/uxlfoundation/oneDNN/archive/refs/tags/v3.8.1.tar.gz"
-      sha256: "4b0638061a789a1efbefdcd2e85eb257c7b432b3b6a71ba8909e19d75f50b163"
+      url: "https://github.com/uxlfoundation/oneDNN/archive/v3.14.tar.gz"
+      sha256: "063eca4137678ba79b2da7030cbe2b41b1cc7b15a76ac13728a531a710e7392d"
     ze_intel_gpu.h:
       url: "https://raw.githubusercontent.com/intel/compute-runtime/59cb5098e7bb43a517864b3c0d987d28640fbdbc/level_zero/include/level_zero/ze_intel_gpu.h"
       sha256: "f43e88fc3e6b17af9269254f010c89ae7916780e1d996fb48bff7a60c3c6c503"
@@ -20,11 +10,7 @@ sources:
       url: "https://raw.githubusercontent.com/intel/compute-runtime/59cb5098e7bb43a517864b3c0d987d28640fbdbc/level_zero/include/level_zero/ze_stypes.h"
       sha256: "e4d2432ece8213bc38733f840539a8927f63b64399f639258d621263f87aec26"
 patches:
-  "3.9.0":
-    - patch_file: "patches/3.8-unvendor.patch"
-      patch_description: "Unvendor third-party dependencies"
-      patch_type: "conan"
-  "3.8.1":
-    - patch_file: "patches/3.8-unvendor.patch"
+  "3.14.0":
+    - patch_file: "patches/3.14-unvendor.patch"
       patch_description: "Unvendor third-party dependencies"
       patch_type: "conan"
