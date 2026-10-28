@@ -4,5 +4,5 @@ project(test_package LANGUAGES C)
 find_package(tinycbor REQUIRED CONFIG)
 
 add_executable(${PROJECT_NAME} test_package.c)
-target_link_libraries(${PROJECT_NAME} PRIVATE tinycbor::tinycbor)
+target_link_libraries(${PROJECT_NAME} PRIVATE tinycbor)
 target_compile_features(${PROJECT_NAME} PRIVATE c_std_99)

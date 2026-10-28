@@ -1,13 +1,8 @@
 import os
 
 from conan import ConanFile
-from conan.errors import ConanInvalidConfiguration
-from conan.tools.apple import is_apple_os
-from conan.tools.env import VirtualBuildEnv
+from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
 from conan.tools.files import *
-from conan.tools.gnu import Autotools, AutotoolsToolchain
-from conan.tools.layout import basic_layout
-from conan.tools.microsoft import is_msvc, NMakeToolchain
 
 required_conan_version = ">=2.4"
 
@@ -34,68 +29,39 @@ class TinycborConan(ConanFile):
     implements = ["auto_shared_fpic"]
     languages = ["C"]
 
-    def export_sources(self):
-        export_conandata_patches(self)
-
     def layout(self):
-        basic_layout(self, src_folder="src")
-
-    def validate(self):
-        if self.options.shared and (self.settings.os == "Windows" or is_apple_os(self)):
-            raise ConanInvalidConfiguration(f"{self.ref} shared not supported on {self.settings.os}")
-
-    def build_requirements(self):
-        if self.settings_build.os == "Windows" and not is_msvc(self):
-            self.win_bash = True
-            if not self.conf.get("tools.microsoft.bash:path", check_type=str):
-                self.tool_requires("msys2/latest")
+        cmake_layout(self, src_folder="src")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
-        apply_conandata_patches(self)
 
     def generate(self):
-        env = VirtualBuildEnv(self)
-        env.generate()
-        if is_msvc(self):
-            tc = NMakeToolchain(self)
-            tc.generate()
-        else:
-            tc = AutotoolsToolchain(self)
-            env = tc.environment()
-            env.define("BUILD_SHARED", "1" if self.options.shared else "0")
-            env.define("BUILD_STATIC", "0" if self.options.shared else "1")
-            tc.generate(env)
+        tc = CMakeToolchain(self)
+        tc.cache_variables["BUILD_SHARED_LIBS"] = self.options.shared
+        tc.cache_variables["BUILD_TESTING"] = False
+        tc.cache_variables["BUILD_EXAMPLES"] = False
+        tc.cache_variables["BUILD_TOOLS"] = False
+        tc.generate()
 
     def build(self):
-        if is_msvc(self):
-            with chdir(self, self.source_folder):
-                self.run("nmake -f Makefile.nmake")
-        else:
-            autotools = Autotools(self)
-            with chdir(self, self.source_folder):
-                autotools.make()
+        cmake = CMake(self)
+        cmake.configure()
+        cmake.build()
 
     def package(self):
         copy(self, "LICENSE", src=self.source_folder, dst=os.path.join(self.package_folder, "licenses"))
-        if is_msvc(self):
-            copy(self, "tinycbor.lib",
-                       src=os.path.join(self.source_folder, "lib"),
-                       dst=os.path.join(self.package_folder, "lib"))
-            for header in ["cbor.h", "cborjson.h", "tinycbor-version.h"]:
-                copy(self, header,
-                           src=os.path.join(self.source_folder, "src"),
-                           dst=os.path.join(self.package_folder, "include", "tinycbor"))
-        else:
-            autotools = Autotools(self)
-            with chdir(self, self.source_folder):
-                autotools.install()
-            rmdir(self, os.path.join(self.package_folder, "lib", "pkgconfig"))
-            rmdir(self, os.path.join(self.package_folder, "bin"))
+        cmake = CMake(self)
+        cmake.install()
+        rmdir(self, os.path.join(self.package_folder, "lib", "cmake"))
+        rmdir(self, os.path.join(self.package_folder, "lib", "pkgconfig"))
 
     def package_info(self):
         self.cpp_info.set_property("pkg_config_name", "tinycbor")
+        self.cpp_info.set_property("cmake_file_name", "tinycbor")
+        self.cpp_info.set_property("cmake_target_name", "tinycbor")
         self.cpp_info.libs = ["tinycbor"]
+        if not self.options.shared:
+            self.cpp_info.defines.append("CBOR_STATIC_DEFINE")
         if self.settings.os in ["Linux", "FreeBSD"]:
             self.cpp_info.system_libs = ["m"]
         self.cpp_info.includedirs.append(os.path.join("include", "tinycbor"))
