@@ -1,0 +1,23 @@
+Linux:
+  ipp-crypto:
+    url: https://files.pythonhosted.org/packages/ec/cb/371aabc88e877ca8e1f4fff857ec3702691e9f90c78b997d1bebaa97b2fa/ipp_crypto-2026.0.1-py2.py3-none-manylinux_2_28_x86_64.whl
+    sha256: 5e3544612e3d5ca4e9bc23239164b6e315c7ba849d082b52b7158fac6aff5ee2
+  ipp-crypto-include:
+    url: https://files.pythonhosted.org/packages/49/bb/85d01504fb5fd43c7f4142a1790c10b73fb0987627e4c4ae25adeadd1595/ipp_crypto_include-2026.0.1-py2.py3-none-manylinux_2_28_x86_64.whl
+    sha256: 78bfe66ddb6f3703e2864b2173773ec20e43d603f8dad9cb92b40f6bdde42921
+  ipp-crypto-static:
+    url: https://files.pythonhosted.org/packages/93/81/a430f80eb79095321150c9bc0aa44b9e55e70a57d9fdb8fca24e5b521806/ipp_crypto_static-2026.0.1-py2.py3-none-manylinux_2_28_x86_64.whl
+    sha256: cdabba52a787265f598392de8e27b90d19c7adacec2d6a6f1d2ab94141e3a738
+Windows:
+  ipp-crypto:
+    url: https://files.pythonhosted.org/packages/0e/de/6898ff2f7cc402483dd21859c10f609eefbf81b05d0414ffda2bc4c0be52/ipp_crypto-2026.0.1-py2.py3-none-win_amd64.whl
+    sha256: bcc4c84e9f5bcd1424abffe36ad150f51d0a356f8b32a2f05d3fa36c482b5f8c
+  ipp-crypto-devel:
+    url: https://files.pythonhosted.org/packages/90/27/49915c0b9a7b69845313029afde02ef98f7b33752a19c16ac06f786add72/ipp_crypto_devel-2026.0.1-py2.py3-none-win_amd64.whl
+    sha256: 707ff4c72a8cbabdff8edadff3a1fc97ef848131e1a3aee63520de2ce0342e76
+  ipp-crypto-include:
+    url: https://files.pythonhosted.org/packages/2b/69/683a1ec00fb7d25beb44546ee1cf7d6aaeeb402961b23eeb500ffc54fe42/ipp_crypto_include-2026.0.1-py2.py3-none-win_amd64.whl
+    sha256: 78fbabd4eae73ef2dba1570c80a17a1f50a9456dff61503b8e405e5038d22961
+  ipp-crypto-static:
+    url: https://files.pythonhosted.org/packages/09/15/09c1062ef9f20080e8c2d780c31ea77b64537a48b10a020aa964998f8847/ipp_crypto_static-2026.0.1-py2.py3-none-win_amd64.whl
+    sha256: bc56838978481c31c130cbba8d09f3d0f425cd53878dfed9d64103fcacca33d2
