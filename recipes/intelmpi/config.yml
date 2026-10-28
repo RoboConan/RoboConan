@@ -1,0 +1,11 @@
+versions:
+  "2021.19.0":
+    folder: all
+  "2021.18.1":
+    folder: all
+  "2021.17.2":
+    folder: all
+  "2021.16.2":
+    folder: all
+  "2021.15.0":
+    folder: all

@@ -1,0 +1,14 @@
+Linux:
+  impi-rt:
+    url: https://files.pythonhosted.org/packages/c5/3f/99b4773fd9ec07b95ce7f5c62832b0981eea278c9fbbc9ba15007c182bb5/impi_rt-2021.15.0-py2.py3-none-manylinux_2_28_x86_64.whl
+    sha256: 1e900c630d6396c8a33816de9866d74f06419903db454899045fadb05ab390f1
+  impi-devel:
+    url: https://files.pythonhosted.org/packages/f8/98/91f94d51e445645ae1556903940ff9a2081d115b8c6816ef0ae15a932d36/impi_devel-2021.15.0-py2.py3-none-manylinux_2_28_x86_64.whl
+    sha256: c0bc6c9b3a6f1606cb55f39a81f6fb3bc67821db9b7aaddb87f5b5f4a5c5aa6c
+Windows:
+  impi-rt:
+    url: https://files.pythonhosted.org/packages/f9/59/21ad0caa10105e1e53d5902eb134b0de096b399b5475957015816e1afc86/impi_rt-2021.15.0-py2.py3-none-win_amd64.whl
+    sha256: d5ce4ae07c6af2b4deff6ec29a3171a922606fbd376400bc26e6955804db937e
+  impi-devel:
+    url: https://files.pythonhosted.org/packages/e1/0a/eeb59bf7f0f252f97ffe37d5f5f1c1aae6c76f977d27436c1d57087c451f/impi_devel-2021.15.0-py2.py3-none-win_amd64.whl
+    sha256: d4d85884bc79a9627e1f1a4d5227fa99e5e3e234dddc4c2830fd7742f5e8ffda
