@@ -27,6 +27,7 @@ class OneMathConan(ConanFile):
 
         "mklcpu": [True, False],
         "mklgpu": [True, False],
+        "armpl": [True, False],
         "netlib_blas": [True, False],
         "generic_sycl_blas": [True, False],
         "portfft": [True, False],
@@ -46,6 +47,7 @@ class OneMathConan(ConanFile):
 
         "mklcpu": True,
         "mklgpu": True,
+        "armpl": False,
         "netlib_blas": False,
         "generic_sycl_blas": False,
         "portfft": False,
@@ -60,6 +62,7 @@ class OneMathConan(ConanFile):
         "hip_targets": None,
 
         "onemkl/*:sycl": True,
+        "onemkl/*:threading": "tbb",
     }
 
     python_requires = "conan-cuda/latest"
@@ -67,7 +70,7 @@ class OneMathConan(ConanFile):
 
     @property
     def _all_backends(self):
-        return ["mklcpu", "mklgpu", "netlib_blas", "generic_sycl_blas", "cublas", "curand", "cusolver", "cufft", "cusparse", "portfft"]
+        return ["mklcpu", "mklgpu", "armpl", "netlib_blas", "generic_sycl_blas", "cublas", "curand", "cusolver", "cufft", "cusparse", "portfft"]
 
     def export_sources(self):
         export_conandata_patches(self)
@@ -75,8 +78,6 @@ class OneMathConan(ConanFile):
     def config_options(self):
         if self.settings.os == "Windows":
             del self.options.fPIC
-        # if self.settings.compiler == "intel-cc":
-        #     self.options.use_adaptivecpp = False
 
     def configure(self):
         if self.options.shared:
@@ -95,6 +96,8 @@ class OneMathConan(ConanFile):
 
         if self.options.mklcpu or self.options.mklgpu:
             self.requires("onemkl/[*]", transitive_headers=True, transitive_libs=True)
+        if self.options.armpl:
+            self.requires("armpl/[^25.7]")
         if self.options.netlib_blas:
             self.requires("blas/latest")
         if self.options.portfft:
@@ -111,26 +114,28 @@ class OneMathConan(ConanFile):
         if self.options.cusparse:
             self.cuda.requires("cusparse")
 
-        # AdaptiveCpp / hipSYCL is disabled as most of the backends don't really successfully
-        # compile with it due to SYCL extensions being used.
-        # The transitive SYCL dependency also makes it difficult to handle correctly for Conan.
-        if self.options.get_safe("use_adaptivecpp"):
-            # PCUDA added in 25.02 has conflicts with CUDA headers
-            self.requires("adaptivecpp/[<25.02]")
-
     def validate(self):
         if self.settings.compiler != "intel-cc" or self.settings.compiler.mode not in ["icx", "dpcpp"]:
             raise ConanInvalidConfiguration("Only Intel icpx and dpcpp compilers are supported")
-        if self.options.generic_sycl_blas and any([self.options.netlib_blas]):
+        if self.options.generic_sycl_blas and any(self.options.get_safe(backend) for backend in
+                                                  ["mklcpu", "mklgpu", "armpl", "netlib_blas", "cublas"]):
             raise ConanInvalidConfiguration("Other BLAS backends cannot be enabled if generic_blas is used.")
+        if self.options.portfft and any(self.options.get_safe(backend) for backend in
+                                        ["mklcpu", "mklgpu", "armpl", "cufft"]):
+            raise ConanInvalidConfiguration("Other DFT backends cannot be enabled if portfft is used.")
+        if self.options.mklcpu and self.dependencies["onemkl"].options.threading not in ["tbb", "sequential"]:
+            raise ConanInvalidConfiguration("The oneMath MKL CPU backend requires oneMKL threading=tbb or sequential")
+        if self.options.armpl:
+            if self.settings.os not in ["Linux", "FreeBSD"] or self.settings.arch != "armv8":
+                raise ConanInvalidConfiguration("The ArmPL backend requires an Arm64 Unix target")
+            if self.dependencies["armpl"].options.interface != "ilp64":
+                raise ConanInvalidConfiguration("The oneMath ArmPL backend requires armpl:interface=ilp64")
         if not any(self.options.get_safe(backend, False) for backend in self._all_backends):
             raise ConanInvalidConfiguration("At least one backend must be enabled. "
                                             "Please enable at least one of: " + ", ".join(self._all_backends))
 
     def build_requirements(self):
         self.tool_requires("cmake/[>=3.17]")
-        if self.options.get_safe("use_adaptivecpp"):
-            self.tool_requires("adaptivecpp/<host_version>")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
@@ -146,7 +151,10 @@ class OneMathConan(ConanFile):
         # backends
         tc.cache_variables["ENABLE_MKLCPU_BACKEND"] = self.options.mklcpu
         tc.cache_variables["ENABLE_MKLGPU_BACKEND"] = self.options.mklgpu
-        tc.cache_variables["ENABLE_ARMPL_BACKEND"] = False
+        tc.cache_variables["ENABLE_MKLCPU_THREAD_TBB"] = self.options.mklcpu and self.dependencies["onemkl"].options.threading == "tbb"
+        tc.cache_variables["ENABLE_ARMPL_BACKEND"] = self.options.armpl
+        tc.cache_variables["ENABLE_ARMPL_OMP"] = self.options.armpl and self.dependencies["armpl"].options.threading == "omp"
+        tc.cache_variables["ENABLE_ARMPL_OPENRNG"] = False
         # blas
         tc.cache_variables["ENABLE_CUBLAS_BACKEND"] = self.options.cublas
         tc.cache_variables["ENABLE_ROCBLAS_BACKEND"] = False
@@ -168,10 +176,7 @@ class OneMathConan(ConanFile):
         tc.cache_variables["ENABLE_CUSPARSE_BACKEND"] = self.options.cusparse
         tc.cache_variables["ENABLE_ROCSPARSE_BACKEND"] = False
 
-        if self.options.get_safe("use_adaptivecpp"):
-            tc.cache_variables["ONEMATH_SYCL_IMPLEMENTATION"] = "hipsycl"
-        else:
-            tc.cache_variables["ONEMATH_SYCL_IMPLEMENTATION"] = "dpc++"
+        tc.cache_variables["ONEMATH_SYCL_IMPLEMENTATION"] = "dpc++"
         if self.options.hip_targets:
             tc.cache_variables["HIP_TARGETS"] = self.options.hip_targets
         tc.cache_variables["BUILD_FUNCTIONAL_TESTS"] = False
@@ -184,6 +189,9 @@ class OneMathConan(ConanFile):
         if self.options.netlib_blas:
             deps.set_property("blas", "cmake_file_name", "NETLIB")
             deps.set_property("blas", "cmake_target_name", "ONEMATH::NETLIB::NETLIB")
+        if self.options.armpl:
+            deps.set_property("armpl", "cmake_file_name", "ARMPL")
+            deps.set_property("armpl", "cmake_target_name", "ONEMKL::ARMPL::ARMPL")
         if self.options.cublas:
             deps.set_property("cublas", "cmake_target_name", "ONEMATH::cuBLAS::cuBLAS")
         if self.options.curand:
@@ -220,9 +228,9 @@ class OneMathConan(ConanFile):
             self.cpp_info.components["onemath_rng_mklcpu"].libs = ["onemath_rng_mklcpu"]
             self.cpp_info.components["onemath_rng_mklcpu"].requires = ["onemkl::mkl-sycl-rng"]
 
-            self.cpp_info.components["onemath_dft_mklgpu"].set_property("cmake_target_name", "ONEMATH::onemath_dft_mklgpu")
-            self.cpp_info.components["onemath_dft_mklgpu"].libs = ["onemath_dft_mklgpu"]
-            self.cpp_info.components["onemath_dft_mklgpu"].requires = ["onemkl::mkl-sycl-dft"]
+            self.cpp_info.components["onemath_dft_mklcpu"].set_property("cmake_target_name", "ONEMATH::onemath_dft_mklcpu")
+            self.cpp_info.components["onemath_dft_mklcpu"].libs = ["onemath_dft_mklcpu"]
+            self.cpp_info.components["onemath_dft_mklcpu"].requires = ["onemkl::mkl-sycl-dft"]
 
             self.cpp_info.components["onemath_sparse_blas_mklcpu"].set_property("cmake_target_name", "ONEMATH::onemath_sparse_blas_mklcpu")
             self.cpp_info.components["onemath_sparse_blas_mklcpu"].libs = ["onemath_sparse_blas_mklcpu"]
@@ -241,9 +249,9 @@ class OneMathConan(ConanFile):
             self.cpp_info.components["onemath_rng_mklgpu"].libs = ["onemath_rng_mklgpu"]
             self.cpp_info.components["onemath_rng_mklgpu"].requires = ["onemkl::mkl-sycl-rng"]
 
-            self.cpp_info.components["onemath_dft_mklcpu"].set_property("cmake_target_name", "ONEMATH::onemath_dft_mklcpu")
-            self.cpp_info.components["onemath_dft_mklcpu"].libs = ["onemath_dft_mklcpu"]
-            self.cpp_info.components["onemath_dft_mklcpu"].requires = ["onemkl::mkl-sycl-dft"]
+            self.cpp_info.components["onemath_dft_mklgpu"].set_property("cmake_target_name", "ONEMATH::onemath_dft_mklgpu")
+            self.cpp_info.components["onemath_dft_mklgpu"].libs = ["onemath_dft_mklgpu"]
+            self.cpp_info.components["onemath_dft_mklgpu"].requires = ["onemkl::mkl-sycl-dft"]
 
             self.cpp_info.components["onemath_sparse_blas_mklgpu"].set_property("cmake_target_name", "ONEMATH::onemath_sparse_blas_mklgpu")
             self.cpp_info.components["onemath_sparse_blas_mklgpu"].libs = ["onemath_sparse_blas_mklgpu"]
@@ -253,6 +261,13 @@ class OneMathConan(ConanFile):
             self.cpp_info.components["onemath_blas_netlib"].set_property("cmake_target_name", "ONEMATH::onemath_blas_netlib")
             self.cpp_info.components["onemath_blas_netlib"].libs = ["onemath_blas_netlib"]
             self.cpp_info.components["onemath_blas_netlib"].requires = ["blas::blas"]
+
+        if self.options.armpl:
+            for domain in ["blas", "lapack", "rng", "dft"]:
+                name = f"onemath_{domain}_armpl"
+                self.cpp_info.components[name].set_property("cmake_target_name", f"ONEMATH::{name}")
+                self.cpp_info.components[name].libs = [name]
+                self.cpp_info.components[name].requires = ["armpl::armpl"]
 
         if self.options.generic_sycl_blas:
             self.cpp_info.components["onemath_blas_generic"].set_property("cmake_target_name", "ONEMATH::onemath_blas_generic")

@@ -1,0 +1,75 @@
+diff --git a/src/blas/backends/armpl/CMakeLists.txt b/src/blas/backends/armpl/CMakeLists.txt
+--- a/src/blas/backends/armpl/CMakeLists.txt
++++ b/src/blas/backends/armpl/CMakeLists.txt
+@@ -41,13 +41,12 @@ target_include_directories(${LIB_OBJ}
+   PRIVATE ${PROJECT_SOURCE_DIR}/src/include
+           ${PROJECT_SOURCE_DIR}/src
+           ${CMAKE_BINARY_DIR}/bin
+-          ${ARMPL_INCLUDE}
+           ${ONEMATH_GENERATED_INCLUDE_PATH}
+ )
+ 
+ target_compile_options(${LIB_OBJ} PRIVATE ${ONEMATH_BUILD_COPT} ${ARMPL_COPT})
+ 
+-target_link_libraries(${LIB_OBJ} PUBLIC ONEMATH::SYCL::SYCL ${ARMPL_LINK})
++target_link_libraries(${LIB_OBJ} PUBLIC ONEMATH::SYCL::SYCL ONEMKL::ARMPL::ARMPL)
+ 
+ set_target_properties(${LIB_OBJ} PROPERTIES
+   POSITION_INDEPENDENT_CODE ON
+diff --git a/src/dft/backends/armpl/CMakeLists.txt b/src/dft/backends/armpl/CMakeLists.txt
+--- a/src/dft/backends/armpl/CMakeLists.txt
++++ b/src/dft/backends/armpl/CMakeLists.txt
+@@ -41,7 +41,6 @@ target_include_directories(${LIB_OBJ}
+   PRIVATE ${PROJECT_SOURCE_DIR}/src/include
+           ${PROJECT_SOURCE_DIR}/src
+           ${CMAKE_BINARY_DIR}/bin
+-          ${ARMPL_INCLUDE}
+ 	  ${ONEMATH_GENERATED_INCLUDE_PATH}
+ )
+ 
+@@ -51,7 +50,7 @@ if (USE_ADD_SYCL_TO_TARGET_INTEGRATION)
+ endif()
+ 
+ target_link_libraries(${LIB_OBJ}
+-	PUBLIC ONEMATH::SYCL::SYCL ${ARMPL_LINK}
++	PUBLIC ONEMATH::SYCL::SYCL ONEMKL::ARMPL::ARMPL
+   PRIVATE onemath_warnings
+ )
+ 
+diff --git a/src/lapack/backends/armpl/CMakeLists.txt b/src/lapack/backends/armpl/CMakeLists.txt
+--- a/src/lapack/backends/armpl/CMakeLists.txt
++++ b/src/lapack/backends/armpl/CMakeLists.txt
+@@ -35,11 +35,10 @@ target_include_directories(${LIB_OBJ}
+   PUBLIC ${ONEMATH_INCLUDE_DIRS}
+   PRIVATE ${PROJECT_SOURCE_DIR}/src/include
+           ${PROJECT_SOURCE_DIR}/src
+-          ${ARMPL_INCLUDE}
+ )
+ 
+ target_link_libraries(${LIB_OBJ}
+-	PUBLIC ONEMATH::SYCL::SYCL ${ARMPL_LINK}
++	PUBLIC ONEMATH::SYCL::SYCL ONEMKL::ARMPL::ARMPL
+ )
+ 
+ target_compile_features(${LIB_OBJ} PUBLIC cxx_std_14)
+diff --git a/src/rng/backends/armpl/CMakeLists.txt b/src/rng/backends/armpl/CMakeLists.txt
+--- a/src/rng/backends/armpl/CMakeLists.txt
++++ b/src/rng/backends/armpl/CMakeLists.txt
+@@ -51,7 +51,6 @@ target_include_directories(${LIB_OBJ}
+   PRIVATE ${PROJECT_SOURCE_DIR}/include
+           ${PROJECT_SOURCE_DIR}/src
+           ${CMAKE_BINARY_DIR}/bin
+-          ${ARMPL_INCLUDE}
+           ${ONEMATH_GENERATED_INCLUDE_PATH}
+ )
+ 
+ target_compile_options(${LIB_OBJ} PRIVATE ${ONEMATH_BUILD_COPT} ${ARMPL_COPT})
+@@ -60,7 +59,7 @@ if (USE_ADD_SYCL_TO_TARGET_INTEGRATION)
+   add_sycl_to_target(TARGET ${LIB_OBJ} SOURCES ${SOURCES})
+ endif()
+ 
+-target_link_libraries(${LIB_OBJ} PUBLIC ONEMATH::SYCL::SYCL $<IF:$<BOOL:${ENABLE_ARMPL_OPENRNG}>,ONEMATH::OpenRNG::OpenRNG,${ARMPL_LINK}>)
++target_link_libraries(${LIB_OBJ} PUBLIC ONEMATH::SYCL::SYCL $<IF:$<BOOL:${ENABLE_ARMPL_OPENRNG}>,ONEMATH::OpenRNG::OpenRNG,ONEMKL::ARMPL::ARMPL>)
+ 
+ set_target_properties(${LIB_OBJ} PROPERTIES
+   POSITION_INDEPENDENT_CODE ON

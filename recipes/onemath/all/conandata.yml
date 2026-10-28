@@ -1,9 +1,10 @@
 sources:
-  "0.8":
-    url: "https://github.com/uxlfoundation/oneMath/archive/refs/tags/v0.8.tar.gz"
-    sha256: "86c3bf5792fdf84ef273f4a787fb2db36c560a1febcadd71a579e4afd73ed232"
+  "0.9":
+    url: "https://github.com/uxlfoundation/oneMath/archive/v0.9.tar.gz"
+    sha256: "6d97e2e5c00c74c410c0c21ba00cfe61a61debea67891b9bcda5795c85111889"
 patches:
-  "0.8":
+  "0.9":
     - patch_file: "patches/0.7-netlib-compatibility.patch"
       patch_description: "Fix a function signature incompatibility with netlib BLAS"
-    - patch_file: "patches/0.7-adaptivecpp-cmake-support.patch"
+    - patch_file: "patches/0.9-armpl-target.patch"
+      patch_description: "Consume ArmPL through its exported CMake target"
