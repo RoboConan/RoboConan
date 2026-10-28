@@ -1,0 +1,2 @@
+subroutine intel_fortran_test_library()
+end subroutine intel_fortran_test_library

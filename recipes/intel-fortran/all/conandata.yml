@@ -1,0 +1,21 @@
+sources:
+  "2026.2.0":
+    Linux:
+      intel-oneapi-compiler-fortran:
+        url: "https://apt.repos.intel.com/oneapi/pool/main/intel-oneapi-compiler-fortran-2026.2-2026.2.0-863_amd64.deb"
+        sha256: "c7dd77eb3a7a67127360cfded6753038092a84f5470fb7cdbc5584b6ed3b49f2"
+      intel-oneapi-compiler-fortran-common:
+        url: "https://apt.repos.intel.com/oneapi/pool/main/intel-oneapi-compiler-fortran-common-2026.2-2026.2.0-863_all.deb"
+        sha256: "f94926088fe0f7a68b47808c721c4bd09745fcba3d3faae11327533722387f11"
+      intel-oneapi-compiler-shared:
+        url: "https://apt.repos.intel.com/oneapi/pool/main/intel-oneapi-compiler-shared-2026.2-2026.2.0-863_amd64.deb"
+        sha256: "6d8b93fd075bb0956862d0a52620c8b08bb32179aac85225a3078399c94a41ca"
+      intel-oneapi-compiler-shared-common:
+        url: "https://apt.repos.intel.com/oneapi/pool/main/intel-oneapi-compiler-shared-common-2026.2-2026.2.0-863_all.deb"
+        sha256: "cbc2f1282f03ae7b991698ce33035b496af085b1fee5e9a95d0a40720f838a79"
+      intel-oneapi-openmp:
+        url: "https://apt.repos.intel.com/oneapi/pool/main/intel-oneapi-openmp-2026.2-2026.2.0-863_amd64.deb"
+        sha256: "1b687b71bb33048ef40886b0c3b10224460d3c35e0226e6358ef283d2ecb1601"
+    Windows:
+      url: "https://registrationcenter-download.intel.com/akdlm/IRC_NAS/3b453507-718a-4d49-8ec3-55ae43b44de4/intel-fortran-compiler-2026.2.0.605_offline.exe"
+      sha256: "c3100d93d65181dd7cc10831269875b50bd385512d0e2fd32c868fa79bce8266"
