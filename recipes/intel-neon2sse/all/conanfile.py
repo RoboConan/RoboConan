@@ -4,6 +4,7 @@ from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
 from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
 from conan.tools.files import *
+from conan.tools.microsoft import is_msvc
 
 required_conan_version = ">=2.1"
 
@@ -37,10 +38,6 @@ class IntelNeon2sseConan(ConanFile):
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
-        # CMake v4 support
-        replace_in_file(self, "CMakeLists.txt",
-                        "cmake_minimum_required(VERSION 3.0)",
-                        "cmake_minimum_required(VERSION 3.5)")
 
     def generate(self):
         tc = CMakeToolchain(self)
@@ -63,6 +60,10 @@ class IntelNeon2sseConan(ConanFile):
         self.cpp_info.set_property("cmake_file_name", "NEON_2_SSE")
         self.cpp_info.set_property("cmake_target_name", "NEON_2_SSE::NEON_2_SSE")
         if self.options.SSE4:
-            self.cpp_info.defines.append("USE_SSE4")
+            if is_msvc(self):
+                self.cpp_info.defines.append("USE_SSE4")
+            else:
+                self.cpp_info.cflags.append("-msse4.2")
+                self.cpp_info.cxxflags.append("-msse4.2")
         if self.options.disable_performance_warnings:
             self.cpp_info.defines.append("NEON2SSE_DISABLE_PERFORMANCE_WARNING")
