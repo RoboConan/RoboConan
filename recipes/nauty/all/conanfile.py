@@ -71,15 +71,12 @@ class NautyConan(ConanFile):
             self.win_bash = True
             if not self.conf.get("tools.microsoft.bash:path", check_type=str):
                 self.tool_requires("msys2/latest")
-            if is_msvc(self):
-                self.tool_requires("automake/[^1.18.1]")
+        if is_msvc(self):
+            self.tool_requires("automake/[^1.18.1]")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
         apply_conandata_patches(self)
-        replace_in_file(self, "nauty.h",
-                        "#pragma instrinsic",
-                        "#pragma intrinsic")
 
     def generate(self):
         tc = AutotoolsToolchain(self)
@@ -91,7 +88,7 @@ class NautyConan(ConanFile):
 
         if is_msvc(self):
             env = Environment()
-            compile_wrapper = unix_path(self, self.conf.get("user.automake:compile-wrapper"))
+            compile_wrapper = unix_path(self, self.dependencies.build["automake"].conf_info.get("user.automake:compile-wrapper"))
             env.define("CC", f"{compile_wrapper} cl -nologo")
             env.vars(self).save_script("conanbuild_msvc")
 

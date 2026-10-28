@@ -1,0 +1,69 @@
+--- a/configure.ac
++++ b/configure.ac
+@@ -353,6 +353,6 @@
+ AC_MSG_CHECKING(if popcnt instruction is available and requested)
+ AC_RUN_IFELSE([AC_LANG_PROGRAM([],[[if (__builtin_cpu_supports("popcnt")) return 0; else return 1;]])],
+-  popsup=1,popsup=0)
++  popsup=1,popsup=0,popsup=0)
+ 
+ AS_IF([test "$allow_popcnt" -eq 1],
+       [have_hwpopcnt=$popsup
+@@ -458,6 +458,6 @@
+ AC_MSG_CHECKING(if lzcnt instruction is available and requested)
+ AC_RUN_IFELSE([AC_LANG_PROGRAM([],[[if (__builtin_cpu_supports("bmi")) return 0; else return 1;]])],
+-  lzsup=1,lzsup=0)
++  lzsup=1,lzsup=0,lzsup=0)
+ AS_IF([test "$allow_clz" -eq 1],
+       [have_hwlzcnt=$lzsup
+ test -f /proc/cpuinfo && $EGREP -i "abm|bmi1" /proc/cpuinfo >/dev/null && have_hwlzcnt=1 
+--- a/configure
++++ b/configure
+@@ -6383,11 +6383,8 @@
+ { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking if popcnt instruction is available and requested" >&5
+ printf %s "checking if popcnt instruction is available and requested... " >&6; }
+ if test "$cross_compiling" = yes
+ then :
+-  { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: error: in '$ac_pwd':" >&5
+-printf "%s\n" "$as_me: error: in '$ac_pwd':" >&2;}
+-as_fn_error $? "cannot run test program while cross compiling
+-See 'config.log' for more details" "$LINENO" 5; }
++  popsup=0
+ else case e in #(
+   e) cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+ /* end confdefs.h.  */
+@@ -6647,11 +6644,8 @@
+ { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking if lzcnt instruction is available and requested" >&5
+ printf %s "checking if lzcnt instruction is available and requested... " >&6; }
+ if test "$cross_compiling" = yes
+ then :
+-  { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: error: in '$ac_pwd':" >&5
+-printf "%s\n" "$as_me: error: in '$ac_pwd':" >&2;}
+-as_fn_error $? "cannot run test program while cross compiling
+-See 'config.log' for more details" "$LINENO" 5; }
++  lzsup=0
+ else case e in #(
+   e) cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+ /* end confdefs.h.  */
+--- a/nauty-h.in
++++ b/nauty-h.in
+@@ -1029,16 +1029,16 @@
+ #endif
+ #if WORDSIZE==128
+-#pragma instrinsic(_mm_popcnt_u64)
++#pragma intrinsic(_mm_popcnt_u64)
+ #define POPCOUNT(x) ((int)_mm_popcnt_u64((unsigned long long)((x)>>64)) \
+                    + (int)_mm_popcnt_u64((unsigned long long)((x)&MASK128R)))
+ #elif WORDSIZE==64
+-#pragma instrinsic(_mm_popcnt_u64)
++#pragma intrinsic(_mm_popcnt_u64)
+ #define POPCOUNT(x) ((int)_mm_popcnt_u64(x))
+ #elif WORDSIZE==32 
+-#pragma instrinsic(_mm_popcnt_u32)
++#pragma intrinsic(_mm_popcnt_u32)
+ #define POPCOUNT(x) _mm_popcnt_u32(x)
+ #elif WORDSIZE==16
+-#pragma instrinsic(_mm_popcnt_u32)
++#pragma intrinsic(_mm_popcnt_u32)
+ #define POPCOUNT(x) _mm_popcnt_u32((unsigned int)(x))
+ #endif
+ 

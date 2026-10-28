@@ -5,3 +5,4 @@ sources:
 patches:
   "2.9.3":
     - patch_file: "patches/move-extern-c.patch"
+    - patch_file: "patches/cross-compile-cpu-detection.patch"
