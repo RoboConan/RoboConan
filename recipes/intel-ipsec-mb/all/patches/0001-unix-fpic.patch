@@ -1,13 +1,13 @@
 diff --git a/lib/cmake/unix.cmake b/lib/cmake/unix.cmake
-index 78aafae..d94297c 100644
+index 5a5bd78..56c7d89 100644
 --- a/lib/cmake/unix.cmake
 +++ b/lib/cmake/unix.cmake
-@@ -38,7 +38,7 @@ string(APPEND CMAKE_ASM_NASM_FLAGS
+@@ -21,7 +21,7 @@ string(APPEND CMAKE_ASM_NASM_FLAGS
  
  # set C compiler flags
  set(CMAKE_C_FLAGS
--    "-fPIC -W -Wall -Wextra -Wmissing-declarations \
-+    "-W -Wall -Wextra -Wmissing-declarations \
+-    "-fPIC -fvisibility=hidden -W -Wall -Wextra -Wmissing-declarations \
++    "-fvisibility=hidden -W -Wall -Wextra -Wmissing-declarations \
  -Wpointer-arith -Wcast-qual -Wundef -Wwrite-strings -Wformat \
  -Wformat-security -Wunreachable-code -Wmissing-noreturn \
  -Wsign-compare -Wno-endif-labels -Wstrict-prototypes \

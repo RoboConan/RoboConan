@@ -49,24 +49,31 @@ class PackageConan(ConanFile):
     def build_requirements(self):
         self.tool_requires("nasm/[*]")
         self.tool_requires("cmake/[>3.16 <5]")
+        if self.settings.os == "Windows":
+            self.tool_requires("strawberryperl/[^5]")
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
         apply_conandata_patches(self)
 
     def generate(self):
-        # INFO: Conan 1.x does not find nasm package automatically due PATH priority.
         nasm_bin_folder = os.path.join(self.dependencies.direct_build["nasm"].package_folder, "bin").replace("\\", "/")
         nasm_path = os.path.join(nasm_bin_folder, "nasm").replace("\\", "/")
         env = Environment()
-        env.define("AS", nasm_path)
+        env.unset("AS")
         env.prepend("PATH", nasm_bin_folder)
         envvars = env.vars(self, scope="build")
         envvars.save_script("asm_configuration")
 
+        compiler_executables = self.conf.get("tools.build:compiler_executables", default={}, check_type=dict).copy()
+        compiler_executables.pop("asm", None)
+        self.conf.define("tools.build:compiler_executables", compiler_executables)
         tc = CMakeToolchain(self)
         # INFO: intel-ipsec-mb project forces shared by default.
         tc.cache_variables["BUILD_SHARED_LIBS"] = self.options.shared
+        tc.cache_variables["BUILD_LIBRARY_ONLY"] = True
+        if self.settings.os == "Windows":
+            tc.cache_variables["PERL_EXECUTABLE"] = self.dependencies.build["strawberryperl"].conf_info.get("user.strawberryperl:perl", check_type=str).replace("\\", "/")
         # INFO: When running on Linux, uses /usr/bin/nasm in case no enforced
         if self.settings_build.os == "Linux":
             tc.cache_variables["CMAKE_ASM_NASM_COMPILER"] = nasm_path
@@ -91,3 +98,5 @@ class PackageConan(ConanFile):
         self.cpp_info.libs = [self._cmake_target]
         if self.settings.os in ["Linux", "FreeBSD"]:
             self.cpp_info.system_libs = ["pthread"]
+        elif self.settings.os == "Windows":
+            self.cpp_info.system_libs = ["bcrypt"]
