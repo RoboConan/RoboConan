@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import gzip
 import pathlib
 import re
 from typing import Dict, List
@@ -32,27 +33,68 @@ PACKAGES = {
     "intel-openmp": ["intel-openmp"],
     "intel-opencl": ["intel-opencl-rt"],
     "intel-ur": ["intel-cmplr-lib-ur"],
+    "intel-compiler-runtime": ["intel-cmplr-lib-rt"],
     "intel-tcmlib": ["tcmlib"],
-    "intel-dpcpp-sycl": [
-        "intel-sycl-rt",
-        "intel-cmplr-lib-rt",
+    "intel-dpcpp-sycl": ["intel-sycl-rt"],
+    "intel-ipp": [
+        "ipp",
+        "ipp-devel",
+        "ipp-include",
+        "ipp-static",
     ],
+    "intelmpi": ["impi-rt", "impi-devel"],
+}
+
+APT_PACKAGES = {
+    "intel-dpcpp": [
+        "intel-oneapi-dpcpp-cpp",
+        "intel-oneapi-compiler-dpcpp-cpp-common",
+        "intel-oneapi-compiler-dpcpp-cpp-runtime",
+        "intel-oneapi-compiler-shared",
+        "intel-oneapi-compiler-shared-common",
+        "intel-oneapi-compiler-shared-runtime",
+        "intel-oneapi-openmp",
+        "intel-oneapi-dpcpp-debugger",
+        "intel-oneapi-dev-utilities",
+    ],
+}
+
+APT_MIN_VERSIONS = {
+    "intel-dpcpp": "2025.3",
 }
 
 MIN_VERSIONS = {
     "onemkl": "2024",
     "intel-openmp": "2024",
-    "intel-opencl": "2024",
-    "intel-ur": "2024",
-    "intel-dpcpp-sycl": "2025.1",
+    "intel-opencl": "2025.3",
+    "intel-ur": "2025.3",
+    "intel-compiler-runtime": "2025.3",
+    "intel-dpcpp-sycl": "2025.3",
+    "intel-ipp": "2026",
+    "intelmpi": "2021",
+    "umf": "1.0",
+}
+
+IGNORED_ONEMKL_PACKAGES = {
+    # Python bindings and NumPy integrations, not oneMKL binary payloads.
+    "mkl-fft",
+    "mkl-random",
+    "mkl-service",
+    "mkl-umath",
+}
+
+COMPLETE_PACKAGE_SETS = {
+    "intel-ipp",
+    "intelmpi",
 }
 
 recipes_root = pathlib.Path(__file__).resolve().parent.parent.parent.parent
 
 
 def list_all_intel_packages():
-    r = requests.get("https://pypi.org/user/IntelAutomationEngineering/")
-    return sorted(re.findall(r'"/project/(\S+)/"', r.text))
+    r = requests.get("https://software.repos.intel.com/python/pypi/", timeout=30)
+    r.raise_for_status()
+    return sorted(set(re.findall(r'/python/pypi/([^/]+)/', r.text)))
 
 
 def load_pypi_json(package: str) -> Dict:
@@ -86,6 +128,53 @@ def index_release_files(package: str) -> Dict[str, Dict[str, Dict[str, str]]]:
             filemap[fn] = {"url": url, "sha256": sha256}
         out[ver] = filemap
     return out
+
+
+def load_apt_index(architecture: str) -> List[Dict[str, str]]:
+    url = f"https://apt.repos.intel.com/oneapi/dists/all/main/binary-{architecture}/Packages.gz"
+    r = requests.get(url, timeout=30)
+    r.raise_for_status()
+    contents = gzip.decompress(r.content).decode()
+    packages = []
+    for paragraph in contents.split("\n\n"):
+        fields = dict(re.findall(r"^(Package|Version|Filename|SHA256): (.*)$", paragraph, re.MULTILINE))
+        if fields:
+            packages.append(fields)
+    return packages
+
+
+def apt_product_version(version: str) -> str:
+    return version.rsplit("-", 1)[0]
+
+
+def find_apt_package(index, package: str, version: str, exact=True):
+    minor = ".".join(version.split(".")[:2])
+    candidates = [
+        entry for entry in index
+        if entry["Package"] == f"{package}-{minor}"
+        and apt_product_version(entry["Version"]).startswith(f"{minor}.")
+    ]
+    if exact:
+        candidates = [entry for entry in candidates if apt_product_version(entry["Version"]) == version]
+    if not candidates:
+        return None
+    return max(candidates, key=lambda entry: Version(apt_product_version(entry["Version"])))
+
+
+def build_apt_sources(version, packages, index):
+    result = {"Linux": {}}
+    for package in packages:
+        optional = package in ["intel-oneapi-dpcpp-debugger", "intel-oneapi-dev-utilities"]
+        entry = find_apt_package(index, package, version, exact=not optional)
+        if entry is None:
+            if optional:
+                continue
+            raise Exception(f"No APT package found for {package} {version}")
+        result["Linux"][package] = {
+            "url": f"https://apt.repos.intel.com/oneapi/{entry['Filename']}",
+            "sha256": entry["SHA256"],
+        }
+    return result
 
 
 def build_sources_for_version(version, packages, per_package_filemaps):
@@ -127,13 +216,19 @@ def select_versions(versions: list[str], min_version: str) -> list[str]:
         key = (v.major, v.minor)
         if key not in grouped or v > grouped[key]:
             grouped[key] = v
-    selected_versions = [str(v) for v in sorted(grouped.values())]
-    return selected_versions
+    return [str(v) for v in sorted(grouped.values())]
+
+
+def remove_old_sources(conan_package: str, selected_versions: list[str]) -> None:
+    sources_dir = recipes_root / conan_package / "all" / "sources"
+    for source in sources_dir.glob("*.yml"):
+        if source.stem not in selected_versions:
+            source.unlink()
 
 
 def check_for_new_onemkl_packages(intel_packages):
     onemkl_packages = set(pkg for pkg in intel_packages if "mkl" in pkg)
-    missing = onemkl_packages - set(PACKAGES["onemkl"])
+    missing = onemkl_packages - set(PACKAGES["onemkl"]) - IGNORED_ONEMKL_PACKAGES
     if missing:
         raise Exception(f"Found new oneMKL packages: {sorted(missing)}\n"
                         "Please update the script and the recipes accordingly.")
@@ -148,16 +243,27 @@ def main():
         print(f"Fetching versions for {conan_package} ...")
         root_package = packages[0]
         versions = get_versions(root_package)
-        min_version = MIN_VERSIONS.get(conan_package, "0")
-        selected_versions = select_versions(versions, min_version)
-
-        print(f"Found {len(selected_versions)} versions")
-
         print("Indexing package release files from PyPI ...")
         per_package_filemaps = {}
         for pkg in packages:
             print(f"  -> {pkg}")
             per_package_filemaps[pkg] = index_release_files(pkg)
+
+        if conan_package in COMPLETE_PACKAGE_SETS:
+            versions = [
+                version for version in versions
+                if all(
+                    set(platform_packages) == set(packages)
+                    for platform_packages in build_sources_for_version(
+                        version, packages, per_package_filemaps
+                    ).values()
+                )
+            ]
+        min_version = MIN_VERSIONS.get(conan_package, "0")
+        selected_versions = select_versions(versions, min_version)
+        remove_old_sources(conan_package, selected_versions)
+
+        print(f"Found {len(selected_versions)} versions")
 
         for ver in selected_versions:
             data_obj = build_sources_for_version(ver, packages, per_package_filemaps)
@@ -174,6 +280,27 @@ def main():
             f.write("sources:\n")
             for ver in reversed(selected_versions):
                 f.write(f'  "{ver}":\n')
+
+    apt_index = load_apt_index("amd64") + load_apt_index("all")
+    for conan_package, packages in APT_PACKAGES.items():
+        root_package = packages[0]
+        root_versions = [
+            apt_product_version(entry["Version"])
+            for entry in apt_index
+            if entry["Package"].startswith(f"{root_package}-")
+        ]
+        selected_versions = select_versions(root_versions, APT_MIN_VERSIONS[conan_package])
+        sources = {
+            version: build_apt_sources(version, packages, apt_index)
+            for version in reversed(selected_versions)
+        }
+        with recipes_root.joinpath(conan_package, "config.yml").open("w") as f:
+            f.write("versions:\n")
+            for version in reversed(selected_versions):
+                f.write(f'  "{version}":\n')
+                f.write("    folder: all\n")
+        with recipes_root.joinpath(conan_package, "all", "conandata.yml").open("w") as f:
+            yaml.safe_dump({"sources": sources}, f, sort_keys=False)
 
     print("Done.")
 
