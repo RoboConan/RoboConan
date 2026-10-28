@@ -48,6 +48,8 @@ class CPythonMSVC(ConanFile):
         tc = MSBuildToolchain(self)
         tc.properties["IncludeExternals"] = "true"
         tc.properties["DisableGil"] = "true" if self.options.get_safe("freethreaded") else "false"
+        if Version(self.version) >= "3.15":
+            tc.properties["UsePymallocHugepages"] = "true" if self.options.pymalloc_hugepages else "false"
         tc.generate()
         deps = MSBuildDeps(self)
         deps.generate()
@@ -100,6 +102,23 @@ class CPythonMSVC(ConanFile):
         glob_regex = fnmatch.translate(glob_pattern)[4:-3].replace(".*", '[^"]*')
         pattern = fr'<(CLCompile|ClInclude|\w+) [^>]*Include="{glob_regex}"[^>]*?(/>|>[\s\S]*?</\1>)'
         self._regex_replace_in_file(f"{path}.vcxproj", pattern, "", re.DOTALL)
+
+    def _patch_solution(self):
+        self._regex_replace_in_file(
+            "pcbuild.sln",
+            r'(?m)(^Project\("[^"]+"\) = "python", "python\.vcxproj", "[^"]+"\r?\n)'
+            r'\tProjectSection\(ProjectDependencies\) = postProject\r?\n'
+            r'(?:\t\t[^\r\n]*\r?\n)+'
+            r'\tEndProjectSection\r?\n',
+            r'\1',
+        )
+        if Version(self.version, qualifier=True) >= "3.14":
+            self._regex_replace_in_file(
+                "pcbuild.sln",
+                r'(?m)^Project\("[^"]+"\) = "zlib-ng", "zlib-ng\.vcxproj", "[^"]+"\r?\n'
+                r'EndProject\r?\n',
+                "",
+            )
 
     def _patch_msvc(self):
         runtime_library = {
@@ -200,7 +219,8 @@ class CPythonMSVC(ConanFile):
         self._inject_conan_props_file("_zstd", "zstd", self.options.get_safe("with_zstd"))
 
     def _msvc_patch_sources(self):
-        with chdir(self, os.path.join(self.source_folder, "PCBuild")):
+        with chdir(self, os.path.join(self.source_folder, "PCbuild")):
+            self._patch_solution()
             self._patch_msvc()
 
     ## BUILD
@@ -250,7 +270,11 @@ class CPythonMSVC(ConanFile):
         sln = os.path.join(self.source_folder, "PCbuild", "pcbuild.sln")
         # FIXME: Solution files do not pick up the toolset automatically.
         cmd = msbuild.command(sln, targets=projects)
-        self.run(f"{cmd} /p:PlatformToolset={msvs_toolset(self)}")
+        cmd += f" /p:PlatformToolset={msvs_toolset(self)}"
+        cmd += f" /p:DisableGil={'true' if self.options.get_safe('freethreaded') else 'false'}"
+        if Version(self.version) >= "3.15":
+            cmd += f" /p:UsePymallocHugepages={'true' if self.options.pymalloc_hugepages else 'false'}"
+        self.run(cmd)
 
     ## PACKAGE
 
@@ -263,7 +287,10 @@ class CPythonMSVC(ConanFile):
             "armv8_32": "arm32",
             "armv8": "arm64",
         }
-        return os.path.join(self.source_folder, "PCbuild", build_subdir_lut[str(self.settings.arch)])
+        build_subdir = build_subdir_lut[str(self.settings.arch)]
+        if self.options.get_safe("freethreaded"):
+            build_subdir += "t"
+        return os.path.join(self.source_folder, "PCbuild", build_subdir)
 
     @property
     def _msvc_install_subprefix(self):

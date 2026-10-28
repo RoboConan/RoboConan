@@ -63,7 +63,7 @@ class CPythonAutotools(ConanFile):
         # Always build shared libraries for the interpreter and modules
         tc.configure_args.append("--enable-shared")
         # Also build static libs for shared=False
-        tc.configure_args.append(f"--enable-static={yes_no(not self.options.shared)}")
+        tc.configure_args.append(f"--with-static-libpython={yes_no(not self.options.shared)}")
 
         tc.configure_args += [
             f"--enable-optimizations={yes_no(self.options.pgo)}",
@@ -75,6 +75,8 @@ class CPythonAutotools(ConanFile):
             "--with-system-expat",
             "--with-system-libmpdec",
         ]
+        if Version(self.version) >= "3.15":
+            tc.configure_args.append(f"--with-pymalloc-hugepages={yes_no(self.options.get_safe('pymalloc_hugepages'))}")
         openssl_root = unix_path(self, self.dependencies["openssl"].package_folder)
         tc.configure_args.append(f"--with-openssl={openssl_root}")
         tc.configure_args.append("--disable-test-modules")
@@ -149,6 +151,8 @@ class CPythonAutotools(ConanFile):
 
         if Version(self.version) < "3.11":
             replace_in_file(self, setup_py, "if (MACOS and self.detect_tkinter_darwin())", "if (False)")
+            if not self.options.get_safe("with_sqlite3"):
+                replace_in_file(self, setup_py, "        self.detect_sqlite()", "        pass # self.detect_sqlite()")
 
     def _autotools_patch_sources(self):
         # <=3.10 requires a lot of manual injection of dependencies through setup.py
@@ -169,19 +173,34 @@ class CPythonAutotools(ConanFile):
 
         configure_path = os.path.join(self.source_folder, "configure")
 
+        darwin_cross_case = "  Darwin/)\n    define_xopen_source=no;;\n"
+        replace_in_file(self, configure_path,
+                        "  Darwin/[12][0-9].*)\n    define_xopen_source=no;;\n",
+                        "  Darwin/[12][0-9].*)\n    define_xopen_source=no;;\n" + darwin_cross_case)
+        replace_in_file(self, os.path.join(self.source_folder, "configure.ac"),
+                        "  Darwin/@<:@[12]@:>@@<:@0-9@:>@.*)\n    define_xopen_source=no;;\n",
+                        "  Darwin/@<:@[12]@:>@@<:@0-9@:>@.*)\n    define_xopen_source=no;;\n" + darwin_cross_case)
+
         # ensure disabled dependencies are not autodetected
         def _disable_dep(var, opt):
             if not self.options.get_safe(f"with_{opt}"):
                 replace_in_file(self, configure_path, f"{var}=yes", f"{var}=no")
 
-        if Version(self.version) >= "3.13":
+        if Version(self.version) >= "3.11":
             _disable_dep("have_bzip2", "bz2")
-            _disable_dep("have_curses", "curses")
-            _disable_dep("have_panel", "curses")
             _disable_dep("have_gdbm", "gdbm")
             _disable_dep("have_liblzma", "lzma")
             _disable_dep("have_sqlite3", "sqlite3")
             _disable_dep("have_tcltk", "tkinter")
+        if Version(self.version) >= "3.12":
+            if Version(self.version) < "3.13" and not self.options.get_safe("with_curses"):
+                replace_in_file(self, configure_path, "have_curses=ncursesw", "have_curses=no")
+                replace_in_file(self, configure_path, "have_curses=ncurses", "have_curses=no")
+                replace_in_file(self, configure_path, "have_panel=panelw", "have_panel=no")
+                replace_in_file(self, configure_path, "have_panel=panel", "have_panel=no")
+            else:
+                _disable_dep("have_curses", "curses")
+                _disable_dep("have_panel", "curses")
         if Version(self.version, qualifier=True) >= "3.14":
             _disable_dep("have_libzstd", "zstd")
 
@@ -199,8 +218,10 @@ class CPythonAutotools(ConanFile):
 
     def _autotools_package(self):
         autotools = Autotools(self)
-        target = "sharedinstall" if is_apple_os(self) else "install"
-        autotools.install(target=target, args=["DESTDIR="])
+        if is_apple_os(self):
+            # FIXME: See https://github.com/python/cpython/issues/109796, this workaround is mentioned there
+            autotools.make(target="sharedinstall", args=["DESTDIR="])
+        autotools.install(args=["DESTDIR="])
         if not self.options.shared:
             copy(self, self._exact_lib_name, self.build_folder, os.path.join(self.package_folder, "lib"))
         rmdir(self, os.path.join(self.package_folder, "lib", "pkgconfig"))
@@ -250,7 +271,12 @@ class CPythonAutotools(ConanFile):
             os.symlink(f"../python{self._version_suffix}-config", f"python{self._version_suffix}-config")
             os.symlink(f"../python{self._version_suffix}-config", "python3-config")
         # Pop an extra directory from the prefix path when inside bin/config.
-        replace_in_file(self, os.path.join(self.package_folder, "bin", f"python{self._version_suffix}-config"),
-                        "    echo $RESULT",
-                        '    [ "$(basename "$RESULT")" = "bin" ] && RESULT=$(dirname "$RESULT")\n'
-                        "    echo $RESULT")
+        python_config = os.path.join(self.package_folder, "bin", f"python{self._version_suffix}-config")
+        if 'printf \'%s\\n\' "$RESULT"' in load(self, python_config):
+            replace_in_file(self, python_config,
+                            '    printf \'%s\\n\' "$RESULT"',
+                            '    [ "$(basename "$RESULT")" = "bin" ] && RESULT=$(dirname "$RESULT")\n    printf \'%s\\n\' "$RESULT"')
+        else:
+            replace_in_file(self, python_config,
+                            '    echo $RESULT',
+                            '    [ "$(basename "$RESULT")" = "bin" ] && RESULT=$(dirname "$RESULT")\n    echo $RESULT')

@@ -1,6 +1,7 @@
 import os
+import re
 
-from conan.errors import ConanInvalidConfiguration
+from conan.errors import ConanException, ConanInvalidConfiguration
 from conan.tools.apple import is_apple_os
 from conan.tools.build import can_run
 from conan.tools.files import *
@@ -31,6 +32,7 @@ class CPythonConan(CPythonAutotools, CPythonMSVC):
         "lto": [True, False],
         "docstrings": [True, False],
         "pymalloc": [True, False],
+        "pymalloc_hugepages": [True, False],
         "with_bz2": [True, False],
         "with_curses": [True, False],
         "with_gdbm": [True, False],
@@ -51,6 +53,7 @@ class CPythonConan(CPythonAutotools, CPythonMSVC):
         "lto": False,
         "docstrings": True,
         "pymalloc": True,
+        "pymalloc_hugepages": False,
         "with_bz2": True,
         "with_curses": False,
         "with_gdbm": False,
@@ -64,11 +67,12 @@ class CPythonConan(CPythonAutotools, CPythonMSVC):
         "env_vars": True,
     }
     options_description = {
-        "freethreaded": "Disable GIL for free-threaded mode (experimental as of v3.14)",
+        "freethreaded": "Disable the GIL for free-threaded mode",
         "pgo": "Enable profile-guided optimization (PGO)",
         "lto": "Enable link-time optimization (LTO)",
         "docstrings": "Enable documentation strings",
         "pymalloc": "Enable specialized mallocs",
+        "pymalloc_hugepages": "Use huge pages for pymalloc arenas",
         "with_bz2": "Add bzip2 dependency for bz2 module",
         "with_curses": "Add ncurses dependency for curses module",
         "with_gdbm": "Add gdbm dependency for dbm module",
@@ -108,12 +112,16 @@ class CPythonConan(CPythonAutotools, CPythonMSVC):
             del self.options.with_readline
         if Version(self.version) < "3.13":
             del self.options.freethreaded
+        if Version(self.version) < "3.15":
+            del self.options.pymalloc_hugepages
         if Version(self.version, qualifier=True) < "3.14":
             del self.options.with_zstd
 
     def configure(self):
         if self.options.get_safe("shared"):
             self.options.rm_safe("fPIC")
+        if not self.options.get_safe("pymalloc"):
+            self.options.rm_safe("pymalloc_hugepages")
 
     def layout(self):
         basic_layout(self, src_folder="src")
@@ -135,15 +143,15 @@ class CPythonConan(CPythonAutotools, CPythonMSVC):
         if self.options.get_safe("with_bz2"):
             self.requires("bzip2/[^1.0.8]")
         if self.options.get_safe("with_gdbm"):
-            self.requires("gdbm/1.23")
+            self.requires("gdbm/[^1.23]")
         if self.options.get_safe("with_readline") == "readline":
             self.requires("readline/[^8.2]")
         elif self.options.get_safe("with_readline") == "editline":
             self.requires("editline/[^3.1]")
         if self.options.get_safe("with_sqlite3"):
-            self.requires("sqlite3/[>=3.45.0 <4]")
+            self.requires("sqlite3/[^3]")
         if self.options.get_safe("with_tkinter"):
-            self.requires("tk/8.6.16")
+            self.requires("tk/[^9]")
         if self.options.get_safe("with_curses"):
             # Used in a public header
             # https://github.com/python/cpython/blob/v3.10.13/Include/py_curses.h#L34
@@ -233,8 +241,35 @@ class CPythonConan(CPythonAutotools, CPythonMSVC):
         content = content.replace("@PREFIX_PATH@", prefix_path)
         content = content.replace("@PYTHON_EXECUTABLE@", python_exe)
         content = content.replace("@PYTHON_LIBRARY@", python_library)
+        content = content.replace("@PYTHON_SOABI@", self._soabi)
+        content = content.replace("@PYTHON_SOSABI@", self._sosabi)
+        content = content.replace("@PYTHON_FREE_THREADED@", "TRUE" if self.options.get_safe("freethreaded") else "FALSE")
+        find_abi = ""
+        if self.options.get_safe("freethreaded"):
+            find_abi = 'set(${_PYTHON}_FIND_ABI "ANY" "ANY" "ANY" "ON")'
+        content = content.replace("@PYTHON_FIND_ABI@", find_abi)
         cmake_file = os.path.join(self.package_folder, self._cmake_module_path, "use_conan_python.cmake")
         save(self, cmake_file, content)
+
+    @property
+    def _soabi(self):
+        if is_msvc(self):
+            return ""
+        makefile = load(self, os.path.join(self.build_folder, "Makefile"))
+        match = re.search(r"^SOABI\s*=\s*(\S*)", makefile, re.MULTILINE)
+        if match is None:
+            raise ConanException("Could not determine CPython's target SOABI")
+        return match.group(1)
+
+    @property
+    def _sosabi(self):
+        if is_msvc(self):
+            return ""
+        if self.options.get_safe("freethreaded") and Version(self.version) >= "3.15":
+            return "abi3t"
+        if self.options.get_safe("freethreaded"):
+            return ""
+        return "abi3"
 
     def package(self):
         copy(self, "LICENSE", src=self.source_folder, dst=os.path.join(self.package_folder, "licenses"))
@@ -263,7 +298,9 @@ class CPythonConan(CPythonAutotools, CPythonMSVC):
     @property
     def _lib_name(self):
         if is_msvc(self):
-            lib_ext = "_d" if self.settings.build_type == "Debug" else ""
+            lib_ext = "t" if self.options.get_safe("freethreaded") else ""
+            if self.settings.build_type == "Debug":
+                lib_ext += "_d"
         else:
             lib_ext = self._abi_suffix
         return f"python{self._version_suffix}{lib_ext}"
@@ -295,6 +332,8 @@ class CPythonConan(CPythonAutotools, CPythonMSVC):
         else:
             comp_python.includedirs = ["include", os.path.join("include", f"python{self._version_suffix}{self._abi_suffix}")]
         comp_python.libdirs = []
+        if self.options.get_safe("freethreaded"):
+            comp_python.defines.append("Py_GIL_DISABLED=1")
         if self.options.get_safe("shared", True):
             comp_python.defines.append("Py_ENABLE_SHARED")
         else:

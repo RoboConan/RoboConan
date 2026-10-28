@@ -21,7 +21,9 @@ class TestPackageConan(ConanFile):
 
     def build_requirements(self):
         # These tests can break pip-installed CMake, so add it as a tool_requires.
-        self.tool_requires("cmake/[>=3.26 <5]")
+        # CMake 4.4 teaches Python3_add_library() to target abi3t for
+        # free-threaded Python 3.15 when USE_SABI is requested.
+        self.tool_requires("cmake/[^4.4]")
         self.tool_requires("cpython/<host_version>")
 
     def layout(self):
@@ -48,6 +50,10 @@ class TestPackageConan(ConanFile):
     def generate(self):
         tc = CMakeToolchain(self)
         tc.cache_variables["BUILD_MODULE"] = self._supports_modules
+        python = self.dependencies.build["cpython"].conf_info.get(
+            "user.cpython:python", check_type=str
+        ).replace("\\", "/")
+        tc.cache_variables["Python3_EXECUTABLE"] = python
         tc.generate()
 
         deps = CMakeDeps(self)
@@ -107,12 +113,17 @@ class TestPackageConan(ConanFile):
             self.output.info("Module failed as expected")
 
     def test(self):
-        if not is_msvc(self):
-            self.run("python3-config --prefix")
-
-        self.run('python -c "print(\'hello world\')"')
-
         if can_run(self):
+            if not is_msvc(self):
+                self.run("python3-config --prefix", env="conanrun")
+
+            code = (f"import sys; assert '.'.join(map(str, sys.version_info[:3])) == "
+                    f"'{self._py_version}', sys.version")
+            if self._py_version >= "3.13":
+                gil_enabled = not self._cpython_option("freethreaded")
+                code += f"; assert sys._is_gil_enabled() is {gil_enabled}"
+            self.run(f'python -c "{code}"', env="conanrun")
+
             self._test_module("gdbm", self._cpython_option("with_gdbm"))
             self._test_module("bz2", self._cpython_option("with_bz2"))
             self._test_module("lzma", self._cpython_option("with_lzma"))
@@ -139,6 +150,8 @@ class TestPackageConan(ConanFile):
                 env.define_path("PYTHONPATH", os.path.join(self.build_folder, self.cpp.build.libdirs[0]))
                 with env.vars(self).apply():
                     self._test_module("spam", True)
+                    if self._py_version >= "3.15":
+                        self._test_module("spam_sabi", True)
 
                 if self._test_setuptools:
                     self.output.info("Testing module (spam) using setup.py built module")

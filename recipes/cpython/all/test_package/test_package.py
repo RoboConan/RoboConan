@@ -94,6 +94,19 @@ def test_spam():
 
 
 @add_test
+def test_spam_sabi():
+    import spam_sabi
+
+    if spam_sabi.answer() != 42:
+        raise Exception("spam_sabi.answer() returned an unexpected value")
+
+    if os.name != "nt":
+        expected_suffix = ".abi3t.so" if sys._is_gil_enabled() is False else ".abi3.so"
+        if not spam_sabi.__file__.endswith(expected_suffix):
+            raise Exception(f"Expected {expected_suffix} extension, got {spam_sabi.__file__}")
+
+
+@add_test
 def test_bz2():
     import bz2
 
@@ -160,6 +173,11 @@ def test_sqlite3():
 def test_decimal():
     # Check whether the _decimal package was built successfully
     import _decimal as decimal
+    import importlib.machinery
+
+    if not any(decimal.__file__.endswith(suffix) for suffix in importlib.machinery.EXTENSION_SUFFIXES):
+        raise Exception(f"_decimal is not a C extension: {decimal.__file__}")
+    print(f"Using _decimal extension {decimal.__file__}")
 
     decimal.getcontext().prec = 6
     print("1/7 =", decimal.Decimal(1) / decimal.Decimal(7))

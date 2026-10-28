@@ -1,39 +1,35 @@
 sources:
-  "3.14.3":
-    url: "https://www.python.org/ftp/python/3.14.3/Python-3.14.3.tgz"
-    sha256: "d7fe130d0501ae047ca318fa92aa642603ab6f217901015a1df6ce650d5470cd"
-  "3.13.12":
-    url: "https://www.python.org/ftp/python/3.13.12/Python-3.13.12.tgz"
-    sha256: "12e7cb170ad2d1a69aee96a1cc7fc8de5b1e97a2bdac51683a3db016ec9a2996"
-  "3.12.13":
-    url: "https://www.python.org/ftp/python/3.12.13/Python-3.12.13.tgz"
-    sha256: "0816c4761c97ecdb3f50a3924de0a93fd78cb63ee8e6c04201ddfaedca500b0b"
-  "3.11.15":
-    url: "https://www.python.org/ftp/python/3.11.15/Python-3.11.15.tgz"
-    sha256: "f4de1b10bd6c70cbb9fa1cd71fc5038b832747a74ee59d599c69ce4846defb50"
-  "3.10.20":
-    url: "https://www.python.org/ftp/python/3.10.20/Python-3.10.20.tgz"
-    sha256: "4ff5fd4c5bab803b935019f3e31d7219cebd6f870d00389cea53b88bbe935d1a"
+  "3.15.2":
+    url: "https://www.python.org/ftp/python/3.15.2/Python-3.15.2.tgz"
+    sha256: "f74e1db0eabd651cd01e4e2a00201bd41866abe74869ab716f9bf33cbbaa0943"
+  "3.14.10":
+    url: "https://www.python.org/ftp/python/3.14.10/Python-3.14.10.tgz"
+    sha256: "9e4996c19ae5a3df31f10c37723661f71d3455d73bd005f79df7098e5cc13192"
+  "3.13.18":
+    url: "https://www.python.org/ftp/python/3.13.18/Python-3.13.18.tgz"
+    sha256: "99dbc847fb6a3fb26358370fb4c591215864116ebb584f2b89ab0b74c51dfa2a"
+  "3.12.16":
+    url: "https://www.python.org/ftp/python/3.12.16/Python-3.12.16.tgz"
+    sha256: "710c3e75dac8b2f258d9cd0f76e5c4c2e9175fac9e249c98901552f7cf33b7dd"
+  "3.11.18":
+    url: "https://www.python.org/ftp/python/3.11.18/Python-3.11.18.tgz"
+    sha256: "5f62711b12470fd435f83f1451c1b1ef4a179aebc715c716874b0967567d814e"
+  "3.10.22":
+    url: "https://www.python.org/ftp/python/3.10.22/Python-3.10.22.tgz"
+    sha256: "9448b34d16f8e3db0964ac3ed9fb283197747543c2c021f283ffd2c8b7287357"
 patches:
-  "3.14.3":
-    - patch_file: "patches/3.14/3.14.0-0002-remove-module-deps.patch"
+  "3.13.18":
     - patch_file: "patches/3.13/3.13.0-0003-relocatable-python-config.patch"
-  "3.13.12":
-    - patch_file: "patches/3.13/3.13.0-0002-remove-module-deps.patch"
-    - patch_file: "patches/3.13/3.13.0-0003-relocatable-python-config.patch"
-  "3.12.13":
+  "3.12.16":
     - patch_file: "patches/3.9/3.9.7-0002-_msi-vcxproj.patch"
     - patch_file: "patches/3.x-0001-relocatable-python-config.patch"
-    - patch_file: "patches/3.12/3.12.1-0002-remove-module-deps.patch"
     - patch_file: "patches/3.12/3.12.2-0003-disable-nis.patch"
-  "3.11.15":
+  "3.11.18":
     - patch_file: "patches/3.9/3.9.7-0002-_msi-vcxproj.patch"
     - patch_file: "patches/3.x-0001-relocatable-python-config.patch"
-    - patch_file: "patches/3.x-0002-remove-module-deps.patch"
     - patch_file: "patches/3.11/3.11.9-0002-disable-nis.patch"
-  "3.10.20":
+  "3.10.22":
     - patch_file: "patches/3.9/3.9.7-0002-_msi-vcxproj.patch"
     - patch_file: "patches/3.10/3.10.0-0003-_ctypes-ffi.patch"
     - patch_file: "patches/3.x-0001-relocatable-python-config.patch"
-    - patch_file: "patches/3.x-0002-remove-module-deps.patch"
     - patch_file: "patches/3.10/3.10.14-0002-disable-nis.patch"
