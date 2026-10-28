@@ -42,6 +42,12 @@ PACKAGES = {
         "ipp-include",
         "ipp-static",
     ],
+    "intel-ipp-crypto": [
+        "ipp-crypto",
+        "ipp-crypto-devel",
+        "ipp-crypto-include",
+        "ipp-crypto-static",
+    ],
     "intelmpi": ["impi-rt", "impi-devel"],
 }
 
@@ -71,7 +77,8 @@ MIN_VERSIONS = {
     "intel-compiler-runtime": "2025.3",
     "intel-dpcpp-sycl": "2025.3",
     "intel-ipp": "2026",
-    "intelmpi": "2021",
+    "intel-ipp-crypto": "2026",
+    "intelmpi": "2021.15",
     "umf": "1.0",
 }
 
@@ -84,8 +91,12 @@ IGNORED_ONEMKL_PACKAGES = {
 }
 
 COMPLETE_PACKAGE_SETS = {
-    "intel-ipp",
-    "intelmpi",
+    "intel-ipp": {},
+    "intel-ipp-crypto": {
+        # Linux does not publish an import-library package.
+        "Linux": {"ipp-crypto-devel"},
+    },
+    "intelmpi": {},
 }
 
 recipes_root = pathlib.Path(__file__).resolve().parent.parent.parent.parent
@@ -253,10 +264,10 @@ def main():
             versions = [
                 version for version in versions
                 if all(
-                    set(platform_packages) == set(packages)
-                    for platform_packages in build_sources_for_version(
+                    set(platform_packages) == set(packages) - COMPLETE_PACKAGE_SETS[conan_package].get(platform, set())
+                    for platform, platform_packages in build_sources_for_version(
                         version, packages, per_package_filemaps
-                    ).values()
+                    ).items()
                 )
             ]
         min_version = MIN_VERSIONS.get(conan_package, "0")
@@ -290,17 +301,19 @@ def main():
             if entry["Package"].startswith(f"{root_package}-")
         ]
         selected_versions = select_versions(root_versions, APT_MIN_VERSIONS[conan_package])
-        sources = {
-            version: build_apt_sources(version, packages, apt_index)
-            for version in reversed(selected_versions)
-        }
+        remove_old_sources(conan_package, selected_versions)
+        for version in selected_versions:
+            write_yaml(conan_package, version, build_apt_sources(version, packages, apt_index))
         with recipes_root.joinpath(conan_package, "config.yml").open("w") as f:
             f.write("versions:\n")
             for version in reversed(selected_versions):
                 f.write(f'  "{version}":\n')
                 f.write("    folder: all\n")
         with recipes_root.joinpath(conan_package, "all", "conandata.yml").open("w") as f:
-            yaml.safe_dump({"sources": sources}, f, sort_keys=False)
+            f.write("# Use recipes/conan-utils/all/scripts/update-oneapi.py to add new versions\n")
+            f.write("sources:\n")
+            for version in reversed(selected_versions):
+                f.write(f'  "{version}":\n')
 
     print("Done.")
 
