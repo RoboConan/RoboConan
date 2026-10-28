@@ -1,0 +1,22 @@
+diff --git a/coin.m4 b/coin.m4
+index 77a7781..a0541b0 100644
+--- a/coin.m4
++++ b/coin.m4
+@@ -325,7 +325,7 @@ coin_cxx_is_cl=false
+ # It seems that we need to cleanup something here for the Windows
+ case "$CXX" in
+   clang* | */clang*) ;;
+-  cl* | */cl* | CL* | */CL* | icl* | */icl* | ICL* | */ICL*)
++  cl* | */cl* | *" cl "* | CL* | */CL* | *" CL "* | icl* | */icl* | ICL* | */ICL*)
+     sed -e 's/^void exit (int);//' confdefs.h >> confdefs.hh
+     mv confdefs.hh confdefs.h
+     coin_cxx_is_cl=true
+@@ -746,7 +746,7 @@ CFLAGS="$save_cflags"
+ coin_cc_is_cl=false
+ case "$CC" in
+   clang* | */clang* ) ;;
+-  cl* | */cl* | CL* | */CL* | icl* | */icl* | ICL* | */ICL*)
++  cl* | */cl* | *" cl "* | CL* | */CL* | *" CL "* | icl* | */icl* | ICL* | */ICL*)
+     coin_cc_is_cl=true
+     ;;
+ esac
