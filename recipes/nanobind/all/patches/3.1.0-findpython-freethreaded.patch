@@ -1,0 +1,11 @@
+--- a/cmake/nanobind-config.cmake
++++ b/cmake/nanobind-config.cmake
+@@ -55,6 +55,7 @@ string(REGEX REPLACE "[^-]*-([^-]*)-.*" "\\1" NB_ABI "${NB_SOABI}")
+ 
+ # Windows has no ABI-tagged extension suffix; scikit-build-core sets this instead
+-if(Py_TARGET_ABI3T)
++# Modern FindPython reports the same state with Python_FREE_THREADED.
++if(Py_TARGET_ABI3T OR Python_FREE_THREADED)
+   set(NB_ABI "${Python_VERSION_MAJOR}${Python_VERSION_MINOR}t")
+ endif()
+ 

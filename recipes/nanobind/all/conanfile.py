@@ -24,14 +24,18 @@ class PackageConan(ConanFile):
     def package_id(self):
         self.info.clear()
 
+    def export_sources(self):
+        export_conandata_patches(self)
+
     def requirements(self):
-        self.requires("tsl-robin-map/[^1.3.0]")
+        self.requires("tsl-robin-map/[^1.3]")
 
     def validate(self):
         check_min_cppstd(self, 17)
 
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
+        apply_conandata_patches(self)
 
     def generate(self):
         tc = CMakeToolchain(self)

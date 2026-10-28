@@ -1,0 +1,4 @@
+sources:
+  "1.0.0":
+    url: "https://github.com/wjakob/nanobind/archive/backend-v1.0.0.tar.gz"
+    sha256: "548a8192932153a8955f172e4c37f11c5341f174eda8e2dee20303fbd32c1598"

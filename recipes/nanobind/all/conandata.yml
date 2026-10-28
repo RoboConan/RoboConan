@@ -1,4 +1,11 @@
 sources:
-  "2.12.0":
-    url: "https://github.com/wjakob/nanobind/archive/refs/tags/v2.12.0.tar.gz"
-    sha256: "01f1f0cd0398743c18f33d07ae36ad410bd7f4a1e90683b508504de897d6e629"
+  "3.1.0":
+    url: "https://github.com/wjakob/nanobind/archive/v3.1.0.tar.gz"
+    sha256: "39659890a112e84e7263e4a263c71dd2621f866f7a4386ce95ef410e6c0e5c2f"
+  "2.15.0":
+    url: "https://github.com/wjakob/nanobind/archive/v2.15.0.tar.gz"
+    sha256: "36c8760b3acb25643cd89d549782d8c67bd82ce54c6238608787c22a34fd490f"
+patches:
+  "3.1.0":
+    - patch_file: "patches/3.1.0-findpython-freethreaded.patch"
+      patch_description: "Detect free-threaded CPython from modern FindPython"
