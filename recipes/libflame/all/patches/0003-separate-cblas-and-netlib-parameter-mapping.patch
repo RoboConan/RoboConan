@@ -1,0 +1,92 @@
+diff --git a/src/base/flamec/main/FLA_Param.c b/src/base/flamec/main/FLA_Param.c
+index 36ffc0c..5a9cc85 100644
+--- a/src/base/flamec/main/FLA_Param.c
++++ b/src/base/flamec/main/FLA_Param.c
+@@ -20,27 +20,15 @@ void FLA_Param_map_flame_to_netlib_trans( FLA_Trans trans, void* blas_trans )
+ {
+ 	if ( trans == FLA_NO_TRANSPOSE )
+ 	{
+-#ifdef FLA_ENABLE_CBLAS_INTERFACES
+-		*( ( enum CBLAS_TRANSPOSE* ) blas_trans ) = CblasNoTrans;
+-#else
+ 		*( ( char*                 ) blas_trans ) = 'N';
+-#endif
+ 	}
+ 	else if ( trans == FLA_TRANSPOSE )
+ 	{
+-#ifdef FLA_ENABLE_CBLAS_INTERFACES
+-		*( ( enum CBLAS_TRANSPOSE* ) blas_trans ) = CblasTrans;
+-#else
+ 		*( ( char*                 ) blas_trans ) = 'T';
+-#endif
+ 	}
+ 	else if ( trans == FLA_CONJ_TRANSPOSE )
+ 	{
+-#ifdef FLA_ENABLE_CBLAS_INTERFACES
+-		*( ( enum CBLAS_TRANSPOSE* ) blas_trans ) = CblasConjTrans;
+-#else
+ 		*( ( char*                 ) blas_trans ) = 'C';
+-#endif
+ 	}
+ 	else
+ 	{
+@@ -89,19 +77,11 @@ void FLA_Param_map_flame_to_netlib_uplo( FLA_Uplo uplo, void* blas_uplo )
+ {
+ 	if ( uplo == FLA_LOWER_TRIANGULAR )
+ 	{
+-#ifdef FLA_ENABLE_CBLAS_INTERFACES
+-		*( ( enum CBLAS_UPLO* ) blas_uplo ) = CblasLower;
+-#else
+ 		*( ( char*            ) blas_uplo ) = 'L';
+-#endif
+ 	}
+ 	else if ( uplo == FLA_UPPER_TRIANGULAR )
+ 	{
+-#ifdef FLA_ENABLE_CBLAS_INTERFACES
+-		*( ( enum CBLAS_UPLO* ) blas_uplo ) = CblasUpper;
+-#else
+ 		*( ( char*            ) blas_uplo ) = 'U';
+-#endif
+ 	}
+ 	else
+ 	{
+@@ -132,19 +112,11 @@ void FLA_Param_map_flame_to_netlib_side( FLA_Side side, void* blas_side )
+ {
+ 	if ( side == FLA_LEFT )
+ 	{
+-#ifdef FLA_ENABLE_CBLAS_INTERFACES
+-		*( ( enum CBLAS_SIDE* ) blas_side ) = CblasLeft;
+-#else
+ 		*( ( char*            ) blas_side ) = 'L';
+-#endif
+ 	}
+ 	else if ( side == FLA_RIGHT )
+ 	{
+-#ifdef FLA_ENABLE_CBLAS_INTERFACES
+-		*( ( enum CBLAS_SIDE* ) blas_side ) = CblasRight;
+-#else
+ 		*( ( char*            ) blas_side ) = 'R';
+-#endif
+ 	}
+ 	else
+ 	{
+@@ -175,19 +147,11 @@ void FLA_Param_map_flame_to_netlib_diag( FLA_Diag diag, void* blas_diag )
+ {
+ 	if ( diag == FLA_NONUNIT_DIAG )
+ 	{
+-#ifdef FLA_ENABLE_CBLAS_INTERFACES
+-		*( ( enum CBLAS_DIAG* ) blas_diag ) = CblasNonUnit;
+-#else
+ 		*( ( char*            ) blas_diag ) = 'N';
+-#endif
+ 	}
+ 	else if ( diag == FLA_UNIT_DIAG )
+ 	{
+-#ifdef FLA_ENABLE_CBLAS_INTERFACES
+-		*( ( enum CBLAS_DIAG* ) blas_diag ) = CblasUnit;
+-#else
+ 		*( ( char*            ) blas_diag ) = 'U';
+-#endif
+ 	}
+ 	else
+ 	{

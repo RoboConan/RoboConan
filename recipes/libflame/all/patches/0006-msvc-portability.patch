@@ -1,0 +1,181 @@
+--- a/Makefile
++++ b/Makefile
+@@ -104,7 +104,11 @@
+ 
+ LIBFLAME             := libflame
+ 
++ifeq ($(CC_VENDOR),cl)
++LIBFLAME_A           := $(LIBFLAME).lib
++else
+ LIBFLAME_A           := $(LIBFLAME).a
++endif
+ LIBFLAME_SO          := $(LIBFLAME).$(SHLIB_EXT)
+ 
+ # --- Library filepaths ---
+@@ -539,10 +543,10 @@
+ FLA_SLAMCH=base/flamec/util/lapack/mch/fla_slamch
+ $(BASE_OBJ_PATH)/$(FLA_SLAMCH).o: $(SRC_PATH)/$(FLA_SLAMCH).c $(CONFIG_MK_FILE) $(HEADERS_TO_FLATTEN)
+ ifeq ($(ENABLE_VERBOSE),yes)
+-	$(CC) $(CFLAGS_NOOPT) -c $< -o $@
++	$(CC) $(CFLAGS_NOOPT) $(CC_COMPILE_FLAG) $< $(CC_OUTPUT_FLAG)$@
+ else
+ 	@echo "Compiling $<"
+-	@$(CC) $(CFLAGS_NOOPT) -c $< -o $@
++	@$(CC) $(CFLAGS_NOOPT) $(CC_COMPILE_FLAG) $< $(CC_OUTPUT_FLAG)$@
+ endif
+ ifeq ($(FLA_ENABLE_MAX_ARG_LIST_HACK),yes)
+ 	@echo $@ >> $(AR_OBJ_LIST_FILE)
+@@ -551,10 +555,10 @@
+ FLA_DLAMCH=base/flamec/util/lapack/mch/fla_dlamch
+ $(BASE_OBJ_PATH)/$(FLA_DLAMCH).o: $(SRC_PATH)/$(FLA_DLAMCH).c $(CONFIG_MK_FILE) $(HEADERS_TO_FLATTEN)
+ ifeq ($(ENABLE_VERBOSE),yes)
+-	$(CC) $(CFLAGS_NOOPT) -c $< -o $@
++	$(CC) $(CFLAGS_NOOPT) $(CC_COMPILE_FLAG) $< $(CC_OUTPUT_FLAG)$@
+ else
+ 	@echo "Compiling $<"
+-	@$(CC) $(CFLAGS_NOOPT) -c $< -o $@
++	@$(CC) $(CFLAGS_NOOPT) $(CC_COMPILE_FLAG) $< $(CC_OUTPUT_FLAG)$@
+ endif
+ ifeq ($(FLA_ENABLE_MAX_ARG_LIST_HACK),yes)
+ 	@echo $@ >> $(AR_OBJ_LIST_FILE)
+@@ -566,10 +570,10 @@
+ # Default compilation rules
+ $(BASE_OBJ_PATH)/%.o: $(SRC_PATH)/%.c $(CONFIG_MK_FILE) $(HEADERS_TO_FLATTEN)
+ ifeq ($(ENABLE_VERBOSE),yes)
+-	$(CC) $(CFLAGS) -c $< -o $@
++	$(CC) $(CFLAGS) $(CC_COMPILE_FLAG) $< $(CC_OUTPUT_FLAG)$@
+ else
+ 	@echo "Compiling $<"
+-	@$(CC) $(CFLAGS) -c $< -o $@
++	@$(CC) $(CFLAGS) $(CC_COMPILE_FLAG) $< $(CC_OUTPUT_FLAG)$@
+ endif
+ ifeq ($(FLA_ENABLE_MAX_ARG_LIST_HACK),yes)
+ 	@echo $@ >> $(AR_OBJ_LIST_FILE)
+@@ -625,8 +629,12 @@
+ ifeq ($(ENABLE_VERBOSE),yes)
+ ifeq ($(FLA_ENABLE_MAX_ARG_LIST_HACK),yes)
+ 	$(SORT) $(AR_OBJ_LIST_FILE) | $(UNIQ) > $(AR_OBJ_LIST_FILE).atmp
++ifeq ($(CC_VENDOR),cl)
++	$(AR) /nologo /OUT:$@ @$(AR_OBJ_LIST_FILE).atmp
++else
+ ### Kyungjoo 2015.10.21
+ 	$(CAT) $(AR_OBJ_LIST_FILE).atmp | xargs -n$(AR_CHUNK_SIZE) $(AR) $(ARFLAGS) $@
++endif
+ ### Previous hack (works on linux, not on osx; osx's ar does not support @file)
+ #	echo $(ARFLAGS) $@ > $(AR_ARG_LIST_FILE)
+ #	$(CAT) $(AR_OBJ_LIST_FILE) >> $(AR_ARG_LIST_FILE)
+@@ -635,8 +643,12 @@
+ else
+ #	NOTE: Can't use $^ automatic variable as long as $(AR_OBJ_LIST_FILE) is in
+ #	the list of prerequisites.
++ifeq ($(CC_VENDOR),cl)
++	$(AR) /nologo /OUT:$@ $^
++else
+ 	$(AR) $(ARFLAGS) $@ $^
+ endif
++endif
+ 	$(RANLIB) $@
+ #	$(MKDIR) include_local
+ #	cp -f $(MK_HEADER_FILES) include_local
+@@ -644,8 +656,12 @@
+ 	@echo "Archiving $@"
+ ifeq ($(FLA_ENABLE_MAX_ARG_LIST_HACK),yes)
+ 	@$(SORT) $(AR_OBJ_LIST_FILE) | $(UNIQ) > $(AR_OBJ_LIST_FILE).atmp
++ifeq ($(CC_VENDOR),cl)
++	@$(AR) /nologo /OUT:$@ @$(AR_OBJ_LIST_FILE).atmp
++else
+ ### Kyungjoo 2015.10.21
+ 	@$(CAT) $(AR_OBJ_LIST_FILE).atmp | xargs -n$(AR_CHUNK_SIZE) $(AR) $(ARFLAGS) $@
++endif
+ ### Previous hack (works on linux, not on osx; osx's ar does not support @file)
+ #	@echo $(ARFLAGS) $@ > $(AR_ARG_LIST_FILE)
+ #	@$(CAT) $(AR_OBJ_LIST_FILE) >> $(AR_ARG_LIST_FILE)
+@@ -654,8 +670,12 @@
+ else
+ #	NOTE: Can't use $^ automatic variable as long as $(AR_OBJ_LIST_FILE) is in
+ #	the list of prerequisites.
++ifeq ($(CC_VENDOR),cl)
++	@$(AR) /nologo /OUT:$@ $^
++else
+ 	@$(AR) $(ARFLAGS) $@ $^
+ endif
++endif
+ 	@$(RANLIB) $@
+ #	@$(MKDIR) include_local
+ #	@cp -f $(MK_HEADER_FILES) include_local
+@@ -777,6 +797,16 @@
+ 	@$(INSTALL) -m 0644 $< $@
+ endif
+ 
++$(INSTALL_LIBDIR)/%.lib: $(BASE_LIB_PATH)/%.lib $(CONFIG_MK_FILE)
++ifeq ($(ENABLE_VERBOSE),yes)
++	$(MKDIR) $(@D)
++	$(INSTALL) -m 0644 $< $@
++else
++	@echo "Installing $(@F) into $(INSTALL_LIBDIR)/"
++	@$(MKDIR) $(@D)
++	@$(INSTALL) -m 0644 $< $@
++endif
++
+ # Install shared library.
+ $(INSTALL_LIBDIR)/%.$(LIBFLAME_SO_MMB_EXT): $(BASE_LIB_PATH)/%.$(SHLIB_EXT) $(CONFIG_MK_FILE)
+ ifeq ($(ENABLE_VERBOSE),yes)
+--- a/build/ac-macros/fla_require_cc_vendor.m4
++++ b/build/ac-macros/fla_require_cc_vendor.m4
+@@ -3,7 +3,7 @@
+ 	AC_REQUIRE([FLA_REQUIRE_CC])
+ 
+ 	dnl Ascertain the compiler "vendor".
+-	CC_VENDOR=$(echo "$CC" | egrep -o 'icc|gcc|clang|emcc|pnacl|IBM|cc|craycc' | { read first rest ; echo $first ; })
++	CC_VENDOR=$(echo "$CC" | egrep -o 'icc|gcc|clang|emcc|pnacl|IBM|cc|craycc|cl' | { read first rest ; echo $first ; })
+ 
+ 	if test "${CC_VENDOR}" = "" ; then
+ 		AC_MSG_ERROR([configure can't determine the compiler vendor for $CC. Please submit a bug report to the FLAME developers.])
+--- a/build/config.mk.in
++++ b/build/config.mk.in
+@@ -125,6 +125,14 @@
+ CFLAGS       := $(strip $(CVECFLAGS) $(CMISCFLAGS) $(CPPROCFLAGS))
+ CFLAGS_NOOPT := $(strip $(CMISCFLAGS) $(CPPROCFLAGS))
+ 
++ifeq ($(CC_VENDOR),cl)
++CC_COMPILE_FLAG := /c
++CC_OUTPUT_FLAG  := /Fo
++else
++CC_COMPILE_FLAG := -c
++CC_OUTPUT_FLAG  := -o
++endif
++
+ ifeq (@fla_enable_hip@, yes)
+ CFLAGS       := -D__HIP_PLATFORM_AMD__=1 -I/opt/rocm/include $(CFLAGS)
+ CFLAGS_NOOPT := -D__HIP_PLATFORM_AMD__=1 -I/opt/rocm/include $(CFLAGS_NOOPT)
+--- a/configure
++++ b/configure
+@@ -3580,7 +3580,7 @@
+ 
+ 
+ 
+-		CC_VENDOR=$(echo "$CC" | egrep -o 'icc|gcc|clang|emcc|pnacl|IBM|cc|craycc' | { read first rest ; echo $first ; })
++		CC_VENDOR=$(echo "$CC" | egrep -o 'icc|gcc|clang|emcc|pnacl|IBM|cc|craycc|cl' | { read first rest ; echo $first ; })
+ 
+ 	if test "${CC_VENDOR}" = "" ; then
+ 		as_fn_error $? "configure can't determine the compiler vendor for $CC. Please submit a bug report to the FLAME developers." "$LINENO" 5
+--- a/src/base/flamec/include/FLA_type_defs.h
++++ b/src/base/flamec/include/FLA_type_defs.h
+@@ -106,6 +106,8 @@
+   omp_lock_t       lock;
+ #elif FLA_MULTITHREADING_MODEL == FLA_PTHREADS
+   pthread_mutex_t  lock;
++#else
++  char             unused;
+ #endif
+ };
+ struct FLA_RWLock_s
+@@ -115,6 +117,8 @@
+   omp_lock_t       lock;
+ #elif FLA_MULTITHREADING_MODEL == FLA_PTHREADS
+   pthread_rwlock_t lock;
++#else
++  char             unused;
+ #endif
+ };
+ //#endif

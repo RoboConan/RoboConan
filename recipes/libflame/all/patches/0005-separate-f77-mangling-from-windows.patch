@@ -1,0 +1,182 @@
+--- a/build/FLA_config.h.in
++++ b/build/FLA_config.h.in
+@@ -87,6 +87,9 @@
+ /* Determines whether thread-specific blocks of code should be compiled. */
+ #undef FLA_ENABLE_MULTITHREADING
+ 
++/* Determines whether Fortran symbols omit the trailing underscore. */
++#undef FLA_ENABLE_F77_NO_UNDERSCORE
++
+ /* Determines whether to enable various segments of code identified as
+    providing non-critical functionality. */
+ #undef FLA_ENABLE_NON_CRITICAL_CODE
+--- a/build/post-configure.sh.in
++++ b/build/post-configure.sh.in
+@@ -38,6 +38,7 @@
+ 
+ echo ""
+ echo "Enable Windows build (experimental)............. : @fla_enable_windows_build@"
++echo "Use Fortran symbols without trailing underscore : @fla_enable_f77_no_underscore@"
+ 
+ echo ""
+ echo "Create static library........................... : @fla_enable_static_build@"
+--- a/configure
++++ b/configure
+@@ -634,6 +634,7 @@
+ fla_enable_tidsp
+ fla_enable_scc
+ fla_enable_windows_build
++fla_enable_f77_no_underscore
+ fla_portable_timer_function
+ fla_enable_portable_timer
+ fla_default_n_blocksize
+@@ -811,6 +812,7 @@
+ enable_default_n_blocksize
+ enable_portable_timer
+ enable_windows_build
++enable_f77_no_underscore
+ enable_scc
+ enable_tidsp
+ '
+@@ -1654,6 +1656,9 @@
+                           exists).)
+   --enable-windows-build  Enable code that is needed for a Windows-friendly
+                           build of libflame. (Disabled by default.)
++  --enable-f77-no-underscore
++                          Use Fortran symbols without a trailing underscore.
++                          (Disabled by default.)
+   --enable-scc            Enable code that takes advantage of the SCC
+                           multicore architecture. When using this option,
+                           enabling SuperMatrix is recommended, though not
+@@ -8800,6 +8805,25 @@
+ 
+ 
+ 
++		if test "${enable_f77_no_underscore+set}" = set; then :
++  enableval=$enable_f77_no_underscore;
++		if test "$enableval" = "no" ; then
++			fla_enable_f77_no_underscore=no
++		elif test "$enableval" = "yes" ; then
++			fla_enable_f77_no_underscore=yes
++		else
++			as_fn_error $? "Invalid option to --enable-f77-no-underscore" "$LINENO" 5
++		fi
++else
++		fla_enable_f77_no_underscore=no
++fi
++if test "$fla_enable_f77_no_underscore" = "yes" ; then
++
++$as_echo "#define FLA_ENABLE_F77_NO_UNDERSCORE 1" >>confdefs.h
++
++fi
++
++
+ 		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether user requested modifying libflame compilating/linking on Windows" >&5
+ $as_echo_n "checking whether user requested modifying libflame compilating/linking on Windows... " >&6; }
+ 
+--- a/configure.ac
++++ b/configure.ac
+@@ -547,6 +547,27 @@
+ dnl assembly.
+ FLA_CHECK_ENABLE_PORTABLE_TIMER
+ 
++dnl Observe whether Fortran symbols omit the conventional trailing underscore.
++AC_ARG_ENABLE([f77-no-underscore],
++              AS_HELP_STRING([--enable-f77-no-underscore],[Use Fortran symbols without a trailing underscore. (Disabled by default.)]),
++[
++	if test "$enableval" = "no" ; then
++		fla_enable_f77_no_underscore=no
++	elif test "$enableval" = "yes" ; then
++		fla_enable_f77_no_underscore=yes
++	else
++		AC_MSG_ERROR([[Invalid option to --enable-f77-no-underscore]])
++	fi
++],
++[
++	fla_enable_f77_no_underscore=no
++])
++if test "$fla_enable_f77_no_underscore" = "yes" ; then
++	AC_DEFINE(FLA_ENABLE_F77_NO_UNDERSCORE,1,
++	          [Determines whether Fortran symbols omit the trailing underscore.])
++fi
++AC_SUBST(fla_enable_f77_no_underscore)
++
+ dnl Observe whether we're building for Windows. (Note this actually never gets
+ dnl invoked, because the Windows build doesn't use a configure script.)
+ FLA_CHECK_ENABLE_WINDOWS_BUILD
+--- a/src/base/flamec/blis/include/blis1.h
++++ b/src/base/flamec/blis/include/blis1.h
+@@ -38,6 +38,9 @@
+   #ifdef FLA_ENABLE_BLIS1_USE_OF_FLA_MALLOC
+     #define BLIS1_ENABLE_USE_OF_FLA_MALLOC
+   #endif
++  #ifdef FLA_ENABLE_F77_NO_UNDERSCORE
++    #define BLIS1_ENABLE_F77_NO_UNDERSCORE
++  #endif
+   #ifdef FLA_ENABLE_CBLAS_INTERFACES
+     #define BLIS1_ENABLE_CBLAS_INTERFACES
+   #endif
+--- a/src/base/flamec/blis/include/blis_f77_name_mangling.h
++++ b/src/base/flamec/blis/include/blis_f77_name_mangling.h
+@@ -14,8 +14,8 @@
+ // it ourselves.
+ #ifndef F77_FUNC
+ 
+-  // Case 1: F77_FUNC is undefined because we're building for Windows.
+-  #ifdef BLIS1_ENABLE_WINDOWS_BUILD
++  // Case 1: The Fortran ABI does not append an underscore.
++  #ifdef BLIS1_ENABLE_F77_NO_UNDERSCORE
+ 
+     // Check whether we need to use uppercase Fortran routine names; otherwise
+     // default to lowercase.
+@@ -31,8 +31,7 @@
+               name_lower
+     #endif
+ 
+-  // Case 2: F77_FUNC is undefined because we're in a Linux-like environment
+-  // that did not define it for us.
++  // Case 2: The Fortran ABI appends an underscore.
+   #else
+ 
+     // Check whether we need to use uppercase Fortran routine names; otherwise
+@@ -49,7 +48,7 @@
+               name_lower ## _
+     #endif
+ 
+-  #endif // #ifdef BLIS1_ENABLE_WINDOWS_BUILD
++  #endif // #ifdef BLIS1_ENABLE_F77_NO_UNDERSCORE
+ 
+ #endif // #ifndef F77_FUNC
+ 
+--- a/src/base/flamec/include/FLA_f77_name_mangling.h
++++ b/src/base/flamec/include/FLA_f77_name_mangling.h
+@@ -14,8 +14,8 @@
+ // it ourselves.
+ #ifndef F77_FUNC
+ 
+-  // Case 1: F77_FUNC is undefined because we're building for Windows.
+-  #ifdef FLA_ENABLE_WINDOWS_BUILD
++  // Case 1: The Fortran ABI does not append an underscore.
++  #ifdef FLA_ENABLE_F77_NO_UNDERSCORE
+ 
+     // Check whether we need to use uppercase BLAS routine names; otherwise
+     // default to lowercase.
+@@ -31,8 +31,7 @@
+               name_lower
+     #endif
+ 
+-  // Case 2: F77_FUNC is undefined because we're in a Linux-like environment
+-  // that did not define it for us.
++  // Case 2: The Fortran ABI appends an underscore.
+   #else
+ 
+     // Check whether we need to use uppercase BLAS routine names; otherwise
+@@ -49,7 +48,7 @@
+               name_lower ## _
+     #endif
+ 
+-  #endif // #ifdef FLA_ENABLE_WINDOWS_BUILD
++  #endif // #ifdef FLA_ENABLE_F77_NO_UNDERSCORE
+ 
+ #endif // #ifndef F77_FUNC
+ 

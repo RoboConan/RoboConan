@@ -1,0 +1,89 @@
+diff --git a/build/ac-macros/fla_check_with_fc.m4 b/build/ac-macros/fla_check_with_fc.m4
+index 8db8a0b..ae69a2d 100644
+--- a/build/ac-macros/fla_check_with_fc.m4
++++ b/build/ac-macros/fla_check_with_fc.m4
+@@ -15,6 +15,7 @@ AC_DEFUN([FLA_CHECK_WITH_FC],
+ 			dnl User provided --with-<option>=no or --without-<option>.
+ 			fla_with_specific_fc=without
+ 			fla_requested_fc=''
++			FC=''
+ 
+ 		elif test "$withval" = "yes" ; then
+ 			
+@@ -47,16 +48,13 @@ AC_DEFUN([FLA_CHECK_WITH_FC],
+ 		dnl Output the result.
+ 		AC_MSG_RESULT([no])
+ 		
+-		dnl The user requested --with-fc=no or --without-fc. Scold him.
+-		AC_MSG_ERROR([[Detected --without-fc. Cannot continue with Fortran compiler disabled!]])
+-		
+ 	else
+ 		dnl Output the result.
+ 		AC_MSG_RESULT([no])
+ 	fi
+ 	
+ 	dnl Check for FC environment variable, which would override everything else.
+-	if test "$FC" != "" ; then
++	if test "$fla_with_specific_fc" != "without" && test "$FC" != "" ; then
+ 		AC_MSG_NOTICE([[FC environment variable is set to $FC, which will override --with-fc option and default search list for Fortran compiler.]])
+ 	fi
+ 
+diff --git a/configure b/configure
+index f71a08a..e357bd5 100755
+--- a/configure
++++ b/configure
+@@ -3599,6 +3599,7 @@ if test "${with_fc+set}" = set; then :
+ 
+ 						fla_with_specific_fc=without
+ 			fla_requested_fc=''
++			FC=''
+ 
+ 		elif test "$withval" = "yes" ; then
+ 
+@@ -3629,14 +3630,12 @@ $as_echo "yes ($fla_requested_fc)" >&6; }
+ 				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+ $as_echo "no" >&6; }
+ 
+-				as_fn_error $? "Detected --without-fc. Cannot continue with Fortran compiler disabled!" "$LINENO" 5
+-
+ 	else
+ 				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+ $as_echo "no" >&6; }
+ 	fi
+ 
+-		if test "$FC" != "" ; then
++		if test "$fla_with_specific_fc" != "without" && test "$FC" != "" ; then
+ 		{ $as_echo "$as_me:${as_lineno-$LINENO}: FC environment variable is set to $FC, which will override --with-fc option and default search list for Fortran compiler." >&5
+ $as_echo "$as_me: FC environment variable is set to $FC, which will override --with-fc option and default search list for Fortran compiler." >&6;}
+ 	fi
+@@ -3646,6 +3645,7 @@ $as_echo "$as_me: FC environment variable is set to $FC, which will override --w
+ 
+ 
+ 
++	if test "$fla_with_specific_fc" != "without"; then
+ 			fla_userdef_fflags=$FFLAGS
+ 
+ 						fla_f_compiler_list="gfortran f77 g77 xlf frt pgf77 cf77 fort77 fl32 af77 xlf90 f90 pgf90 pghpf epcf90 g95 xlf95 f95 fort ifort ifc efc pgfortran pgf95 lf95 ftn nagfor"
+@@ -3864,6 +3864,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
+ 	if test "$FC" = "" ; then
+ 		as_fn_error 1 "Could not locate any of the following Fortran compilers: $FC $fla_requested_fc $fla_f_compiler_list. Cannot continue without a Fortran compiler." "$LINENO" 5
+ 	fi
++	fi
+ 
+ 
+ 
+diff --git a/configure.ac b/configure.ac
+index 78bd5a1..9b4b987 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -258,7 +258,9 @@ dnl front of the compiler search list. Otherwise do nothing.
+ FLA_CHECK_WITH_FC
+ 
+ dnl Determine the Fortran compiler (FC).
+-FLA_REQUIRE_FC
++if test "$fla_with_specific_fc" != "without"; then
++	FLA_REQUIRE_FC
++fi
+ 
+ dnl Check whether the user requested a specific library archiver. If so, assign
+ dnl it to the requested archiver variable. Otherwise do nothing.

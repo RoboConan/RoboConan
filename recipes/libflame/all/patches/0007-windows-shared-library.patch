@@ -1,0 +1,234 @@
+--- a/Makefile
++++ b/Makefile
+@@ -93,8 +93,10 @@
+ 
+ # --- Shared library extension ---
+ 
+-# The shared (dynamic) library file suffix is different for Linux and OS X.
+-ifeq ($(OS_NAME),Darwin)
++# The shared (dynamic) library file suffix is platform-specific.
++ifeq ($(CC_VENDOR),cl)
++SHLIB_EXT          := dll
++else ifeq ($(OS_NAME),Darwin)
+ SHLIB_EXT          := dylib
+ else
+ SHLIB_EXT          := so
+@@ -116,6 +118,10 @@
+ # Append the base library path to the library names.
+ LIBFLAME_A_PATH      := $(BASE_LIB_PATH)/$(LIBFLAME_A)
+ LIBFLAME_SO_PATH     := $(BASE_LIB_PATH)/$(LIBFLAME_SO)
++ifeq ($(CC_VENDOR),cl)
++LIBFLAME_IMPLIB      := $(LIBFLAME).lib
++LIBFLAME_IMPLIB_PATH := $(BASE_LIB_PATH)/$(LIBFLAME_IMPLIB)
++endif
+ 
+ ifeq ($(OS_NAME),Darwin)
+ # OS X shared library extensions.
+@@ -196,9 +202,14 @@
+ 
+ # --- Define install target names for dynamic libraries ---
+ 
++ifeq ($(CC_VENDOR),cl)
++LIBFLAME_SO_INST      := $(INSTALL_BINDIR)/$(LIBFLAME_SO)
++LIBFLAME_IMPLIB_INST  := $(INSTALL_LIBDIR)/$(LIBFLAME_IMPLIB)
++else
+ LIBFLAME_SO_INST      := $(INSTALL_LIBDIR)/$(LIBFLAME_SO)
+ LIBFLAME_SO_MAJ_INST  := $(INSTALL_LIBDIR)/$(LIBFLAME_SONAME)
+ LIBFLAME_SO_MMB_INST  := $(INSTALL_LIBDIR)/$(LIBFLAME).$(LIBFLAME_SO_MMB_EXT)
++endif
+ 
+ # --- Determine which libraries to build ---
+ 
+@@ -213,12 +224,18 @@
+ endif
+ 
+ ifeq ($(FLA_ENABLE_DYNAMIC_BUILD),yes)
++ifeq ($(CC_VENDOR),cl)
++MK_LIBS                   += $(LIBFLAME_SO_PATH)
++MK_LIBS_INST              += $(LIBFLAME_SO_INST) \
++                             $(LIBFLAME_IMPLIB_INST)
++else
+ MK_LIBS                   += $(LIBFLAME_SO_PATH) \
+                              $(LIBFLAME_SO_MAJ_PATH)
+ MK_LIBS_INST              += $(LIBFLAME_SO_MMB_INST)
+ MK_LIBS_SYML              += $(LIBFLAME_SO_INST) \
+                              $(LIBFLAME_SO_MAJ_INST)
+ endif
++endif
+ 
+ # Strip leading, internal, and trailing whitespace.
+ MK_LIBS_INST              := $(strip $(MK_LIBS_INST))
+@@ -685,6 +702,17 @@
+ # --- Shared library linker rules ---
+ 
+ $(LIBFLAME_SO_PATH): $(MK_ALL_FLAMEC_OBJS)
++ifeq ($(CC_VENDOR),cl)
++	$(SORT) -u $(AR_OBJ_LIST_FILE) > $(AR_OBJ_LIST_FILE).sotmp
++	$(AR) /nologo /OUT:$(LIBFLAME_A) @$(AR_OBJ_LIST_FILE).sotmp
++	dumpbin /LINKERMEMBER:1 $(LIBFLAME_A) > $(LIBFLAME_A).symbols
++	$(PYTHON) $(DIST_PATH)/build/filter-windows-def.py \
++	          $(DIST_PATH)/windows/build/libflame-symbols.def \
++	          $(LIBFLAME_A).symbols $(LIBFLAME_A).def
++	link /nologo /dll /out:$@ /implib:$(LIBFLAME_IMPLIB_PATH) \
++	     /def:$(LIBFLAME_A).def @$(AR_OBJ_LIST_FILE).sotmp $(LDFLAGS)
++	$(RM_F) $(AR_OBJ_LIST_FILE).sotmp $(LIBFLAME_A).symbols $(LIBFLAME_A).def $(LIBFLAME_A)
++else
+ ifeq ($(ENABLE_VERBOSE),yes)
+ ifeq ($(FLA_ENABLE_MAX_ARG_LIST_HACK),yes)
+ 	$(SORT) $(AR_OBJ_LIST_FILE) | $(UNIQ) > $(AR_OBJ_LIST_FILE).sotmp
+@@ -717,6 +745,7 @@
+ 	@$(LINKER) $(SOFLAGS) -o $@ $^ $(LDFLAGS)
+ endif
+ endif
++endif
+ 
+ # Local symlink for shared library.
+ # NOTE: We use a '.loc' suffix to avoid filename collisions in case this
+@@ -807,6 +836,32 @@
+ 	@$(INSTALL) -m 0644 $< $@
+ endif
+ 
++ifeq ($(CC_VENDOR),cl)
++ifeq ($(FLA_ENABLE_DYNAMIC_BUILD),yes)
++# The import library is a side effect of linking the DLL. Do not let the
++# generic .lib install rule rebuild this path as a static archive.
++$(LIBFLAME_IMPLIB_INST): $(LIBFLAME_SO_PATH) $(CONFIG_MK_FILE)
++ifeq ($(ENABLE_VERBOSE),yes)
++	$(MKDIR) $(@D)
++	$(INSTALL) -m 0644 $(LIBFLAME_IMPLIB_PATH) $@
++else
++	@echo "Installing $(@F) into $(INSTALL_LIBDIR)/"
++	@$(MKDIR) $(@D)
++	@$(INSTALL) -m 0644 $(LIBFLAME_IMPLIB_PATH) $@
++endif
++endif
++endif
++
++$(INSTALL_BINDIR)/%.dll: $(BASE_LIB_PATH)/%.dll $(CONFIG_MK_FILE)
++ifeq ($(ENABLE_VERBOSE),yes)
++	$(MKDIR) $(@D)
++	$(INSTALL) -m 0755 $< $@
++else
++	@echo "Installing $(@F) into $(INSTALL_BINDIR)/"
++	@$(MKDIR) $(@D)
++	@$(INSTALL) -m 0755 $< $@
++endif
++
+ # Install shared library.
+ $(INSTALL_LIBDIR)/%.$(LIBFLAME_SO_MMB_EXT): $(BASE_LIB_PATH)/%.$(SHLIB_EXT) $(CONFIG_MK_FILE)
+ ifeq ($(ENABLE_VERBOSE),yes)
+--- a/build/config.mk.in
++++ b/build/config.mk.in
+@@ -40,12 +40,14 @@
+ prefix                         := @prefix@
+ exec_prefix                    := @exec_prefix@
+ libdir                         := @libdir@
++bindir                         := @bindir@
+ includedir                     := @includedir@
+ 
+ # The library and header installation directories tell us where to install
+ # the libraries and headers, respectively. Notice that we support the use of
+ # DESTDIR so that advanced users may install to a temporary location.
+ INSTALL_LIBDIR                 := $(DESTDIR)$(libdir)
++INSTALL_BINDIR                 := $(DESTDIR)$(bindir)
+ INSTALL_INCDIR                 := $(DESTDIR)$(includedir)
+ 
+ # The directory path to the top level of the source distribution. When
+--- /dev/null
++++ b/build/filter-windows-def.py
+@@ -0,0 +1,32 @@
++import sys
++
++
++data_symbols = (
++    "FLA_THREE", "FLA_TWO", "FLA_ONE", "FLA_ONE_HALF", "FLA_ZERO",
++    "FLA_MINUS_ONE_HALF", "FLA_MINUS_ONE", "FLA_MINUS_TWO", "FLA_MINUS_THREE",
++    "FLA_EPSILON", "FLA_SAFE_MIN", "FLA_SAFE_MIN_SQUARE", "FLA_SAFE_INV_MIN",
++    "FLA_SAFE_INV_MIN_SQUARE", "FLA_UNDERFLOW_THRES", "FLA_OVERFLOW_THRES",
++    "FLA_UNDERFLOW_SQUARE_THRES", "FLA_OVERFLOW_SQUARE_THRES",
++    "fzero", "dzero", "czero", "zzero",
++)
++
++template_path, symbols_path, output_path = sys.argv[1:]
++
++with open(symbols_path, encoding="utf-8") as symbols_file:
++    defined = set()
++    for line in symbols_file:
++        fields = line.split()
++        if len(fields) == 2:
++            defined.add(fields[1])
++
++with open(template_path, encoding="utf-8") as template_file:
++    exports = [line.strip().split()[0] for line in template_file]
++
++with open(output_path, "w", encoding="utf-8", newline="\n") as output_file:
++    output_file.write("EXPORTS\n")
++    for symbol in data_symbols:
++        if symbol in defined:
++            output_file.write(f"{symbol} DATA\n")
++    for symbol in exports:
++        if symbol not in data_symbols and symbol in defined:
++            output_file.write(f"{symbol}\n")
+--- a/src/base/flamec/include/FLA_extern_defs.h
++++ b/src/base/flamec/include/FLA_extern_defs.h
+@@ -11,30 +11,36 @@
+ #ifndef FLA_EXTERN_DEFS_H
+ #define FLA_EXTERN_DEFS_H
+ 
+-extern FLA_Obj FLA_THREE;
+-extern FLA_Obj FLA_TWO;
+-extern FLA_Obj FLA_ONE;
+-extern FLA_Obj FLA_ONE_HALF;
+-extern FLA_Obj FLA_ZERO;
+-extern FLA_Obj FLA_MINUS_ONE_HALF;
+-extern FLA_Obj FLA_MINUS_ONE;
+-extern FLA_Obj FLA_MINUS_TWO;
+-extern FLA_Obj FLA_MINUS_THREE;
+-
+-extern FLA_Obj FLA_EPSILON;
+-extern FLA_Obj FLA_SAFE_MIN;
+-extern FLA_Obj FLA_SAFE_MIN_SQUARE;
+-extern FLA_Obj FLA_SAFE_INV_MIN;
+-extern FLA_Obj FLA_SAFE_INV_MIN_SQUARE;
+-extern FLA_Obj FLA_UNDERFLOW_THRES;
+-extern FLA_Obj FLA_OVERFLOW_THRES;
+-extern FLA_Obj FLA_UNDERFLOW_SQUARE_THRES;
+-extern FLA_Obj FLA_OVERFLOW_SQUARE_THRES;
+-
+-extern const float    fzero;
+-extern const double   dzero;
+-extern const scomplex czero;
+-extern const dcomplex zzero;
++#if defined(_WIN32) && defined(FLA_DLL)
++#define FLA_DATA_IMPORT __declspec(dllimport)
++#else
++#define FLA_DATA_IMPORT
++#endif
++
++extern FLA_DATA_IMPORT FLA_Obj FLA_THREE;
++extern FLA_DATA_IMPORT FLA_Obj FLA_TWO;
++extern FLA_DATA_IMPORT FLA_Obj FLA_ONE;
++extern FLA_DATA_IMPORT FLA_Obj FLA_ONE_HALF;
++extern FLA_DATA_IMPORT FLA_Obj FLA_ZERO;
++extern FLA_DATA_IMPORT FLA_Obj FLA_MINUS_ONE_HALF;
++extern FLA_DATA_IMPORT FLA_Obj FLA_MINUS_ONE;
++extern FLA_DATA_IMPORT FLA_Obj FLA_MINUS_TWO;
++extern FLA_DATA_IMPORT FLA_Obj FLA_MINUS_THREE;
++
++extern FLA_DATA_IMPORT FLA_Obj FLA_EPSILON;
++extern FLA_DATA_IMPORT FLA_Obj FLA_SAFE_MIN;
++extern FLA_DATA_IMPORT FLA_Obj FLA_SAFE_MIN_SQUARE;
++extern FLA_DATA_IMPORT FLA_Obj FLA_SAFE_INV_MIN;
++extern FLA_DATA_IMPORT FLA_Obj FLA_SAFE_INV_MIN_SQUARE;
++extern FLA_DATA_IMPORT FLA_Obj FLA_UNDERFLOW_THRES;
++extern FLA_DATA_IMPORT FLA_Obj FLA_OVERFLOW_THRES;
++extern FLA_DATA_IMPORT FLA_Obj FLA_UNDERFLOW_SQUARE_THRES;
++extern FLA_DATA_IMPORT FLA_Obj FLA_OVERFLOW_SQUARE_THRES;
++
++extern FLA_DATA_IMPORT const float    fzero;
++extern FLA_DATA_IMPORT const double   dzero;
++extern FLA_DATA_IMPORT const scomplex czero;
++extern FLA_DATA_IMPORT const dcomplex zzero;
+ 
+ #endif
+ 

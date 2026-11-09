@@ -1,0 +1,51 @@
+--- a/src/base/flamec/blis/include/blis1.h
++++ b/src/base/flamec/blis/include/blis1.h
+@@ -35,6 +35,9 @@ extern "C" {
+   #include "FLA_type_defs.h"
+ 
+   // --- Pass-through macros for BLIS ---
++  #ifdef FLA_ENABLE_BLIS1_USE_OF_FLA_MALLOC
++    #define BLIS1_ENABLE_USE_OF_FLA_MALLOC
++  #endif
+   #ifdef FLA_ENABLE_CBLAS_INTERFACES
+     #define BLIS1_ENABLE_CBLAS_INTERFACES
+   #endif
+--- a/src/base/flamec/blis/util/bl1_free.c
++++ b/src/base/flamec/blis/util/bl1_free.c
+@@ -19,30 +19,30 @@
+ 
+ void bl1_vfree( void* p )
+ {
+-	free( ( void* ) p );
++	BLIS1_FREE( ( void* ) p );
+ }
+ 
+ void bl1_ifree( int* p )
+ {
+-	free( ( int* ) p );
++	BLIS1_FREE( ( int* ) p );
+ }
+ 
+ void bl1_sfree( float* p )
+ {
+-	free( ( void* ) p );
++	BLIS1_FREE( ( void* ) p );
+ }
+ 
+ void bl1_dfree( double* p )
+ {
+-	free( ( void* ) p );
++	BLIS1_FREE( ( void* ) p );
+ }
+ 
+ void bl1_cfree( scomplex* p )
+ {
+-	free( ( void* ) p );
++	BLIS1_FREE( ( void* ) p );
+ }
+ 
+ void bl1_zfree( dcomplex* p )
+ {
+-	free( ( void* ) p );
++	BLIS1_FREE( ( void* ) p );
+ }

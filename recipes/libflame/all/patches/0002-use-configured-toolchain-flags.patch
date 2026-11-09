@@ -1,0 +1,64 @@
+diff --git a/Makefile b/Makefile
+index c7a2b7f..6332181 100644
+--- a/Makefile
++++ b/Makefile
+@@ -140,7 +140,7 @@ LIBFLAME_SO_OUTPUT_NAME := $(LIBFLAME_SO_PATH)
+ ifeq ($(OS_NAME),Darwin)
+ # OS X shared library link flags.
+ SOFLAGS    := -dynamiclib
+-SOFLAGS    += -Wl,-install_name,$(LIBFLAME_SONAME)
++SOFLAGS    += -Wl,-install_name,@rpath/$(LIBFLAME_SONAME)
+ else
+ SOFLAGS    := -shared
+ # Linux shared library link flags.
+diff --git a/build/config.mk.in b/build/config.mk.in
+index b166f77..3ac8815 100644
+--- a/build/config.mk.in
++++ b/build/config.mk.in
+@@ -110,17 +110,12 @@ UNIQ       := uniq -u
+ # --- Determine the C compiler and related flags ---
+ CC           := @CC@
+ CC_VENDOR    := @CC_VENDOR@
+-CPPROCFLAGS  := -D_POSIX_C_SOURCE=200809L @DEFS@ @fla_blis_flags@
+-CMISCFLAGS   := @fla_c_lang_flags@ @fla_c_openmp_flags@ @fla_c_prof_flags@
++CPPROCFLAGS  := @CPPFLAGS@ -D_POSIX_C_SOURCE=200809L @DEFS@ @fla_blis_flags@
++CMISCFLAGS   := @fla_c_openmp_flags@
+ CDBGFLAGS    := @fla_c_debug_flags@
+ CWARNFLAGS   := @fla_c_warning_flags@
+ COPTFLAGS    := @fla_c_opt_flags@
+ CVECFLAGS    := @fla_c_sse_flags@
+ 
+-# Add position-independent code flag if building a dynamic library.
+-ifeq ($(FLA_ENABLE_DYNAMIC_BUILD),yes)
+-CMISCFLAGS   += -fPIC
+-endif
+-
+ # Add explicit C99 support.
+ #CMISCFLAGS   += -std=c99
+@@ -127,8 +122,8 @@ endif
+ 
+ # Aggregate all of the flags into two groups: one for optimizable code, and
+ # one for code that should not be optimized.
+-CFLAGS       := $(strip $(CDBGFLAGS) $(COPTFLAGS) $(CVECFLAGS) $(CWARNFLAGS) $(CMISCFLAGS) $(CPPROCFLAGS))
+-CFLAGS_NOOPT := $(strip $(CDBGFLAGS) $(CWARNFLAGS) $(CMISCFLAGS) $(CPPROCFLAGS))
++CFLAGS       := $(strip $(CVECFLAGS) $(CMISCFLAGS) $(CPPROCFLAGS))
++CFLAGS_NOOPT := $(strip $(CMISCFLAGS) $(CPPROCFLAGS))
+ 
+ ifeq (@fla_enable_hip@, yes)
+ CFLAGS       := -D__HIP_PLATFORM_AMD__=1 -I/opt/rocm/include $(CFLAGS)
+@@ -172,12 +172,12 @@ PYTHON       := @PYTHON@
+ # --- Determine the linker and related flags ---
+ LINKER       := $(CC)
+ ifeq (@fla_multithreading_model@, pthreads)
+-LDFLAGS      := @fla_c_prof_flags@ @LDFLAGS@ @FLIBS@ -lpthread
++LDFLAGS      := @fla_c_prof_flags@ @LDFLAGS@ @LIBS@ -lpthread
+ else
+ ifeq (@fla_multithreading_model@, openmp)
+-LDFLAGS      := @fla_c_prof_flags@ @LDFLAGS@ @FLIBS@ @fla_c_openmp_flags@
++LDFLAGS      := @fla_c_prof_flags@ @LDFLAGS@ @LIBS@ @fla_c_openmp_flags@
+ else
+-LDFLAGS      := @fla_c_prof_flags@ @LDFLAGS@ @FLIBS@
++LDFLAGS      := @fla_c_prof_flags@ @LDFLAGS@ @LIBS@
+ endif
+ endif
+ ifeq (@fla_enable_hip@, yes)

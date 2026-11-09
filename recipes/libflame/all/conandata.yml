@@ -1,0 +1,20 @@
+sources:
+  "5.2.0+git.20240520":
+    url: "https://github.com/flame/libflame/archive/f38dd83e30136b4e25eb2343813ee4fbd7c16681.tar.gz"
+    sha256: "72c31f89e2cb6f76d286a5c0b0650357a70c4bfc6afeac0453fcf314d14c2ade"
+patches:
+  "5.2.0+git.20240520":
+    - patch_file: "patches/0001-without-fortran.patch"
+      patch_description: "Allow C-only builds to disable the Fortran compiler"
+    - patch_file: "patches/0002-use-configured-toolchain-flags.patch"
+      patch_description: "Honor configured compiler, preprocessor, linker, and Darwin runtime-path flags"
+    - patch_file: "patches/0003-separate-cblas-and-netlib-parameter-mapping.patch"
+      patch_description: "Keep Netlib LAPACK and cuBLAS character parameters independent of CBLAS enums"
+    - patch_file: "patches/0004-fix-blis-fla-allocator.patch"
+      patch_description: "Route embedded BLIS allocations and frees through the configured libflame allocator"
+    - patch_file: "patches/0005-separate-f77-mangling-from-windows.patch"
+      patch_description: "Configure the Fortran trailing underscore independently from Windows portability support"
+    - patch_file: "patches/0006-msvc-portability.patch"
+      patch_description: "Support the MSVC compiler and library archiver in the portable build"
+    - patch_file: "patches/0007-windows-shared-library.patch"
+      patch_description: "Build and install a Windows DLL with complete function and data exports"
