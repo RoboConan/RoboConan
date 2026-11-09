@@ -1,0 +1,4 @@
+sources:
+  "0.5":
+    url: "https://github.com/brenocq/implot3d/archive/v0.5.tar.gz"
+    sha256: "61cb7730a4272fa7fde0c2b52c7c238064488d039ff0de43fa2e62aa2ddb9a2f"
