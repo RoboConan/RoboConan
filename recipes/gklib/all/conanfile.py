@@ -2,7 +2,7 @@ import os
 from os import path
 
 from conan import ConanFile
-from conan.tools.cmake import CMake, CMakeToolchain, cmake_layout
+from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
 from conan.tools.files import *
 from conan.tools.microsoft import is_msvc
 
@@ -57,10 +57,14 @@ class GKlibConan(ConanFile):
         replace_in_file(self, "CMakeLists.txt",
                         "cmake_minimum_required(VERSION 3.4)",
                         "cmake_minimum_required(VERSION 3.5)")
+        replace_in_file(self, "gk_arch.h",
+                        '#include "ms_stdint.h"\n  #include "ms_inttypes.h"',
+                        "#include <stdint.h>\n  #include <inttypes.h>")
         # Disable -march=native, which breaks cross-compilation and produces non-portable binaries
         replace_in_file(self, os.path.join(self.source_folder, "GKlibSystem.cmake"),  "-march=native", "")
 
     def generate(self):
+        CMakeDeps(self).generate()
         tc = CMakeToolchain(self)
         tc.variables["ASSERT"] = self.settings.build_type == "Debug"
         tc.variables["ASSERT2"] = self.settings.build_type == "Debug"
@@ -85,5 +89,3 @@ class GKlibConan(ConanFile):
             self.cpp_info.system_libs.append("m")
         if is_msvc(self) or self._is_mingw:
             self.cpp_info.defines.append("USE_GKREGEX")
-        if is_msvc(self):
-            self.cpp_info.defines.append("__thread=__declspec(thread)")

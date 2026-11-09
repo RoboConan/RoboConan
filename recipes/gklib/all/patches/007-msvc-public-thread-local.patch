@@ -1,0 +1,14 @@
+diff --git a/GKlib.h b/GKlib.h
+index 6a79648..f6f35ac 100644
+--- a/GKlib.h
++++ b/GKlib.h
+@@ -13,6 +13,9 @@
+ #define GKMSPACE
+ 
+ #if defined(_MSC_VER)
+ #define __MSC__
++#if !defined(__thread)
++#define __thread __declspec(thread)
++#endif
+ #endif
+ #if defined(__ICC)

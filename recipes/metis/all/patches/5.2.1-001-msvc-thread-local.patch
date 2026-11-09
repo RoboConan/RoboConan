@@ -2,7 +2,7 @@ diff --git a/gkbuild.cmake b/gkbuild.cmake
 index 887ee0c..8406fc1 100644
 --- a/gkbuild.cmake
 +++ b/gkbuild.cmake
-@@ -88,24 +88,7 @@ endif()
+@@ -84,24 +84,7 @@ endif()
  
  # Custom check for TLS.
  if(MSVC)
