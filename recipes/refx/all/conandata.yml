@@ -1,4 +1,4 @@
 sources:
-  "0.2.1":
-    url: "https://github.com/mosaico-labs/refx/archive/refs/tags/v0.2.1.tar.gz"
-    sha256: "373fcb6bfa7eeb8cfb6fdbbb28907f0d416936bee6c570bdf8a3b0dfb2c0ee8d"
+  "0.2.4":
+    url: "https://github.com/mosaico-labs/refx/archive/refs/tags/v0.2.4.tar.gz"
+    sha256: "e0a8c4cd5c4b3f78c16bfd0c4362123208b4bc26e8e4e27e80e117c80f6fc62c"
